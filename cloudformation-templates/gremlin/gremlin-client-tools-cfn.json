@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
   "Description" : "Sample Amazon Neptune CloudFormation: Creates New VPC, EC2 for Graphexp & Tinkerpop, SGs for Lab environment ",
-
+ 
   "Parameters" : {
     "EC2InstanceType" : {
       "Description" : "EC2 instance type",
@@ -39,7 +39,15 @@
       "Default": "0.0.0.0/0",
       "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
       "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-    }
+    },
+
+    "GraphexpAccess" : {
+    "Description" : "The IP address range that can be used to access hosted Graphexp",
+    "Type": "String",
+    "Default": "0.0.0.0/0",
+    "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+    "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+  }
   },
   "Mappings" : {
     "RegionMap" : {
@@ -55,7 +63,7 @@
        "GroupDescription" : "EC2-Graphexp SG",
         "SecurityGroupIngress" : [
           {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "SSHLocation"} },
-          {"IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" },
+          {"IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : { "Ref" : "GraphexpAccess"} },
           {"IpProtocol" : "tcp", "FromPort" : "8193", "ToPort" : "8193", "CidrIp" : "0.0.0.0/0" }
         ]
       }
