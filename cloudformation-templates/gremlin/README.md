@@ -15,7 +15,7 @@ This cloudformation template can be launched in your account directly by clickin
 
 Choose Stack name, Instance Type, KeyName, SSH Location and enter your Amazon Neptune endpoint and Amazon Neptune Security Group Id
 
-![cloudformation](images/step1.jpg)
+![cloudformation](step1.jpg)
 
 Do not append the port information to the Neptune endpoint  
 
