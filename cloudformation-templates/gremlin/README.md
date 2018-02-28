@@ -8,7 +8,7 @@ This cloudformation template can be launched in your account directly by clickin
 
 | AWS Region | Short name | | 
 | -- | -- | -- |
-| US East (N. Virginia) | us-east-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Demo&templateURL=https://s3.amazonaws.com/neptune-labs/cloudformation/neptune-workshop-default-vpc.json) |
+| US East (N. Virginia) | us-east-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=NeptuneDemo&templateURL=https://s3.amazonaws.com/neptune-labs/cloudformation/gremlin-client-tools-cfn.json) |
 
 
 ## Step 1
