@@ -17,7 +17,7 @@ Choose Stack name, Instance Type, KeyName, SSH Location and enter your Amazon Ne
 
 ![cloudformation](images/step1.jpg)
 
-Do not append the port information to the Neptune endpoint  
+Do not append the port information to the Neptune endpoint and for your Graphexp Access - use your IP, otherwise access will be public.
 
 
 ## Step 2
