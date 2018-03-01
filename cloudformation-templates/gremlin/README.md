@@ -13,9 +13,7 @@ This cloudformation template can be launched in your account directly by clickin
 
 ## Pre-requisite
 
-The cloudformation template will assume there is an already established Amazon Neptune Cluster.
-
-Create a Neptune Cluster for Gremlin (resources): 
+The cloudformation template will assume there is an already established Amazon Neptune Cluster. See the following links for how to create an Amazon Neptune Cluster for Gremlin:  
 
 https://docs.aws.amazon.com/neptune/latest/userguide/get-started-CreateInstance-Console.html
 https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html
