@@ -11,6 +11,11 @@ This cloudformation template can be launched in your account directly by clickin
 | US East (N. Virginia) | us-east-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=NeptuneDemo&templateURL=https://s3.amazonaws.com/neptune-labs/cloudformation/gremlin-client-tools-cfn.json) |
 
 
+## Pre-requisite
+
+Create a Neptune Cluster: https://docs.aws.amazon.com/neptune/latest/userguide/get-started-CreateInstance-Console.html
+
+
 ## Step 1
 
 Choose Stack name, Instance Type, KeyName, SSH Location and enter your Amazon Neptune endpoint and Amazon Neptune Security Group Id
