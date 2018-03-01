@@ -11,13 +11,15 @@ This cloudformation template can be launched in your account directly by clickin
 | US East (N. Virginia) | us-east-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=NeptuneDemo&templateURL=https://s3.amazonaws.com/neptune-labs/cloudformation/gremlin-client-tools-cfn.json) |
 
 
-## Pre-requisite
+## Prerequisite
 
 The cloudformation template will assume there is an already established Amazon Neptune Cluster. See the following links for how to create an Amazon Neptune Cluster for Gremlin:  
 
-* https://docs.aws.amazon.com/neptune/latest/userguide/get-started-CreateInstance-Console.html
-* https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html
-* https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html
+https://docs.aws.amazon.com/neptune/latest/userguide/get-started-CreateInstance-Console.html
+
+https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html
+
+https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html
 
 
 ## Step 1
