@@ -1,6 +1,6 @@
 ## Amazon Neptune Tools
 
-Utilities to enable to load data and build graph applications with Amazon Neptune.
+Utilities to enable loading data and building graph applications with Amazon Neptune.
 
 ## Examples
 
