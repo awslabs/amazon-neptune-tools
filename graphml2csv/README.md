@@ -1,6 +1,6 @@
 # GraphML 2 Neptune CSV
 
-This Python script provides a utility to convert GraphML files into the CSV format that is used by Amazon Neptune for [Bulk Loading](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html).
+This Python script provides a utility to convert GraphML files into the CSV format that is used by Amazon Neptune for [Bulk Loading](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html). This script is compatible with Python2 and Python3.
 
 ## Usage
 
@@ -15,7 +15,8 @@ Options:
   --version           show program's version number and exit
   -h, --help          show this help message and exit
   -i FILE, --in=FILE  set input path [default: none]
-  -v, --verbose       set verbosity level [default: none]
+  -d DELIMITER, --delimiter=DELIMITER
+                        Set the output file delimiter [default: ,]
 
 A utility python script to convert GraphML files into the Amazon Neptune CSV
 format for bulk ingestion. See
