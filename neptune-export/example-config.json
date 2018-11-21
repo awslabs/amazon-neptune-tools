@@ -1,0 +1,117 @@
+{
+  "edges": [
+    {
+      "label": "CREATED",
+      "properties": [
+
+      ]
+    },
+    {
+      "label": "FOLLOWS",
+      "properties": [
+        {
+          "property": "creationDate",
+          "dataType": "Date",
+          "isMultiValue": false
+        }
+      ]
+    },
+    {
+      "label": "LIKES",
+      "properties": [
+        {
+          "property": "creationDate",
+          "dataType": "Date",
+          "isMultiValue": false
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "label": "Post",
+      "properties": [
+        {
+          "property": "imageFile",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "browserUsed",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "length",
+          "dataType": "Integer",
+          "isMultiValue": false
+        },
+        {
+          "property": "locationIP",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "language",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "creationDate",
+          "dataType": "Date",
+          "isMultiValue": false
+        },
+        {
+          "property": "content",
+          "dataType": "String",
+          "isMultiValue": false
+        }
+      ]
+    },
+    {
+      "label": "Person",
+      "properties": [
+        {
+          "property": "birthday",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "firstName",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "lastName",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "gender",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "browserUsed",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "locationIP",
+          "dataType": "String",
+          "isMultiValue": false
+        },
+        {
+          "property": "id",
+          "dataType": "Long",
+          "isMultiValue": false
+        },
+        {
+          "property": "creationDate",
+          "dataType": "Date",
+          "isMultiValue": false
+        }
+      ]
+    }
+  ]
+}
