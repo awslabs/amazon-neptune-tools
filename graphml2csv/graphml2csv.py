@@ -50,7 +50,10 @@ class GraphML2CSV:
     @staticmethod
     def graphml_tag(tag):
         graphml_ns = 'http://graphml.graphdrawing.org/xmlns'
-        return GraphML2CSV.fixtag(graphml_ns, tag)
+        if tag.startswith('{'+graphml_ns+'}'):
+            return tag
+        else:
+            return GraphML2CSV.fixtag(graphml_ns, tag)
 
     @staticmethod
     def py_compat_str(data):
@@ -101,7 +104,7 @@ class GraphML2CSV:
 
                         # Extract the node and edge CSV headers
                         # Write the header for the CSV files when we see the graph element
-                        if elem.tag == GraphML2CSV.graphml_tag('graph'):
+                        if GraphML2CSV.graphml_tag(elem.tag) == GraphML2CSV.graphml_tag('graph'):
                             node_writer = csv.DictWriter(
                                 node_csvfile, fieldnames=vtx_header, restval='', delimiter=delimiter)
                             node_writer.writeheader()
@@ -111,28 +114,36 @@ class GraphML2CSV:
 
                     if event == 'end':
 
-                        if elem.tag == GraphML2CSV.graphml_tag('key'):
+                        if GraphML2CSV.graphml_tag(elem.tag) == GraphML2CSV.graphml_tag('key'):
 
                             # Assume the labelV is the vertex label, if specified
-                            if elem.attrib['for'] == 'node' and elem.attrib['id'] != 'labelV':
-                                vtx_dict[elem.attrib['id']] = elem.attrib['id'] + \
-                                    ":"+elem.attrib['attr.type']
-                                vtx_header.append(
-                                    elem.attrib['id']+":"+elem.attrib['attr.type'])
+                            if elem.attrib['id'] != 'labelV' and elem.attrib['id'] != 'labelE':
+                                if not 'for' in elem.attrib or elem.attrib['for'] == 'node':
+                                    vtx_dict[elem.attrib['id']] = elem.attrib['id'] + \
+                                        ":"+elem.attrib['attr.type']
+                                    vtx_header.append(
+                                        elem.attrib['id']+":"+elem.attrib['attr.type'])
 
-                                # Assume the labelE is the edge label, if specified
-                            elif elem.attrib['for'] == 'edge' and elem.attrib['id'] != 'labelE':
-                                edge_dict[elem.attrib['id']] = elem.attrib['id'] + \
-                                    ":"+elem.attrib['attr.type']
-                                edge_header.append(
-                                    elem.attrib['id']+":"+elem.attrib['attr.type'])
+                                if not 'for' in elem.attrib or elem.attrib['for'] == 'edge':
+                                    edge_dict[elem.attrib['id']] = elem.attrib['id'] + \
+                                        ":"+elem.attrib['attr.type']
+                                    edge_header.append(
+                                        elem.attrib['id']+":"+elem.attrib['attr.type'])
 
                             elem.clear()
 
-                        if elem.tag == GraphML2CSV.graphml_tag('node'):
+                        if GraphML2CSV.graphml_tag(elem.tag) == GraphML2CSV.graphml_tag('node'):
+
                             node_cnt += 1
                             node_d = {}
-                            node_d["~id"] = elem.attrib['id']
+
+                            if 'id' in elem.attrib:
+                                node_d["~id"] = elem.attrib['id']
+                            else:
+                                # If the optional ID is not present, use the node count
+                                node_d["~id"] = node_cnt
+
+                            has_label = None
 
                             for data in elem:
                                 att_val = GraphML2CSV.py_compat_str(
@@ -141,23 +152,32 @@ class GraphML2CSV:
                                 if att_val == "labelV":
                                     node_d["~label"] = GraphML2CSV.py_compat_str(
                                         data.text)
+                                    has_label = True
                                 else:
                                     node_d[vtx_dict[att_val]] = GraphML2CSV.py_compat_str(
                                         data.text)
                                 node_attr_cnt += 1
 
+                            if not has_label:
+                                # Use node as the label if it is unspecified
+                                node_d["~label"] = "node"
+
                             node_writer.writerow(node_d)
                             elem.clear()
 
-                        if elem.tag == GraphML2CSV.graphml_tag('edge'):
+                        if GraphML2CSV.graphml_tag(elem.tag) == GraphML2CSV.graphml_tag('edge'):
                             edge_cnt += 1
                             edge_d = {}
+                            has_label = None
 
-                            id = elem.attrib['id']
                             source = elem.attrib['source']
                             dest = elem.attrib['target']
                             # Neptune CSV header values
                             # source/target attributes refer to IDs: http://graphml.graphdrawing.org/xmlns/1.1/graphml-structure.xsd
+
+                            id = source + '_' + dest  # If the optional ID is not present, use the source_dest
+                            if 'id' in elem.attrib:
+                                id = elem.attrib['id']
 
                             edge_d["~id"] = id
                             edge_d["~from"] = source
@@ -170,10 +190,15 @@ class GraphML2CSV:
                                 if att_val == "labelE":
                                     edge_d["~label"] = GraphML2CSV.py_compat_str(
                                         data.text)
+                                    has_label = True
                                 else:
                                     edge_d[edge_dict[att_val]] = GraphML2CSV.py_compat_str(
                                         data.text)
                                 edge_attr_cnt += 1
+
+                            if not has_label:
+                                # Use edge as the label if it is unspecified
+                                edge_d["~label"] = "edge"
 
                             edge_writer.writerow(edge_d)
                             elem.clear()
