@@ -14,6 +14,13 @@ Exports Amazon Neptune data to CSV.
 
 You can use [neptune-export](neptune-export/) to export an Amazon Neptune database to the bulk load CSV format used by the Amazon Neptune bulk loader. Alternatively, you can supply your own queries to neptune-export and unload the results to CSV. 
 
+### Glue Neptune
+
+[glue-neptune](glue-neptune/) is a Python library for AWS Glue that helps writing data to Amazon Neptune from Glue jobs. With glue-neptune you can:
+* Get Neptune connection information from the Glue Data Catalog
+* Create label and node and edge ID columns in DynamicFrames, named in accordance with the Neptune CSV bulk load format for property graphs
+* Write from DynamicFrames directly to Neptune
+
 ## License
 
 This library is licensed under the Apache 2.0 License. 
