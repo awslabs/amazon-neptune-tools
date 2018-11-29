@@ -3,19 +3,19 @@ package com.amazonaws.services.neptune.io;
 import java.io.PrintWriter;
 import java.util.Map;
 
-public class QueryCsvWriter implements GraphElementHandler<Map<?, ?>> {
+public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
 
     private final PrintWriter writer;
-    private final PropertyCsvWriter propertyCsvWriter;
+    private final PropertyWriter propertyWriter;
 
-    public QueryCsvWriter(PrintWriter writer, PropertyCsvWriter propertyCsvWriter) {
+    public QueryWriter(PrintWriter writer, PropertyWriter propertyWriter) {
         this.writer = writer;
-        this.propertyCsvWriter = propertyCsvWriter;
+        this.propertyWriter = propertyWriter;
     }
 
     @Override
     public void handle(Map<?, ?> properties, boolean allowStructuralElements) {
-        propertyCsvWriter.handle(properties, writer);
+        propertyWriter.handle(properties, writer);
         writer.print(System.lineSeparator());
     }
 

@@ -87,7 +87,7 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
             }
 
             PrintWriter printer = writerFactory.createPrinter(label, index);
-            PropertyCsvWriter propertyCsvWriter = new PropertyCsvWriter(propertyMetadata, true);
+            PropertyWriter propertyWriter = new PropertyWriter(propertyMetadata, true);
 
             writerFactory.printHeader(printer);
             for (PropertyTypeInfo property : propertyMetadata.values()) {
@@ -95,7 +95,7 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
             }
             printer.print(System.lineSeparator());
 
-            labelWriters.put(label, writerFactory.createLabelWriter(printer, propertyCsvWriter));
+            labelWriters.put(label, writerFactory.createLabelWriter(printer, propertyWriter));
 
 
         } catch (IOException e) {

@@ -25,7 +25,7 @@ public class EdgesWriterFactory implements WriterFactory<Path> {
     }
 
     @Override
-    public GraphElementHandler<Path> createLabelWriter(PrintWriter printer, PropertyCsvWriter propertyCsvWriter) {
-        return new EdgeCsvWriter(printer, propertyCsvWriter);
+    public GraphElementHandler<Path> createLabelWriter(PrintWriter printer, PropertyWriter propertyWriter) {
+        return new EdgeWriter(printer, propertyWriter);
     }
 }

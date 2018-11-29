@@ -5,14 +5,14 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import java.io.PrintWriter;
 import java.util.Map;
 
-public class NodeCsvWriter implements GraphElementHandler<Map<?, Object>> {
+public class NodeWriter implements GraphElementHandler<Map<?, Object>> {
 
     private final PrintWriter writer;
-    private final PropertyCsvWriter propertyCsvWriter;
+    private final PropertyWriter propertyWriter;
 
-    public NodeCsvWriter(PrintWriter writer, PropertyCsvWriter propertyCsvWriter) {
+    public NodeWriter(PrintWriter writer, PropertyWriter propertyWriter) {
         this.writer = writer;
-        this.propertyCsvWriter = propertyCsvWriter;
+        this.propertyWriter = propertyWriter;
     }
 
     @Override
@@ -20,7 +20,7 @@ public class NodeCsvWriter implements GraphElementHandler<Map<?, Object>> {
         String id = String.valueOf(properties.get(T.id));
         String label = String.valueOf(properties.get(T.label));
         writer.printf("%s,%s", id, label) ;
-        propertyCsvWriter.handle(properties, writer);
+        propertyWriter.handle(properties, writer);
         writer.print(System.lineSeparator());
     }
 

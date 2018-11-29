@@ -6,14 +6,14 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import java.io.PrintWriter;
 import java.util.Map;
 
-public class EdgeCsvWriter implements GraphElementHandler<Path> {
+public class EdgeWriter implements GraphElementHandler<Path> {
 
     private final PrintWriter writer;
-    private final PropertyCsvWriter propertyCsvWriter;
+    private final PropertyWriter propertyWriter;
 
-    public EdgeCsvWriter(PrintWriter writer, PropertyCsvWriter propertyCsvWriter) {
+    public EdgeWriter(PrintWriter writer, PropertyWriter propertyWriter) {
         this.writer = writer;
-        this.propertyCsvWriter = propertyCsvWriter;
+        this.propertyWriter = propertyWriter;
     }
 
     @Override
@@ -24,7 +24,7 @@ public class EdgeCsvWriter implements GraphElementHandler<Path> {
         String id = String.valueOf(properties.get(T.id));
         String label = String.valueOf(properties.get(T.label));
         writer.printf("%s,%s,%s,%s", id, label, from, to);
-        propertyCsvWriter.handle(properties, writer);
+        propertyWriter.handle(properties, writer);
         writer.print(System.lineSeparator());
     }
 

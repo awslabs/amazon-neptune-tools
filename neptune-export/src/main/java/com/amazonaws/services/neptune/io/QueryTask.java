@@ -116,7 +116,7 @@ public class QueryTask implements Runnable {
                 Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
                 PrintWriter printer = writerFactory.createPrinter(name, index);
-                PropertyCsvWriter propertyCsvWriter = new PropertyCsvWriter(propertyMetadata, false);
+                PropertyWriter propertyWriter = new PropertyWriter(propertyMetadata, false);
 
                 boolean printComma = false;
 
@@ -131,7 +131,7 @@ public class QueryTask implements Runnable {
                 }
                 printer.print(System.lineSeparator());
 
-                labelWriters.put(name, writerFactory.createLabelWriter(printer, propertyCsvWriter));
+                labelWriters.put(name, writerFactory.createLabelWriter(printer, propertyWriter));
 
 
             } catch (IOException e) {

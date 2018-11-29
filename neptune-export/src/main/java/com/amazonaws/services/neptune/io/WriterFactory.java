@@ -9,5 +9,5 @@ public interface WriterFactory<T> {
 
     void printHeader(PrintWriter printer);
 
-    GraphElementHandler<T> createLabelWriter(PrintWriter printer, PropertyCsvWriter propertyCsvWriter);
+    GraphElementHandler<T> createLabelWriter(PrintWriter printer, PropertyWriter propertyWriter);
 }

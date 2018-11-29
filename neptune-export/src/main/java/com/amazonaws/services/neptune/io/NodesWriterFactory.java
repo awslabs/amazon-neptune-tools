@@ -25,7 +25,7 @@ public class NodesWriterFactory implements WriterFactory<Map<?, Object>> {
     }
 
     @Override
-    public GraphElementHandler<Map<?, Object>> createLabelWriter(PrintWriter printer, PropertyCsvWriter propertyCsvWriter) {
-        return new NodeCsvWriter(printer, propertyCsvWriter);
+    public GraphElementHandler<Map<?, Object>> createLabelWriter(PrintWriter printer, PropertyWriter propertyWriter) {
+        return new NodeWriter(printer, propertyWriter);
     }
 }
