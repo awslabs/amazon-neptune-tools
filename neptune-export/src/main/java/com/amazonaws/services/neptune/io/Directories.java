@@ -70,10 +70,10 @@ public class Directories {
         return directory.resolve(QUERIES_FILE).toAbsolutePath();
     }
 
-    public Path createCsvFilePath(Path directory, String name, int index) {
+    public Path createFilePath(Path directory, String name, int index, Format format) {
         String filename = tag.isEmpty() ?
-                String.format("%s-%s.csv", name, index) :
-                String.format("%s-%s-%s.csv", tag, name, index);
+                String.format("%s-%s.%s", name, index, format.name()) :
+                String.format("%s-%s-%s.%s", tag, name, index, format.name());
         return directory.resolve(filename);
     }
 

@@ -2,6 +2,7 @@ package com.amazonaws.services.neptune.io;
 
 import org.apache.tinkerpop.gremlin.structure.T;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class NodeWriter implements GraphElementHandler<Map<?, Object>> {
@@ -14,7 +15,7 @@ public class NodeWriter implements GraphElementHandler<Map<?, Object>> {
 
 
     @Override
-    public void handle(Map<?, Object> properties, boolean allowStructuralElements) {
+    public void handle(Map<?, Object> properties, boolean allowStructuralElements) throws IOException {
         String id = String.valueOf(properties.get(T.id));
         String label = String.valueOf(properties.get(T.label));
 

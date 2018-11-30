@@ -15,18 +15,20 @@ public class QueryTask implements Runnable {
     private final Queue<NamedQuery> queries;
     private final NeptuneClient.QueryClient queryClient;
     private final Directories directories;
+    private final Format format;
     private final Status status;
     private final int index;
 
     public QueryTask(Queue<NamedQuery> queries,
                      NeptuneClient.QueryClient queryClient,
                      Directories directories,
-                     Status status,
+                     Format format, Status status,
                      int index) {
 
         this.queries = queries;
         this.queryClient = queryClient;
         this.directories = directories;
+        this.format = format;
         this.status = status;
         this.index = index;
     }
@@ -54,7 +56,13 @@ public class QueryTask implements Runnable {
 
                         results.stream().
                                 map(r -> castToMap(r.getObject())).
-                                forEach(r -> handler.handle(r, true));
+                                forEach(r -> {
+                                    try {
+                                        handler.handle(r, true);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                });
 
                     } else {
                         status.halt();
@@ -114,7 +122,7 @@ public class QueryTask implements Runnable {
 
                 Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
-                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata);
+                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, format);
                 printer.printHeaderRemainingColumns(propertyMetadata.values());
 
                 labelWriters.put(name, writerFactory.createLabelWriter(printer));
@@ -125,7 +133,7 @@ public class QueryTask implements Runnable {
         }
 
         @Override
-        public void handle(Map<?, ?> properties, boolean allowStructuralElements) {
+        public void handle(Map<?, ?> properties, boolean allowStructuralElements) throws IOException {
 
             if (!labelWriters.containsKey(name)) {
                 createWriterFor(name, properties, allowStructuralElements);
@@ -151,7 +159,7 @@ public class QueryTask implements Runnable {
         }
 
         @Override
-        public void handle(Map<?, ?> input, boolean allowStructuralElements) {
+        public void handle(Map<?, ?> input, boolean allowStructuralElements) throws IOException {
             parent.handle(input, allowStructuralElements);
             status.update();
         }

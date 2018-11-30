@@ -3,6 +3,7 @@ package com.amazonaws.services.neptune.io;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.structure.T;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class EdgeWriter implements GraphElementHandler<Path> {
@@ -14,7 +15,7 @@ public class EdgeWriter implements GraphElementHandler<Path> {
     }
 
     @Override
-    public void handle(Path path, boolean allowStructuralElements) {
+    public void handle(Path path, boolean allowStructuralElements) throws IOException {
         String from = path.get(3);
         String to = path.get(1);
         Map<?, Object> properties = path.get(0);

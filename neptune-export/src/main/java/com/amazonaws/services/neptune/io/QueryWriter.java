@@ -1,5 +1,6 @@
 package com.amazonaws.services.neptune.io;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
@@ -11,7 +12,7 @@ public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
     }
 
     @Override
-    public void handle(Map<?, ?> properties, boolean allowStructuralElements) {
+    public void handle(Map<?, ?> properties, boolean allowStructuralElements) throws IOException {
 
         printer.printStartRow();
         printer.printProperties(properties);

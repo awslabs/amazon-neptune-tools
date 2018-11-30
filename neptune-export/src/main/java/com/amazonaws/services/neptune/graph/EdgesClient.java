@@ -9,6 +9,7 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,7 +33,13 @@ public class EdgesClient implements GraphClient<Path> {
     @Override
     public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
         traversal(range, labelsFilter).valueMap(true).
-                forEachRemaining(m -> handler.handle(m, false));
+                forEachRemaining(m -> {
+                    try {
+                        handler.handle(m, false);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     @Override
@@ -44,7 +51,13 @@ public class EdgesClient implements GraphClient<Path> {
                 by(__.id()).
                 by(__.id()).
                 by(__.id());
-        traversal.forEachRemaining(p -> handler.handle(p, false));
+        traversal.forEachRemaining(p -> {
+            try {
+                handler.handle(p, false);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override

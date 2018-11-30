@@ -6,10 +6,7 @@ import com.amazonaws.services.neptune.graph.RangeFactory;
 import com.amazonaws.services.neptune.graph.GraphClient;
 import com.amazonaws.services.neptune.graph.LabelsFilter;
 import com.amazonaws.services.neptune.graph.SpecifiedLabels;
-import com.amazonaws.services.neptune.io.ExportTask;
-import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.GraphElementHandler;
-import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
@@ -56,6 +53,7 @@ public class MetadataSpecification<T> {
     public ExportTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,
                                           GraphTraversalSource g,
                                           Directories directories,
+                                          Format format,
                                           RangeFactory rangeFactory,
                                           Status status,
                                           int index) {
@@ -64,6 +62,7 @@ public class MetadataSpecification<T> {
                 labelsFilter,
                 metadataType.graphClient(g),
                 metadataType.writerFactory(directories),
+                format,
                 rangeFactory,
                 status,
                 index

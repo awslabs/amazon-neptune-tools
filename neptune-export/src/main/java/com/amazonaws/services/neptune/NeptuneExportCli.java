@@ -4,7 +4,7 @@ import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.help.Help;
 
 @Cli(name = "neptune-export.sh",
-        description = "Export Neptune to CSV",
+        description = "Export Neptune to CSV or JSON",
         defaultCommand = Help.class,
         commands = {Export.class, CreateConfig.class, ExportFromConfig.class, ExportFromQueries.class, Help.class})
 public class NeptuneExportCli {

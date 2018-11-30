@@ -2,6 +2,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.graph.*;
 import com.amazonaws.services.neptune.io.ExportJob;
+import com.amazonaws.services.neptune.io.Format;
 import com.amazonaws.services.neptune.metadata.MetadataCommand;
 import com.amazonaws.services.neptune.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.metadata.PropertiesMetadataCollection;
@@ -32,7 +33,7 @@ import java.util.List;
         "Parallel export using 2 threads",
         "Parallel export using 2 threads, with each thread processing batches of 1000 nodes or edges"
 })
-@Command(name = "export", description = "Export from Neptune to CSV")
+@Command(name = "export", description = "Export from Neptune to CSV or JSON")
 public class Export implements Runnable {
 
     @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
@@ -84,6 +85,11 @@ public class Export implements Runnable {
     @Once
     private long sampleSize = 1000;
 
+    @Option(name = {"--format"}, description = "Output format (optional, default 'csv'")
+    @Once
+    @AllowedValues(allowedValues = {"csv", "json"})
+    private Format format = Format.csv;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
@@ -103,10 +109,10 @@ public class Export implements Runnable {
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 
-            ExportJob exportJob = new ExportJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories);
+            ExportJob exportJob = new ExportJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
             exportJob.execute();
 
-            System.err.println("CSV files   : " + directories.directory());
+            System.err.println(format.description() + " files   : " + directories.directory());
             System.err.println("Config file : " + configFilePath);
             System.out.println(directories.directory());
 

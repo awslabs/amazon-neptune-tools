@@ -1,6 +1,9 @@
 package com.amazonaws.services.neptune.io;
 
 import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,10 +19,11 @@ public class NodesWriterFactory implements WriterFactory<Map<?, Object>> {
     }
 
     @Override
-    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata) throws IOException {
-        java.nio.file.Path filePath = directories.createCsvFilePath(directories.nodesDirectory(), name, index);
+    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata, Format format) throws IOException {
+        java.nio.file.Path filePath = directories.createFilePath(directories.nodesDirectory(), name, index, format);
         PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
-        CsvPrinter printer = new CsvPrinter(printWriter, metadata);
+
+        Printer printer = format.createPrinter(printWriter, metadata);
         printer.printHeaderMandatoryColumns("~id","~label");
         return printer;
     }

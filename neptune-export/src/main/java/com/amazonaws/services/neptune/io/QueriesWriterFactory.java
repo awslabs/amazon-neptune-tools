@@ -17,11 +17,12 @@ public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
     }
 
     @Override
-    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata) throws IOException {
+    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata, Format format) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
-        java.nio.file.Path filePath = directories.createCsvFilePath(directory, name, index);
+        java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
         PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
-        return new CsvPrinter(printWriter, metadata);
+
+        return format.createPrinter(printWriter, metadata);
     }
 
     @Override
