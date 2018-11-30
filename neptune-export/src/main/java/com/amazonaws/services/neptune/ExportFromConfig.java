@@ -22,9 +22,11 @@ import java.util.Collection;
 import java.util.List;
 
 @Examples(examples = {
-        "bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output"
+        "bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output",
+        "bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json"
 }, descriptions ={
-        "Export data using the metadata config in /home/ec2-user/config.json"
+        "Export data using the metadata config in /home/ec2-user/config.json",
+        "Export data as JSON using the metadata config in /home/ec2-user/config.json"
 })
 @Command(name = "export-from-config", description = "Export from Neptune to CSV or JSON using an existing config file")
 public class ExportFromConfig implements Runnable {
@@ -76,7 +78,7 @@ public class ExportFromConfig implements Runnable {
     @AllowedValues(allowedValues = { "all", "nodes", "edges" })
     private Scope scope = Scope.all;
 
-    @Option(name = {"--format"}, description = "Output format (optional, default 'csv'")
+    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
     @AllowedValues(allowedValues = {"csv", "json"})
     private Format format = Format.csv;

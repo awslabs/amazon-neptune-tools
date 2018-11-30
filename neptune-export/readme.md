@@ -1,18 +1,18 @@
 # Neptune Export
 
-Exports Amazon Neptune data to CSV.
+Exports Amazon Neptune data to CSV or JSON.
 
-You can use _neptune-export_ to export an Amazon Neptune database to the bulk load [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html). See 'Exporting to the bulk loader CSV format' below.
+You can use _neptune-export_ to export an Amazon Neptune database to the bulk load [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), or to JSON. See 'Exporting to the bulk loader CSV format' below.
 
-Alternatively, you can supply your own queries to _neptune-export_ and unload the results to CSV. See 'Exporting the results of user-supplied queries' below.
+Alternatively, you can supply your own queries to _neptune-export_ and unload the results to CSV or JSON. See 'Exporting the results of user-supplied queries' below.
 
 ## Exporting to the bulk loader CSV format
 
 When exporting to the bulk loader format, _neptune-export_ generates CSV files based on metadata derived from scanning your graph. This metadata is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
 
- - `export` – This command makes two passes over your data: the first to generate the metadata, the second to create the CSV files. By scanning all nodes and edges in the first pass, the tool captures the superset of properties for each label, identifies the broadest datatype for each property, and identifies any properties for which at least one vertex or edge has multiple values – these latter properties are exported to CSV as array types.
+ - `export` – This command makes two passes over your data: the first to generate the metadata, the second to create the data files. By scanning all nodes and edges in the first pass, the tool captures the superset of properties for each label, identifies the broadest datatype for each property, and identifies any properties for which at least one vertex or edge has multiple values. If exporting to CSV, these latter properties are exported to CSV as array types. If exporting to JSON, these property values are exported as array nodes.
  - `create-config` – This command makes a single pass over your data to generate the metadata config file.
- - `export-from-config` – This command makes a single pass over your data to create the CSV files. It uses a preexisting metadata config file.
+ - `export-from-config` – This command makes a single pass over your data to create the CSV or JSON files. It uses a preexisting metadata config file.
  
 ### Generating metadata
 
@@ -24,9 +24,9 @@ Both commands also allow you to sample a range of nodes and edges in order to cr
 
 All three commands allow you to supply vertex and edge label filters. 
 
- - If you supply label filters to the `export` command, the metadata file and the exported CSV files will contain data only for the labels specified in the filters.
+ - If you supply label filters to the `export` command, the metadata file and the exported data files will contain data only for the labels specified in the filters.
  - If you supply label filters to the `create-config` command, the metadata file will contain data only for the labels specified in the filters.
- - If you supply label filters to the `export-from-config` command, the exported CSV files will contain data for the intersection of labels in the config file and the labels specified in the command filters.
+ - If you supply label filters to the `export-from-config` command, the exported data files will contain data for the intersection of labels in the config file and the labels specified in the command filters.
  
 ### Parallel export
 
@@ -36,7 +36,7 @@ If using parallel export, we recommend setting the concurrency level to the numb
 
 ### Long-running queries
 
-_neptune-export_ uses long-running queries to generate the metadata and the CSV files. You may need to increase the `neptune_query_timeout` [DB parameter](https://docs.aws.amazon.com/neptune/latest/userguide/parameters.html) in order to run the tool against large datasets.
+_neptune-export_ uses long-running queries to generate the metadata and the data files. You may need to increase the `neptune_query_timeout` [DB parameter](https://docs.aws.amazon.com/neptune/latest/userguide/parameters.html) in order to run the tool against large datasets.
 
 For large datasets, we recommend running this tool against a standalone database instance that has been restored from a snapshot of your database.
 
@@ -49,12 +49,12 @@ For large datasets, we recommend running this tool against a standalone database
 ### export
 
     NAME
-            neptune-export.sh export - Export from Neptune to CSV
+            neptune-export.sh export - Export from Neptune to CSV or JSON
     
     SYNOPSIS
             neptune-export.sh export [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <dir> {-e | --endpoint} <endpoint>
-                    [ {-el | --edge-label} <edgeLabels>... ]
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>
+                    [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ {-p | --port} <port> ] [ {-r | --range} <range> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
@@ -67,7 +67,7 @@ For large datasets, we recommend running this tool against a standalone database
                 This option may occur a maximum of 1 times
     
     
-            -d <dir>, --dir <dir>
+            -d <directory>, --dir <directory>
                 Root directory for output
     
                 This option may occur a maximum of 1 times
@@ -85,6 +85,16 @@ For large datasets, we recommend running this tool against a standalone database
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be exported (optional, default all labels)
+    
+            --format <format>
+                Output format (optional, default 'csv')
+    
+                This options value is restricted to the following set of values:
+                    csv
+                    json
+    
+                This option may occur a maximum of 1 times
+    
     
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be exported (optional, default all labels)
@@ -139,6 +149,10 @@ For large datasets, we recommend running this tool against a standalone database
             bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
     
                 Export all data to the /home/ec2-user/output directory
+    
+            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --format json
+    
+                Export all data to the /home/ec2-user/output directory as JSON
     
             bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -s nodes
     
@@ -255,14 +269,14 @@ For large datasets, we recommend running this tool against a standalone database
 ### export-from-config
 
     NAME
-            neptune-export.sh export-from-config - Export from Neptune to CSV using
-            an existing config file
+            neptune-export.sh export-from-config - Export from Neptune to CSV or
+            JSON using an existing config file
     
     SYNOPSIS
             neptune-export.sh export-from-config {-c | --config-file} <configFile>
-                    [ {-cn | --concurrency} <concurrency> ] {-d | --dir} <dir>
-                    {-e | --endpoint} <endpoint>
-                    [ {-el | --edge-label} <edgeLabels>... ]
+                    [ {-cn | --concurrency} <concurrency> ]
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>
+                    [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ {-p | --port} <port> ] [ {-r | --range} <range> ]
                     [ {-s | --scope} <scope> ] [ {-t | --tag} <tag> ]
@@ -285,7 +299,7 @@ For large datasets, we recommend running this tool against a standalone database
                 This option may occur a maximum of 1 times
     
     
-            -d <dir>, --dir <dir>
+            -d <directory>, --dir <directory>
                 Root directory for output
     
                 This option may occur a maximum of 1 times
@@ -303,6 +317,16 @@ For large datasets, we recommend running this tool against a standalone database
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be exported (optional, default all labels)
+    
+            --format <format>
+                Output format (optional, default 'csv')
+    
+                This options value is restricted to the following set of values:
+                    csv
+                    json
+    
+                This option may occur a maximum of 1 times
+    
     
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be exported (optional, default all labels)
@@ -344,14 +368,19 @@ For large datasets, we recommend running this tool against a standalone database
             bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output
     
                 Export data using the metadata config in /home/ec2-user/config.json
-                
+    
+            bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json
+    
+                Export data as JSON using the metadata config in
+                /home/ec2-user/config.json
+
 ## Exporting the results of user-supplied queries
 
-_neptune-export_'s `export-from-queries` command allows you to supply groups of Gremlin queries and export the results to CSV.
+_neptune-export_'s `export-from-queries` command allows you to supply groups of Gremlin queries and export the results to CSV or JSON.
 
 Every user-supplied query should return a resultset whose every result comprises a Map. Typically, these are queries that return a `valueMap()` or a projection created using `project().by().by()...`.
 
-Queries are grouped into _named groups_. All the queries in a named group should return the same columns. Named groups allow you to 'shard' large queries and execute them in parallel (using the `--concurrency` option). The resulting CSV files will be written to a directory named after the group.
+Queries are grouped into _named groups_. All the queries in a named group should return the same columns. Named groups allow you to 'shard' large queries and execute them in parallel (using the `--concurrency` option). The resulting CSV or JSON files will be written to a directory named after the group.
 
 You can supply multiple named groups using multiple `--queries` options. Each group comprises a name, an equals sign, and  then a semi-colon-delimited list of Gremlin queries. Surround the list of queries in double quotes. For example:
 
@@ -370,15 +399,15 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
 ### export-from-queries
 
     NAME
-            neptune-export.sh export-from-queries - Export to CSV from Gremlin
-            queries
+            neptune-export.sh export-from-queries - Export to CSV or JSON from
+            Gremlin queries
     
     SYNOPSIS
             neptune-export.sh export-from-queries
                     [ {-b | --batch-size} <batchSize> ]
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>
-                    [ {-f | --queries-file} <queriesFile> ]
+                    [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
                     [ {-p | --port} <port> ] [ {-q | --queries} <queries>... ]
                     [ {-t | --tag} <tag> ]
     
@@ -423,6 +452,16 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
                 writable.
     
     
+            --format <format>
+                Output format (optional, default 'csv'
+    
+                This options value is restricted to the following set of values:
+                    csv
+                    json
+    
+                This option may occur a maximum of 1 times
+    
+    
             -p <port>, --port <port>
                 Neptune port (optional, default 8182)
     
@@ -434,8 +473,7 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
     
     
             -q <queries>, --queries <queries>
-                Gremlin queries (format: name="semi-colon-separated list of
-                queries")
+                Gremlin queries (format: name="semi-colon-separated list of queries")
     
             -t <tag>, --tag <tag>
                 Directory prefix (optional)
@@ -444,11 +482,11 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
     
     
     EXAMPLES
-            bin/neptune-export.sh export-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output \
-              -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" \
-              -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" \
-              --concurrency 6
+            bin/neptune-export.sh export-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" --concurrency 6
     
-                Parallel export of Person data in 2 shards, sharding on the
-                'birthday' property, and Post data in 4 shards, sharding on range,
-                using 6 threads
+                Parallel export of Person data in 2 shards, sharding on the 'birthday' property, 
+                and Post data in 4 shards, sharding on range, using 6 threads
+    
+            bin/neptune-export.sh export-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" --concurrency 6 --format json
+    
+                Parallel export of Person data and Post data as JSON

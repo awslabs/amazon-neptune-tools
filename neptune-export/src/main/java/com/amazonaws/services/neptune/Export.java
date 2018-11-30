@@ -22,12 +22,14 @@ import java.util.List;
 
 @Examples(examples = {
         "bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
+        "bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --format json",
         "bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -s nodes",
         "bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS",
         "bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2",
         "bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2 -r 1000"
 }, descriptions = {
         "Export all data to the /home/ec2-user/output directory",
+        "Export all data to the /home/ec2-user/output directory as JSON",
         "Export only nodes to the /home/ec2-user/output directory",
         "Export only User nodes and FOLLOWS relationships",
         "Parallel export using 2 threads",
@@ -85,7 +87,7 @@ public class Export implements Runnable {
     @Once
     private long sampleSize = 1000;
 
-    @Option(name = {"--format"}, description = "Output format (optional, default 'csv'")
+    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
     @AllowedValues(allowedValues = {"csv", "json"})
     private Format format = Format.csv;
