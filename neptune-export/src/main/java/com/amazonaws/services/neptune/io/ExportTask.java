@@ -86,17 +86,10 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
                 propertyMetadata = new HashMap<>();
             }
 
-            PrintWriter printer = writerFactory.createPrinter(label, index);
-            PropertyWriter propertyWriter = new PropertyWriter(propertyMetadata, true);
+            Printer printer = writerFactory.createPrinter(label, index, propertyMetadata);
+            printer.printHeaderRemainingColumns(propertyMetadata.values());
 
-            writerFactory.printHeader(printer);
-            for (PropertyTypeInfo property : propertyMetadata.values()) {
-                printer.printf(",%s", property.nameWithDataType());
-            }
-            printer.print(System.lineSeparator());
-
-            labelWriters.put(label, writerFactory.createLabelWriter(printer, propertyWriter));
-
+            labelWriters.put(label, writerFactory.createLabelWriter(printer));
 
         } catch (IOException e) {
             throw new RuntimeException(e);

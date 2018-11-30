@@ -3,17 +3,14 @@ package com.amazonaws.services.neptune.io;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.structure.T;
 
-import java.io.PrintWriter;
 import java.util.Map;
 
 public class EdgeWriter implements GraphElementHandler<Path> {
 
-    private final PrintWriter writer;
-    private final PropertyWriter propertyWriter;
+    private final Printer printer;
 
-    public EdgeWriter(PrintWriter writer, PropertyWriter propertyWriter) {
-        this.writer = writer;
-        this.propertyWriter = propertyWriter;
+    public EdgeWriter(Printer printer) {
+        this.printer = printer;
     }
 
     @Override
@@ -23,13 +20,15 @@ public class EdgeWriter implements GraphElementHandler<Path> {
         Map<?, Object> properties = path.get(0);
         String id = String.valueOf(properties.get(T.id));
         String label = String.valueOf(properties.get(T.label));
-        writer.printf("%s,%s,%s,%s", id, label, from, to);
-        propertyWriter.handle(properties, writer);
-        writer.print(System.lineSeparator());
+
+        printer.printStartRow();
+        printer.printEdge(id, label, from, to);
+        printer.printProperties(properties);
+        printer.printEndRow();
     }
 
     @Override
     public void close() throws Exception {
-        writer.close();
+        printer.close();
     }
 }

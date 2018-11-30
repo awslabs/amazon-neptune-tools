@@ -1,5 +1,7 @@
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,19 +17,15 @@ public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
     }
 
     @Override
-    public PrintWriter createPrinter(String name, int index) throws IOException {
+    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
-        java.nio.file.Path csvFilePath = directories.createCsvFilePath(directory, name, index);
-        return new PrintWriter(new FileWriter(csvFilePath.toFile()));
+        java.nio.file.Path filePath = directories.createCsvFilePath(directory, name, index);
+        PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
+        return new CsvPrinter(printWriter, metadata);
     }
 
     @Override
-    public void printHeader(PrintWriter printer) {
-        // Do nothing
-    }
-
-    @Override
-    public GraphElementHandler<Map<?, ?>> createLabelWriter(PrintWriter printer, PropertyWriter propertyWriter) {
-        return new QueryWriter(printer, propertyWriter);
+    public GraphElementHandler<Map<?, ?>> createLabelWriter(Printer printer) {
+        return new QueryWriter(printer);
     }
 }

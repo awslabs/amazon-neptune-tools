@@ -1,26 +1,25 @@
 package com.amazonaws.services.neptune.io;
 
-import java.io.PrintWriter;
 import java.util.Map;
 
 public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
 
-    private final PrintWriter writer;
-    private final PropertyWriter propertyWriter;
+    private final Printer printer;
 
-    public QueryWriter(PrintWriter writer, PropertyWriter propertyWriter) {
-        this.writer = writer;
-        this.propertyWriter = propertyWriter;
+    public QueryWriter(Printer printer) {
+        this.printer = printer;
     }
 
     @Override
     public void handle(Map<?, ?> properties, boolean allowStructuralElements) {
-        propertyWriter.handle(properties, writer);
-        writer.print(System.lineSeparator());
+
+        printer.printStartRow();
+        printer.printProperties(properties);
+        printer.printEndRow();
     }
 
     @Override
     public void close() throws Exception {
-        writer.close();
+        printer.close();
     }
 }

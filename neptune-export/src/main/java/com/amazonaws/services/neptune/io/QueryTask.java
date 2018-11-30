@@ -7,7 +7,6 @@ import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -82,9 +81,9 @@ public class QueryTask implements Runnable {
 
     }
 
-    private HashMap<?, ?> castToMap(Object o){
-        if (Map.class.isAssignableFrom(o.getClass())){
-            return (HashMap<?, ?>)o;
+    private HashMap<?, ?> castToMap(Object o) {
+        if (Map.class.isAssignableFrom(o.getClass())) {
+            return (HashMap<?, ?>) o;
         }
 
         throw new IllegalStateException("Expected Map, found " + o.getClass().getSimpleName());
@@ -115,24 +114,10 @@ public class QueryTask implements Runnable {
 
                 Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
-                PrintWriter printer = writerFactory.createPrinter(name, index);
-                PropertyWriter propertyWriter = new PropertyWriter(propertyMetadata, false);
+                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata);
+                printer.printHeaderRemainingColumns(propertyMetadata.values());
 
-                boolean printComma = false;
-
-                for (PropertyTypeInfo property : propertyMetadata.values()) {
-                    if (printComma){
-                        printer.print(",");
-                    }
-                    else{
-                        printComma = true;
-                    }
-                    printer.print(property.nameWithoutDataType());
-                }
-                printer.print(System.lineSeparator());
-
-                labelWriters.put(name, writerFactory.createLabelWriter(printer, propertyWriter));
-
+                labelWriters.put(name, writerFactory.createLabelWriter(printer));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
