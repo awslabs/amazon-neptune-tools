@@ -20,7 +20,7 @@ public class NodesWriterFactory implements WriterFactory<Map<?, Object>> {
         java.nio.file.Path filePath = directories.createCsvFilePath(directories.nodesDirectory(), name, index);
         PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
         CsvPrinter printer = new CsvPrinter(printWriter, metadata);
-        printer.printHeaderMandatoryColumns("~id,~label");
+        printer.printHeaderMandatoryColumns("~id","~label");
         return printer;
     }
 

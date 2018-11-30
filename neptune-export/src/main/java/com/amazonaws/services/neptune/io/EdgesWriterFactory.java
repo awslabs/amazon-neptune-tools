@@ -20,7 +20,7 @@ public class EdgesWriterFactory implements WriterFactory<Path> {
         java.nio.file.Path filePath = directories.createCsvFilePath(directories.edgesDirectory(), name, index);
         PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
         CsvPrinter printer = new CsvPrinter(printWriter, metadata);
-        printer.printHeaderMandatoryColumns("~id,~label,~from,~to");
+        printer.printHeaderMandatoryColumns("~id","~label","~from","~to");
         return printer;
     }
 

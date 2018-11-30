@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public interface Printer extends AutoCloseable {
-    void printHeaderMandatoryColumns(String columns);
+    void printHeaderMandatoryColumns(String... columns);
     void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns);
     void printProperties(Map<?, ?> properties);
     void printEdge(String id, String label, String from, String to);

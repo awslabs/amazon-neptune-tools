@@ -4,9 +4,11 @@ import com.amazonaws.services.neptune.metadata.DataType;
 import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CsvPrinter implements Printer {
 
@@ -21,8 +23,8 @@ public class CsvPrinter implements Printer {
     }
 
     @Override
-    public void printHeaderMandatoryColumns(String columns) {
-        printer.print(columns);
+    public void printHeaderMandatoryColumns(String... columns) {
+        printer.print(Arrays.stream(columns).collect(Collectors.joining(",")));
         commaPrinter.printComma();
     }
 
