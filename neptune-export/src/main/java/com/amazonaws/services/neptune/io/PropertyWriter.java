@@ -7,12 +7,12 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
-public class PropertyCsvWriter {
+public class PropertyWriter {
 
     private final Map<String, PropertyTypeInfo> metadata;
     private final boolean printLeadingComma;
 
-    public PropertyCsvWriter(Map<String, PropertyTypeInfo> metadata, boolean printLeadingComma) {
+    public PropertyWriter(Map<String, PropertyTypeInfo> metadata, boolean printLeadingComma) {
         this.metadata = metadata;
         this.printLeadingComma = printLeadingComma;
     }

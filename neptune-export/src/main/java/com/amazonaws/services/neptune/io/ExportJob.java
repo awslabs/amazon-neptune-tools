@@ -18,17 +18,20 @@ public class ExportJob {
     private final GraphTraversalSource g;
     private final ConcurrencyConfig concurrencyConfig;
     private final Directories directories;
+    private final Format format;
 
     public ExportJob(Collection<MetadataSpecification<?>> metadataSpecifications,
                      PropertiesMetadataCollection propertiesMetadataCollection,
                      GraphTraversalSource g,
                      ConcurrencyConfig concurrencyConfig,
-                     Directories directories) {
+                     Directories directories,
+                     Format format) {
         this.metadataSpecifications = metadataSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
         this.concurrencyConfig = concurrencyConfig;
         this.directories = directories;
+        this.format = format;
     }
 
     public void execute() throws Exception {
@@ -36,7 +39,7 @@ public class ExportJob {
         for (MetadataSpecification metadataSpecification : metadataSpecifications) {
 
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " CSV files");
+                System.err.println("Creating " + metadataSpecification.description() + " " + format.description() + " files");
 
                 RangeFactory rangeFactory = metadataSpecification.createRangeFactory(g, concurrencyConfig);
                 Status status = new Status();
@@ -48,10 +51,10 @@ public class ExportJob {
                             propertiesMetadataCollection,
                             g,
                             directories,
+                            format,
                             rangeFactory,
                             status,
-                            index
-                    );
+                            index);
                     taskExecutor.execute(exportTask);
                 }
 

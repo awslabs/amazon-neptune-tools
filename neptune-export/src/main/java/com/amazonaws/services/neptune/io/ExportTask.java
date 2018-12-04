@@ -8,7 +8,6 @@ import com.amazonaws.services.neptune.metadata.PropertiesMetadata;
 import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +17,7 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
     private final WriterFactory<T> writerFactory;
+    private final Format format;
     private final RangeFactory rangeFactory;
     private final Status status;
     private final int index;
@@ -27,13 +27,14 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
                       LabelsFilter labelsFilter,
                       GraphClient<T> graphClient,
                       WriterFactory<T> writerFactory,
-                      RangeFactory rangeFactory,
+                      Format format, RangeFactory rangeFactory,
                       Status status,
                       int index) {
         this.propertiesMetadata = propertiesMetadata;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
         this.writerFactory = writerFactory;
+        this.format = format;
         this.rangeFactory = rangeFactory;
         this.status = status;
         this.index = index;
@@ -61,7 +62,7 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
     }
 
     @Override
-    public void handle(T input, boolean allowStructuralElements) {
+    public void handle(T input, boolean allowStructuralElements) throws IOException {
         status.update();
         String label = graphClient.getLabelFrom(input);
         if (!labelWriters.containsKey(label)) {
@@ -86,17 +87,10 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
                 propertyMetadata = new HashMap<>();
             }
 
-            PrintWriter printer = writerFactory.createPrinter(label, index);
-            PropertyCsvWriter propertyCsvWriter = new PropertyCsvWriter(propertyMetadata, true);
+            Printer printer = writerFactory.createPrinter(label, index, propertyMetadata, format);
+            printer.printHeaderRemainingColumns(propertyMetadata.values());
 
-            writerFactory.printHeader(printer);
-            for (PropertyTypeInfo property : propertyMetadata.values()) {
-                printer.printf(",%s", property.nameWithDataType());
-            }
-            printer.print(System.lineSeparator());
-
-            labelWriters.put(label, writerFactory.createLabelWriter(printer, propertyCsvWriter));
-
+            labelWriters.put(label, writerFactory.createLabelWriter(printer));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -113,7 +107,7 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
         }
 
         @Override
-        public void handle(T input, boolean allowStructuralElements) {
+        public void handle(T input, boolean allowStructuralElements) throws IOException {
             parent.handle(input, allowStructuralElements);
             counter++;
         }

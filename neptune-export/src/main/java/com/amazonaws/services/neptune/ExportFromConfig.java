@@ -4,6 +4,7 @@ import com.amazonaws.services.neptune.graph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.graph.NeptuneClient;
 import com.amazonaws.services.neptune.graph.Scope;
 import com.amazonaws.services.neptune.io.ExportJob;
+import com.amazonaws.services.neptune.io.Format;
 import com.amazonaws.services.neptune.metadata.CreateMetadataFromConfigFile;
 import com.amazonaws.services.neptune.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.metadata.PropertiesMetadataCollection;
@@ -21,11 +22,13 @@ import java.util.Collection;
 import java.util.List;
 
 @Examples(examples = {
-        "bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output"
+        "bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output",
+        "bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json"
 }, descriptions ={
-        "Export data using the metadata config in /home/ec2-user/config.json"
+        "Export data using the metadata config in /home/ec2-user/config.json",
+        "Export data as JSON using the metadata config in /home/ec2-user/config.json"
 })
-@Command(name = "export-from-config", description = "Export from Neptune to CSV using an existing config file")
+@Command(name = "export-from-config", description = "Export from Neptune to CSV or JSON using an existing config file")
 public class ExportFromConfig implements Runnable {
 
     @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
@@ -75,6 +78,11 @@ public class ExportFromConfig implements Runnable {
     @AllowedValues(allowedValues = { "all", "nodes", "edges" })
     private Scope scope = Scope.all;
 
+    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
+    @Once
+    @AllowedValues(allowedValues = {"csv", "json"})
+    private Format format = Format.csv;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
@@ -88,10 +96,10 @@ public class ExportFromConfig implements Runnable {
 
             Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
 
-            ExportJob exportJob = new ExportJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories);
+            ExportJob exportJob = new ExportJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
             exportJob.execute();
 
-            System.err.println("CSV files   : " + directories.directory());
+            System.err.println(format.description() + " files   : " + directories.directory());
             System.err.println("Config file : " + configFile.getAbsolutePath());
             System.out.println(directories.directory());
 

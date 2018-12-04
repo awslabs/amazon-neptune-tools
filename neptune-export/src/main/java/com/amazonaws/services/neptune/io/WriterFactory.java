@@ -1,13 +1,14 @@
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
+
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.Map;
 
 public interface WriterFactory<T> {
 
-    PrintWriter createPrinter(String name, int index) throws IOException;
+    Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata, Format format) throws IOException;
 
-    void printHeader(PrintWriter printer);
+    GraphElementHandler<T> createLabelWriter(Printer printer);
 
-    GraphElementHandler<T> createLabelWriter(PrintWriter printer, PropertyCsvWriter propertyCsvWriter);
 }

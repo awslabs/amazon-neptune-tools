@@ -7,6 +7,7 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,13 +29,25 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
     @Override
     public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
         traversal(range, labelsFilter).valueMap(true).
-                forEachRemaining(m -> handler.handle(m, false));
+                forEachRemaining(m -> {
+                    try {
+                        handler.handle(m, false);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     @Override
     public void queryForValues(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
         traversal(range, labelsFilter).valueMap(true).
-                forEachRemaining(m -> handler.handle(m, false));
+                forEachRemaining(m -> {
+                    try {
+                        handler.handle(m, false);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     @Override

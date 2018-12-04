@@ -7,7 +7,6 @@ import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -16,18 +15,20 @@ public class QueryTask implements Runnable {
     private final Queue<NamedQuery> queries;
     private final NeptuneClient.QueryClient queryClient;
     private final Directories directories;
+    private final Format format;
     private final Status status;
     private final int index;
 
     public QueryTask(Queue<NamedQuery> queries,
                      NeptuneClient.QueryClient queryClient,
                      Directories directories,
-                     Status status,
+                     Format format, Status status,
                      int index) {
 
         this.queries = queries;
         this.queryClient = queryClient;
         this.directories = directories;
+        this.format = format;
         this.status = status;
         this.index = index;
     }
@@ -55,7 +56,13 @@ public class QueryTask implements Runnable {
 
                         results.stream().
                                 map(r -> castToMap(r.getObject())).
-                                forEach(r -> handler.handle(r, true));
+                                forEach(r -> {
+                                    try {
+                                        handler.handle(r, true);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                });
 
                     } else {
                         status.halt();
@@ -82,9 +89,9 @@ public class QueryTask implements Runnable {
 
     }
 
-    private HashMap<?, ?> castToMap(Object o){
-        if (Map.class.isAssignableFrom(o.getClass())){
-            return (HashMap<?, ?>)o;
+    private HashMap<?, ?> castToMap(Object o) {
+        if (Map.class.isAssignableFrom(o.getClass())) {
+            return (HashMap<?, ?>) o;
         }
 
         throw new IllegalStateException("Expected Map, found " + o.getClass().getSimpleName());
@@ -115,24 +122,10 @@ public class QueryTask implements Runnable {
 
                 Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
-                PrintWriter printer = writerFactory.createPrinter(name, index);
-                PropertyCsvWriter propertyCsvWriter = new PropertyCsvWriter(propertyMetadata, false);
+                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, format);
+                printer.printHeaderRemainingColumns(propertyMetadata.values());
 
-                boolean printComma = false;
-
-                for (PropertyTypeInfo property : propertyMetadata.values()) {
-                    if (printComma){
-                        printer.print(",");
-                    }
-                    else{
-                        printComma = true;
-                    }
-                    printer.print(property.nameWithoutDataType());
-                }
-                printer.print(System.lineSeparator());
-
-                labelWriters.put(name, writerFactory.createLabelWriter(printer, propertyCsvWriter));
-
+                labelWriters.put(name, writerFactory.createLabelWriter(printer));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -140,7 +133,7 @@ public class QueryTask implements Runnable {
         }
 
         @Override
-        public void handle(Map<?, ?> properties, boolean allowStructuralElements) {
+        public void handle(Map<?, ?> properties, boolean allowStructuralElements) throws IOException {
 
             if (!labelWriters.containsKey(name)) {
                 createWriterFor(name, properties, allowStructuralElements);
@@ -166,7 +159,7 @@ public class QueryTask implements Runnable {
         }
 
         @Override
-        public void handle(Map<?, ?> input, boolean allowStructuralElements) {
+        public void handle(Map<?, ?> input, boolean allowStructuralElements) throws IOException {
             parent.handle(input, allowStructuralElements);
             status.update();
         }
