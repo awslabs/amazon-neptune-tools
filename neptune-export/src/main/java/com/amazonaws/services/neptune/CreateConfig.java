@@ -33,10 +33,9 @@ import java.util.List;
 @Command(name = "create-config", description = "Create an export metadata config file")
 public class CreateConfig implements Runnable {
 
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s)")
     @Required
-    @Once
-    private String endpoint;
+    private List<String> endpoints;
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.USER})
@@ -80,7 +79,7 @@ public class CreateConfig implements Runnable {
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoint, port, concurrencyConfig);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(directory, tag);

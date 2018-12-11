@@ -31,10 +31,9 @@ import java.util.List;
 @Command(name = "export-from-config", description = "Export from Neptune to CSV or JSON using an existing config file")
 public class ExportFromConfig implements Runnable {
 
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s)")
     @Required
-    @Once
-    private String endpoint;
+    private List<String> endpoints;
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.USER})
@@ -88,7 +87,7 @@ public class ExportFromConfig implements Runnable {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoint, port, concurrencyConfig);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(directory, tag);

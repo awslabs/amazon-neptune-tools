@@ -8,20 +8,25 @@ import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
+import java.util.Collection;
+
 public class NeptuneClient implements AutoCloseable {
 
     public static final int DEFAULT_BATCH_SIZE = 64;
 
-    public static NeptuneClient create(String endpoint, int port, ConcurrencyConfig concurrencyConfig) {
-        return create(endpoint, port, concurrencyConfig, DEFAULT_BATCH_SIZE);
+    public static NeptuneClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig) {
+        return create(endpoints, port, concurrencyConfig, DEFAULT_BATCH_SIZE);
     }
 
-    public static NeptuneClient create(String endpoint, int port, ConcurrencyConfig concurrencyConfig, int batchSize) {
+    public static NeptuneClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, int batchSize) {
         Cluster.Builder builder = Cluster.build()
-                .addContactPoint(endpoint)
                 .port(port)
                 .serializer(Serializers.GRYO_V3D0)
                 .resultIterationBatchSize(batchSize);
+
+        for (String endpoint : endpoints) {
+            builder = builder.addContactPoint(endpoint);
+        }
 
         return new NeptuneClient(concurrencyConfig.applyTo(builder).create());
     }

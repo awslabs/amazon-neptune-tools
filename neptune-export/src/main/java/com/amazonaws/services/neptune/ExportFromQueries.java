@@ -33,8 +33,7 @@ import java.util.List;
 public class ExportFromQueries implements Runnable {
     @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
     @Required
-    @Once
-    private String endpoint;
+    private List<String> endpoints;
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.USER})
@@ -78,7 +77,7 @@ public class ExportFromQueries implements Runnable {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoint, port, concurrencyConfig, batchSize);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, batchSize);
              NeptuneClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(directory, tag);
