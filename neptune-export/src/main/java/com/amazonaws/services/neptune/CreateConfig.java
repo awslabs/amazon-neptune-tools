@@ -33,7 +33,7 @@ import java.util.List;
 @Command(name = "create-config", description = "Create an export metadata config file")
 public class CreateConfig implements Runnable {
 
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s)")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
     @Required
     private List<String> endpoints;
 

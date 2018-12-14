@@ -1,6 +1,6 @@
 # Neptune Export
 
-Exports Amazon Neptune data to CSV or JSON.
+Exports Amazon Neptune property graph data to CSV or JSON.
 
 You can use _neptune-export_ to export an Amazon Neptune database to the bulk load [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), or to JSON. See 'Exporting to the bulk loader CSV format' below.
 
@@ -34,6 +34,8 @@ The `export` and `export-from-config` commands support parallel export. You can 
 
 If using parallel export, we recommend setting the concurrency level to the number of vCPUs on your Neptune instance.
 
+You can load balance requests across multiple instances in your cluster (or even multiple clusters) by supplying multiple `--endpoint` options.
+
 ### Long-running queries
 
 _neptune-export_ uses long-running queries to generate the metadata and the data files. You may need to increase the `neptune_query_timeout` [DB parameter](https://docs.aws.amazon.com/neptune/latest/userguide/parameters.html) in order to run the tool against large datasets.
@@ -53,12 +55,13 @@ For large datasets, we recommend running this tool against a standalone database
     
     SYNOPSIS
             neptune-export.sh export [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ {-p | --port} <port> ] [ {-r | --range} <range> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
                     [ --sample-size <sampleSize> ] [ {-t | --tag} <tag> ]
+                    [ --use-iam-auth ]
     
     OPTIONS
             -cn <concurrency>, --concurrency <concurrency>
@@ -77,11 +80,9 @@ For large datasets, we recommend running this tool against a standalone database
                 must be readable and writable.
     
     
-            -e <endpoint>, --endpoint <endpoint>
-                Neptune endpoint
-    
-                This option may occur a maximum of 1 times
-    
+            -e <endpoints>, --endpoint <endpoints>
+                Neptune endpoint(s) – supply multiple instance endpoints if you
+                want to load balance requests across a cluster
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be exported (optional, default all labels)
@@ -145,6 +146,12 @@ For large datasets, we recommend running this tool against a standalone database
                 This option may occur a maximum of 1 times
     
     
+            --use-iam-auth
+                Use IAM database authentication to authenticate to Neptune
+    
+                This option may occur a maximum of 1 times
+    
+    
     EXAMPLES
             bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
     
@@ -177,16 +184,16 @@ For large datasets, we recommend running this tool against a standalone database
             neptune-export.sh create-config - Create an export metadata config file
     
     SYNOPSIS
-            neptune-export.sh create-config {-d | --dir} <dir>
-                    {-e | --endpoint} <endpoint>
+            neptune-export.sh create-config {-d | --dir} <directory>
+                    {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ {-p | --port} <port> ] [ {-s | --scope} <scope> ]
                     [ --sample ] [ --sample-size <sampleSize> ]
-                    [ {-t | --tag} <tag> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
-            -d <dir>, --dir <dir>
+            -d <directory>, --dir <directory>
                 Root directory for output
     
                 This option may occur a maximum of 1 times
@@ -196,11 +203,9 @@ For large datasets, we recommend running this tool against a standalone database
                 must be readable and writable.
     
     
-            -e <endpoint>, --endpoint <endpoint>
-                Neptune endpoint
-    
-                This option may occur a maximum of 1 times
-    
+            -e <endpoints>, --endpoint <endpoints>
+                Neptune endpoint(s) – supply multiple instance endpoints if you
+                want to load balance requests across a cluster
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be included in config (optional, default all
@@ -250,6 +255,12 @@ For large datasets, we recommend running this tool against a standalone database
                 This option may occur a maximum of 1 times
     
     
+            --use-iam-auth
+                Use IAM database authentication to authenticate to Neptune
+    
+                This option may occur a maximum of 1 times
+    
+    
     EXAMPLES
             bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
     
@@ -275,11 +286,12 @@ For large datasets, we recommend running this tool against a standalone database
     SYNOPSIS
             neptune-export.sh export-from-config {-c | --config-file} <configFile>
                     [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ {-p | --port} <port> ] [ {-r | --range} <range> ]
                     [ {-s | --scope} <scope> ] [ {-t | --tag} <tag> ]
+                    [ --use-iam-auth ]
     
     OPTIONS
             -c <configFile>, --config-file <configFile>
@@ -309,11 +321,9 @@ For large datasets, we recommend running this tool against a standalone database
                 must be readable and writable.
     
     
-            -e <endpoint>, --endpoint <endpoint>
-                Neptune endpoint
-    
-                This option may occur a maximum of 1 times
-    
+            -e <endpoints>, --endpoint <endpoints>
+                Neptune endpoint(s) – supply multiple instance endpoints if you
+                want to load balance requests across a cluster
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be exported (optional, default all labels)
@@ -364,6 +374,12 @@ For large datasets, we recommend running this tool against a standalone database
                 This option may occur a maximum of 1 times
     
     
+            --use-iam-auth
+                Use IAM database authentication to authenticate to Neptune
+    
+                This option may occur a maximum of 1 times
+    
+    
     EXAMPLES
             bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output
     
@@ -406,10 +422,10 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
             neptune-export.sh export-from-queries
                     [ {-b | --batch-size} <batchSize> ]
                     [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
                     [ {-p | --port} <port> ] [ {-q | --queries} <queries>... ]
-                    [ {-t | --tag} <tag> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
             -b <batchSize>, --batch-size <batchSize>
@@ -435,11 +451,9 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
                 must be readable and writable.
     
     
-            -e <endpoint>, --endpoint <endpoint>
-                Neptune endpoint
-    
-                This option may occur a maximum of 1 times
-    
+            -e <endpoints>, --endpoint <endpoints>
+                Neptune endpoint(s) – supply multiple instance endpoints if you
+                want to load balance requests across a cluster
     
             -f <queriesFile>, --queries-file <queriesFile>
                 Path to JSON queries file
@@ -453,7 +467,7 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
     
     
             --format <format>
-                Output format (optional, default 'csv'
+                Output format (optional, default 'csv')
     
                 This options value is restricted to the following set of values:
                     csv
@@ -473,10 +487,17 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
     
     
             -q <queries>, --queries <queries>
-                Gremlin queries (format: name="semi-colon-separated list of queries")
+                Gremlin queries (format: name="semi-colon-separated list of
+                queries")
     
             -t <tag>, --tag <tag>
                 Directory prefix (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --use-iam-auth
+                Use IAM database authentication to authenticate to Neptune
     
                 This option may occur a maximum of 1 times
     

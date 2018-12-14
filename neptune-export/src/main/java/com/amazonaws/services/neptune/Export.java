@@ -38,7 +38,7 @@ import java.util.List;
 @Command(name = "export", description = "Export from Neptune to CSV or JSON")
 public class Export implements Runnable {
 
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
     @Required
     private List<String> endpoints;
 

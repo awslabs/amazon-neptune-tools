@@ -31,7 +31,7 @@ import java.util.List;
         })
 @Command(name = "export-from-queries", description = "Export to CSV or JSON from Gremlin queries")
 public class ExportFromQueries implements Runnable {
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
     @Required
     private List<String> endpoints;
 
