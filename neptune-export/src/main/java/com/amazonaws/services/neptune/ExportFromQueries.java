@@ -31,10 +31,9 @@ import java.util.List;
         })
 @Command(name = "export-from-queries", description = "Export to CSV or JSON from Gremlin queries")
 public class ExportFromQueries implements Runnable {
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
     @Required
-    @Once
-    private String endpoint;
+    private List<String> endpoints;
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.USER})
@@ -54,6 +53,10 @@ public class ExportFromQueries implements Runnable {
     @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
     @Once
     private int concurrency = 1;
+
+    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune")
+    @Once
+    private boolean useIamAuth = false;
 
     @Option(name = {"-q", "--queries"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\")",
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)
@@ -78,7 +81,7 @@ public class ExportFromQueries implements Runnable {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoint, port, concurrencyConfig, batchSize);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, batchSize, useIamAuth);
              NeptuneClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(directory, tag);
