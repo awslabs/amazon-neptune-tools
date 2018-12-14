@@ -88,7 +88,7 @@ public class ExportTask<T> implements Runnable, GraphElementHandler<T> {
             }
 
             Printer printer = writerFactory.createPrinter(label, index, propertyMetadata, format);
-            printer.printHeaderRemainingColumns(propertyMetadata.values());
+            printer.printHeaderRemainingColumns(propertyMetadata.values(), true);
 
             labelWriters.put(label, writerFactory.createLabelWriter(printer));
 

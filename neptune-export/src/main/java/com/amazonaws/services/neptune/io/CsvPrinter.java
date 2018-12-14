@@ -29,10 +29,14 @@ public class CsvPrinter implements Printer {
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns, boolean includeTypeDefinitions) {
         for (PropertyTypeInfo property : remainingColumns) {
             commaPrinter.printComma();
-            printer.print(property.nameWithoutDataType());
+            if (includeTypeDefinitions) {
+                printer.print(property.nameWithDataType());
+            } else {
+                printer.print(property.nameWithoutDataType());
+            }
         }
         printer.print(System.lineSeparator());
     }
@@ -66,7 +70,7 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void printNode(String id, String label) {
-        printer.printf("%s,%s", id, label) ;
+        printer.printf("%s,%s", id, label);
     }
 
     @Override
@@ -93,7 +97,7 @@ public class CsvPrinter implements Printer {
         printer.close();
     }
 
-    private static class CommaPrinter{
+    private static class CommaPrinter {
         private final PrintWriter printer;
         private boolean printComma = false;
 
@@ -101,10 +105,10 @@ public class CsvPrinter implements Printer {
             this.printer = printer;
         }
 
-        void printComma(){
-            if (printComma){
+        void printComma() {
+            if (printComma) {
                 printer.print(",");
-            } else{
+            } else {
                 printComma = true;
             }
         }

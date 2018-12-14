@@ -123,7 +123,7 @@ public class QueryTask implements Runnable {
                 Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
                 Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, format);
-                printer.printHeaderRemainingColumns(propertyMetadata.values());
+                printer.printHeaderRemainingColumns(propertyMetadata.values(), false);
 
                 labelWriters.put(name, writerFactory.createLabelWriter(printer));
 

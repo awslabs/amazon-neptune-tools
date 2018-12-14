@@ -72,6 +72,10 @@ public class ExportFromConfig implements Runnable {
     @Once
     private int concurrency = 1;
 
+    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune")
+    @Once
+    private boolean useIamAuth = false;
+
     @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all')")
     @Once
     @AllowedValues(allowedValues = { "all", "nodes", "edges" })
@@ -87,7 +91,7 @@ public class ExportFromConfig implements Runnable {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, useIamAuth);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(directory, tag);

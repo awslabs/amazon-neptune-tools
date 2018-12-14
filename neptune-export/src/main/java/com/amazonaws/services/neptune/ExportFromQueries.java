@@ -54,6 +54,10 @@ public class ExportFromQueries implements Runnable {
     @Once
     private int concurrency = 1;
 
+    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune")
+    @Once
+    private boolean useIamAuth = false;
+
     @Option(name = {"-q", "--queries"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\")",
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)
     private List<NamedQueries> queries = new ArrayList<>();
@@ -77,7 +81,7 @@ public class ExportFromQueries implements Runnable {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, batchSize);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, batchSize, useIamAuth);
              NeptuneClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(directory, tag);

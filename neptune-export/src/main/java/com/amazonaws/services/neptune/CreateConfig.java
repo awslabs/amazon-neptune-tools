@@ -69,6 +69,10 @@ public class CreateConfig implements Runnable {
     @Once
     private boolean sample = false;
 
+    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune")
+    @Once
+    private boolean useIamAuth = false;
+
     @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000")
     @Once
     private long sampleSize = 1000;
@@ -79,7 +83,7 @@ public class CreateConfig implements Runnable {
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig);
+             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, useIamAuth);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(directory, tag);
