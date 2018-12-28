@@ -56,13 +56,13 @@ class GraphML2CSV:
             return GraphML2CSV.fixtag(graphml_ns, tag)
 
     @staticmethod
-    def py_compat_str(data):
+    def py_compat_str(encoding, data):
         if sys.hexversion >= 0x3000000:
-            return data.encode('utf-8').decode('utf-8')
+            return data.encode(encoding).decode('utf-8')
         else:
-            return data.encode('utf-8')
+            return data.encode(encoding)
 
-    def graphml_to_csv(self, fname, delimiter):
+    def graphml_to_csv(self, fname, delimiter, encoding):
 
         outfname_prefix = os.path.splitext(fname)[0]
 
@@ -146,16 +146,16 @@ class GraphML2CSV:
                             has_label = None
 
                             for data in elem:
-                                att_val = GraphML2CSV.py_compat_str(
-                                    data.attrib.get('key'))
+                                att_val = GraphML2CSV.py_compat_str(encoding,
+                                                                    data.attrib.get('key'))
 
                                 if att_val == "labelV":
-                                    node_d["~label"] = GraphML2CSV.py_compat_str(
-                                        data.text)
+                                    node_d["~label"] = GraphML2CSV.py_compat_str(encoding,
+                                                                                 data.text)
                                     has_label = True
                                 else:
-                                    node_d[vtx_dict[att_val]] = GraphML2CSV.py_compat_str(
-                                        data.text)
+                                    node_d[vtx_dict[att_val]] = GraphML2CSV.py_compat_str(encoding,
+                                                                                          data.text)
                                 node_attr_cnt += 1
 
                             if not has_label:
@@ -184,16 +184,16 @@ class GraphML2CSV:
                             edge_d["~to"] = dest
 
                             for data in elem:
-                                att_val = GraphML2CSV.py_compat_str(
-                                    data.attrib.get('key'))
+                                att_val = GraphML2CSV.py_compat_str(encoding,
+                                                                    data.attrib.get('key'))
 
                                 if att_val == "labelE":
-                                    edge_d["~label"] = GraphML2CSV.py_compat_str(
-                                        data.text)
+                                    edge_d["~label"] = GraphML2CSV.py_compat_str(encoding,
+                                                                                 data.text)
                                     has_label = True
                                 else:
-                                    edge_d[edge_dict[att_val]] = GraphML2CSV.py_compat_str(
-                                        data.text)
+                                    edge_d[edge_dict[att_val]] = GraphML2CSV.py_compat_str(encoding,
+                                                                                           data.text)
                                 edge_attr_cnt += 1
 
                             if not has_label:
@@ -239,6 +239,9 @@ def main(argv=None):
         parser.add_option("-d", "--delimiter", dest="delimiter", default=",",
                           help="Set the output file delimiter [default: %default]")
 
+        parser.add_option("-e", "--encoding", dest="encoding", default="utf-8",
+                          help="Set the input file encoding [default: %default]")
+
         # process options
         (opts, args) = parser.parse_args(argv)
 
@@ -253,7 +256,7 @@ def main(argv=None):
 
         sys.stderr.write('Processing %s\n' % opts.infile)
         xformer = GraphML2CSV()
-        xformer.graphml_to_csv(opts.infile, opts.delimiter)
+        xformer.graphml_to_csv(opts.infile, opts.delimiter, opts.encoding)
         return 0
 
     except Exception as e:

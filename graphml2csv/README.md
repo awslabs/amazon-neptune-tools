@@ -8,20 +8,20 @@ This Python script provides a utility to convert GraphML files into the CSV form
 Usage: graphml2csv.py [options]
 
 Copyright 2018 Amazon.com, Inc. or its affiliates.
-Licensed under the Apache License 2.0
-http://aws.amazon.com/apache2.0/
+Licensed under the Apache License 2.0 http://aws.amazon.com/apache2.0/
 
 Options:
-  --version           show program's version number and exit
-  -h, --help          show this help message and exit
-  -i FILE, --in=FILE  set input path [default: none]
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -i FILE, --in=FILE    set input path [default: none]
   -d DELIMITER, --delimiter=DELIMITER
                         Set the output file delimiter [default: ,]
+  -e ENCODING, --encoding=ENCODING
+                        Set the input file encoding [default: utf-8]
 
 A utility python script to convert GraphML files into the Amazon Neptune CSV
 format for bulk ingestion. See
 https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html.
-
 ```
 
 ## Example Using the Tinkerpop modern graph.
