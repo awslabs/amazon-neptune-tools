@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.metadata;
 
-import com.amazonaws.services.neptune.graph.NamedQueriesCollection;
+import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 

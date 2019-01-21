@@ -12,10 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.neptune.graph.GraphClient;
-import com.amazonaws.services.neptune.graph.LabelsFilter;
-import com.amazonaws.services.neptune.graph.Range;
-import com.amazonaws.services.neptune.graph.RangeFactory;
+import com.amazonaws.services.neptune.propertygraph.GraphClient;
+import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
+import com.amazonaws.services.neptune.propertygraph.Range;
+import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.metadata.PropertiesMetadata;
 import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
 

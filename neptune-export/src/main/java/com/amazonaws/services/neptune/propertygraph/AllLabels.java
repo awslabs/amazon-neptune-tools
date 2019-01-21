@@ -10,15 +10,26 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.graph;
+package com.amazonaws.services.neptune.propertygraph;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.Collection;
 
-public interface LabelsFilter {
-    GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal);
+public class AllLabels implements LabelsFilter {
 
-    Collection<String> resolveLabels(GraphClient<?> graphClient);
+    public static final LabelsFilter INSTANCE = new AllLabels();
+
+    private AllLabels(){}
+
+    @Override
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
+        return traversal;
+    }
+
+    @Override
+    public Collection<String> resolveLabels(GraphClient<?> graphClient) {
+        return graphClient.labels();
+    }
 }

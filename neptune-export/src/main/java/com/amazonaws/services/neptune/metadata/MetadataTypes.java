@@ -12,9 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.metadata;
 
-import com.amazonaws.services.neptune.graph.EdgesClient;
-import com.amazonaws.services.neptune.graph.GraphClient;
-import com.amazonaws.services.neptune.graph.NodesClient;
+import com.amazonaws.services.neptune.propertygraph.EdgesClient;
+import com.amazonaws.services.neptune.propertygraph.GraphClient;
+import com.amazonaws.services.neptune.propertygraph.NodesClient;
 import com.amazonaws.services.neptune.io.EdgesWriterFactory;
 import com.amazonaws.services.neptune.io.NodesWriterFactory;
 import com.amazonaws.services.neptune.io.WriterFactory;

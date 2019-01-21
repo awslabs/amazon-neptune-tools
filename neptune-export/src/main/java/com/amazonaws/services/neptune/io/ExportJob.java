@@ -12,8 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.neptune.graph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.graph.RangeFactory;
+import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.util.Timer;

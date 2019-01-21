@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.graph;
+package com.amazonaws.services.neptune.propertygraph;
 
 import org.apache.tinkerpop.gremlin.driver.Client;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
@@ -23,15 +23,15 @@ import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
 import java.util.Collection;
 
-public class NeptuneClient implements AutoCloseable {
+public class NeptuneGremlinClient implements AutoCloseable {
 
     public static final int DEFAULT_BATCH_SIZE = 64;
 
-    public static NeptuneClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, boolean useIamAuth) {
+    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, boolean useIamAuth) {
         return create(endpoints, port, concurrencyConfig, DEFAULT_BATCH_SIZE, useIamAuth);
     }
 
-    public static NeptuneClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, int batchSize, boolean useIamAuth) {
+    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, int batchSize, boolean useIamAuth) {
         Cluster.Builder builder = Cluster.build()
                 .port(port)
                 .serializer(Serializers.GRYO_V3D0)
@@ -46,12 +46,12 @@ public class NeptuneClient implements AutoCloseable {
             builder = builder.addContactPoint(endpoint);
         }
 
-        return new NeptuneClient(concurrencyConfig.applyTo(builder).create());
+        return new NeptuneGremlinClient(concurrencyConfig.applyTo(builder).create());
     }
 
     private final Cluster cluster;
 
-    private NeptuneClient(Cluster cluster) {
+    private NeptuneGremlinClient(Cluster cluster) {
         this.cluster = cluster;
     }
 

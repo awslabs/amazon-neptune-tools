@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.graph;
+package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.metadata.CreateMetadataFromGraphSample;
 import com.amazonaws.services.neptune.metadata.CreateMetadataFromGraphScan;

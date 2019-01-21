@@ -12,8 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.neptune.graph.NamedQuery;
-import com.amazonaws.services.neptune.graph.NeptuneClient;
+import com.amazonaws.services.neptune.propertygraph.NamedQuery;
+import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.metadata.PropertiesMetadata;
 import com.amazonaws.services.neptune.metadata.PropertyTypeInfo;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -25,14 +25,14 @@ import java.util.Queue;
 
 public class QueryTask implements Runnable {
     private final Queue<NamedQuery> queries;
-    private final NeptuneClient.QueryClient queryClient;
+    private final NeptuneGremlinClient.QueryClient queryClient;
     private final Directories directories;
     private final Format format;
     private final Status status;
     private final int index;
 
     public QueryTask(Queue<NamedQuery> queries,
-                     NeptuneClient.QueryClient queryClient,
+                     NeptuneGremlinClient.QueryClient queryClient,
                      Directories directories,
                      Format format, Status status,
                      int index) {

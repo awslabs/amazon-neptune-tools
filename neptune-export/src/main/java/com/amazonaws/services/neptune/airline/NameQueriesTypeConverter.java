@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.airline;
 
-import com.amazonaws.services.neptune.graph.NamedQueries;
+import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.github.rvesse.airline.model.ArgumentsMetadata;
 import com.github.rvesse.airline.model.OptionMetadata;
 import com.github.rvesse.airline.parser.ParseState;

@@ -12,10 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.amazonaws.services.neptune.graph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.graph.MetadataSamplingSpecification;
-import com.amazonaws.services.neptune.graph.NeptuneClient;
-import com.amazonaws.services.neptune.graph.Scope;
+import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.io.ExportJob;
+import com.amazonaws.services.neptune.io.Format;
 import com.amazonaws.services.neptune.metadata.MetadataCommand;
 import com.amazonaws.services.neptune.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.metadata.PropertiesMetadataCollection;
@@ -34,16 +33,22 @@ import java.util.Collection;
 import java.util.List;
 
 @Examples(examples = {
-        "bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
-        "bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --sample --sample-size 100",
-        "bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS"
+        "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
+        "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --format json",
+        "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -s nodes",
+        "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS",
+        "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2",
+        "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2 -r 1000"
 }, descriptions = {
-        "Create metadata config file for all node and edge labels and save it to /home/ec2-user/output",
-        "Create metadata config file for all node and edge labels, sampling 100 nodes and edges for each label",
-        "Create config file containing metadata for User nodes and FOLLOWS edges"
+        "Export all data to the /home/ec2-user/output directory",
+        "Export all data to the /home/ec2-user/output directory as JSON",
+        "Export only nodes to the /home/ec2-user/output directory",
+        "Export only User nodes and FOLLOWS relationships",
+        "Parallel export using 2 threads",
+        "Parallel export using 2 threads, with each thread processing batches of 1000 nodes or edges"
 })
-@Command(name = "create-config", description = "Create an export metadata config file")
-public class CreateConfig implements Runnable {
+@Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON")
+public class ExportPropertyGraph implements Runnable {
 
     @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
     @Required
@@ -64,13 +69,21 @@ public class CreateConfig implements Runnable {
     @Once
     private String tag = "";
 
-    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be included in config (optional, default all labels)",
+    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be exported (optional, default all labels)",
             arity = 1)
     private List<String> nodeLabels = new ArrayList<>();
 
-    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be included in config (optional, default all labels)",
+    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be exported (optional, default all labels)",
             arity = 1)
     private List<String> edgeLabels = new ArrayList<>();
+
+    @Option(name = {"-r", "--range"}, description = "Range (optional)")
+    @Once
+    private long range = -1;
+
+    @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
+    @Once
+    private int concurrency = 1;
 
     @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all')")
     @Once
@@ -89,17 +102,22 @@ public class CreateConfig implements Runnable {
     @Once
     private long sampleSize = 1000;
 
+    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
+    @Once
+    @AllowedValues(allowedValues = {"csv", "json"})
+    private Format format = Format.csv;
+
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(1, -1);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
-             NeptuneClient client = NeptuneClient.create(endpoints, port, concurrencyConfig, useIamAuth);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(directory, tag);
-            java.nio.file.Path configFilePath = directories.configFilePath();
+            java.nio.file.Path configFilePath = directories.configFilePath().toAbsolutePath();
 
             Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
 
@@ -108,11 +126,15 @@ public class CreateConfig implements Runnable {
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 
+            ExportJob exportJob = new ExportJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
+            exportJob.execute();
+
+            System.err.println(format.description() + " files   : " + directories.directory());
             System.err.println("Config file : " + configFilePath);
-            System.out.println(configFilePath);
+            System.out.println(directories.directory());
 
         } catch (Exception e) {
-            System.err.println("An error occurred while creating export config:");
+            System.err.println("An error occurred while exporting from Neptune:");
             e.printStackTrace();
         }
     }

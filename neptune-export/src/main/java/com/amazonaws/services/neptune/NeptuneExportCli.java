@@ -12,13 +12,30 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.github.rvesse.airline.annotations.Alias;
 import com.github.rvesse.airline.annotations.Cli;
+import com.github.rvesse.airline.annotations.Parser;
 import com.github.rvesse.airline.help.Help;
 
 @Cli(name = "neptune-export.sh",
         description = "Export Neptune to CSV or JSON",
         defaultCommand = Help.class,
-        commands = {Export.class, CreateConfig.class, ExportFromConfig.class, ExportFromQueries.class, Help.class})
+        commands = {
+                ExportPropertyGraph.class,
+                CreatePropertyGraphExportConfig.class,
+                ExportPropertyGraphFromConfig.class,
+                ExportPropertyGraphFromGremlinQueries.class,
+                Help.class},
+        parserConfiguration = @Parser(aliases = {
+                @Alias(name = "create-config",
+                        arguments = {"create-pg-config"}),
+                @Alias(name = "export",
+                        arguments = {"export-pg"}),
+                @Alias(name = "export-from-config",
+                        arguments = {"export-pg-from-config"}),
+                @Alias(name = "export-from-queries",
+                        arguments = {"export-pg-from-queries"})
+        }))
 public class NeptuneExportCli {
 
     public static void main(String[] args) {

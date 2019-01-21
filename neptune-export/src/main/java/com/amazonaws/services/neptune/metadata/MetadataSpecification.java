@@ -12,12 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.metadata;
 
-import com.amazonaws.services.neptune.graph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.graph.Range;
-import com.amazonaws.services.neptune.graph.RangeFactory;
-import com.amazonaws.services.neptune.graph.GraphClient;
-import com.amazonaws.services.neptune.graph.LabelsFilter;
-import com.amazonaws.services.neptune.graph.SpecifiedLabels;
+import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.Range;
+import com.amazonaws.services.neptune.propertygraph.RangeFactory;
+import com.amazonaws.services.neptune.propertygraph.GraphClient;
+import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
+import com.amazonaws.services.neptune.propertygraph.SpecifiedLabels;
 import com.amazonaws.services.neptune.io.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 

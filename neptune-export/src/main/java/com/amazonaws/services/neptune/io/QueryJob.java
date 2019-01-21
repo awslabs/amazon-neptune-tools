@@ -12,9 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.neptune.graph.NamedQuery;
-import com.amazonaws.services.neptune.graph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.graph.NeptuneClient;
+import com.amazonaws.services.neptune.propertygraph.NamedQuery;
+import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.util.Timer;
 
 import java.util.Collection;
@@ -26,13 +26,13 @@ import java.util.concurrent.TimeUnit;
 
 public class QueryJob {
     private final Queue<NamedQuery> queries;
-    private final NeptuneClient.QueryClient queryClient;
+    private final NeptuneGremlinClient.QueryClient queryClient;
     private final ConcurrencyConfig concurrencyConfig;
     private final Directories directories;
     private final Format format;
 
     public QueryJob(Collection<NamedQuery> queries,
-                    NeptuneClient.QueryClient queryClient,
+                    NeptuneGremlinClient.QueryClient queryClient,
                     ConcurrencyConfig concurrencyConfig,
                     Directories directories,
                     Format format){

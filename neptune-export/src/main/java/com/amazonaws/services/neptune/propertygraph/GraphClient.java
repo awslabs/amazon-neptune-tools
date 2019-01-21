@@ -10,15 +10,23 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.metadata;
+package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.GraphClient;
-import com.amazonaws.services.neptune.io.WriterFactory;
-import com.amazonaws.services.neptune.io.Directories;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import com.amazonaws.services.neptune.io.GraphElementHandler;
 
-public interface MetadataType<T> {
-    String name();
-    GraphClient<T> graphClient(GraphTraversalSource g);
-    WriterFactory<T> writerFactory(Directories directories);
+import java.util.Collection;
+import java.util.Map;
+
+public interface GraphClient<T> {
+    String description();
+
+    void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter);
+
+    void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter);
+
+    long count(LabelsFilter labelsFilter);
+
+    Collection<String> labels();
+
+    String getLabelFrom(T input);
 }
