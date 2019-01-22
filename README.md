@@ -10,9 +10,9 @@ You may also be interested in the [Neptune Samples github repository](https://gi
 This is a [utility](graphml2csv/README.md) to convert graphml files into the Neptune CSV format.
 
 ### Neptune Export
-Exports Amazon Neptune data to CSV.
+Exports Amazon Neptune data to CSV for Property Graph or Turtle for RDF graphs.
 
-You can use [neptune-export](neptune-export/) to export an Amazon Neptune database to the bulk load CSV format used by the Amazon Neptune bulk loader. Alternatively, you can supply your own queries to neptune-export and unload the results to CSV. 
+You can use [neptune-export](neptune-export/) to export an Amazon Neptune database to the bulk load CSV format used by the Amazon Neptune bulk loader for Property Graph or Turtle for RDF graphs. Alternatively, you can supply your own queries to neptune-export and unload the results to CSV or Turtle.
 
 ### Glue Neptune
 
