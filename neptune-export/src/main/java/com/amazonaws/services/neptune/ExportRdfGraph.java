@@ -19,11 +19,18 @@ import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+import com.github.rvesse.airline.annotations.help.Examples;
 import com.github.rvesse.airline.annotations.restrictions.*;
 
 import java.io.File;
 import java.util.List;
 
+@Examples(examples = {
+        "bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output "},
+
+        descriptions = {
+                "Export all data to the /home/ec2-user/output directory"
+        })
 @Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle")
 public class ExportRdfGraph implements Runnable {
 
