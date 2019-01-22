@@ -12,14 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.MetadataSamplingSpecification;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.Scope;
-import com.amazonaws.services.neptune.metadata.MetadataCommand;
-import com.amazonaws.services.neptune.metadata.MetadataSpecification;
-import com.amazonaws.services.neptune.metadata.PropertiesMetadataCollection;
-import com.amazonaws.services.neptune.metadata.SaveMetadataConfig;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
@@ -98,7 +99,7 @@ public class CreatePropertyGraphExportConfig implements Runnable {
              NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth);
              GraphTraversalSource g = client.newTraversalSource()) {
 
-            Directories directories = Directories.createFor(directory, tag);
+            Directories directories = Directories.createFor(DirectoryStructure.Config, directory, tag);
             java.nio.file.Path configFilePath = directories.configFilePath();
 
             Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);

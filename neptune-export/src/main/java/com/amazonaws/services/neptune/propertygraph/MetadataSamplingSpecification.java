@@ -12,10 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.metadata.CreateMetadataFromGraphSample;
-import com.amazonaws.services.neptune.metadata.CreateMetadataFromGraphScan;
-import com.amazonaws.services.neptune.metadata.MetadataCommand;
-import com.amazonaws.services.neptune.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromGraphSample;
+import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromGraphScan;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;

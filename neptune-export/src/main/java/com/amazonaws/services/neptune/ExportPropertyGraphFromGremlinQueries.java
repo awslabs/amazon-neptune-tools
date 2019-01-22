@@ -12,16 +12,17 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.amazonaws.services.neptune.airline.NameQueriesTypeConverter;
+import com.amazonaws.services.neptune.io.DirectoryStructure;
+import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.Format;
-import com.amazonaws.services.neptune.io.QueryJob;
-import com.amazonaws.services.neptune.metadata.CreateQueriesFromFile;
-import com.amazonaws.services.neptune.metadata.SaveQueries;
+import com.amazonaws.services.neptune.propertygraph.io.Format;
+import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
+import com.amazonaws.services.neptune.propertygraph.metadata.CreateQueriesFromFile;
+import com.amazonaws.services.neptune.propertygraph.metadata.SaveQueries;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -96,7 +97,7 @@ public class ExportPropertyGraphFromGremlinQueries implements Runnable {
              NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, batchSize, useIamAuth);
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
-            Directories directories = Directories.createFor(directory, tag);
+            Directories directories = Directories.createFor(DirectoryStructure.GremlinQueries, directory, tag);
 
             QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
 

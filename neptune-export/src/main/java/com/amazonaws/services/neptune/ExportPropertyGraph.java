@@ -12,13 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
-import com.amazonaws.services.neptune.io.ExportJob;
-import com.amazonaws.services.neptune.io.Format;
-import com.amazonaws.services.neptune.metadata.MetadataCommand;
-import com.amazonaws.services.neptune.metadata.MetadataSpecification;
-import com.amazonaws.services.neptune.metadata.PropertiesMetadataCollection;
-import com.amazonaws.services.neptune.metadata.SaveMetadataConfig;
+import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
+import com.amazonaws.services.neptune.propertygraph.io.Format;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
@@ -116,7 +117,7 @@ public class ExportPropertyGraph implements Runnable {
              NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth);
              GraphTraversalSource g = client.newTraversalSource()) {
 
-            Directories directories = Directories.createFor(directory, tag);
+            Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);
             java.nio.file.Path configFilePath = directories.configFilePath().toAbsolutePath();
 
             Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
@@ -126,7 +127,7 @@ public class ExportPropertyGraph implements Runnable {
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 
-            ExportJob exportJob = new ExportJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
+            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
             exportJob.execute();
 
             System.err.println(format.description() + " files   : " + directories.directory());

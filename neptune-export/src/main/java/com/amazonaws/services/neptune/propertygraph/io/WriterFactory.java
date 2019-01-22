@@ -10,23 +10,17 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph;
+package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
-import java.util.Collection;
+import java.io.IOException;
 import java.util.Map;
 
-public interface GraphClient<T> {
-    String description();
+public interface WriterFactory<T> {
 
-    void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter);
+    Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata, Format format) throws IOException;
 
-    void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter);
+    GraphElementHandler<T> createLabelWriter(Printer printer);
 
-    long count(LabelsFilter labelsFilter);
-
-    Collection<String> labels();
-
-    String getLabelFrom(T input);
 }

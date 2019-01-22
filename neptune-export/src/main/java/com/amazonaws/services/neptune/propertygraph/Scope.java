@@ -12,8 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.metadata.MetadataSpecification;
-import com.amazonaws.services.neptune.metadata.MetadataTypes;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
 
 import java.util.*;
 import java.util.stream.Collectors;

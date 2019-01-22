@@ -25,6 +25,7 @@ import com.github.rvesse.airline.help.Help;
                 CreatePropertyGraphExportConfig.class,
                 ExportPropertyGraphFromConfig.class,
                 ExportPropertyGraphFromGremlinQueries.class,
+                ExportRdfGraph.class,
                 Help.class},
         parserConfiguration = @Parser(aliases = {
                 @Alias(name = "create-config",
