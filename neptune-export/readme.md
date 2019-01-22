@@ -1,14 +1,19 @@
 # Neptune Export
 
-Exports Amazon Neptune property graph data to CSV or JSON.
+Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to Turtle.
 
-You can use _neptune-export_ to export an Amazon Neptune database to the bulk load [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), or to JSON. See 'Exporting to the bulk loader CSV format' below.
+### Property Graph
 
-Alternatively, you can supply your own queries to _neptune-export_ and unload the results to CSV or JSON. See 'Exporting the results of user-supplied queries' below.
+  - [Exporting to the bulk loader CSV format](#exporting-to-the-bulk-loader-csv-format)
+  - [Exporting the results of user-supplied queries](#exporting-the-results-of-user-supplied-queries)
+  
+### RDF Graph
+
+  - [Exporting an RDF graph](#exporting-an-rdf-graph)
 
 ## Exporting to the bulk loader CSV format
 
-When exporting to the bulk loader format, _neptune-export_ generates CSV files based on metadata derived from scanning your graph. This metadata is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
+When exporting to the [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), _neptune-export_ generates CSV files based on metadata derived from scanning your graph. This metadata is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
 
  - `export` – This command makes two passes over your data: the first to generate the metadata, the second to create the data files. By scanning all nodes and edges in the first pass, the tool captures the superset of properties for each label, identifies the broadest datatype for each property, and identifies any properties for which at least one vertex or edge has multiple values. If exporting to CSV, these latter properties are exported to CSV as array types. If exporting to JSON, these property values are exported as array nodes.
  - `create-config` – This command makes a single pass over your data to generate the metadata config file.
@@ -24,9 +29,9 @@ Both commands also allow you to sample a range of nodes and edges in order to cr
 
 All three commands allow you to supply vertex and edge label filters. 
 
- - If you supply label filters to the `export` command, the metadata file and the exported data files will contain data only for the labels specified in the filters.
- - If you supply label filters to the `create-config` command, the metadata file will contain data only for the labels specified in the filters.
- - If you supply label filters to the `export-from-config` command, the exported data files will contain data for the intersection of labels in the config file and the labels specified in the command filters.
+ - If you supply label filters to the `export-pg` command, the metadata file and the exported data files will contain data only for the labels specified in the filters.
+ - If you supply label filters to the `create-pg-config` command, the metadata file will contain data only for the labels specified in the filters.
+ - If you supply label filters to the `export-pg-from-config` command, the exported data files will contain data for the intersection of labels in the config file and the labels specified in the command filters.
  
 ### Parallel export
 
@@ -48,13 +53,13 @@ For large datasets, we recommend running this tool against a standalone database
 
 ## Usage
 
-### export
+### export-pg
 
     NAME
-            neptune-export.sh export - Export from Neptune to CSV or JSON
+            neptune-export.sh export-pg - Export property graph from Neptune to CSV or JSON
     
     SYNOPSIS
-            neptune-export.sh export [ {-cn | --concurrency} <concurrency> ]
+            neptune-export.sh export-pg [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
@@ -153,38 +158,38 @@ For large datasets, we recommend running this tool against a standalone database
     
     
     EXAMPLES
-            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
+            bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
     
                 Export all data to the /home/ec2-user/output directory
     
-            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --format json
+            bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --format json
     
                 Export all data to the /home/ec2-user/output directory as JSON
     
-            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -s nodes
+            bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -s nodes
     
                 Export only nodes to the /home/ec2-user/output directory
     
-            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS
+            bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS
     
                 Export only User nodes and FOLLOWS relationships
     
-            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2
+            bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2
     
                 Parallel export using 2 threads
     
-            bin/neptune-export.sh export -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2 -r 1000
+            bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -cn 2 -r 1000
     
                 Parallel export using 2 threads, with each thread processing
                 batches of 1000 nodes or edges
 
-### create-config
+### create-pg-config
 
     NAME
-            neptune-export.sh create-config - Create an export metadata config file
+            neptune-export.sh create-pg-config - Create a property graph export metadata config file
     
     SYNOPSIS
-            neptune-export.sh create-config {-d | --dir} <directory>
+            neptune-export.sh create-pg-config {-d | --dir} <directory>
                     {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ {-nl | --node-label} <nodeLabels>... ]
@@ -262,29 +267,29 @@ For large datasets, we recommend running this tool against a standalone database
     
     
     EXAMPLES
-            bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
+            bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
     
                 Create metadata config file for all node and edge labels and save
                 it to /home/ec2-user/output
     
-            bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --sample --sample-size 100
+            bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --sample --sample-size 100
     
                 Create metadata config file for all node and edge labels, sampling
                 100 nodes and edges for each label
     
-            bin/neptune-export.sh create-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS
+            bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS
     
                 Create config file containing metadata for User nodes and FOLLOWS
                 edges
 
-### export-from-config
+### export-pg-from-config
 
     NAME
-            neptune-export.sh export-from-config - Export from Neptune to CSV or
+            neptune-export.sh export-pg-from-config - Export from Neptune to CSV or
             JSON using an existing config file
     
     SYNOPSIS
-            neptune-export.sh export-from-config {-c | --config-file} <configFile>
+            neptune-export.sh export-pg-from-config {-c | --config-file} <configFile>
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
@@ -381,11 +386,11 @@ For large datasets, we recommend running this tool against a standalone database
     
     
     EXAMPLES
-            bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output
+            bin/neptune-export.sh export-pg-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output
     
                 Export data using the metadata config in /home/ec2-user/config.json
     
-            bin/neptune-export.sh export-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json
+            bin/neptune-export.sh export-pg-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json
     
                 Export data as JSON using the metadata config in
                 /home/ec2-user/config.json
@@ -412,14 +417,14 @@ If using parallel export, we recommend setting the concurrency level to the numb
 
 Queries whose results contain very large rows can sometimes trigger a `CorruptedFrameException`. If this happens, adjust the batch size (`--batch-size`) to reduce the number of results returned to the client in a batch (the default is 64).
 
-### export-from-queries
+### export-pg-from-queries
 
     NAME
-            neptune-export.sh export-from-queries - Export to CSV or JSON from
+            neptune-export.sh export-pg-from-queries - Export property graph to CSV or JSON from Gremlin queries
             Gremlin queries
     
     SYNOPSIS
-            neptune-export.sh export-from-queries
+            neptune-export.sh export-pg-from-queries
                     [ {-b | --batch-size} <batchSize> ]
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
@@ -503,11 +508,59 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
     
     
     EXAMPLES
-            bin/neptune-export.sh export-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" --concurrency 6
+            bin/neptune-export.sh export-pg-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" --concurrency 6
     
                 Parallel export of Person data in 2 shards, sharding on the 'birthday' property, 
                 and Post data in 4 shards, sharding on range, using 6 threads
     
-            bin/neptune-export.sh export-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" --concurrency 6 --format json
+            bin/neptune-export.sh export-pg-from-queries -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -q person="g.V().hasLabel('Person').has('birthday', lt('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday');g.V().hasLabel('Person').has('birthday', gte('1985-01-01')).project('id', 'first_name', 'last_name', 'birthday').by(id).by('firstName').by('lastName').by('birthday')" -q post="g.V().hasLabel('Post').has('imageFile').range(0, 250000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(250000, 500000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(500000, 750000).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id());g.V().hasLabel('Post').has('imageFile').range(750000, -1).project('id', 'image_file', 'creation_date', 'creator_id').by(id).by('imageFile').by('creationDate').by(in('CREATED').id())" --concurrency 6 --format json
     
                 Parallel export of Person data and Post data as JSON
+
+## Exporting an RDF graph
+              
+### export-rdf
+
+    NAME
+            neptune-export.sh export-rdf - Export RDF graph from Neptune to Turtle
+    
+    SYNOPSIS
+            neptune-export.sh export-rdf {-d | --dir} <directory>
+                    {-e | --endpoint} <endpoints>... [ {-p | --port} <port> ]
+                    [ {-t | --tag} <tag> ]
+    
+    OPTIONS
+            -d <directory>, --dir <directory>
+                Root directory for output
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This options value must be a path to a directory. The provided path
+                must be readable and writable.
+    
+    
+            -e <endpoints>, --endpoint <endpoints>
+                Neptune endpoint(s) – supply multiple instance endpoints if you
+                want to load balance requests across a cluster
+    
+            -p <port>, --port <port>
+                Neptune port (optional, default 8182)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This options value represents a port and must fall in one of the
+                following port ranges: 1024-49151
+    
+    
+            -t <tag>, --tag <tag>
+                Directory prefix (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+    EXAMPLES
+            bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output
+    
+                Export all data to the /home/ec2-user/output directory
