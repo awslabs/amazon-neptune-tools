@@ -12,13 +12,19 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.rdf;
 
+import com.amazonaws.services.neptune.rdf.io.EnhancedTurtleWriter;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.base.AbstractRepository;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
+import org.eclipse.rdf4j.rio.WriterConfig;
 import org.joda.time.DateTime;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -42,11 +48,17 @@ public class NeptuneSparqlClient implements AutoCloseable {
         this.repositories = repositories;
     }
 
-    public GraphQueryResult executeQuery(String sparql) {
-        try (RepositoryConnection connection = chooseRepository().getConnection()) {
-            GraphQuery query = connection.prepareGraphQuery(sparql);
-            return query.evaluate();
+    public void executeQuery(String sparql, Path file) throws IOException {
+        Prefixes prefixes = new Prefixes();
+
+        try (RepositoryConnection connection = chooseRepository().getConnection();
+             Writer fileWriter = new FileWriter(file.toFile())) {
+
+            EnhancedTurtleWriter writer = new EnhancedTurtleWriter(fileWriter, prefixes);
+            connection.prepareGraphQuery(sparql).evaluate(writer);
         }
+
+        prefixes.addTo(file);
     }
 
     private SPARQLRepository chooseRepository() {

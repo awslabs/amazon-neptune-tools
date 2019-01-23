@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.rdf;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
+import org.eclipse.rdf4j.rio.RDFWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -52,6 +53,21 @@ public class Prefixes {
 
         } else {
             return String.format("<%s>", s);
+        }
+    }
+
+    public void parse(String s, RDFWriter writer) {
+
+        int i = s.indexOf("#");
+
+        if (i > 0 && i < (s.length() - 1)) {
+            String uri = s.substring(0, i + 1);
+
+            if (!prefixes.containsKey(uri)) {
+                String prefix = "s" + (prefixes.size() - offset);
+                prefixes.put(uri, prefix);
+                writer.handleNamespace(prefix, uri);
+            }
         }
     }
 
