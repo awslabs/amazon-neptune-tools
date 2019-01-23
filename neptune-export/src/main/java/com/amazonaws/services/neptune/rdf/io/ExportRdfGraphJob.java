@@ -13,11 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.rdf.io;
 
 import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.Prefixes;
-import com.amazonaws.services.neptune.rdf.StatementHandler;
-import org.eclipse.rdf4j.query.GraphQueryResult;
 
 public class ExportRdfGraphJob {
 
@@ -37,22 +34,6 @@ public class ExportRdfGraphJob {
         java.nio.file.Path filePath = directories.createFilePath(
                 directories.statementsDirectory(), "statements", 0, () -> "ttl");
 
-        try (StatementsPrinter printer = new StatementsPrinter(filePath)) {
-
-            Status status = new Status();
-            StatementHandler handler = StatementHandler.create(prefixes);
-
-            GraphQueryResult result = client.executeQuery("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }");
-
-            while (result.hasNext()) {
-
-                handler = handler.handle(result.next());
-                handler.printTo(printer);
-
-                status.update();
-            }
-        }
-
-        prefixes.addTo(filePath);
+        client.executeQuery("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", filePath);
     }
 }
