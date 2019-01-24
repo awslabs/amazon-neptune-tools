@@ -44,26 +44,7 @@ import java.util.List;
         "Create config file containing metadata for User nodes and FOLLOWS edges"
 })
 @Command(name = "create-pg-config", description = "Create a property graph export metadata config file")
-public class CreatePropertyGraphExportConfig implements Runnable {
-
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
-    @Required
-    private List<String> endpoints;
-
-    @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
-    @Port(acceptablePorts = {PortType.USER})
-    @Once
-    private int port = 8182;
-
-    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
-    @Required
-    @Path(mustExist = false, kind = PathKind.DIRECTORY)
-    @Once
-    private File directory;
-
-    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
-    @Once
-    private String tag = "";
+public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be included in config (optional, default all labels)",
             arity = 1)
@@ -81,10 +62,6 @@ public class CreatePropertyGraphExportConfig implements Runnable {
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata")
     @Once
     private boolean sample = false;
-
-    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune")
-    @Once
-    private boolean useIamAuth = false;
 
     @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000")
     @Once

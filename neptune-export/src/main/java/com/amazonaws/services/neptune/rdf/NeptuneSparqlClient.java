@@ -12,13 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.rdf;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.neptune.auth.NeptuneSigV4SignerException;
+import com.amazonaws.neptune.client.rdf4j.NeptuneSparqlRepository;
 import com.amazonaws.services.neptune.rdf.io.EnhancedTurtleWriter;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.GraphQueryResult;
+import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.base.AbstractRepository;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
-import org.eclipse.rdf4j.rio.WriterConfig;
 import org.joda.time.DateTime;
 
 import java.io.FileWriter;
@@ -32,13 +34,34 @@ import java.util.stream.Collectors;
 
 public class NeptuneSparqlClient implements AutoCloseable {
 
-    public static NeptuneSparqlClient create(Collection<String> endpoints, int port) {
-        return new NeptuneSparqlClient(
-                endpoints.stream().map(e ->
-                        new SPARQLRepository(String.format("https://%s:%s/sparql", e, port))).
-                        peek(r -> r.enableQuadMode(true)).
-                        peek(AbstractRepository::initialize).
-                        collect(Collectors.toList()));
+    public static NeptuneSparqlClient create(Collection<String> endpoints, int port, boolean useIamAuth) {
+
+        if (useIamAuth) {
+            String serviceRegion = EnvironmentVariableUtils.getMandatoryEnv("SERVICE_REGION");
+            AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
+            return new NeptuneSparqlClient(
+                    endpoints.stream().map(e -> {
+                        try {
+                            return new NeptuneSparqlRepository(sparqlEndpount(e, port), credentialsProvider, serviceRegion);
+                        } catch (NeptuneSigV4SignerException e1) {
+                            throw new RuntimeException(e1);
+                        }
+                    }).
+                            peek(r -> r.enableQuadMode(true)).
+                            peek(AbstractRepository::initialize).
+                            collect(Collectors.toList()));
+        } else {
+            return new NeptuneSparqlClient(
+                    endpoints.stream().map(e ->
+                            new SPARQLRepository(sparqlEndpount(e, port))).
+                            peek(r -> r.enableQuadMode(true)).
+                            peek(AbstractRepository::initialize).
+                            collect(Collectors.toList()));
+        }
+    }
+
+    private static String sparqlEndpount(String endpoint, int port) {
+        return String.format("https://%s:%s/sparql", endpoint, port);
     }
 
     private final List<SPARQLRepository> repositories;

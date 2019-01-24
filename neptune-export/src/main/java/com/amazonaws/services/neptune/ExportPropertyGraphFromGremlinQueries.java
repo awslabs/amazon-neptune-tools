@@ -43,33 +43,11 @@ import java.util.List;
                 "Parallel export of Person data and Post data as JSON"
         })
 @Command(name = "export-pg-from-queries", description = "Export property graph to CSV or JSON from Gremlin queries")
-public class ExportPropertyGraphFromGremlinQueries implements Runnable {
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
-    @Required
-    private List<String> endpoints;
-
-    @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
-    @Port(acceptablePorts = {PortType.USER})
-    @Once
-    private int port = 8182;
-
-    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
-    @Required
-    @Path(mustExist = false, kind = PathKind.DIRECTORY)
-    @Once
-    private File directory;
-
-    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
-    @Once
-    private String tag = "";
+public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseCommand implements Runnable {
 
     @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
     @Once
     private int concurrency = 1;
-
-    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune")
-    @Once
-    private boolean useIamAuth = false;
 
     @Option(name = {"-q", "--queries"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\")",
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)

@@ -39,19 +39,17 @@ import com.github.rvesse.airline.help.Help;
         }))
 public class NeptuneExportCli {
 
-    static {
-        System.setProperty("org.apache.commons.logging.Log",
-                "org.apache.commons.logging.impl.NoOpLog");
-    }
-
     public static void main(String[] args) {
         com.github.rvesse.airline.Cli<Runnable> cli = new com.github.rvesse.airline.Cli<>(NeptuneExportCli.class);
 
         try {
-
             Runnable cmd = cli.parse(args);
-            cmd.run();
 
+            if (NeptuneExportBaseCommand.class.isAssignableFrom(cmd.getClass())) {
+                ((NeptuneExportBaseCommand) cmd).setLoggingLevel();
+            }
+
+            cmd.run();
         } catch (Exception e) {
 
             System.err.println(e.getMessage());

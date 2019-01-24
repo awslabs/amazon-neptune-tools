@@ -32,32 +32,13 @@ import java.util.List;
                 "Export all data to the /home/ec2-user/output directory"
         })
 @Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle")
-public class ExportRdfGraph implements Runnable {
-
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster")
-    @Required
-    private List<String> endpoints;
-
-    @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
-    @Port(acceptablePorts = {PortType.USER})
-    @Once
-    private int port = 8182;
-
-    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
-    @Required
-    @Path(mustExist = false, kind = PathKind.DIRECTORY)
-    @Once
-    private File directory;
-
-    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
-    @Once
-    private String tag = "";
+public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Override
     public void run() {
 
         try (Timer timer = new Timer();
-             NeptuneSparqlClient client = NeptuneSparqlClient.create(endpoints, port)) {
+             NeptuneSparqlClient client = NeptuneSparqlClient.create(endpoints, port, useIamAuth)) {
 
             Directories directories = Directories.createFor(DirectoryStructure.Rdf, directory, tag);
 
