@@ -12,14 +12,14 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
 
 ### Property Graph
 
-  - [Exporting to the bulk loader CSV format](#exporting-to-the-bulk-loader-csv-format)
-  - [Exporting the results of user-supplied queries](#exporting-the-results-of-user-supplied-queries)
+  - [Exporting to the Bulk Loader CSV Format](#exporting-to-the-bulk-loader-csv-format)
+  - [Exporting the Results of User-Supplied Queries](#exporting-the-results-of-user-supplied-queries)
   
 ### RDF Graph
 
-  - [Exporting an RDF graph](#exporting-an-rdf-graph)
+  - [Exporting an RDF Graph](#exporting-an-rdf-graph)
   
-### IAM DB Authentication
+### IAM DB authentication
 
 _neptune-export_ supports exporting from databases that have [IAM database authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) enabled. Supply the `--use-iam-auth` option with each command. Remember to set the **SERVICE_REGION** environment variable – e.g. `export SERVICE_REGION=us-east-1`.
    
@@ -27,7 +27,7 @@ _neptune-export_ supports exporting from databases that have [IAM database authe
 
 `mvn clean install`
  
-## Exporting to the bulk loader CSV format
+## Exporting to the Bulk Loader CSV Format
 
 When exporting to the [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), _neptune-export_ generates CSV files based on metadata derived from scanning your graph. This metadata is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
 
@@ -63,7 +63,7 @@ _neptune-export_ uses long-running queries to generate the metadata and the data
 
 For large datasets, we recommend running this tool against a standalone database instance that has been restored from a snapshot of your database.
 
-## Exporting the results of user-supplied queries
+## Exporting the Results of User-Supplied Queries
 
 _neptune-export_'s [`export-pg-from-queries`](docs/export-pg-from-queries.md) command allows you to supply groups of Gremlin queries and export the results to CSV or JSON.
 
@@ -85,6 +85,6 @@ If using parallel export, we recommend setting the concurrency level to the numb
 
 Queries whose results contain very large rows can sometimes trigger a `CorruptedFrameException`. If this happens, adjust the batch size (`--batch-size`) to reduce the number of results returned to the client in a batch (the default is 64).
 
-## Exporting an RDF graph
+## Exporting an RDF Graph
               
 At present _neptune-export_ supports exporting an RDF dataset to Turtle with a single-threaded long-running query.
