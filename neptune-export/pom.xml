@@ -44,13 +44,19 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-neptune-sigv4-signer</artifactId>
-            <version>1.0</version>
+            <version>1.0.4</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-neptune-gremlin-java-sigv4</artifactId>
-            <version>1.0</version>
+            <version>1.0.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>amazon-neptune-sparql-java-sigv4</artifactId>
+            <version>1.0.4</version>
         </dependency>
 
         <dependency>
@@ -101,7 +107,11 @@
             <version>1.8.0-beta2</version>
         </dependency>
 
-
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.22.Final</version>
+        </dependency>
 
 
     </dependencies>
