@@ -18,7 +18,6 @@ import com.amazonaws.services.neptune.rdf.Prefixes;
 
 public class ExportRdfGraphJob {
 
-    private final Prefixes prefixes = new Prefixes();
     private final NeptuneSparqlClient client;
     private final Directories directories;
 
@@ -34,6 +33,6 @@ public class ExportRdfGraphJob {
         java.nio.file.Path filePath = directories.createFilePath(
                 directories.statementsDirectory(), "statements", 0, () -> "ttl");
 
-        client.executeQuery("CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }", filePath);
+        client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", filePath);
     }
 }

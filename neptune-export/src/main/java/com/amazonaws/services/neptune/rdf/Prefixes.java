@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.rdf;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
+import org.eclipse.rdf4j.model.util.URIUtil;
 import org.eclipse.rdf4j.rio.RDFWriter;
 
 import java.io.BufferedWriter;
@@ -32,28 +33,10 @@ public class Prefixes {
 
     public Prefixes() {
         prefixes.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
-        prefixes.put("http://www.w3.org/2000/01/rdf-schema#", "rdfs");
+        //prefixes.put("http://www.w3.org/2000/01/rdf-schema#", "rdfs");
         prefixes.put("http://www.w3.org/2001/XMLSchema#", "xsd");
 
         offset = prefixes.size();
-    }
-
-    public String formatIRI(String s) {
-        int i = s.indexOf("#");
-
-        if (i > 0 && i < (s.length() - 1)) {
-            String prefix = s.substring(0, i + 1);
-            String value = s.substring(i + 1);
-
-            if (!prefixes.containsKey(prefix)) {
-                prefixes.put(prefix, "s" + (prefixes.size() - offset));
-            }
-
-            return String.format("%s:%s", prefixes.get(prefix), value);
-
-        } else {
-            return String.format("<%s>", s);
-        }
     }
 
     public void parse(String s, RDFWriter writer) {
