@@ -3,17 +3,30 @@
             or JSON
     
     SYNOPSIS
-            neptune-export.sh export-pg [ {-cn | --concurrency} <concurrency> ]
+            neptune-export.sh export-pg [ --alb-host-header <albHostHeader> ]
+                    [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
-                    [ --host-header <hostHeader> ] [ --log-level <logLevel> ]
+                    [ --log-level <logLevel> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
-                    [ {-p | --port} <port> ] [ {-r | --range} <range> ]
-                    [ {-s | --scope} <scope> ] [ --sample ]
-                    [ --sample-size <sampleSize> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ]
+                    [ --nlb-host-header <nlbHostHeader> ] [ {-p | --port} <port> ]
+                    [ {-r | --range} <range> ] [ {-s | --scope} <scope> ]
+                    [ --sample ] [ --sample-size <sampleSize> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
+            --alb-host-header <albHostHeader>
+                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
+                connecting to an IAM DB enabled Neptune cluster through an
+                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'host-header' from which only one
+                option may be specified
+    
+    
             -cn <concurrency>, --concurrency <concurrency>
                 Concurrency (optional)
     
@@ -47,13 +60,6 @@
                 This option may occur a maximum of 1 times
     
     
-            --host-header <hostHeader>
-                Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled
-                Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
-    
-                This option may occur a maximum of 1 times
-    
-    
             --log-level <logLevel>
                 Log level (optional, default 'error')
     
@@ -69,6 +75,18 @@
     
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be exported (optional, default all labels)
+    
+            --nlb-host-header <nlbHostHeader>
+                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
+                connecting to an IAM DB enabled Neptune cluster through a network
+                load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'host-header' from which only one
+                option may be specified
+    
     
             -p <port>, --port <port>
                 Neptune port (optional, default 8182)

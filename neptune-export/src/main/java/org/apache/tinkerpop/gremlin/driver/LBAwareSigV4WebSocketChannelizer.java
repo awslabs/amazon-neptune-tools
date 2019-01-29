@@ -36,6 +36,7 @@ package org.apache.tinkerpop.gremlin.driver;
 
 import com.amazon.neptune.gremlin.driver.sigv4.AwsSigV4ClientHandshaker;
 import com.amazon.neptune.gremlin.driver.sigv4.ChainedSigV4PropertiesProvider;
+import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 import com.amazonaws.services.neptune.auth.LBAwareAwsSigV4ClientHandshaker;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -194,7 +195,8 @@ public class LBAwareSigV4WebSocketChannelizer extends Channelizer.AbstractChanne
      * @return the instance of clientHandler.
      */
     private WebSocketClientHandler createHandler() {
-        String hostHeaderValue = cluster.authProperties().get(AuthProperties.Property.JAAS_ENTRY);
+        HandshakeRequestConfig handshakeRequestConfig =
+                HandshakeRequestConfig.parse(cluster.authProperties().get(AuthProperties.Property.JAAS_ENTRY));
         WebSocketClientHandshaker handshaker = new LBAwareAwsSigV4ClientHandshaker(
                 connection.getUri(),
                 WebSocketVersion.V13,
@@ -203,7 +205,7 @@ public class LBAwareSigV4WebSocketChannelizer extends Channelizer.AbstractChanne
                 EmptyHttpHeaders.INSTANCE,
                 cluster.getMaxContentLength(),
                 new ChainedSigV4PropertiesProvider(),
-                hostHeaderValue);
+                handshakeRequestConfig);
         return new WebSocketClientHandler(handshaker);
     }
 }

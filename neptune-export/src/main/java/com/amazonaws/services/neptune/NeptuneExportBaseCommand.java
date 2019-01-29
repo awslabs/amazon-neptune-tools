@@ -36,9 +36,15 @@ public class NeptuneExportBaseCommand {
     @Once
     protected boolean useIamAuth = false;
 
-    @Option(name = {"--host-header"}, description = "Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
+    @Option(name = {"--nlb-host-header"}, description = "Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
     @Once
-    protected String hostHeader = "";
+    @MutuallyExclusiveWith(tag = "host-header")
+    protected String nlbHostHeader;
+
+    @Option(name = {"--alb-host-header"}, description = "Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if connecting to an IAM DB enabled Neptune cluster through an application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
+    @Once
+    @MutuallyExclusiveWith(tag = "host-header")
+    protected String albHostHeader;
 
     public void setLoggingLevel(){
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);

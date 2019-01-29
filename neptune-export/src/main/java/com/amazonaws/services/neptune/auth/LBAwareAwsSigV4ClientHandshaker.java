@@ -26,27 +26,28 @@ import java.net.URI;
 
 public class LBAwareAwsSigV4ClientHandshaker extends WebSocketClientHandshaker13 {
     private final ChainedSigV4PropertiesProvider sigV4PropertiesProvider;
-    private final String hostHeaderValue;
+    private final HandshakeRequestConfig handshakeRequestConfig;
     private final SigV4Properties sigV4Properties;
 
-    public LBAwareAwsSigV4ClientHandshaker(URI webSocketURL, WebSocketVersion version, String subprotocol, boolean allowExtensions, HttpHeaders customHeaders, int maxFramePayloadLength, ChainedSigV4PropertiesProvider sigV4PropertiesProvider, String hostHeaderValue) {
+    public LBAwareAwsSigV4ClientHandshaker(URI webSocketURL, WebSocketVersion version, String subprotocol, boolean allowExtensions, HttpHeaders customHeaders, int maxFramePayloadLength, ChainedSigV4PropertiesProvider sigV4PropertiesProvider, HandshakeRequestConfig handshakeRequestConfig) {
         super(webSocketURL, version, subprotocol, allowExtensions, customHeaders, maxFramePayloadLength);
         this.sigV4PropertiesProvider = sigV4PropertiesProvider;
-        this.hostHeaderValue = hostHeaderValue;
+        this.handshakeRequestConfig = handshakeRequestConfig;
         this.sigV4Properties = this.loadProperties();
     }
 
     protected FullHttpRequest newHandshakeRequest() {
         FullHttpRequest request = super.newHandshakeRequest();
+
         request.headers().remove("Host");
-
-        System.err.println("Host header: " + hostHeaderValue);
-
-        request.headers().add("Host", hostHeaderValue);
+        request.headers().add("Host", handshakeRequestConfig.hostHeader());
 
         try {
             NeptuneNettyHttpSigV4Signer sigV4Signer = new NeptuneNettyHttpSigV4Signer(this.sigV4Properties.getServiceRegion(), new DefaultAWSCredentialsProviderChain());
             sigV4Signer.signRequest(request);
+            if (handshakeRequestConfig.removeHostHeaderAfterSigning()) {
+                request.headers().remove("Host");
+            }
             return request;
         } catch (NeptuneSigV4SignerException var4) {
             throw new RuntimeException("Exception occurred while signing the request", var4);

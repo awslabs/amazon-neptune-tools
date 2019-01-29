@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
@@ -72,7 +73,12 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
 
         try (Timer timer = new Timer();
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, batchSize, useIamAuth, hostHeader);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(
+                     endpoints,
+                     port,
+                     concurrencyConfig,
+                     useIamAuth,
+                     HandshakeRequestConfig.create(nlbHostHeader, albHostHeader));
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.GremlinQueries, directory, tag);

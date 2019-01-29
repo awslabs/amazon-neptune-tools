@@ -4,15 +4,29 @@
     
     SYNOPSIS
             neptune-export.sh export-pg-from-queries
+                    [ --alb-host-header <albHostHeader> ]
                     [ {-b | --batch-size} <batchSize> ]
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
-                    [ --host-header <hostHeader> ] [ --log-level <logLevel> ]
-                    [ {-p | --port} <port> ] [ {-q | --queries} <queries>... ]
-                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
+                    [ --log-level <logLevel> ]
+                    [ --nlb-host-header <nlbHostHeader> ] [ {-p | --port} <port> ]
+                    [ {-q | --queries} <queries>... ] [ {-t | --tag} <tag> ]
+                    [ --use-iam-auth ]
     
     OPTIONS
+            --alb-host-header <albHostHeader>
+                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
+                connecting to an IAM DB enabled Neptune cluster through an
+                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'host-header' from which only one
+                option may be specified
+    
+    
             -b <batchSize>, --batch-size <batchSize>
                 Batch size (optional, default 64). Reduce this number if your
                 queries trigger CorruptedFrameExceptions.
@@ -61,13 +75,6 @@
                 This option may occur a maximum of 1 times
     
     
-            --host-header <hostHeader>
-                Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled
-                Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
-    
-                This option may occur a maximum of 1 times
-    
-    
             --log-level <logLevel>
                 Log level (optional, default 'error')
     
@@ -79,6 +86,18 @@
                     error
     
                 This option may occur a maximum of 1 times
+    
+    
+            --nlb-host-header <nlbHostHeader>
+                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
+                connecting to an IAM DB enabled Neptune cluster through a network
+                load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'host-header' from which only one
+                option may be specified
     
     
             -p <port>, --port <port>

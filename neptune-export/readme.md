@@ -23,9 +23,13 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
 
 _neptune-export_ supports exporting from databases that have [IAM database authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) enabled. Supply the `--use-iam-auth` option with each command. Remember to set the **SERVICE_REGION** environment variable – e.g. `export SERVICE_REGION=us-east-1`.
 
-If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply a `--host-header` option (see [Connecting to Amazon Neptune from Clients Outside the Neptune VPC](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)). Use the `--endpoint` and `--port` options to specify the _load balancer_ endpoint and port, and the `--host-header` option to specify the Neptune endpoint and port in the form `<NEPTUNE_DNS:PORT>`. For example:
+_neptune-export_ also supports connecting through a load balancer to a Neptune database with IAM DB authetication enabled. However, this feature is only currently supported for property graphs, with support for RDF graphs coming soon.
 
-`--host-header neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com:8182`
+If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply either an `--nlb-host-header` option (if using a network load balancer) or an `--alb-host-header` option (if using an application load balancer). Use the `--endpoint` and `--port` options to specify the _load balancer_ endpoint and port, and the `--nlb-host-header` or `--alb-host-header` option to specify the Neptune endpoint and port in the form `<NEPTUNE_DNS:PORT>`. For example:
+
+`--nlb-host-header neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com:8182`
+
+For details on using a load balancer with a database with IAM DB authentication enabled, see [Connecting to Amazon Neptune from Clients Outside the Neptune VPC](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer). 
    
 ## Building neptune-export
 

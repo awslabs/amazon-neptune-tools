@@ -2,12 +2,25 @@
             neptune-export.sh export-rdf - Export RDF graph from Neptune to Turtle
     
     SYNOPSIS
-            neptune-export.sh export-rdf {-d | --dir} <directory>
-                    {-e | --endpoint} <endpoints>... [ --host-header <hostHeader> ]
-                    [ --log-level <logLevel> ] [ {-p | --port} <port> ]
+            neptune-export.sh export-rdf [ --alb-host-header <albHostHeader> ]
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
+                    [ --log-level <logLevel> ]
+                    [ --nlb-host-header <nlbHostHeader> ] [ {-p | --port} <port> ]
                     [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
+            --alb-host-header <albHostHeader>
+                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
+                connecting to an IAM DB enabled Neptune cluster through an
+                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'host-header' from which only one
+                option may be specified
+    
+    
             -d <directory>, --dir <directory>
                 Root directory for output
     
@@ -22,13 +35,6 @@
                 Neptune endpoint(s) – supply multiple instance endpoints if you
                 want to load balance requests across a cluster
     
-            --host-header <hostHeader>
-                Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled
-                Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
-    
-                This option may occur a maximum of 1 times
-    
-    
             --log-level <logLevel>
                 Log level (optional, default 'error')
     
@@ -40,6 +46,18 @@
                     error
     
                 This option may occur a maximum of 1 times
+    
+    
+            --nlb-host-header <nlbHostHeader>
+                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
+                connecting to an IAM DB enabled Neptune cluster through a network
+                load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'host-header' from which only one
+                option may be specified
     
     
             -p <port>, --port <port>
