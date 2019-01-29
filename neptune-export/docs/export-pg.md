@@ -3,17 +3,32 @@
             or JSON
     
     SYNOPSIS
-            neptune-export.sh export-pg [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
+            neptune-export.sh export-pg
+                    [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
+                    [ {-cn | --concurrency} <concurrency> ]
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
-                    [ --log-level <logLevel> ]
+                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
+                    [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-p | --port} <port> ] [ {-r | --range} <range> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
                     [ --sample-size <sampleSize> ] [ {-t | --tag} <tag> ]
                     [ --use-iam-auth ]
     
     OPTIONS
+            --alb-endpoint <applicationLoadBalancerEndpoint>
+                Application load balancer endpoint (optional: use only if
+                connecting to an IAM DB enabled Neptune cluster through an
+                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-application-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'load-balancer' from which only
+                one option may be specified
+    
+    
             -cn <concurrency>, --concurrency <concurrency>
                 Concurrency (optional)
     
@@ -30,7 +45,7 @@
                 must be readable and writable.
     
     
-            -e <endpoints>, --endpoint <endpoints>
+            -e <endpoint>, --endpoint <endpoint>
                 Neptune endpoint(s) – supply multiple instance endpoints if you
                 want to load balance requests across a cluster
     
@@ -47,7 +62,17 @@
                 This option may occur a maximum of 1 times
     
     
-            --log-level <logLevel>
+            --lb-port <loadBalancerPort>
+                Load balancer port (optional, default 80)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This options value represents a port and must fall in one of the
+                following port ranges: 1-1023, 1024-49151
+    
+    
+            --log-level <log level>
                 Log level (optional, default 'error')
     
                 This options value is restricted to the following set of values:
@@ -63,6 +88,18 @@
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be exported (optional, default all labels)
     
+            --nlb-endpoint <networkLoadBalancerEndpoint>
+                Network load balancer endpoint (optional: use only if connecting to
+                an IAM DB enabled Neptune cluster through a network load balancer
+                (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'load-balancer' from which only
+                one option may be specified
+    
+    
             -p <port>, --port <port>
                 Neptune port (optional, default 8182)
     
@@ -70,7 +107,7 @@
     
     
                 This options value represents a port and must fall in one of the
-                following port ranges: 1024-49151
+                following port ranges: 1-1023, 1024-49151
     
     
             -r <range>, --range <range>
@@ -111,7 +148,8 @@
     
             --use-iam-auth
                 Use IAM database authentication to authenticate to Neptune
-                (remember to set SERVICE_REGION environment variable)
+                (remember to set SERVICE_REGION environment variable, and, if using
+                a load balancer, set the --host-header option as well)
     
                 This option may occur a maximum of 1 times
     
