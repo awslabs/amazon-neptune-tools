@@ -81,7 +81,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
 
         try (Timer timer = new Timer();
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth, hostHeader);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);

@@ -32,9 +32,13 @@ public class NeptuneExportBaseCommand {
     @AllowedValues(allowedValues = {"trace", "debug", "info", "warn", "error"})
     protected String logLevel = "error";
 
-    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune (remember to set SERVICE_REGION environment variable)")
+    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune (remember to set SERVICE_REGION environment variable, and, if using a load balancer, set the --host-header option as well)")
     @Once
     protected boolean useIamAuth = false;
+
+    @Option(name = {"--host-header"}, description = "Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
+    @Once
+    protected String hostHeader = "";
 
     public void setLoggingLevel(){
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);

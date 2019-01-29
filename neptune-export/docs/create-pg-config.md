@@ -6,7 +6,7 @@
             neptune-export.sh create-pg-config {-d | --dir} <directory>
                     {-e | --endpoint} <endpoints>...
                     [ {-el | --edge-label} <edgeLabels>... ]
-                    [ --log-level <logLevel> ]
+                    [ --host-header <hostHeader> ] [ --log-level <logLevel> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ {-p | --port} <port> ] [ {-s | --scope} <scope> ]
                     [ --sample ] [ --sample-size <sampleSize> ]
@@ -30,6 +30,13 @@
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be included in config (optional, default all
                 labels)
+    
+            --host-header <hostHeader>
+                Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled
+                Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
     
             --log-level <logLevel>
                 Log level (optional, default 'error')
@@ -55,7 +62,7 @@
     
     
                 This options value represents a port and must fall in one of the
-                following port ranges: 1024-49151
+                following port ranges: 1-1023, 1024-49151
     
     
             -s <scope>, --scope <scope>
@@ -90,7 +97,8 @@
     
             --use-iam-auth
                 Use IAM database authentication to authenticate to Neptune
-                (remember to set SERVICE_REGION environment variable)
+                (remember to set SERVICE_REGION environment variable, and, if using
+                a load balancer, set the --host-header option as well)
     
                 This option may occur a maximum of 1 times
     

@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import org.apache.tinkerpop.gremlin.driver.Client;
-import org.apache.tinkerpop.gremlin.driver.Cluster;
-import org.apache.tinkerpop.gremlin.driver.ResultSet;
-import org.apache.tinkerpop.gremlin.driver.SigV4WebSocketChannelizer;
+import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -27,19 +24,26 @@ public class NeptuneGremlinClient implements AutoCloseable {
 
     public static final int DEFAULT_BATCH_SIZE = 64;
 
-    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, boolean useIamAuth) {
-        return create(endpoints, port, concurrencyConfig, DEFAULT_BATCH_SIZE, useIamAuth);
+    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, boolean useIamAuth, String hostHeader) {
+        return create(endpoints, port, concurrencyConfig, DEFAULT_BATCH_SIZE, useIamAuth, hostHeader);
     }
 
-    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, int batchSize, boolean useIamAuth) {
+    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, int batchSize, boolean useIamAuth, String hostHeader) {
         Cluster.Builder builder = Cluster.build()
                 .port(port)
                 .serializer(Serializers.GRYO_V3D0)
                 .maxWaitForConnection(10000)
                 .resultIterationBatchSize(batchSize);
 
-        if (useIamAuth){
-            builder = builder.channelizer(SigV4WebSocketChannelizer.class);
+        if (useIamAuth) {
+            if (hostHeader.isEmpty()) {
+                builder = builder.channelizer(SigV4WebSocketChannelizer.class);
+            } else {
+                builder = builder
+                        // use the JAAS_ENTRY auth property to pass Host header info to the channelizer
+                        .authProperties(new AuthProperties().with(AuthProperties.Property.JAAS_ENTRY, hostHeader))
+                        .channelizer(LBAwareSigV4WebSocketChannelizer.class);
+            }
         }
 
         for (String endpoint : endpoints) {
@@ -59,7 +63,7 @@ public class NeptuneGremlinClient implements AutoCloseable {
         return EmptyGraph.instance().traversal().withRemote(DriverRemoteConnection.using(cluster));
     }
 
-    public QueryClient queryClient(){
+    public QueryClient queryClient() {
         return new QueryClient(cluster.connect());
     }
 
@@ -70,7 +74,7 @@ public class NeptuneGremlinClient implements AutoCloseable {
         }
     }
 
-    public static class QueryClient implements AutoCloseable{
+    public static class QueryClient implements AutoCloseable {
 
         private final Client client;
 
@@ -78,7 +82,7 @@ public class NeptuneGremlinClient implements AutoCloseable {
             this.client = client;
         }
 
-        public ResultSet submit(String  gremlin){
+        public ResultSet submit(String gremlin) {
             return client.submit(gremlin);
         }
 

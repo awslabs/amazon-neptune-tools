@@ -8,9 +8,9 @@
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
-                    [ --log-level <logLevel> ] [ {-p | --port} <port> ]
-                    [ {-q | --queries} <queries>... ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ]
+                    [ --host-header <hostHeader> ] [ --log-level <logLevel> ]
+                    [ {-p | --port} <port> ] [ {-q | --queries} <queries>... ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
             -b <batchSize>, --batch-size <batchSize>
@@ -61,6 +61,13 @@
                 This option may occur a maximum of 1 times
     
     
+            --host-header <hostHeader>
+                Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled
+                Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
+    
             --log-level <logLevel>
                 Log level (optional, default 'error')
     
@@ -81,7 +88,7 @@
     
     
                 This options value represents a port and must fall in one of the
-                following port ranges: 1024-49151
+                following port ranges: 1-1023, 1024-49151
     
     
             -q <queries>, --queries <queries>
@@ -96,7 +103,8 @@
     
             --use-iam-auth
                 Use IAM database authentication to authenticate to Neptune
-                (remember to set SERVICE_REGION environment variable)
+                (remember to set SERVICE_REGION environment variable, and, if using
+                a load balancer, set the --host-header option as well)
     
                 This option may occur a maximum of 1 times
     

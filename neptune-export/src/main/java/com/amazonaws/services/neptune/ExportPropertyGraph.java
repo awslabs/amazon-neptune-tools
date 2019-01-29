@@ -94,7 +94,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, useIamAuth, hostHeader);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);

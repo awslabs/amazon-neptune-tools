@@ -3,9 +3,9 @@
     
     SYNOPSIS
             neptune-export.sh export-rdf {-d | --dir} <directory>
-                    {-e | --endpoint} <endpoints>... [ --log-level <logLevel> ]
-                    [ {-p | --port} <port> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ]
+                    {-e | --endpoint} <endpoints>... [ --host-header <hostHeader> ]
+                    [ --log-level <logLevel> ] [ {-p | --port} <port> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
             -d <directory>, --dir <directory>
@@ -21,6 +21,13 @@
             -e <endpoints>, --endpoint <endpoints>
                 Neptune endpoint(s) – supply multiple instance endpoints if you
                 want to load balance requests across a cluster
+    
+            --host-header <hostHeader>
+                Host header (<NEPTUNE_DNS:PORT> if connecting to an IAM DB enabled
+                Neptune cluster through a load balancer – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+    
+                This option may occur a maximum of 1 times
+    
     
             --log-level <logLevel>
                 Log level (optional, default 'error')
@@ -42,7 +49,7 @@
     
     
                 This options value represents a port and must fall in one of the
-                following port ranges: 1024-49151
+                following port ranges: 1-1023, 1024-49151
     
     
             -t <tag>, --tag <tag>
@@ -53,7 +60,8 @@
     
             --use-iam-auth
                 Use IAM database authentication to authenticate to Neptune
-                (remember to set SERVICE_REGION environment variable)
+                (remember to set SERVICE_REGION environment variable, and, if using
+                a load balancer, set the --host-header option as well)
     
                 This option may occur a maximum of 1 times
     

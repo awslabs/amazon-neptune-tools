@@ -22,6 +22,10 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
 ### IAM DB authentication
 
 _neptune-export_ supports exporting from databases that have [IAM database authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) enabled. Supply the `--use-iam-auth` option with each command. Remember to set the **SERVICE_REGION** environment variable – e.g. `export SERVICE_REGION=us-east-1`.
+
+If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply a `--host-header` option (see [Connecting to Amazon Neptune from Clients Outside the Neptune VPC](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)). Use the `--endpoint` and `--port` options to specify the _load balancer_ endpoint and port, and the `--host-header` option to specify the Neptune endpoint and port in the form `<NEPTUNE_DNS:PORT>`. For example:
+
+`--host-header neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com:8182`
    
 ## Building neptune-export
 

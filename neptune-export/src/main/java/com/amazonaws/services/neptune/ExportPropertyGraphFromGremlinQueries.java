@@ -72,7 +72,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
 
         try (Timer timer = new Timer();
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, batchSize, useIamAuth);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(endpoints, port, concurrencyConfig, batchSize, useIamAuth, hostHeader);
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.GremlinQueries, directory, tag);
