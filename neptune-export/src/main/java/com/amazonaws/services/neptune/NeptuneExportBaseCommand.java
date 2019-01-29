@@ -13,7 +13,7 @@ public class NeptuneExportBaseCommand {
     protected List<String> endpoints;
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
-    @Port(acceptablePorts = {PortType.USER})
+    @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
     @Once
     protected int port = 8182;
 
