@@ -25,9 +25,7 @@ _neptune-export_ supports exporting from databases that have [IAM database authe
 
 _neptune-export_ also supports connecting through a load balancer to a Neptune database with IAM DB authetication enabled. However, this feature is only currently supported for property graphs, with support for RDF graphs coming soon.
 
-If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply either an `--nlb-host-header` option (if using a network load balancer) or an `--alb-host-header` option (if using an application load balancer). Use the `--endpoint` and `--port` options to specify the _load balancer_ endpoint and port, and the `--nlb-host-header` or `--alb-host-header` option to specify the Neptune endpoint and port in the form `<NEPTUNE_DNS:PORT>`. For example:
-
-`--nlb-host-header neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com:8182`
+If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply either an `--nlb-endpoint` option (if using a network load balancer) or an `--alb-endpoint` option (if using an application load balancer), and an `--lb-port`.
 
 For details on using a load balancer with a database with IAM DB authentication enabled, see [Connecting to Amazon Neptune from Clients Outside the Neptune VPC](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer). 
    

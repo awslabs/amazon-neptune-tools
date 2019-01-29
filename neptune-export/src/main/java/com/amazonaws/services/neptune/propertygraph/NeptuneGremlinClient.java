@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.auth.ConnectionConfig;
 import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
@@ -25,29 +26,29 @@ public class NeptuneGremlinClient implements AutoCloseable {
 
     public static final int DEFAULT_BATCH_SIZE = 64;
 
-    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, boolean useIamAuth, HandshakeRequestConfig handshakeRequestConfig) {
-        return create(endpoints, port, concurrencyConfig, DEFAULT_BATCH_SIZE, useIamAuth, handshakeRequestConfig);
+    public static NeptuneGremlinClient create(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) {
+        return create(connectionConfig, concurrencyConfig, DEFAULT_BATCH_SIZE);
     }
 
-    public static NeptuneGremlinClient create(Collection<String> endpoints, int port, ConcurrencyConfig concurrencyConfig, int batchSize, boolean useIamAuth, HandshakeRequestConfig handshakeRequestConfig) {
+    public static NeptuneGremlinClient create(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, int batchSize) {
         Cluster.Builder builder = Cluster.build()
-                .port(port)
+                .port(connectionConfig.port())
                 .serializer(Serializers.GRYO_V3D0)
                 .maxWaitForConnection(10000)
                 .resultIterationBatchSize(batchSize);
 
-        if (useIamAuth) {
-            if (handshakeRequestConfig.isEmpty()) {
+        if (connectionConfig.useIamAuth()) {
+            if (connectionConfig.isDirectConnection()) {
                 builder = builder.channelizer(SigV4WebSocketChannelizer.class);
             } else {
                 builder = builder
                         // use the JAAS_ENTRY auth property to pass Host header info to the channelizer
-                        .authProperties(new AuthProperties().with(AuthProperties.Property.JAAS_ENTRY, handshakeRequestConfig.value()))
+                        .authProperties(new AuthProperties().with(AuthProperties.Property.JAAS_ENTRY, connectionConfig.handshakeRequestConfig().value()))
                         .channelizer(LBAwareSigV4WebSocketChannelizer.class);
             }
         }
 
-        for (String endpoint : endpoints) {
+        for (String endpoint : connectionConfig.endpoints()) {
             builder = builder.addContactPoint(endpoint);
         }
 

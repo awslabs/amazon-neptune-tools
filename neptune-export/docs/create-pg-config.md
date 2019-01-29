@@ -3,28 +3,27 @@
             metadata config file
     
     SYNOPSIS
-            neptune-export.sh create-pg-config
-                    [ --alb-host-header <albHostHeader> ] {-d | --dir} <directory>
-                    {-e | --endpoint} <endpoints>...
-                    [ {-el | --edge-label} <edgeLabels>... ]
+            neptune-export.sh create-pg-config [ --alb-endpoint <albEndpoint> ]
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
+                    [ {-el | --edge-label} <edgeLabels>... ] [ --lb-port <lbPort> ]
                     [ --log-level <logLevel> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
-                    [ --nlb-host-header <nlbHostHeader> ] [ {-p | --port} <port> ]
+                    [ --nlb-endpoint <nlbEndpoint> ] [ {-p | --port} <port> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
                     [ --sample-size <sampleSize> ] [ {-t | --tag} <tag> ]
                     [ --use-iam-auth ]
     
     OPTIONS
-            --alb-host-header <albHostHeader>
-                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
-                connecting to an IAM DB enabled Neptune cluster through an
-                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+            --alb-endpoint <albEndpoint>
+                Application load balancer endpoint <NEPTUNE_DNS:PORT> (optional
+                – use only if connecting to an IAM DB enabled Neptune cluster
+                through an application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
     
                 This option may occur a maximum of 1 times
     
     
-                This option is part of the group 'host-header' from which only one
-                option may be specified
+                This option is part of the group 'load-balancer' from which only
+                one option may be specified
     
     
             -d <directory>, --dir <directory>
@@ -45,6 +44,16 @@
                 Labels of edges to be included in config (optional, default all
                 labels)
     
+            --lb-port <lbPort>
+                Load balancer port (optional, default 80)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This options value represents a port and must fall in one of the
+                following port ranges: 1-1023, 1024-49151
+    
+    
             --log-level <logLevel>
                 Log level (optional, default 'error')
     
@@ -62,16 +71,16 @@
                 Labels of nodes to be included in config (optional, default all
                 labels)
     
-            --nlb-host-header <nlbHostHeader>
-                Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if
-                connecting to an IAM DB enabled Neptune cluster through a network
-                load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+            --nlb-endpoint <nlbEndpoint>
+                Network load balancer endpoint (optional – use only if connecting
+                to an IAM DB enabled Neptune cluster through a network load
+                balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
     
                 This option may occur a maximum of 1 times
     
     
-                This option is part of the group 'host-header' from which only one
-                option may be specified
+                This option is part of the group 'load-balancer' from which only
+                one option may be specified
     
     
             -p <port>, --port <port>

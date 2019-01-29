@@ -1,5 +1,6 @@
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.auth.ConnectionConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
 
@@ -36,15 +37,24 @@ public class NeptuneExportBaseCommand {
     @Once
     protected boolean useIamAuth = false;
 
-    @Option(name = {"--nlb-host-header"}, description = "Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
+    @Option(name = {"--nlb-endpoint"}, description = "Network load balancer endpoint (optional – use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
     @Once
-    @MutuallyExclusiveWith(tag = "host-header")
-    protected String nlbHostHeader;
+    @MutuallyExclusiveWith(tag = "load-balancer")
+    protected String nlbEndpoint;
 
-    @Option(name = {"--alb-host-header"}, description = "Host header of the form <NEPTUNE_DNS:PORT> (optional – use only if connecting to an IAM DB enabled Neptune cluster through an application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
+    @Option(name = {"--alb-endpoint"}, description = "Application load balancer endpoint <NEPTUNE_DNS:PORT> (optional – use only if connecting to an IAM DB enabled Neptune cluster through an application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)")
     @Once
-    @MutuallyExclusiveWith(tag = "host-header")
-    protected String albHostHeader;
+    @MutuallyExclusiveWith(tag = "load-balancer")
+    protected String albEndpoint;
+
+    @Option(name = {"--lb-port"}, description = "Load balancer port (optional, default 80)")
+    @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
+    @Once
+    protected int lbPort = 80;
+
+    public ConnectionConfig connectionConfig(){
+        return new ConnectionConfig(endpoints, port, nlbEndpoint, albEndpoint, lbPort, useIamAuth);
+    }
 
     public void setLoggingLevel(){
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);

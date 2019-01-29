@@ -40,7 +40,7 @@ public class LBAwareAwsSigV4ClientHandshaker extends WebSocketClientHandshaker13
         FullHttpRequest request = super.newHandshakeRequest();
 
         request.headers().remove("Host");
-        request.headers().add("Host", handshakeRequestConfig.hostHeader());
+        request.headers().add("Host", handshakeRequestConfig.chooseHostHeader());
 
         try {
             NeptuneNettyHttpSigV4Signer sigV4Signer = new NeptuneNettyHttpSigV4Signer(this.sigV4Properties.getServiceRegion(), new DefaultAWSCredentialsProviderChain());
