@@ -67,9 +67,6 @@ public class NeptuneSparqlClient implements AutoCloseable {
                             collect(Collectors.toList()));
         } else {
 
-            SPARQLRepository repository = new SPARQLRepository("");
-            updateParser(repository);
-
             return new NeptuneSparqlClient(
                     endpoints.stream().map(e ->
                             updateParser(new SPARQLRepository(sparqlEndpount(e, port)))).
