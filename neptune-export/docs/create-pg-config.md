@@ -3,21 +3,22 @@
             metadata config file
     
     SYNOPSIS
-            neptune-export.sh create-pg-config [ --alb-endpoint <albEndpoint> ]
-                    {-d | --dir} <directory> {-e | --endpoint} <endpoints>...
-                    [ {-el | --edge-label} <edgeLabels>... ] [ --lb-port <lbPort> ]
-                    [ --log-level <logLevel> ]
+            neptune-export.sh create-pg-config
+                    [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
+                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
+                    [ {-el | --edge-label} <edgeLabels>... ]
+                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
-                    [ --nlb-endpoint <nlbEndpoint> ] [ {-p | --port} <port> ]
-                    [ {-s | --scope} <scope> ] [ --sample ]
-                    [ --sample-size <sampleSize> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ]
+                    [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
+                    [ {-p | --port} <port> ] [ {-s | --scope} <scope> ]
+                    [ --sample ] [ --sample-size <sampleSize> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ]
     
     OPTIONS
-            --alb-endpoint <albEndpoint>
-                Application load balancer endpoint <NEPTUNE_DNS:PORT> (optional
-                – use only if connecting to an IAM DB enabled Neptune cluster
-                through an application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+            --alb-endpoint <applicationLoadBalancerEndpoint>
+                Application load balancer endpoint (optional: use only if
+                connecting to an IAM DB enabled Neptune cluster through an
+                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-application-load-balancer)
     
                 This option may occur a maximum of 1 times
     
@@ -36,7 +37,7 @@
                 must be readable and writable.
     
     
-            -e <endpoints>, --endpoint <endpoints>
+            -e <endpoint>, --endpoint <endpoint>
                 Neptune endpoint(s) – supply multiple instance endpoints if you
                 want to load balance requests across a cluster
     
@@ -44,7 +45,7 @@
                 Labels of edges to be included in config (optional, default all
                 labels)
     
-            --lb-port <lbPort>
+            --lb-port <loadBalancerPort>
                 Load balancer port (optional, default 80)
     
                 This option may occur a maximum of 1 times
@@ -54,7 +55,7 @@
                 following port ranges: 1-1023, 1024-49151
     
     
-            --log-level <logLevel>
+            --log-level <log level>
                 Log level (optional, default 'error')
     
                 This options value is restricted to the following set of values:
@@ -71,10 +72,10 @@
                 Labels of nodes to be included in config (optional, default all
                 labels)
     
-            --nlb-endpoint <nlbEndpoint>
-                Network load balancer endpoint (optional – use only if connecting
-                to an IAM DB enabled Neptune cluster through a network load
-                balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer)
+            --nlb-endpoint <networkLoadBalancerEndpoint>
+                Network load balancer endpoint (optional: use only if connecting to
+                an IAM DB enabled Neptune cluster through a network load balancer
+                (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer)
     
                 This option may occur a maximum of 1 times
     
