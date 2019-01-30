@@ -29,7 +29,7 @@ public class EdgesWriterFactory implements WriterFactory<Path> {
     }
 
     @Override
-    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata, Format format) throws IOException {
+    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, Format format) throws IOException {
 
         java.nio.file.Path filePath = directories.createFilePath(directories.edgesDirectory(), name, index, format);
         PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));

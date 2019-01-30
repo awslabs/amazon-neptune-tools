@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 public class CsvPrinter implements Printer {
 
     private final PrintWriter printer;
-    private final Map<String, PropertyTypeInfo> metadata;
+    private final Map<Object, PropertyTypeInfo> metadata;
     private final CommaPrinter commaPrinter;
 
-    public CsvPrinter(PrintWriter printer, Map<String, PropertyTypeInfo> metadata) {
+    public CsvPrinter(PrintWriter printer, Map<Object, PropertyTypeInfo> metadata) {
         this.printer = printer;
         this.metadata = metadata;
         this.commaPrinter = new CommaPrinter(printer);
@@ -56,9 +56,9 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void printProperties(Map<?, ?> properties) {
-        for (Map.Entry<String, PropertyTypeInfo> entry : metadata.entrySet()) {
+        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
 
-            String property = entry.getKey();
+            Object property = entry.getKey();
             DataType dataType = entry.getValue().dataType();
 
             if (properties.containsKey(property)) {

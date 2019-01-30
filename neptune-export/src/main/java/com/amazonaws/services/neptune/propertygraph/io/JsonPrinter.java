@@ -24,9 +24,9 @@ import java.util.Map;
 public class JsonPrinter implements Printer {
 
     private final JsonGenerator generator;
-    private final Map<String, PropertyTypeInfo> metadata;
+    private final Map<Object, PropertyTypeInfo> metadata;
 
-    public JsonPrinter(JsonGenerator generator, Map<String, PropertyTypeInfo> metadata) throws IOException {
+    public JsonPrinter(JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         this.generator = generator;
         this.metadata = metadata;
     }
@@ -43,10 +43,14 @@ public class JsonPrinter implements Printer {
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        for (Map.Entry<String, PropertyTypeInfo> entry : metadata.entrySet()) {
+        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
 
-            String key = entry.getKey();
-            DataType dataType = entry.getValue().dataType();
+            Object key = entry.getKey();
+            PropertyTypeInfo propertyTypeInfo = entry.getValue();
+
+            DataType dataType = propertyTypeInfo.dataType();
+            String formattedKey = propertyTypeInfo.nameWithoutDataType();
+
             if (properties.containsKey(key)) {
 
                 Object value = properties.get(key);
@@ -54,18 +58,18 @@ public class JsonPrinter implements Printer {
                 if (isList(value)) {
                     List<?> values = (List<?>) value;
                     if (values.size() > 1) {
-                        generator.writeFieldName(key);
+                        generator.writeFieldName(formattedKey);
                         generator.writeStartArray();
                         for (Object v : values) {
                             dataType.printTo(generator, v);
                         }
                         generator.writeEndArray();
                     } else {
-                        dataType.printTo(generator, key, values.get(0));
+                        dataType.printTo(generator, formattedKey, values.get(0));
                     }
 
                 } else {
-                    dataType.printTo(generator, key, value);
+                    dataType.printTo(generator, formattedKey, value);
                 }
             }
         }
@@ -103,5 +107,4 @@ public class JsonPrinter implements Printer {
     private boolean isList(Object value) {
         return value.getClass().isAssignableFrom(java.util.ArrayList.class);
     }
-
 }
