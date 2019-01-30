@@ -30,7 +30,7 @@ public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
     }
 
     @Override
-    public Printer createPrinter(String name, int index, Map<String, PropertyTypeInfo> metadata, Format format) throws IOException {
+    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, Format format) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
         java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
         PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));

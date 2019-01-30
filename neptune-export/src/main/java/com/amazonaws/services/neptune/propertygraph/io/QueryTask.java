@@ -120,7 +120,8 @@ public class QueryTask implements Runnable {
 
         private ResultsHandler(String name,
                                Map<String, GraphElementHandler<Map<?, ?>>> labelWriters,
-                               QueriesWriterFactory writerFactory, PropertiesMetadata propertiesMetadata) {
+                               QueriesWriterFactory writerFactory,
+                               PropertiesMetadata propertiesMetadata) {
             this.name = name;
             this.labelWriters = labelWriters;
             this.writerFactory = writerFactory;
@@ -134,7 +135,7 @@ public class QueryTask implements Runnable {
                     propertiesMetadata.update(name, properties, allowStructuralElements);
                 }
 
-                Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
+                Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
                 Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, format);
                 printer.printHeaderRemainingColumns(propertyMetadata.values(), false);

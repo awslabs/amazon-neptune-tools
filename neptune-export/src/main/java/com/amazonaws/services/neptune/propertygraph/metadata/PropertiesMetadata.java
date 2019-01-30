@@ -24,7 +24,7 @@ import java.util.Map;
 public class PropertiesMetadata {
 
     public static PropertiesMetadata fromJson(ArrayNode arrayNode) {
-        Map<String, Map<String, PropertyTypeInfo>> metadata = new HashMap<>();
+        Map<String, Map<Object, PropertyTypeInfo>> metadata = new HashMap<>();
 
         for (JsonNode node : arrayNode) {
             String label = node.path("label").asText();
@@ -45,17 +45,17 @@ public class PropertiesMetadata {
         return new PropertiesMetadata(metadata);
     }
 
-    private final Map<String, Map<String, PropertyTypeInfo>> metadata;
+    private final Map<String, Map<Object, PropertyTypeInfo>> metadata;
 
     public PropertiesMetadata() {
         this(new HashMap<>());
     }
 
-    public PropertiesMetadata(Map<String, Map<String, PropertyTypeInfo>> metadata) {
+    public PropertiesMetadata(Map<String, Map<Object, PropertyTypeInfo>> metadata) {
         this.metadata = metadata;
     }
 
-    public Map<String, PropertyTypeInfo> propertyMetadataFor(String label) {
+    public Map<Object, PropertyTypeInfo> propertyMetadataFor(String label) {
         return metadata.get(label);
     }
 
@@ -76,14 +76,13 @@ public class PropertiesMetadata {
             metadata.put(label, new HashMap<>());
         }
 
-        Map<String, PropertyTypeInfo> propertyInfo = metadata.get(label);
+        Map<Object, PropertyTypeInfo> propertyInfo = metadata.get(label);
 
         for (Map.Entry<?, ?> entry : properties.entrySet()) {
 
-            Object key = entry.getKey();
+            Object property = entry.getKey();
 
-            if (allowStructuralElements || !(isStructuralElement(key))){
-                String property = propertyName(key);
+            if (allowStructuralElements || !(isStructuralElement(property))){
                 if (!propertyInfo.containsKey(property)) {
                     propertyInfo.put(property, new PropertyTypeInfo(property));
                 }
@@ -96,27 +95,11 @@ public class PropertiesMetadata {
         return key.equals(T.label) || key.equals(T.id) || key.equals(T.key) || key.equals(T.value);
     }
 
-    private String propertyName(Object key) {
-        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.label)) {
-            return "~label";
-        }
-        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.id)) {
-            return "~id";
-        }
-        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.key)) {
-            return "~key";
-        }
-        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.value)) {
-            return "~value";
-        }
-        return String.valueOf(key);
-    }
-
     public ArrayNode toJson() {
 
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
-        for (Map.Entry<String, Map<String, PropertyTypeInfo>> entry : metadata.entrySet()) {
+        for (Map.Entry<String, Map<Object, PropertyTypeInfo>> entry : metadata.entrySet()) {
 
             String label = entry.getKey();
 
@@ -125,12 +108,12 @@ public class PropertiesMetadata {
 
             ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
 
-            Map<String, PropertyTypeInfo> properties = entry.getValue();
-            for (Map.Entry<String, PropertyTypeInfo> property : properties.entrySet()) {
+            Map<Object, PropertyTypeInfo> properties = entry.getValue();
+            for (Map.Entry<Object, PropertyTypeInfo> property : properties.entrySet()) {
                 PropertyTypeInfo typeInfo = property.getValue();
 
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
-                propertyNode.put("property", property.getKey());
+                propertyNode.put("property", property.getKey().toString());
                 propertyNode.put("dataType", typeInfo.dataType().name());
                 propertyNode.put("isMultiValue", typeInfo.isMultiValue());
                 propertiesNode.add(propertyNode);

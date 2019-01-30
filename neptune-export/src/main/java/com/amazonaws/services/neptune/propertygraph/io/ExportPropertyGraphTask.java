@@ -93,7 +93,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
 
     private void createWriterFor(String label) {
         try {
-            Map<String, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(label);
+            Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(label);
 
             if (propertyMetadata == null) {
                 System.err.printf("%nWARNING: Unable to find property metadata for '%s' %s label%n", label, graphClient.description());

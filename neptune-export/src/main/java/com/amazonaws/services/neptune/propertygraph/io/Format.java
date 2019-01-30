@@ -25,7 +25,7 @@ import java.util.Map;
 public enum Format implements FileExtension {
     json {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<String, PropertyTypeInfo> metadata) throws IOException {
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer);
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new JsonPrinter(generator, metadata);
@@ -33,12 +33,12 @@ public enum Format implements FileExtension {
     },
     csv {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<String, PropertyTypeInfo> metadata) {
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) {
             return new CsvPrinter(writer, metadata);
         }
     };
 
-    abstract Printer createPrinter(PrintWriter writer, Map<String, PropertyTypeInfo> metadata) throws IOException;
+    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException;
 
     public String description(){
         return name().toUpperCase();

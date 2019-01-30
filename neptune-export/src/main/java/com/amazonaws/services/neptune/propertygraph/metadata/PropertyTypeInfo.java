@@ -16,11 +16,11 @@ import java.util.List;
 
 public class PropertyTypeInfo {
 
-    private final String property;
+    private final Object property;
     private DataType dataType = DataType.None;
     private boolean isMultiValue = false;
 
-    public PropertyTypeInfo(String property) {
+    public PropertyTypeInfo(Object property) {
         this.property = property;
     }
 
@@ -62,11 +62,27 @@ public class PropertyTypeInfo {
 
     public String nameWithDataType(){
         return isMultiValue ?
-                String.format("%s%s[]", property, dataType.typeDescription()) :
-                String.format("%s%s", property, dataType.typeDescription());
+                String.format("%s%s[]", propertyName(property), dataType.typeDescription()) :
+                String.format("%s%s", propertyName(property), dataType.typeDescription());
     }
 
     public String nameWithoutDataType(){
-        return property;
+        return propertyName(property);
+    }
+
+    private String propertyName(Object key) {
+        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.label)) {
+            return "~label";
+        }
+        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.id)) {
+            return "~id";
+        }
+        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.key)) {
+            return "~key";
+        }
+        if (key.equals(org.apache.tinkerpop.gremlin.structure.T.value)) {
+            return "~value";
+        }
+        return String.valueOf(key);
     }
 }
