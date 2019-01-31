@@ -23,19 +23,22 @@ public class ConnectionConfig {
     private final String albEndpoint;
     private final int lbPort;
     private final boolean useIamAuth;
+    private final boolean useSsl;
 
     public ConnectionConfig(Collection<String> neptuneEndpoints,
                             int neptunePort,
                             String nlbEndpoint,
                             String albEndpoint,
                             int lbPort,
-                            boolean useIamAuth) {
+                            boolean useIamAuth,
+                            boolean useSsl) {
         this.neptuneEndpoints = neptuneEndpoints;
         this.neptunePort = neptunePort;
         this.nlbEndpoint = nlbEndpoint;
         this.albEndpoint = albEndpoint;
         this.lbPort = lbPort;
         this.useIamAuth = useIamAuth;
+        this.useSsl = useSsl;
     }
 
     public Collection<String> endpoints() {
@@ -58,6 +61,10 @@ public class ConnectionConfig {
 
     public boolean useIamAuth() {
         return useIamAuth;
+    }
+
+    public boolean useSsl() {
+        return useSsl;
     }
 
     public HandshakeRequestConfig handshakeRequestConfig() {
