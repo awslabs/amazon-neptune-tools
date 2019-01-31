@@ -8,7 +8,7 @@
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-p | --port} <port> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ]
+                    [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -92,6 +92,12 @@
                 Use IAM database authentication to authenticate to Neptune
                 (remember to set SERVICE_REGION environment variable, and, if using
                 a load balancer, set the --host-header option as well)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --use-ssl
+                Enables connectivity over SSL
     
                 This option may occur a maximum of 1 times
     

@@ -19,6 +19,12 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
 
   - [Exporting an RDF Graph](#exporting-an-rdf-graph)
   
+### Encryption in transit
+
+You can connect to Neptune from _neptune-export_ using SSL by specifying the `--use-ssl` option.
+
+You cannot use the `--use-ssl` option with a network load balancer. As per the [Neptune security documentation](https://docs.aws.amazon.com/neptune/latest/userguide/security-ssl.html), if you are using a load balancer or a proxy server (such as HAProxy), you must use SSL termination and have your own SSL certificate on the proxy server. SSL passthrough doesn't work because the provided SSL certificates don't match the proxy server hostname. Network load balancers, being Layer 4 load balancers, support TCP traffic passthrough, but not SSL termination. Application load balancers, however, do support SSL termination.
+
 ### IAM DB authentication
 
 _neptune-export_ supports exporting from databases that have [IAM database authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) enabled. Supply the `--use-iam-auth` option with each command. Remember to set the **SERVICE_REGION** environment variable – e.g. `export SERVICE_REGION=us-east-1`.

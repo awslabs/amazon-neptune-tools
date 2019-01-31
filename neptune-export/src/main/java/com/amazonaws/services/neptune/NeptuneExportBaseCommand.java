@@ -37,6 +37,10 @@ public class NeptuneExportBaseCommand {
     @Once
     protected boolean useIamAuth = false;
 
+    @Option(name = {"--use-ssl"}, description = "Enables connectivity over SSL")
+    @Once
+    protected boolean useSsl = false;
+
     @Option(name = {"--nlb-endpoint"}, description = "Network load balancer endpoint (optional: use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer)")
     @Once
     @MutuallyExclusiveWith(tag = "load-balancer")
@@ -53,7 +57,7 @@ public class NeptuneExportBaseCommand {
     protected int loadBalancerPort = 80;
 
     public ConnectionConfig connectionConfig(){
-        return new ConnectionConfig(endpoints, port, networkLoadBalancerEndpoint, applicationLoadBalancerEndpoint, loadBalancerPort, useIamAuth);
+        return new ConnectionConfig(endpoints, port, networkLoadBalancerEndpoint, applicationLoadBalancerEndpoint, loadBalancerPort, useIamAuth, useSsl);
     }
 
     public void setLoggingLevel(){
