@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,8 +36,10 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
-        printer.print(Arrays.stream(columns).collect(Collectors.joining(",")));
-        commaPrinter.printComma();
+        for (String column : columns) {
+            commaPrinter.printComma();
+            printer.print(column);
+        }
     }
 
     @Override
@@ -78,17 +79,27 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void printEdge(String id, String label, String from, String to) {
-        printer.printf("%s,%s,%s,%s", id, label, from, to);
+        commaPrinter.printComma();
+        printer.print(id);
+        commaPrinter.printComma();
+        printer.print(label);
+        commaPrinter.printComma();
+        printer.print(from);
+        commaPrinter.printComma();
+        printer.print(to);
     }
 
     @Override
     public void printNode(String id, String label) {
-        printer.printf("%s,%s", id, label);
+        commaPrinter.printComma();
+        printer.print(id);
+        commaPrinter.printComma();
+        printer.print(label);
     }
 
     @Override
     public void printStartRow() {
-        // Do nothing
+        commaPrinter.init();
     }
 
     @Override
@@ -124,6 +135,10 @@ public class CsvPrinter implements Printer {
             } else {
                 printComma = true;
             }
+        }
+
+        void init() {
+            printComma = false;
         }
     }
 }
