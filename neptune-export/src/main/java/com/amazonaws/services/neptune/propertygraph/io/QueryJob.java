@@ -32,17 +32,20 @@ public class QueryJob {
     private final ConcurrencyConfig concurrencyConfig;
     private final Directories directories;
     private final Format format;
+    private final boolean twoPassAnalysis;
 
     public QueryJob(Collection<NamedQuery> queries,
                     NeptuneGremlinClient.QueryClient queryClient,
                     ConcurrencyConfig concurrencyConfig,
                     Directories directories,
-                    Format format){
+                    Format format,
+                    boolean twoPassAnalysis){
         this.queries = new ConcurrentLinkedQueue<>(queries);
         this.queryClient = queryClient;
         this.concurrencyConfig = concurrencyConfig;
         this.directories = directories;
         this.format = format;
+        this.twoPassAnalysis = twoPassAnalysis;
     }
 
     public void execute() throws Exception {
@@ -54,7 +57,7 @@ public class QueryJob {
             ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
 
             for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-                QueryTask queryTask = new QueryTask(queries, queryClient, directories, format, status, index);
+                QueryTask queryTask = new QueryTask(queries, queryClient, directories, format, twoPassAnalysis, status, index);
                 taskExecutor.execute(queryTask);
             }
 

@@ -83,6 +83,8 @@ Every user-supplied query should return a resultset whose every result comprises
 
 Queries are grouped into _named groups_. All the queries in a named group should return the same columns. Named groups allow you to 'shard' large queries and execute them in parallel (using the `--concurrency` option). The resulting CSV or JSON files will be written to a directory named after the group.
 
+If there is a possibility that individual rows in a query's resultset will contain different keys, use the `--two-pass-analysis` flag to force _neptune-export_ to determine the superset of keys or column headers for the query.
+
 You can supply multiple named groups using multiple `--queries` options. Each group comprises a name, an equals sign, and then a semi-colon-delimited list of Gremlin queries. Surround the list of queries in double quotes. For example:
 
 `-q person="g.V().hasLabel('Person').range(0,100000).valueMap();g.V().hasLabel('Person').range(100000,-1).valueMap()"`

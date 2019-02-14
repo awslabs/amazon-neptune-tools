@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PropertiesMetadata {
@@ -73,7 +74,7 @@ public class PropertiesMetadata {
     public void update(String label, Map<?, ?> properties, boolean allowStructuralElements) {
 
         if (!metadata.containsKey(label)) {
-            metadata.put(label, new HashMap<>());
+            metadata.put(label, new LinkedHashMap<>());
         }
 
         Map<Object, PropertyTypeInfo> propertyInfo = metadata.get(label);

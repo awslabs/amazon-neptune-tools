@@ -12,7 +12,8 @@
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-p | --port} <port> ] [ {-q | --queries} <queries>... ]
-                    [ {-t | --tag} <tag> ] [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-t | --tag} <tag> ] [ --two-pass-analysis ]
+                    [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -126,6 +127,13 @@
     
             -t <tag>, --tag <tag>
                 Directory prefix (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --two-pass-analysis
+                Perform two-pass analysis of query results (optional, default
+                'false')
     
                 This option may occur a maximum of 1 times
     
