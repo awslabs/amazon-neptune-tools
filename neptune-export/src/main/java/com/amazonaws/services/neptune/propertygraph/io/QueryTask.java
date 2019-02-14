@@ -30,19 +30,23 @@ public class QueryTask implements Runnable {
     private final NeptuneGremlinClient.QueryClient queryClient;
     private final Directories directories;
     private final Format format;
+    private final boolean twoPassAnalysis;
     private final Status status;
     private final int index;
 
     public QueryTask(Queue<NamedQuery> queries,
                      NeptuneGremlinClient.QueryClient queryClient,
                      Directories directories,
-                     Format format, Status status,
+                     Format format,
+                     boolean twoPassAnalysis,
+                     Status status,
                      int index) {
 
         this.queries = queries;
         this.queryClient = queryClient;
         this.directories = directories;
         this.format = format;
+        this.twoPassAnalysis = twoPassAnalysis;
         this.status = status;
         this.index = index;
     }
@@ -51,7 +55,6 @@ public class QueryTask implements Runnable {
     public void run() {
 
         QueriesWriterFactory writerFactory = new QueriesWriterFactory(directories);
-        PropertiesMetadata propertiesMetadata = new PropertiesMetadata();
         Map<String, GraphElementHandler<Map<?, ?>>> labelWriters = new HashMap<>();
 
         try {
@@ -62,7 +65,21 @@ public class QueryTask implements Runnable {
 
                     NamedQuery namedQuery = queries.poll();
                     if (!(namedQuery == null)) {
+                        PropertiesMetadata propertiesMetadata = new PropertiesMetadata();
+
                         ResultSet results = queryClient.submit(namedQuery.query());
+
+                        if (twoPassAnalysis) {
+                            // First pass
+                            results.stream().
+                                    map(r -> castToMap(r.getObject())).
+                                    forEach(r -> {
+                                        propertiesMetadata.update(namedQuery.name(), r, true);
+                                    });
+
+                            // Re-run query for second pass
+                            results = queryClient.submit(namedQuery.query());
+                        }
 
                         ResultsHandler resultsHandler = new ResultsHandler(
                                 namedQuery.name(), labelWriters, writerFactory, propertiesMetadata);

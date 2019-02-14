@@ -68,6 +68,10 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     @AllowedValues(allowedValues = {"csv", "json"})
     private Format format = Format.csv;
 
+    @Option(name = {"--two-pass-analysis"}, description = "Perform two-pass analysis of query results (optional, default 'false')")
+    @Once
+    private boolean twoPassAnalysis = false;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
@@ -86,8 +90,11 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
             QueryJob queryJob = new QueryJob(
                     queriesInfo.namedQueriesCollection().flatten(),
-                    queryClient, concurrencyConfig,
-                    directories, format);
+                    queryClient,
+                    concurrencyConfig,
+                    directories,
+                    format,
+                    twoPassAnalysis);
             queryJob.execute();
 
             System.err.println("CSV files   : " + directories.resultsDirectory());
