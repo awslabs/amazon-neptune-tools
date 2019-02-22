@@ -75,11 +75,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
-            <artifactId>rdf4j-runtime</artifactId>
+            <artifactId>rdf4j-repository-sparql</artifactId>
             <version>[2.4.0,)</version>
         </dependency>
 

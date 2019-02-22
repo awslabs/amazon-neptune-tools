@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.github.rvesse.airline.Accessor;
 import com.github.rvesse.airline.annotations.Alias;
 import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.annotations.Parser;
@@ -46,7 +47,7 @@ public class NeptuneExportCli {
             Runnable cmd = cli.parse(args);
 
             if (NeptuneExportBaseCommand.class.isAssignableFrom(cmd.getClass())) {
-                ((NeptuneExportBaseCommand) cmd).setLoggingLevel();
+                ((NeptuneExportBaseCommand) cmd).applyLogLevel();
             }
 
             cmd.run();

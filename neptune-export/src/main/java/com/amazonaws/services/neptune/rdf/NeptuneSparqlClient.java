@@ -63,14 +63,14 @@ public class NeptuneSparqlClient implements AutoCloseable {
                             throw new RuntimeException(e1);
                         }
                     }).
-                            peek(AbstractRepository::initialize).
+                            peek(AbstractRepository::init).
                             collect(Collectors.toList()));
         } else {
 
             return new NeptuneSparqlClient(
                     endpoints.stream().map(e ->
                             updateParser(new SPARQLRepository(sparqlEndpount(e, port)))).
-                            peek(AbstractRepository::initialize).
+                            peek(AbstractRepository::init).
                             collect(Collectors.toList()));
         }
     }
@@ -172,7 +172,7 @@ public class NeptuneSparqlClient implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         repositories.forEach(AbstractRepository::shutDown);
     }
 }
