@@ -18,13 +18,9 @@ You can then refer to this library from your Glue Development Endpoint or Glue j
  
 ## Examples
 
-The _examples_ directory contains 3 example Glue jobs:
-
- - _export-from-mysql-to-s3_ – Shows how to export from several MySQL tables to CSV formatted in accordance with the Neptune CSV bulk load format. These files are saved to S3, ready to be bulk loaded into Neptune.
- - _export-from-mysql-to-neptune_ – Shows how to export direct from several MySQL tables into Neptune. Nodes and edges are written conditionally to the database using user-supplied IDs.
- - _export-from-mysql-to-neptune-incremental_ – Shows how to perform an incremental  load from MySQL to Neptune using checkpoint information that is written to a Neptune vertex.
+See [Migrating from MySQL to Amazon Neptune using AWS Glue](https://github.com/iansrobinson/amazon-neptune-samples/tree/master/gremlin/glue-neptune).
  
- ## Cross Account/Region Datasources
+## Cross Account/Region Datasources
 If you have a datasource in a different region and/or different account from Glue and your Neptune database, you can follow the instructions in this [blog](https://aws.amazon.com/blogs/big-data/create-cross-account-and-cross-region-aws-glue-connections/) to allow access.
  
 

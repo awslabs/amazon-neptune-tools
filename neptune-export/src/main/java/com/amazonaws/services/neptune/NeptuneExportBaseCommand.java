@@ -5,13 +5,14 @@ import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
-public class NeptuneExportBaseCommand {
+public abstract class NeptuneExportBaseCommand {
 
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster", title="endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster", title = "endpoint")
     @Required
-    protected List<String> endpoints;
+    protected List<String> endpoints = new ArrayList<>();
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
@@ -56,11 +57,11 @@ public class NeptuneExportBaseCommand {
     @Once
     protected int loadBalancerPort = 80;
 
-    public ConnectionConfig connectionConfig(){
+    public ConnectionConfig connectionConfig() {
         return new ConnectionConfig(endpoints, port, networkLoadBalancerEndpoint, applicationLoadBalancerEndpoint, loadBalancerPort, useIamAuth, useSsl);
     }
 
-    public void setLoggingLevel(){
+    public void applyLogLevel() {
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
     }
 }

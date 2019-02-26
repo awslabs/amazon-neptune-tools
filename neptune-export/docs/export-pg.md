@@ -7,7 +7,8 @@
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
-                    [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
+                    [ {-el | --edge-label} <edgeLabels>... ]
+                    [ --exclude-type-definitions ] [ --format <format> ]
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
@@ -51,6 +52,13 @@
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be exported (optional, default all labels)
+    
+            --exclude-type-definitions
+                Exclude type definitions from column headers (optional, default
+                false)
+    
+                This option may occur a maximum of 1 times
+    
     
             --format <format>
                 Output format (optional, default 'csv')

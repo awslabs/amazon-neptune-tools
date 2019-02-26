@@ -10,34 +10,14 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
   - [`export-pg-from-queries`](docs/export-pg-from-queries.md)
   - [`export-rdf`](docs/export-rdf.md)
 
-### Property Graph
+### Topics
 
   - [Exporting to the Bulk Loader CSV Format](#exporting-to-the-bulk-loader-csv-format)
   - [Exporting the Results of User-Supplied Queries](#exporting-the-results-of-user-supplied-queries)
-  
-### RDF Graph
-
   - [Exporting an RDF Graph](#exporting-an-rdf-graph)
-  
-### Encryption in transit
-
-You can connect to Neptune from _neptune-export_ using SSL by specifying the `--use-ssl` option.
-
-If you are using a load balancer or a proxy server (such as HAProxy), you must [use SSL termination and have your own SSL certificate on the proxy server](https://docs.aws.amazon.com/neptune/latest/userguide/security-ssl.html).
-
-### IAM DB authentication
-
-_neptune-export_ supports exporting from databases that have [IAM database authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) enabled. Supply the `--use-iam-auth` option with each command. Remember to set the **SERVICE_REGION** environment variable – e.g. `export SERVICE_REGION=us-east-1`.
-
-_neptune-export_ also supports connecting through a load balancer to a Neptune database with IAM DB authetication enabled. However, this feature is only currently supported for property graphs, with support for RDF graphs coming soon.
-
-If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply either an `--nlb-endpoint` option (if using a network load balancer) or an `--alb-endpoint` option (if using an application load balancer), and an `--lb-port`.
-
-For details on using a load balancer with a database with IAM DB authentication enabled, see [Connecting to Amazon Neptune from Clients Outside the Neptune VPC](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer). 
-   
-## Building neptune-export
-
-`mvn clean install`
+  - [Building neptune-export](#building-neptune-export)
+  - [Security](#security)
+  - [Deploying neptune-export as an AWS Lambda Function](#deploying-neptune-export-as-an-aws-lambda-function)
  
 ## Exporting to the Bulk Loader CSV Format
 
@@ -102,3 +82,44 @@ Queries whose results contain very large rows can sometimes trigger a `Corrupted
 ## Exporting an RDF Graph
               
 At present _neptune-export_ supports exporting an RDF dataset to Turtle with a single-threaded long-running query.
+
+## Security
+  
+### Encryption in transit
+
+You can connect to Neptune from _neptune-export_ using SSL by specifying the `--use-ssl` option.
+
+If you are using a load balancer or a proxy server (such as HAProxy), you must [use SSL termination and have your own SSL certificate on the proxy server](https://docs.aws.amazon.com/neptune/latest/userguide/security-ssl.html).
+
+### IAM DB authentication
+
+_neptune-export_ supports exporting from databases that have [IAM database authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) enabled. Supply the `--use-iam-auth` option with each command. Remember to set the **SERVICE_REGION** environment variable – e.g. `export SERVICE_REGION=us-east-1`.
+
+_neptune-export_ also supports connecting through a load balancer to a Neptune database with IAM DB authetication enabled. However, this feature is only currently supported for property graphs, with support for RDF graphs coming soon.
+
+If you are connecting through a load balancer, and have IAM DB authentication enabled, you must also supply either an `--nlb-endpoint` option (if using a network load balancer) or an `--alb-endpoint` option (if using an application load balancer), and an `--lb-port`.
+
+For details on using a load balancer with a database with IAM DB authentication enabled, see [Connecting to Amazon Neptune from Clients Outside the Neptune VPC](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer). 
+   
+## Building neptune-export
+
+To build the jar, run:
+
+`mvn clean install`
+
+## Deploying neptune-export as an AWS Lambda Function
+
+The _neptune-export_ jar can be deployed as an AWS Lambda function. To access Neptune, you will either have to [configure the function to access resources inside your VPC](https://docs.aws.amazon.com/lambda/latest/dg/vpc.html), or [expose the Neptune endpoints via a load balancer](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer).
+
+Be mindful of the [AWS Lambda limits](https://docs.aws.amazon.com/lambda/latest/dg/limits.html), particularly with regard to function timeouts (max 15 minutes) and _/tmp_ directory storage (512 MB). Large exports can easily exceed these limits.
+
+When deployed as a Lambda function, _neptune-export_ will automatically copy the export files to an S3 bucket of your choosing. Optionally, it can also write a completion file to a separate S3 location (useful for triggering additional Lambda functions). You must configure your function with an IAM role that has write access to these S3 locations.
+
+The Lambda function expects a number of parameters, which you can supply either as [environment variables](https://docs.aws.amazon.com/lambda/latest/dg/env_variables.html) or via a JSON input parameter. Fields in the JSON input parameter override any environment variables you have set up.
+
+| Environment Variable | JSON Field | Description ||
+| ---- | ---- | ---- | ---- |
+| `COMMAND` | `command` | Command and command-line options: e.g. `export-pg -e <neptune_endpoint>` | Mandatory |
+| `OUTPUT_S3_PATH` | `outputS3Path` | S3 location to which exported files will be written | Mandatory |
+| `CONFIG_FILE_S3_PATH` | `configFileS3Path` | S3 location of a JSON config file to be used when exporting a property graph from a config file | Optional |
+| `COMPLETION_FILE_S3_PATH` | `completionFileS3Path` | S3 location to which a completion file shuld be written once all export files have been copied to S3 | Optional |

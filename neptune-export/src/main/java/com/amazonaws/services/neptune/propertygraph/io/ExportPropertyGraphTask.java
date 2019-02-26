@@ -35,14 +35,17 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final Status status;
     private final int index;
     private final Map<String, GraphElementHandler<T>> labelWriters = new HashMap<>();
+    private boolean includeTypeDefinitions;
 
     public ExportPropertyGraphTask(PropertiesMetadata propertiesMetadata,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
-                                   Format format, RangeFactory rangeFactory,
+                                   Format format,
+                                   RangeFactory rangeFactory,
                                    Status status,
-                                   int index) {
+                                   int index,
+                                   boolean includeTypeDefinitions) {
         this.propertiesMetadata = propertiesMetadata;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
@@ -51,6 +54,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         this.rangeFactory = rangeFactory;
         this.status = status;
         this.index = index;
+        this.includeTypeDefinitions = includeTypeDefinitions;
     }
 
     @Override
@@ -101,7 +105,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
             }
 
             Printer printer = writerFactory.createPrinter(label, index, propertyMetadata, format);
-            printer.printHeaderRemainingColumns(propertyMetadata.values(), true);
+            printer.printHeaderRemainingColumns(propertyMetadata.values(), includeTypeDefinitions);
 
             labelWriters.put(label, writerFactory.createLabelWriter(printer));
 

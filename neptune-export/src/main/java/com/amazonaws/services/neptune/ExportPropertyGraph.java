@@ -88,6 +88,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @AllowedValues(allowedValues = {"csv", "json"})
     private Format format = Format.csv;
 
+    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default false)")
+    @Once
+    private boolean excludeTypeDefinitions = false;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
@@ -107,7 +111,14 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 
-            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
+            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                    metadataSpecifications,
+                    metadataCollection,
+                    g,
+                    concurrencyConfig,
+                    directories,
+                    format,
+                    !excludeTypeDefinitions);
             exportJob.execute();
 
             System.err.println(format.description() + " files   : " + directories.directory());
