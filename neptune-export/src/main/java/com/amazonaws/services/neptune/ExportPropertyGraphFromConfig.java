@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -77,6 +76,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @AllowedValues(allowedValues = {"csv", "json"})
     private Format format = Format.csv;
 
+    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default false)")
+    @Once
+    private boolean excludeTypeDefinitions = false;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
@@ -90,7 +93,14 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
             Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
 
-            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(metadataSpecifications, metadataCollection, g, concurrencyConfig, directories, format);
+            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                    metadataSpecifications,
+                    metadataCollection,
+                    g,
+                    concurrencyConfig,
+                    directories,
+                    format,
+                    !excludeTypeDefinitions);
             exportJob.execute();
 
             System.err.println(format.description() + " files   : " + directories.directory());

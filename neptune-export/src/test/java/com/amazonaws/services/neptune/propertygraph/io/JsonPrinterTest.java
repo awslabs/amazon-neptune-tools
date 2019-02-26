@@ -37,5 +37,4 @@ public class JsonPrinterTest {
                 "{\"~id\":\"edge-id\",\"~label\":\"edge-label\",\"~from\":\"from-id\",\"~to\":\"to-id\"}",
                 stringWriter.toString());
     }
-
 }

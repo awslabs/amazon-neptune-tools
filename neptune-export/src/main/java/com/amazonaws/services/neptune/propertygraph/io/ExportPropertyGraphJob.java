@@ -33,19 +33,22 @@ public class ExportPropertyGraphJob {
     private final ConcurrencyConfig concurrencyConfig;
     private final Directories directories;
     private final Format format;
+    private boolean includeTypeDefinitions;
 
     public ExportPropertyGraphJob(Collection<MetadataSpecification<?>> metadataSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
                                   ConcurrencyConfig concurrencyConfig,
                                   Directories directories,
-                                  Format format) {
+                                  Format format,
+                                  boolean includeTypeDefinitions) {
         this.metadataSpecifications = metadataSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
         this.concurrencyConfig = concurrencyConfig;
         this.directories = directories;
         this.format = format;
+        this.includeTypeDefinitions = includeTypeDefinitions;
     }
 
     public void execute() throws Exception {
@@ -68,7 +71,8 @@ public class ExportPropertyGraphJob {
                             format,
                             rangeFactory,
                             status,
-                            index);
+                            index,
+                            includeTypeDefinitions);
                     taskExecutor.execute(exportTask);
                 }
 

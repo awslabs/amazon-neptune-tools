@@ -69,7 +69,8 @@ public class MetadataSpecification<T> {
                                                        Format format,
                                                        RangeFactory rangeFactory,
                                                        Status status,
-                                                       int index) {
+                                                       int index,
+                                                       boolean includeTypeDefinitions) {
         return new ExportPropertyGraphTask<>(
                 metadataCollection.propertyMetadataFor(metadataType),
                 labelsFilter,
@@ -78,8 +79,8 @@ public class MetadataSpecification<T> {
                 format,
                 rangeFactory,
                 status,
-                index
-        );
+                index,
+                includeTypeDefinitions);
     }
 
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
