@@ -30,17 +30,36 @@ public enum Format implements FileExtension {
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new JsonPrinter(generator, metadata);
         }
+
+        @Override
+        public String description() {
+            return "JSON";
+        }
     },
     csv {
         @Override
         Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) {
-            return new CsvPrinter(writer, metadata);
+            return new CsvPrinter(writer, metadata, true);
+        }
+
+        @Override
+        public String description() {
+            return "CSV";
+        }
+    },
+    csvNoHeaders {
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) {
+            return new CsvPrinter(writer, metadata, false);
+        }
+
+        @Override
+        public String description() {
+            return "CSV (no headers)";
         }
     };
 
     abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException;
 
-    public String description(){
-        return name().toUpperCase();
-    }
+    public abstract String description();
 }

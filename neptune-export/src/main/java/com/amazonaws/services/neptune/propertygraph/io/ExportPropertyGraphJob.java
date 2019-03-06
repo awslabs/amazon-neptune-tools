@@ -31,23 +31,20 @@ public class ExportPropertyGraphJob {
     private final PropertiesMetadataCollection propertiesMetadataCollection;
     private final GraphTraversalSource g;
     private final ConcurrencyConfig concurrencyConfig;
-    private final Directories directories;
-    private final Format format;
+    private final TargetConfig targetConfig;
     private boolean includeTypeDefinitions;
 
     public ExportPropertyGraphJob(Collection<MetadataSpecification<?>> metadataSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
                                   ConcurrencyConfig concurrencyConfig,
-                                  Directories directories,
-                                  Format format,
+                                  TargetConfig targetConfig,
                                   boolean includeTypeDefinitions) {
         this.metadataSpecifications = metadataSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
         this.concurrencyConfig = concurrencyConfig;
-        this.directories = directories;
-        this.format = format;
+        this.targetConfig = targetConfig;
         this.includeTypeDefinitions = includeTypeDefinitions;
     }
 
@@ -56,7 +53,7 @@ public class ExportPropertyGraphJob {
         for (MetadataSpecification metadataSpecification : metadataSpecifications) {
 
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " " + format.description() + " files");
+                System.err.println("Creating " + metadataSpecification.description() + " " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
                 RangeFactory rangeFactory = metadataSpecification.createRangeFactory(g, concurrencyConfig);
                 Status status = new Status();
@@ -67,8 +64,7 @@ public class ExportPropertyGraphJob {
                     ExportPropertyGraphTask exportTask = metadataSpecification.createExportTask(
                             propertiesMetadataCollection,
                             g,
-                            directories,
-                            format,
+                            targetConfig,
                             rangeFactory,
                             status,
                             index,
@@ -87,6 +83,4 @@ public class ExportPropertyGraphJob {
             }
         }
     }
-
-
 }

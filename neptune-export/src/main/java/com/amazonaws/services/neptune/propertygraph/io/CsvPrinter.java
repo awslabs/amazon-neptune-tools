@@ -16,43 +16,47 @@ import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class CsvPrinter implements Printer {
 
     private final PrintWriter printer;
     private final Map<Object, PropertyTypeInfo> metadata;
     private final CommaPrinter commaPrinter;
+    private final boolean includeHeaders;
 
-    public CsvPrinter(PrintWriter printer, Map<Object, PropertyTypeInfo> metadata) {
+    public CsvPrinter(PrintWriter printer, Map<Object, PropertyTypeInfo> metadata, boolean includeHeaders) {
         this.printer = printer;
         this.metadata = metadata;
         this.commaPrinter = new CommaPrinter(printer);
+        this.includeHeaders = includeHeaders;
     }
 
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
-        for (String column : columns) {
-            commaPrinter.printComma();
-            printer.print(column);
+        if (includeHeaders) {
+            for (String column : columns) {
+                commaPrinter.printComma();
+                printer.print(column);
+            }
         }
     }
 
     @Override
     public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns, boolean includeTypeDefinitions) {
-        for (PropertyTypeInfo property : remainingColumns) {
-            commaPrinter.printComma();
-            if (includeTypeDefinitions) {
-                printer.print(property.nameWithDataType());
-            } else {
-                printer.print(property.nameWithoutDataType());
+        if (includeHeaders) {
+            for (PropertyTypeInfo property : remainingColumns) {
+                commaPrinter.printComma();
+                if (includeTypeDefinitions) {
+                    printer.print(property.nameWithDataType());
+                } else {
+                    printer.print(property.nameWithoutDataType());
+                }
             }
+            printer.print(System.lineSeparator());
         }
-        printer.print(System.lineSeparator());
     }
 
     @Override

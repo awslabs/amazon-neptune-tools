@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -28,24 +27,21 @@ import java.util.Queue;
 public class QueryTask implements Runnable {
     private final Queue<NamedQuery> queries;
     private final NeptuneGremlinClient.QueryClient queryClient;
-    private final Directories directories;
-    private final Format format;
+    private final TargetConfig targetConfig;
     private final boolean twoPassAnalysis;
     private final Status status;
     private final int index;
 
     public QueryTask(Queue<NamedQuery> queries,
                      NeptuneGremlinClient.QueryClient queryClient,
-                     Directories directories,
-                     Format format,
+                     TargetConfig targetConfig,
                      boolean twoPassAnalysis,
                      Status status,
                      int index) {
 
         this.queries = queries;
         this.queryClient = queryClient;
-        this.directories = directories;
-        this.format = format;
+        this.targetConfig = targetConfig;
         this.twoPassAnalysis = twoPassAnalysis;
         this.status = status;
         this.index = index;
@@ -54,7 +50,7 @@ public class QueryTask implements Runnable {
     @Override
     public void run() {
 
-        QueriesWriterFactory writerFactory = new QueriesWriterFactory(directories);
+        QueriesWriterFactory writerFactory = new QueriesWriterFactory(targetConfig.directories());
         Map<String, GraphElementHandler<Map<?, ?>>> labelWriters = new HashMap<>();
 
         try {
@@ -154,7 +150,7 @@ public class QueryTask implements Runnable {
 
                 Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
-                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, format);
+                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
                 printer.printHeaderRemainingColumns(propertyMetadata.values(), false);
 
                 labelWriters.put(name, writerFactory.createLabelWriter(printer));

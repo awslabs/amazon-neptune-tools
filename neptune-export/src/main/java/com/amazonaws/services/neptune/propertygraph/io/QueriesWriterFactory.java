@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
@@ -30,12 +29,12 @@ public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
     }
 
     @Override
-    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, Format format) throws IOException {
+    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
-        java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
-        PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
+        java.nio.file.Path filePath = directories.createFilePath(directory, name, index, targetConfig.format());
+        PrintWriter printWriter = targetConfig.output().createPrintWriter(filePath);
 
-        return format.createPrinter(printWriter, metadata);
+        return targetConfig.format().createPrinter(printWriter, metadata);
     }
 
     @Override
