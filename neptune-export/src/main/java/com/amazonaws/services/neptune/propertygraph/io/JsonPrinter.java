@@ -37,7 +37,7 @@ public class JsonPrinter implements Printer {
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns, boolean includeTypeDefinitions) {
+    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
         // Do nothing
     }
 

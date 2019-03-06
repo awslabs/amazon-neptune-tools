@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
@@ -32,20 +31,17 @@ public class ExportPropertyGraphJob {
     private final GraphTraversalSource g;
     private final ConcurrencyConfig concurrencyConfig;
     private final TargetConfig targetConfig;
-    private boolean includeTypeDefinitions;
 
     public ExportPropertyGraphJob(Collection<MetadataSpecification<?>> metadataSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
                                   ConcurrencyConfig concurrencyConfig,
-                                  TargetConfig targetConfig,
-                                  boolean includeTypeDefinitions) {
+                                  TargetConfig targetConfig) {
         this.metadataSpecifications = metadataSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
         this.concurrencyConfig = concurrencyConfig;
         this.targetConfig = targetConfig;
-        this.includeTypeDefinitions = includeTypeDefinitions;
     }
 
     public void execute() throws Exception {
@@ -53,7 +49,7 @@ public class ExportPropertyGraphJob {
         for (MetadataSpecification metadataSpecification : metadataSpecifications) {
 
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " " + targetConfig.format().description() + " to " + targetConfig.output().name());
+                System.err.println("Creating " + metadataSpecification.description() + " " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
 
                 RangeFactory rangeFactory = metadataSpecification.createRangeFactory(g, concurrencyConfig);
                 Status status = new Status();
@@ -67,8 +63,7 @@ public class ExportPropertyGraphJob {
                             targetConfig,
                             rangeFactory,
                             status,
-                            index,
-                            includeTypeDefinitions);
+                            index);
                     taskExecutor.execute(exportTask);
                 }
 

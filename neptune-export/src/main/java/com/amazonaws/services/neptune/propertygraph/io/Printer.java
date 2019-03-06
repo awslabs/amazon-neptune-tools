@@ -20,7 +20,7 @@ import java.util.Map;
 
 public interface Printer extends AutoCloseable {
     void printHeaderMandatoryColumns(String... columns);
-    void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns, boolean includeTypeDefinitions);
+    void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns);
     void printProperties(Map<?, ?> properties) throws IOException;
     void printEdge(String id, String label, String from, String to) throws IOException;
     void printNode(String id, String label) throws IOException;

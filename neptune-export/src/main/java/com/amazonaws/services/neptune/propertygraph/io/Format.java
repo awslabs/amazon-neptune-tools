@@ -25,7 +25,12 @@ import java.util.Map;
 public enum Format implements FileExtension {
     json {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+        public String suffix() {
+            return "json";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer);
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new JsonPrinter(generator, metadata);
@@ -38,8 +43,13 @@ public enum Format implements FileExtension {
     },
     csv {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) {
-            return new CsvPrinter(writer, metadata, true);
+        public String suffix() {
+            return "csv";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+            return new CsvPrinter(writer, metadata, true, includeTypeDefinitions);
         }
 
         @Override
@@ -49,8 +59,13 @@ public enum Format implements FileExtension {
     },
     csvNoHeaders {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) {
-            return new CsvPrinter(writer, metadata, false);
+        public String suffix() {
+            return "csv";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+            return new CsvPrinter(writer, metadata, false, includeTypeDefinitions);
         }
 
         @Override
@@ -59,7 +74,7 @@ public enum Format implements FileExtension {
         }
     };
 
-    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException;
+    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
 
     public abstract String description();
 }

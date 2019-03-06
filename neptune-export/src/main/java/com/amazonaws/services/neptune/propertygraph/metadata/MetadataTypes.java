@@ -18,7 +18,6 @@ import com.amazonaws.services.neptune.propertygraph.NodesClient;
 import com.amazonaws.services.neptune.propertygraph.io.EdgesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.NodesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
-import com.amazonaws.services.neptune.io.Directories;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
@@ -39,8 +38,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public WriterFactory<Map<?, Object>> writerFactory(Directories directories) {
-            return new NodesWriterFactory(directories);
+        public WriterFactory<Map<?, Object>> writerFactory() {
+            return new NodesWriterFactory();
         }
     };
 
@@ -56,8 +55,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public WriterFactory<Path> writerFactory(Directories directories) {
-            return new EdgesWriterFactory(directories);
+        public WriterFactory<Path> writerFactory() {
+            return new EdgesWriterFactory();
         }
     };
 

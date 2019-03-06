@@ -46,7 +46,7 @@ public class QueryJob {
 
     public void execute() throws Exception {
         try (Timer timer = new Timer()) {
-            System.err.println("Writing " + targetConfig.format().description() + " query results to " + targetConfig.output().name());
+            System.err.println("Writing query results to " + targetConfig.outputDescription() + " as " + targetConfig.formatDescription());
 
             Status status = new Status();
 

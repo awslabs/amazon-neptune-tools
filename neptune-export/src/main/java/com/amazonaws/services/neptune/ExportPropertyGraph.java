@@ -95,7 +95,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @AllowedValues(allowedValues = {"files", "stdout"})
     private Output output = Output.files;
 
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default false)")
+    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
     @Once
     private boolean excludeTypeDefinitions = false;
 
@@ -111,7 +111,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);
             java.nio.file.Path configFilePath = directories.configFilePath().toAbsolutePath();
 
-            TargetConfig targetConfig = new TargetConfig(directories, format, output);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
 
             Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
 
@@ -125,8 +125,8 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     metadataCollection,
                     g,
                     concurrencyConfig,
-                    targetConfig,
-                    !excludeTypeDefinitions);
+                    targetConfig
+            );
             exportJob.execute();
 
             System.err.println(format.description() + " files   : " + directories.directory());

@@ -90,8 +90,8 @@ public class Directories {
 
     public Path createFilePath(Path directory, String name, int index, FileExtension extension) {
         String filename = tag.isEmpty() ?
-                String.format("%s-%s.%s", name, index, extension.name()) :
-                String.format("%s-%s-%s.%s", tag, name, index, extension.name());
+                String.format("%s-%s.%s", name, index, extension.suffix()) :
+                String.format("%s-%s-%s.%s", tag, name, index, extension.suffix());
         return directory.resolve(filename);
     }
 

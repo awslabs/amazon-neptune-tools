@@ -13,5 +13,5 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.io;
 
 public interface FileExtension {
-    String name();
+    String suffix();
 }

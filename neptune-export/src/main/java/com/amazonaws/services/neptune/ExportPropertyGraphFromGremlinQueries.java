@@ -81,6 +81,10 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     @Once
     private boolean twoPassAnalysis = false;
 
+    @Option(name = {"--include-type-definitions"}, description = "Include type definitions from column headers (optional, default 'false')")
+    @Once
+    private boolean includeTypeDefinitions = false;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
@@ -90,7 +94,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.GremlinQueries, directory, tag);
-            TargetConfig targetConfig = new TargetConfig(directories, format, output);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, includeTypeDefinitions);
 
             QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
 

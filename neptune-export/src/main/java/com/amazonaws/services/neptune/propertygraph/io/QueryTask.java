@@ -50,7 +50,7 @@ public class QueryTask implements Runnable {
     @Override
     public void run() {
 
-        QueriesWriterFactory writerFactory = new QueriesWriterFactory(targetConfig.directories());
+        QueriesWriterFactory writerFactory = new QueriesWriterFactory();
         Map<String, GraphElementHandler<Map<?, ?>>> labelWriters = new HashMap<>();
 
         try {
@@ -151,7 +151,7 @@ public class QueryTask implements Runnable {
                 Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
 
                 Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
-                printer.printHeaderRemainingColumns(propertyMetadata.values(), false);
+                printer.printHeaderRemainingColumns(propertyMetadata.values());
 
                 labelWriters.put(name, writerFactory.createLabelWriter(printer));
 

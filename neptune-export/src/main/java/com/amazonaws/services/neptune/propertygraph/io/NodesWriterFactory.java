@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
@@ -21,19 +20,11 @@ import java.util.Map;
 
 public class NodesWriterFactory implements WriterFactory<Map<?, Object>> {
 
-    private final Directories directories;
-
-    public NodesWriterFactory(Directories directories) {
-        this.directories = directories;
-    }
-
     @Override
     public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
-        java.nio.file.Path filePath = directories.createFilePath(directories.nodesDirectory(), name, index, targetConfig.format());
-        PrintWriter printWriter = targetConfig.output().createPrintWriter(filePath);
+        Printer printer = targetConfig.createPrinterForNodes(name, index, metadata);
+        printer.printHeaderMandatoryColumns("~id", "~label");
 
-        Printer printer = targetConfig.format().createPrinter(printWriter, metadata);
-        printer.printHeaderMandatoryColumns("~id","~label");
         return printer;
     }
 

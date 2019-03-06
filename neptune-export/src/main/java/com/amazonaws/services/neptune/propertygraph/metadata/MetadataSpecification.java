@@ -68,18 +68,17 @@ public class MetadataSpecification<T> {
                                                        TargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
-                                                       int index,
-                                                       boolean includeTypeDefinitions) {
+                                                       int index) {
         return new ExportPropertyGraphTask<>(
                 metadataCollection.propertyMetadataFor(metadataType),
                 labelsFilter,
                 metadataType.graphClient(g),
-                metadataType.writerFactory(targetConfig.directories()),
+                metadataType.writerFactory(),
                 targetConfig,
                 rangeFactory,
                 status,
-                index,
-                includeTypeDefinitions);
+                index
+        );
     }
 
     private static class Handler implements GraphElementHandler<Map<?, Object>> {

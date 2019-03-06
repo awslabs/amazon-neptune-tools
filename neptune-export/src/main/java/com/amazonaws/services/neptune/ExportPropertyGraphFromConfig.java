@@ -83,7 +83,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @AllowedValues(allowedValues = {"files", "stdout"})
     private Output output = Output.files;
 
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default false)")
+    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
     @Once
     private boolean excludeTypeDefinitions = false;
 
@@ -96,7 +96,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);
-            TargetConfig targetConfig = new TargetConfig(directories, format, output);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
 
             PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
 
@@ -107,8 +107,8 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                     metadataCollection,
                     g,
                     concurrencyConfig,
-                    targetConfig,
-                    !excludeTypeDefinitions);
+                    targetConfig
+            );
             exportJob.execute();
 
             System.err.println(format.description() + " files   : " + directories.directory());
