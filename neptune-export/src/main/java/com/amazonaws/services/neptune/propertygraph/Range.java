@@ -35,12 +35,12 @@ public class Range {
         }
     }
 
-    public long start() {
-        return start;
+    public long difference(){
+        return end - start;
     }
 
-    public long value(){
-        return end - start;
+    public boolean isEmpty() {
+        return difference() <= 0;
     }
 
     @Override

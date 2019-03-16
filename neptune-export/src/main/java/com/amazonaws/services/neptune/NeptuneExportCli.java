@@ -17,6 +17,7 @@ import com.github.rvesse.airline.annotations.Alias;
 import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.annotations.Parser;
 import com.github.rvesse.airline.help.Help;
+import org.codehaus.plexus.util.cli.CommandLineUtils;
 
 @Cli(name = "neptune-export.sh",
         description = "Export Neptune to CSV or JSON",
@@ -41,6 +42,7 @@ import com.github.rvesse.airline.help.Help;
 public class NeptuneExportCli {
 
     public static void main(String[] args) {
+
         com.github.rvesse.airline.Cli<Runnable> cli = new com.github.rvesse.airline.Cli<>(NeptuneExportCli.class);
 
         try {

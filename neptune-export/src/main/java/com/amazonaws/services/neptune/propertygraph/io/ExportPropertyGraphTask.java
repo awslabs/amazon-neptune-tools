@@ -59,12 +59,14 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         try {
             while (status.allowContinue()) {
                 Range range = rangeFactory.nextRange();
-                if (rangeFactory.exceedsUpperBound(range)) {
+                if (range.isEmpty()){
                     status.halt();
-                } else {
+                }
+                else
+                {
                     CountingHandler handler = new CountingHandler(this);
                     graphClient.queryForValues(handler, range, labelsFilter);
-                    if (range.value() > handler.counter()) {
+                    if (range.difference() > handler.counter() || rangeFactory.isExhausted()) {
                         status.halt();
                     }
                 }

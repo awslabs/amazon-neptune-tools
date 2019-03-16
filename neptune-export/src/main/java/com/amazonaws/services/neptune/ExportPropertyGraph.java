@@ -64,9 +64,17 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             arity = 1)
     private List<String> edgeLabels = new ArrayList<>();
 
-    @Option(name = {"-r", "--range"}, description = "Range (optional)")
+    @Option(name = {"-r", "--range", "--range-size"}, description = "Number of items to fetch per request (optional)")
     @Once
-    private long range = -1;
+    private long rangeSize = -1;
+
+    @Option(name = {"--limit"}, description = "Maximum number of items to export (optional)")
+    @Once
+    private long limit = Long.MAX_VALUE;
+
+    @Option(name = {"--skip"}, description = "Number of items to skip (optional)")
+    @Once
+    private long skip = 0;
 
     @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
     @Once
@@ -101,7 +109,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, rangeSize, skip, limit);
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();

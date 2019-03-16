@@ -87,7 +87,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency);
 
         try (Timer timer = new Timer();
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connectionConfig(), concurrencyConfig, batchSize);
@@ -113,7 +113,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
             System.err.println("CSV files   : " + directories.resultsDirectory());
             System.err.println("Queries file : " + queriesInfo.queriesFile());
 
-            output.writeCommandResult(directories.resultsDirectory());
+            output.writeCommandResult(directories.directory());
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");

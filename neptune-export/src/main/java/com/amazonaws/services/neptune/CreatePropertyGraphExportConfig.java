@@ -69,7 +69,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
 
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(1, -1);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(1);
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
