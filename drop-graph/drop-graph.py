@@ -22,11 +22,6 @@
 This code uses Gremlin Python to drop an entire graph.
 
 It is intended as an example of a multi-threaded strategy for dropping vertices and edges.
-The code could be further improved by offering an option to only drop the edges and by removing
-the need to count all edges and all vertices before starting work. This can be addressed in a
-future update. The use of threads could be further optimized in future to get more reuse out of
-the threads. One further refinement would be to avoid the need to read all elementment IDs into
-memory before dropping can start by doing that process in a loop.
 
 The following overall strategy is currently used.
 
@@ -56,6 +51,14 @@ NOTES:
   6: This script assumes that the 'gremlinpyton' library has already been installed.
   7: For massive graphs (with hundreds of millions or billions of elements) creating a new
      Neptune cluster will be faster than trying to delete everything programmatically.
+
+STILL TODO:
+The code could be further improved by offering an option to only drop the edges and by
+removing the need to count all edges and all vertices before starting work.  The use of
+threads could be further optimized in future to get more reuse out of the fetcher threads.
+One further refinement that would enable very large graphs to be dropped, would be to
+avoid the need to read all elementment IDs into memory before dropping can start by doing
+that process iteratively.  This script should probably also been turned into a class.
 '''
 
 from gremlin_python.structure.graph import Graph
@@ -117,8 +120,8 @@ def fetch_edges(q):
         fetch_size = MAX_FETCH_SIZE
         num_threads = min(math.ceil(count/fetch_size),MAX_FETCHERS)
         bracket_size = math.ceil(count/num_threads)
-        print("Bracket size is", bracket_size)
         print("Will use", num_threads, "threads.")
+        print("Each thread will queue", bracket_size)
         print("Queueing  IDs")
 
         start_offset = 0
@@ -147,8 +150,8 @@ def fetch_vertices(q):
         fetch_size = MAX_FETCH_SIZE
         num_threads = min(math.ceil(count/fetch_size),MAX_FETCHERS)
         bracket_size = math.ceil(count/num_threads)
-        print("Bracket size is", bracket_size)
         print("Will use", num_threads, "threads.")
+        print("Each thread will queue", bracket_size)
         print("Queueing  IDs")
 
         start_offset = 0
@@ -175,14 +178,14 @@ def edge_fetcher(q,start_offset,bracket_size):
     org = p1
     done = False
     nm = threading.currentThread().name
-    print(nm,"[Edges] Fetching from offset", start_offset, "with end at",start_offset+bracket_size)
+    print(nm,"[edges] Fetching from offset", start_offset, "with end at",start_offset+bracket_size)
     edge_fetch_wait_queue.get()
 
     done = False
     while not done:
         success = False
         while not success:
-            print(nm,"[Edges] retrieving range ({},{} batch=size={})".format(p1,p2,p2-p1))
+            print(nm,"[edges] retrieving range ({},{} batch=size={})".format(p1,p2,p2-p1))
             try:
                 edges = g.E().range(p1,p2).id().toList()
                 success = True
@@ -195,7 +198,7 @@ def edge_fetcher(q,start_offset,bracket_size):
         s2 = 0
         for i in range(slices):
             s2 += min(len(edges)-s1,EDGE_BATCH_SIZE)
-            q.put(["Edges",edges[s1:s2]])
+            q.put(["edges",edges[s1:s2]])
             s1 = s2
         p1 += inc
         if p1 >= org + bracket_size:
@@ -203,7 +206,7 @@ def edge_fetcher(q,start_offset,bracket_size):
         else:
             p2 += min(inc, org+bracket_size - p2) 
     size = q.qsize()        
-    print(nm,"[Edges] work done. Queue size ==>",size)
+    print(nm,"[edges] work done. Queue size ==>",size)
     edge_fetch_wait_queue.task_done()
     return
 
@@ -219,14 +222,14 @@ def vertex_fetcher(q,start_offset,bracket_size):
     org = p1
     done = False
     nm = threading.currentThread().name
-    print(nm,"[Vertices] Fetching from offset", start_offset, "with end at",start_offset+bracket_size)
+    print(nm,"[vertices] Fetching from offset", start_offset, "with end at",start_offset+bracket_size)
     vertex_fetch_wait_queue.get()
 
     done = False
     while not done:
         success = False
         while not success:
-            print(nm,"[Vertices] retrieving range ({},{} batch=size={})".format(p1,p2,p2-p1))
+            print(nm,"[vertices] retrieving range ({},{} batch=size={})".format(p1,p2,p2-p1))
             try:
                 vertices = g.V().range(p1,p2).id().toList()
                 success = True
@@ -239,7 +242,7 @@ def vertex_fetcher(q,start_offset,bracket_size):
         s2 = 0
         for i in range(slices):
             s2 += min(len(vertices)-s1,VERTEX_BATCH_SIZE)
-            q.put(["Vertices",vertices[s1:s2]])
+            q.put(["vertices",vertices[s1:s2]])
             s1 = s2
         p1 += inc
         if p1 >= org + bracket_size:
@@ -247,7 +250,7 @@ def vertex_fetcher(q,start_offset,bracket_size):
         else:
             p2 += min(inc, org+bracket_size - p2) 
     size = q.qsize()        
-    print(nm,"[Vertices] work done. Queue size ==>",size)
+    print(nm,"[vertices] work done. Queue size ==>",size)
     vertex_fetch_wait_queue.task_done()
     return
 
@@ -270,7 +273,7 @@ def worker(q):
                 try:
                     if len(work[1]) > 0:
                         print("[{}] {} deleting {} {}".format(c,nm,len(work[1]), work[0]))
-                        if work[0] == "Edges":
+                        if work[0] == "edges":
                             g.E(work[1]).drop().iterate()
                         else:
                             g.V(work[1]).drop().iterate()
