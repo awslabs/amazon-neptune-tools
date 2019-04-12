@@ -250,6 +250,7 @@ def main(argv=None):
             infile = opts.infile
         else:
             sys.stderr.write("graphml input file is required.\n")
+            parser.print_help()
             return int(2)
 
         # MAIN BODY #
