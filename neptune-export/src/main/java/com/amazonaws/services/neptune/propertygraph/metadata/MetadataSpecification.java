@@ -12,14 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
-import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.propertygraph.Range;
-import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.GraphClient;
-import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
-import com.amazonaws.services.neptune.propertygraph.SpecifiedLabels;
-import com.amazonaws.services.neptune.io.*;
-import com.amazonaws.services.neptune.propertygraph.io.*;
+import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphTask;
+import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
+import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
@@ -28,14 +25,20 @@ import java.util.Map;
 public class MetadataSpecification<T> {
     private final MetadataType<T> metadataType;
     private final LabelsFilter labelsFilter;
+    private final boolean tokensOnly;
 
-    public MetadataSpecification(MetadataType<T> metadataType, LabelsFilter labelsFilter) {
+    public MetadataSpecification(MetadataType<T> metadataType, LabelsFilter labelsFilter, boolean tokensOnly) {
         this.metadataType = metadataType;
         this.labelsFilter = labelsFilter;
+        this.tokensOnly = tokensOnly;
     }
 
     public void scan(PropertiesMetadataCollection metadataCollection, GraphTraversalSource g) {
-        GraphClient<T> graphClient = metadataType.graphClient(g);
+        if (tokensOnly) {
+            return;
+        }
+
+        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly);
 
         graphClient.queryForMetadata(
                 new Handler(metadataType, metadataCollection),
@@ -44,7 +47,11 @@ public class MetadataSpecification<T> {
     }
 
     public void sample(PropertiesMetadataCollection metadataCollection, GraphTraversalSource g, long sampleSize) {
-        GraphClient<T> graphClient = metadataType.graphClient(g);
+        if (tokensOnly) {
+            return;
+        }
+
+        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly);
         Collection<String> labels = labelsFilter.resolveLabels(graphClient);
 
         for (String label : labels) {
@@ -55,32 +62,30 @@ public class MetadataSpecification<T> {
         }
     }
 
-    public String description(){
+    public String description() {
         return metadataType.name();
     }
 
     public RangeFactory createRangeFactory(GraphTraversalSource g, ConcurrencyConfig concurrencyConfig) {
-        return RangeFactory.create(metadataType.graphClient(g), labelsFilter, concurrencyConfig);
+        return RangeFactory.create(metadataType.graphClient(g, tokensOnly), labelsFilter, concurrencyConfig);
     }
 
     public ExportPropertyGraphTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,
                                                        GraphTraversalSource g,
-                                                       Directories directories,
-                                                       Format format,
+                                                       TargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
-                                                       int index,
-                                                       boolean includeTypeDefinitions) {
+                                                       int index) {
         return new ExportPropertyGraphTask<>(
                 metadataCollection.propertyMetadataFor(metadataType),
                 labelsFilter,
-                metadataType.graphClient(g),
-                metadataType.writerFactory(directories),
-                format,
+                metadataType.graphClient(g, tokensOnly),
+                metadataType.writerFactory(),
+                targetConfig,
                 rangeFactory,
                 status,
-                index,
-                includeTypeDefinitions);
+                index
+        );
     }
 
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
@@ -95,9 +100,9 @@ public class MetadataSpecification<T> {
         }
 
         @Override
-        public void handle(Map<?, Object> properties, boolean allowStructuralElements) {
+        public void handle(Map<?, Object> properties, boolean allowTokens) {
             status.update();
-            metadataCollection.update(metadataType, properties, allowStructuralElements);
+            metadataCollection.update(metadataType, properties, allowTokens);
         }
 
         @Override

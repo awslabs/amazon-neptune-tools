@@ -12,23 +12,27 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
 import com.amazonaws.services.neptune.propertygraph.io.Format;
+import com.amazonaws.services.neptune.propertygraph.io.Output;
 import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
+import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateQueriesFromFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveQueries;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.*;
+import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
+import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.github.rvesse.airline.annotations.restrictions.Path;
+import com.github.rvesse.airline.annotations.restrictions.PathKind;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,22 +69,32 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
-    @AllowedValues(allowedValues = {"csv", "json"})
+    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json"})
     private Format format = Format.csv;
+
+    @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
+    @Once
+    @AllowedValues(allowedValues = {"files", "stdout"})
+    private Output output = Output.files;
 
     @Option(name = {"--two-pass-analysis"}, description = "Perform two-pass analysis of query results (optional, default 'false')")
     @Once
     private boolean twoPassAnalysis = false;
 
+    @Option(name = {"--include-type-definitions"}, description = "Include type definitions from column headers (optional, default 'false')")
+    @Once
+    private boolean includeTypeDefinitions = false;
+
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, -1);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency);
 
         try (Timer timer = new Timer();
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connectionConfig(), concurrencyConfig, batchSize);
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.GremlinQueries, directory, tag);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, includeTypeDefinitions);
 
             QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
 
@@ -92,14 +106,14 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
                     queriesInfo.namedQueriesCollection().flatten(),
                     queryClient,
                     concurrencyConfig,
-                    directories,
-                    format,
+                    targetConfig,
                     twoPassAnalysis);
             queryJob.execute();
 
             System.err.println("CSV files   : " + directories.resultsDirectory());
             System.err.println("Queries file : " + queriesInfo.queriesFile());
-            System.out.println(directories.resultsDirectory());
+
+            output.writeCommandResult(directories.directory());
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");

@@ -22,28 +22,31 @@ public enum Scope {
     all {
         @Override
         public Collection<MetadataSpecification<?>> metadataSpecifications(List<String> nodeLabels,
-                                                                           List<String> edgeLabels) {
+                                                                           List<String> edgeLabels,
+                                                                           boolean tokensOnly) {
             return Arrays.asList(
-                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels)),
-                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels))
+                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly),
+                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly)
             );
         }
     },
     nodes {
         @Override
         public Collection<MetadataSpecification<?>> metadataSpecifications(List<String> nodeLabels,
-                                                                           List<String> edgeLabels) {
+                                                                           List<String> edgeLabels,
+                                                                           boolean tokensOnly) {
             return Collections.singletonList(
-                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels))
+                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly)
             );
         }
     },
     edges {
         @Override
         public Collection<MetadataSpecification<?>> metadataSpecifications(List<String> nodeLabels,
-                                                                           List<String> edgeLabels) {
+                                                                           List<String> edgeLabels,
+                                                                           boolean tokensOnly) {
             return Collections.singletonList(
-                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels))
+                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly)
             );
         }
     };
@@ -62,6 +65,7 @@ public enum Scope {
 
     public abstract Collection<MetadataSpecification<?>> metadataSpecifications(
             List<String> nodeLabels,
-            List<String> edgeLabels);
+            List<String> edgeLabels,
+            boolean tokensOnly);
 
 }

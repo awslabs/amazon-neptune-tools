@@ -32,9 +32,11 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueM
 public class EdgesClient implements GraphClient<Path> {
 
     private final GraphTraversalSource g;
+    private final boolean tokensOnly;
 
-    public EdgesClient(GraphTraversalSource g) {
+    public EdgesClient(GraphTraversalSource g, boolean tokensOnly) {
         this.g = g;
+        this.tokensOnly = tokensOnly;
     }
 
     @Override
@@ -44,14 +46,17 @@ public class EdgesClient implements GraphClient<Path> {
 
     @Override
     public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
-        traversal(range, labelsFilter).valueMap(true).
-                forEachRemaining(m -> {
-                    try {
-                        handler.handle(m, false);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
+                traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
+                traversal(range, labelsFilter).valueMap(true);
+
+        t.forEachRemaining(m -> {
+            try {
+                handler.handle(m, false);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
@@ -59,7 +64,7 @@ public class EdgesClient implements GraphClient<Path> {
         GraphTraversal<? extends Element, Path> traversal = range.applyRange(labelsFilter.apply(g.E())).as("e").
                 inV().select("e").outV().
                 path().
-                by(valueMap(true)).
+                by( tokensOnly ?  valueMap(true, "~TOKENS-ONLY") : valueMap(true)).
                 by(__.id()).
                 by(__.id()).
                 by(__.id());

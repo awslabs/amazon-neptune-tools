@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
@@ -31,24 +30,18 @@ public class ExportPropertyGraphJob {
     private final PropertiesMetadataCollection propertiesMetadataCollection;
     private final GraphTraversalSource g;
     private final ConcurrencyConfig concurrencyConfig;
-    private final Directories directories;
-    private final Format format;
-    private boolean includeTypeDefinitions;
+    private final TargetConfig targetConfig;
 
     public ExportPropertyGraphJob(Collection<MetadataSpecification<?>> metadataSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
                                   ConcurrencyConfig concurrencyConfig,
-                                  Directories directories,
-                                  Format format,
-                                  boolean includeTypeDefinitions) {
+                                  TargetConfig targetConfig) {
         this.metadataSpecifications = metadataSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
         this.concurrencyConfig = concurrencyConfig;
-        this.directories = directories;
-        this.format = format;
-        this.includeTypeDefinitions = includeTypeDefinitions;
+        this.targetConfig = targetConfig;
     }
 
     public void execute() throws Exception {
@@ -56,7 +49,7 @@ public class ExportPropertyGraphJob {
         for (MetadataSpecification metadataSpecification : metadataSpecifications) {
 
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " " + format.description() + " files");
+                System.err.println("Creating " + metadataSpecification.description() + " " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
 
                 RangeFactory rangeFactory = metadataSpecification.createRangeFactory(g, concurrencyConfig);
                 Status status = new Status();
@@ -67,12 +60,10 @@ public class ExportPropertyGraphJob {
                     ExportPropertyGraphTask exportTask = metadataSpecification.createExportTask(
                             propertiesMetadataCollection,
                             g,
-                            directories,
-                            format,
+                            targetConfig,
                             rangeFactory,
                             status,
-                            index,
-                            includeTypeDefinitions);
+                            index);
                     taskExecutor.execute(exportTask);
                 }
 
@@ -87,6 +78,4 @@ public class ExportPropertyGraphJob {
             }
         }
     }
-
-
 }

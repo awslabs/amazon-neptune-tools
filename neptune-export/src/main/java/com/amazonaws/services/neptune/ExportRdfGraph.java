@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
+import com.amazonaws.services.neptune.propertygraph.io.Output;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
 import com.amazonaws.services.neptune.util.Timer;

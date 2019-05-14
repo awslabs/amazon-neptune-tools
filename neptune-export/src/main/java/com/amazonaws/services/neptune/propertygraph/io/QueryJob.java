@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
@@ -30,34 +29,37 @@ public class QueryJob {
     private final Queue<NamedQuery> queries;
     private final NeptuneGremlinClient.QueryClient queryClient;
     private final ConcurrencyConfig concurrencyConfig;
-    private final Directories directories;
-    private final Format format;
+    private final TargetConfig targetConfig;
     private final boolean twoPassAnalysis;
 
     public QueryJob(Collection<NamedQuery> queries,
                     NeptuneGremlinClient.QueryClient queryClient,
                     ConcurrencyConfig concurrencyConfig,
-                    Directories directories,
-                    Format format,
+                    TargetConfig targetConfig,
                     boolean twoPassAnalysis){
         this.queries = new ConcurrentLinkedQueue<>(queries);
         this.queryClient = queryClient;
         this.concurrencyConfig = concurrencyConfig;
-        this.directories = directories;
-        this.format = format;
+        this.targetConfig = targetConfig;
         this.twoPassAnalysis = twoPassAnalysis;
     }
 
     public void execute() throws Exception {
         try (Timer timer = new Timer()) {
-            System.err.println("Writing " + format.description() + " files from queries");
+            System.err.println("Writing query results to " + targetConfig.outputDescription() + " as " + targetConfig.formatDescription());
 
             Status status = new Status();
 
             ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
 
             for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-                QueryTask queryTask = new QueryTask(queries, queryClient, directories, format, twoPassAnalysis, status, index);
+                QueryTask queryTask = new QueryTask(
+                        queries,
+                        queryClient,
+                        targetConfig,
+                        twoPassAnalysis,
+                        status,
+                        index);
                 taskExecutor.execute(queryTask);
             }
 

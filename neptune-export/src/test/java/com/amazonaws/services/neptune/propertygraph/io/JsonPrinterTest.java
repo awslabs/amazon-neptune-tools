@@ -27,7 +27,7 @@ public class JsonPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        try (Printer printer = Format.json.createPrinter(new PrintWriter(stringWriter), new HashMap<>())) {
+        try (Printer printer = Format.json.createPrinter(new PrintWriter(stringWriter), new HashMap<>(), true)) {
             printer.printStartRow();
             printer.printEdge("edge-id", "edge-label", "from-id", "to-id");
             printer.printEndRow();

@@ -15,6 +15,8 @@ package com.amazonaws.services.neptune.propertygraph;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
+import static java.lang.Math.abs;
+
 public class Range {
 
     public static final Range ALL = new Range(0, -1);
@@ -35,12 +37,12 @@ public class Range {
         }
     }
 
-    public long start() {
-        return start;
+    public long difference(){
+        return abs(end) - start;
     }
 
-    public long value(){
-        return end - start;
+    public boolean isEmpty() {
+        return difference() <= 0;
     }
 
     @Override

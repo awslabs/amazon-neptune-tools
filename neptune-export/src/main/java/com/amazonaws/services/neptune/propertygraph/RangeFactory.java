@@ -13,49 +13,42 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.LongUnaryOperator;
+
+import static java.lang.Math.min;
 
 public class RangeFactory {
 
     public static RangeFactory create(GraphClient<?> graphClient, LabelsFilter labelsFilter, ConcurrencyConfig config) {
         if (config.isUnboundedParallelExecution()) {
-            System.err.println("Calculating " + graphClient.description() + " range");
-            long count = graphClient.count(labelsFilter);
-            long range = (count / config.concurrency()) + 1;
-            return new RangeFactory(range, count);
+            System.err.println("Calculating " + graphClient.description() + " ranges");
+            long limit = min(graphClient.count(labelsFilter), config.limit());
+            long rangeSize = (limit / config.concurrency()) + 1;
+            return new RangeFactory(rangeSize, limit, config.skip());
         }
 
-        return new RangeFactory(config.range());
+        return new RangeFactory(config.rangeSize(), config.limit(), config.skip());
     }
 
-    private final long range;
-    private final long maxValue;
-    private final LongUnaryOperator addRange;
-    private final AtomicLong currentEnd = new AtomicLong(0);
+    private final long rangeSize;
+    private final long rangeLimit;
+    private final AtomicLong currentEnd;
 
-    private RangeFactory(long range) {
-        this(range, Long.MAX_VALUE);
-    }
-
-    private RangeFactory(long range, long maxValue) {
-        this.range = range;
-        this.maxValue = maxValue;
-        this.addRange = v -> v + range;
+    private RangeFactory(long rangeSize, long limit, long skip) {
+        this.rangeSize = rangeSize;
+        this.rangeLimit = limit + skip;
+        this.currentEnd =  new AtomicLong(skip);
     }
 
     public Range nextRange() {
+        long proposedEnd = currentEnd.accumulateAndGet(rangeSize, (left, right) -> left+right);
 
-        long end = currentEnd.updateAndGet(addRange);
-        long start = end - range;
+        long start = min(proposedEnd - rangeSize, rangeLimit);
+        long actualEnd = min(proposedEnd, rangeLimit);
 
-        return new Range(start, end);
+        return new Range(start, actualEnd);
     }
 
-    public boolean exceedsUpperBound(Range range) {
-        if (range.start() < 0 || range.start() >= maxValue) {
-            return true;
-        }
-
-        return false;
+    public boolean isExhausted() {
+        return currentEnd.get() >= rangeLimit;
     }
 }

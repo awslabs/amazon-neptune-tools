@@ -25,22 +25,56 @@ import java.util.Map;
 public enum Format implements FileExtension {
     json {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+        public String suffix() {
+            return "json";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer);
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new JsonPrinter(generator, metadata);
         }
+
+        @Override
+        public String description() {
+            return "JSON";
+        }
     },
     csv {
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) {
-            return new CsvPrinter(writer, metadata);
+        public String suffix() {
+            return "csv";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+            return new CsvPrinter(writer, metadata, true, includeTypeDefinitions);
+        }
+
+        @Override
+        public String description() {
+            return "CSV";
+        }
+    },
+    csvNoHeaders {
+        @Override
+        public String suffix() {
+            return "csv";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+            return new CsvPrinter(writer, metadata, false, includeTypeDefinitions);
+        }
+
+        @Override
+        public String description() {
+            return "CSV (no headers)";
         }
     };
 
-    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata) throws IOException;
+    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
 
-    public String description(){
-        return name().toUpperCase();
-    }
+    public abstract String description();
 }

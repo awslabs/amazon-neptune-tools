@@ -18,6 +18,8 @@ import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.Scope;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.Format;
+import com.amazonaws.services.neptune.propertygraph.io.Output;
+import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromConfigFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
@@ -58,9 +60,17 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
             arity = 1)
     private List<String> edgeLabels = new ArrayList<>();
 
-    @Option(name = {"-r", "--range"}, description = "Range (optional)")
+    @Option(name = {"-r", "--range", "--range-size"}, description = "Number of items to fetch per request (optional)")
     @Once
-    private long range = -1;
+    private long rangeSize = -1;
+
+    @Option(name = {"--limit"}, description = "Maximum number of items to export (optional)")
+    @Once
+    private long limit = Long.MAX_VALUE;
+
+    @Option(name = {"--skip"}, description = "Number of items to skip (optional)")
+    @Once
+    private long skip = 0;
 
     @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
     @Once
@@ -73,39 +83,46 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
-    @AllowedValues(allowedValues = {"csv", "json"})
+    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json"})
     private Format format = Format.csv;
 
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default false)")
+    @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
+    @Once
+    @AllowedValues(allowedValues = {"files", "stdout"})
+    private Output output = Output.files;
+
+    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
     @Once
     private boolean excludeTypeDefinitions = false;
 
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, range);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, rangeSize, skip, limit);
 
         try (Timer timer = new Timer();
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connectionConfig(), concurrencyConfig);
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
+
             PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
+            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false);
 
             ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                     metadataSpecifications,
                     metadataCollection,
                     g,
                     concurrencyConfig,
-                    directories,
-                    format,
-                    !excludeTypeDefinitions);
+                    targetConfig
+            );
             exportJob.execute();
 
             System.err.println(format.description() + " files   : " + directories.directory());
             System.err.println("Config file : " + configFile.getAbsolutePath());
-            System.out.println(directories.directory());
+
+            output.writeCommandResult(directories.directory());
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");

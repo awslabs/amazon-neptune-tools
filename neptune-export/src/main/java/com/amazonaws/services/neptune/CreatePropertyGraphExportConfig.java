@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.MetadataSamplingSpecification;
@@ -69,7 +68,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
 
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(1, -1);
+        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(1);
         MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
@@ -79,7 +78,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
             Directories directories = Directories.createFor(DirectoryStructure.Config, directory, tag);
             java.nio.file.Path configFilePath = directories.configFilePath();
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
+            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false);
 
             MetadataCommand metadataCommand = metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g);
             PropertiesMetadataCollection metadataCollection = metadataCommand.execute();

@@ -54,6 +54,9 @@ public class PropertiesMetadataCollection {
     }
 
     public PropertiesMetadata propertyMetadataFor(MetadataType type) {
+        if (!metadataCollection.containsKey(type)) {
+            metadataCollection.put(type, new PropertiesMetadata());
+        }
         return metadataCollection.get(type);
     }
 

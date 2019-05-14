@@ -12,30 +12,19 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
 public class EdgesWriterFactory implements WriterFactory<Path> {
-    private final Directories directories;
-
-    public EdgesWriterFactory(Directories directories) {
-        this.directories = directories;
-    }
 
     @Override
-    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, Format format) throws IOException {
-
-        java.nio.file.Path filePath = directories.createFilePath(directories.edgesDirectory(), name, index, format);
-        PrintWriter printWriter = new PrintWriter(new FileWriter(filePath.toFile()));
-
-        Printer printer = format.createPrinter(printWriter, metadata);
-        printer.printHeaderMandatoryColumns("~id","~label","~from","~to");
+    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
+        Printer printer = targetConfig.createPrinterForEdges(name, index, metadata);
+        printer.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
 
         return printer;
     }

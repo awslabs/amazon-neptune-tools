@@ -57,6 +57,11 @@ public class PropertiesMetadata {
     }
 
     public Map<Object, PropertyTypeInfo> propertyMetadataFor(String label) {
+
+        if (!metadata.containsKey(label)) {
+            metadata.put(label, new LinkedHashMap<>());
+        }
+
         return metadata.get(label);
     }
 
@@ -83,7 +88,7 @@ public class PropertiesMetadata {
 
             Object property = entry.getKey();
 
-            if (allowStructuralElements || !(isStructuralElement(property))){
+            if (allowStructuralElements || !(isToken(property))){
                 if (!propertyInfo.containsKey(property)) {
                     propertyInfo.put(property, new PropertyTypeInfo(property));
                 }
@@ -92,7 +97,7 @@ public class PropertiesMetadata {
         }
     }
 
-    private boolean isStructuralElement(Object key) {
+    private boolean isToken(Object key) {
         return key.equals(T.label) || key.equals(T.id) || key.equals(T.key) || key.equals(T.value);
     }
 

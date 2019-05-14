@@ -119,7 +119,7 @@ The Lambda function expects a number of parameters, which you can supply either 
 
 | Environment Variable | JSON Field | Description ||
 | ---- | ---- | ---- | ---- |
-| `COMMAND` | `command` | Command and command-line options: e.g. `export-pg -e <neptune_endpoint>` | Mandatory |
+| `COMMAND` | `command` | _neptune-export_ command and command-line options: e.g. `export-pg -e <neptune_endpoint>` | Mandatory |
 | `OUTPUT_S3_PATH` | `outputS3Path` | S3 location to which exported files will be written | Mandatory |
 | `CONFIG_FILE_S3_PATH` | `configFileS3Path` | S3 location of a JSON config file to be used when exporting a property graph from a config file | Optional |
-| `COMPLETION_FILE_S3_PATH` | `completionFileS3Path` | S3 location to which a completion file shuld be written once all export files have been copied to S3 | Optional |
+| `COMPLETION_FILE_S3_PATH` | `completionFileS3Path` | S3 location to which a completion file should be written once all export files have been copied to S3 | Optional |

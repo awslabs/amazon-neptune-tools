@@ -27,7 +27,7 @@ public class NodeWriter implements GraphElementHandler<Map<?, Object>> {
 
 
     @Override
-    public void handle(Map<?, Object> properties, boolean allowStructuralElements) throws IOException {
+    public void handle(Map<?, Object> properties, boolean allowTokens) throws IOException {
         String id = String.valueOf(properties.get(T.id));
         String label = String.valueOf(properties.get(T.label));
 

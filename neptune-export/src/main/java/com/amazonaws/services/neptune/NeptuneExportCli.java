@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.github.rvesse.airline.Accessor;
 import com.github.rvesse.airline.annotations.Alias;
 import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.annotations.Parser;
@@ -27,6 +26,7 @@ import com.github.rvesse.airline.help.Help;
                 ExportPropertyGraphFromConfig.class,
                 ExportPropertyGraphFromGremlinQueries.class,
                 ExportRdfGraph.class,
+                NeptuneExportSvc.class,
                 Help.class},
         parserConfiguration = @Parser(aliases = {
                 @Alias(name = "create-config",
@@ -41,6 +41,7 @@ import com.github.rvesse.airline.help.Help;
 public class NeptuneExportCli {
 
     public static void main(String[] args) {
+
         com.github.rvesse.airline.Cli<Runnable> cli = new com.github.rvesse.airline.Cli<>(NeptuneExportCli.class);
 
         try {

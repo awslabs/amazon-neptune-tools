@@ -14,11 +14,10 @@ package com.amazonaws.services.neptune.propertygraph.metadata;
 
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
-import com.amazonaws.services.neptune.io.Directories;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 public interface MetadataType<T> {
     String name();
-    GraphClient<T> graphClient(GraphTraversalSource g);
-    WriterFactory<T> writerFactory(Directories directories);
+    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly);
+    WriterFactory<T> writerFactory();
 }

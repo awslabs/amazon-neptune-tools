@@ -30,31 +30,28 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
     private final WriterFactory<T> writerFactory;
-    private final Format format;
+    private final TargetConfig targetConfig;
     private final RangeFactory rangeFactory;
     private final Status status;
     private final int index;
     private final Map<String, GraphElementHandler<T>> labelWriters = new HashMap<>();
-    private boolean includeTypeDefinitions;
 
     public ExportPropertyGraphTask(PropertiesMetadata propertiesMetadata,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
-                                   Format format,
+                                   TargetConfig targetConfig,
                                    RangeFactory rangeFactory,
                                    Status status,
-                                   int index,
-                                   boolean includeTypeDefinitions) {
+                                   int index) {
         this.propertiesMetadata = propertiesMetadata;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
         this.writerFactory = writerFactory;
-        this.format = format;
+        this.targetConfig = targetConfig;
         this.rangeFactory = rangeFactory;
         this.status = status;
         this.index = index;
-        this.includeTypeDefinitions = includeTypeDefinitions;
     }
 
     @Override
@@ -62,12 +59,14 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         try {
             while (status.allowContinue()) {
                 Range range = rangeFactory.nextRange();
-                if (rangeFactory.exceedsUpperBound(range)) {
+                if (range.isEmpty()){
                     status.halt();
-                } else {
+                }
+                else
+                {
                     CountingHandler handler = new CountingHandler(this);
                     graphClient.queryForValues(handler, range, labelsFilter);
-                    if (range.value() > handler.counter()) {
+                    if (range.difference() > handler.counter() || rangeFactory.isExhausted()) {
                         status.halt();
                     }
                 }
@@ -79,13 +78,13 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     }
 
     @Override
-    public void handle(T input, boolean allowStructuralElements) throws IOException {
+    public void handle(T input, boolean allowTokens) throws IOException {
         status.update();
         String label = graphClient.getLabelFrom(input);
         if (!labelWriters.containsKey(label)) {
             createWriterFor(label);
         }
-        labelWriters.get(label).handle(input, allowStructuralElements);
+        labelWriters.get(label).handle(input, allowTokens);
     }
 
     @Override
@@ -97,6 +96,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
 
     private void createWriterFor(String label) {
         try {
+
             Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(label);
 
             if (propertyMetadata == null) {
@@ -104,8 +104,8 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                 propertyMetadata = new HashMap<>();
             }
 
-            Printer printer = writerFactory.createPrinter(label, index, propertyMetadata, format);
-            printer.printHeaderRemainingColumns(propertyMetadata.values(), includeTypeDefinitions);
+            Printer printer = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
+            printer.printHeaderRemainingColumns(propertyMetadata.values());
 
             labelWriters.put(label, writerFactory.createLabelWriter(printer));
 
@@ -124,8 +124,8 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         }
 
         @Override
-        public void handle(T input, boolean allowStructuralElements) throws IOException {
-            parent.handle(input, allowStructuralElements);
+        public void handle(T input, boolean allowTokens) throws IOException {
+            parent.handle(input, allowTokens);
             counter++;
         }
 
