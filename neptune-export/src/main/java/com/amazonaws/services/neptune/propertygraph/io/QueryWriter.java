@@ -24,7 +24,7 @@ public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
     }
 
     @Override
-    public void handle(Map<?, ?> properties, boolean allowStructuralElements) throws IOException {
+    public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
         printer.printStartRow();
         printer.printProperties(properties);

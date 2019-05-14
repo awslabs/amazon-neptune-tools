@@ -18,6 +18,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 public interface MetadataType<T> {
     String name();
-    GraphClient<T> graphClient(GraphTraversalSource g);
+    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly);
     WriterFactory<T> writerFactory();
 }

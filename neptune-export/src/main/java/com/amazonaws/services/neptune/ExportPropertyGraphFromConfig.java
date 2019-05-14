@@ -108,7 +108,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
             PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
+            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false);
 
             ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                     metadataSpecifications,

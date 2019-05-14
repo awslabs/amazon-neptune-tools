@@ -78,13 +78,13 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     }
 
     @Override
-    public void handle(T input, boolean allowStructuralElements) throws IOException {
+    public void handle(T input, boolean allowTokens) throws IOException {
         status.update();
         String label = graphClient.getLabelFrom(input);
         if (!labelWriters.containsKey(label)) {
             createWriterFor(label);
         }
-        labelWriters.get(label).handle(input, allowStructuralElements);
+        labelWriters.get(label).handle(input, allowTokens);
     }
 
     @Override
@@ -96,6 +96,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
 
     private void createWriterFor(String label) {
         try {
+
             Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(label);
 
             if (propertyMetadata == null) {
@@ -123,8 +124,8 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         }
 
         @Override
-        public void handle(T input, boolean allowStructuralElements) throws IOException {
-            parent.handle(input, allowStructuralElements);
+        public void handle(T input, boolean allowTokens) throws IOException {
+            parent.handle(input, allowTokens);
             counter++;
         }
 

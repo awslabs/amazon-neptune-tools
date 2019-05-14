@@ -15,5 +15,5 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import java.io.IOException;
 
 public interface GraphElementHandler<T> extends AutoCloseable {
-    void handle(T element, boolean allowStructuralElements) throws IOException;
+    void handle(T element, boolean allowTokens) throws IOException;
 }

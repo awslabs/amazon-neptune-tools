@@ -33,8 +33,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public GraphClient<Map<?, Object>> graphClient(GraphTraversalSource g) {
-            return new NodesClient(g);
+        public GraphClient<Map<?, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly) {
+            return new NodesClient(g, tokensOnly);
         }
 
         @Override
@@ -50,8 +50,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public GraphClient<Path> graphClient(GraphTraversalSource g) {
-            return new EdgesClient(g);
+        public GraphClient<Path> graphClient(GraphTraversalSource g, boolean tokensOnly) {
+            return new EdgesClient(g, tokensOnly);
         }
 
         @Override

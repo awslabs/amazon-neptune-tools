@@ -28,9 +28,11 @@ import java.util.Set;
 public class NodesClient implements GraphClient<Map<?, Object>> {
 
     private final GraphTraversalSource g;
+    private final boolean tokensOnly;
 
-    public NodesClient(GraphTraversalSource g) {
+    public NodesClient(GraphTraversalSource g, boolean tokensOnly) {
         this.g = g;
+        this.tokensOnly = tokensOnly;
     }
 
     @Override
@@ -40,26 +42,32 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
 
     @Override
     public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
-        traversal(range, labelsFilter).valueMap(true).
-                forEachRemaining(m -> {
-                    try {
-                        handler.handle(m, false);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
+                traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
+                traversal(range, labelsFilter).valueMap(true);
+
+        t.forEachRemaining(m -> {
+            try {
+                handler.handle(m, false);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
     public void queryForValues(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
-        traversal(range, labelsFilter).valueMap(true).
-                forEachRemaining(m -> {
-                    try {
-                        handler.handle(m, false);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
+                traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
+                traversal(range, labelsFilter).valueMap(true);
+
+        t.forEachRemaining(m -> {
+            try {
+                handler.handle(m, false);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override

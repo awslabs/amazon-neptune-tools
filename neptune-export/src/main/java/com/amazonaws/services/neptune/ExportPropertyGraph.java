@@ -22,7 +22,6 @@ import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.Format;
 import com.amazonaws.services.neptune.propertygraph.io.Output;
 import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
@@ -107,6 +106,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Once
     private boolean excludeTypeDefinitions = false;
 
+    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only")
+    @Once
+    private boolean tokensOnly = false;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, rangeSize, skip, limit);
@@ -121,10 +124,11 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
             TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels);
+            Collection<MetadataSpecification<?>> metadataSpecifications =
+                    scope.metadataSpecifications(nodeLabels, edgeLabels, tokensOnly);
 
-            MetadataCommand metadataCommand = metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g);
-            PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
+            PropertiesMetadataCollection metadataCollection =
+                    metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g).execute();
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 

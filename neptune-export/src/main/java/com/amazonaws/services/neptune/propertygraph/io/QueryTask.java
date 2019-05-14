@@ -161,13 +161,13 @@ public class QueryTask implements Runnable {
         }
 
         @Override
-        public void handle(Map<?, ?> properties, boolean allowStructuralElements) throws IOException {
+        public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
             if (!labelWriters.containsKey(name)) {
-                createWriterFor(name, properties, allowStructuralElements);
+                createWriterFor(name, properties, allowTokens);
             }
 
-            labelWriters.get(name).handle(properties, allowStructuralElements);
+            labelWriters.get(name).handle(properties, allowTokens);
         }
 
         @Override
@@ -187,8 +187,8 @@ public class QueryTask implements Runnable {
         }
 
         @Override
-        public void handle(Map<?, ?> input, boolean allowStructuralElements) throws IOException {
-            parent.handle(input, allowStructuralElements);
+        public void handle(Map<?, ?> input, boolean allowTokens) throws IOException {
+            parent.handle(input, allowTokens);
             status.update();
         }
 
