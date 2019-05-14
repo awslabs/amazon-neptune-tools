@@ -61,7 +61,7 @@ public class PropertiesMetadata {
         if (!metadata.containsKey(label)) {
             metadata.put(label, new LinkedHashMap<>());
         }
-        
+
         return metadata.get(label);
     }
 
