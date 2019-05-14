@@ -12,12 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.github.rvesse.airline.Accessor;
 import com.github.rvesse.airline.annotations.Alias;
 import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.annotations.Parser;
 import com.github.rvesse.airline.help.Help;
-import org.codehaus.plexus.util.cli.CommandLineUtils;
 
 @Cli(name = "neptune-export.sh",
         description = "Export Neptune to CSV or JSON",
@@ -28,6 +26,7 @@ import org.codehaus.plexus.util.cli.CommandLineUtils;
                 ExportPropertyGraphFromConfig.class,
                 ExportPropertyGraphFromGremlinQueries.class,
                 ExportRdfGraph.class,
+                NeptuneExportSvc.class,
                 Help.class},
         parserConfiguration = @Parser(aliases = {
                 @Alias(name = "create-config",
