@@ -9,11 +9,12 @@
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
-                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
+                    [ --include-type-definitions ] [ --lb-port <loadBalancerPort> ]
+                    [ --log-level <log level> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
-                    [ {-p | --port} <port> ] [ {-q | --queries} <queries>... ]
-                    [ {-t | --tag} <tag> ] [ --two-pass-analysis ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-o | --output} <output> ] [ {-p | --port} <port> ]
+                    [ {-q | --queries} <queries>... ] [ {-t | --tag} <tag> ]
+                    [ --two-pass-analysis ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -71,7 +72,15 @@
     
                 This options value is restricted to the following set of values:
                     csv
+                    csvNoHeaders
                     json
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --include-type-definitions
+                Include type definitions from column headers (optional, default
+                'false')
     
                 This option may occur a maximum of 1 times
     
@@ -109,6 +118,16 @@
     
                 This option is part of the group 'load-balancer' from which only
                 one option may be specified
+    
+    
+            -o <output>, --output <output>
+                Output target (optional, default 'file')
+    
+                This options value is restricted to the following set of values:
+                    files
+                    stdout
+    
+                This option may occur a maximum of 1 times
     
     
             -p <port>, --port <port>
