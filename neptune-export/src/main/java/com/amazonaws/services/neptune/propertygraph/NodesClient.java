@@ -20,10 +20,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class NodesClient implements GraphClient<Map<?, Object>> {
 
@@ -42,6 +39,7 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
 
     @Override
     public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);

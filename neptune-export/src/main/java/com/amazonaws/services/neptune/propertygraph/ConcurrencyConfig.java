@@ -64,12 +64,12 @@ public class ConcurrencyConfig {
             return clusterBuilder;
         }
 
-        int minPoolSize = max(concurrency/2, 2);
-        int maxPoolSize =  max(concurrency/2, 8);
-        int minSimultaneousUsage = max(concurrency/2, 8);
-        int maxSimultaneousUsage = max(concurrency, 16);
-        int minInProcess = max(concurrency/8, 1);
-        int maxInProcess = max(concurrency/4, 4);
+        int minPoolSize = max(concurrency, 2);
+        int maxPoolSize =  max(concurrency, 8);
+        int minSimultaneousUsage = 1;
+        int maxSimultaneousUsage = 1;
+        int minInProcess = 1;
+        int maxInProcess = 1;
 
         return clusterBuilder.
                 minConnectionPoolSize(minPoolSize).
