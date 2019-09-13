@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.Scope;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
@@ -108,7 +109,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
             PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false);
+            ExportStats stats = new ExportStats();
+            stats.prepare(metadataCollection);
+
+            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false, stats);
 
             ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                     metadataSpecifications,
@@ -119,8 +123,11 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
             );
             exportJob.execute();
 
+            System.err.println();
             System.err.println(format.description() + " files   : " + directories.directory());
             System.err.println("Config file : " + configFile.getAbsolutePath());
+            System.err.println();
+            System.err.println(stats.toString());
 
             output.writeCommandResult(directories.directory());
 

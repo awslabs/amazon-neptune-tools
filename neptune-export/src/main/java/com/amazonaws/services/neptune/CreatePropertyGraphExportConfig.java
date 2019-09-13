@@ -13,10 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.propertygraph.MetadataSamplingSpecification;
-import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.propertygraph.Scope;
+import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
@@ -78,7 +75,8 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
             Directories directories = Directories.createFor(DirectoryStructure.Config, directory, tag);
             java.nio.file.Path configFilePath = directories.configFilePath();
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false);
+            ExportStats stats = new ExportStats();
+            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false, stats);
 
             MetadataCommand metadataCommand = metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g);
             PropertiesMetadataCollection metadataCollection = metadataCommand.execute();

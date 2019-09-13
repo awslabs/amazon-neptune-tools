@@ -27,16 +27,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
 public class EdgesClient implements GraphClient<Path> {
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
+    private final ExportStats stats;
 
-    public EdgesClient(GraphTraversalSource g, boolean tokensOnly) {
+    public EdgesClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
         this.g = g;
         this.tokensOnly = tokensOnly;
+        this.stats = stats;
     }
 
     @Override
@@ -59,7 +61,38 @@ public class EdgesClient implements GraphClient<Path> {
         });
     }
 
-    // suggested simplification: g.E().project('from','edge','to').by(outV().id()).by(id()).by(inV().id())
+//    // suggested simplification: g.E().project('from','edge','to').by(outV().id()).by(id()).by(inV().id())
+//
+//    @Override
+//    public void queryForValues(GraphElementHandler<Path> handler, Range range, LabelsFilter labelsFilter) {
+//
+//        GraphTraversal<? extends Element, Map<String, Object>> t =
+//                range.applyRange(labelsFilter.apply(g.E())).
+//                        project("properties", "from", "to").
+//                        by(tokensOnly ?
+//                                valueMap(true, "~TOKENS-ONLY") :
+//                                valueMap(true)).
+//                        by(inV().id()).
+//                        by(outV().id());
+//
+//        t.forEachRemaining(e -> e.);
+//
+//
+//        GraphTraversal<? extends Element, Path> traversal = range.applyRange(labelsFilter.apply(g.E())).as("e").
+//                inV().select("e").outV().
+//                path().
+//                by(tokensOnly ? valueMap(true, "~TOKENS-ONLY") : valueMap(true)).
+//                by(__.id()).
+//                by(__.id()).
+//                by(__.id());
+//        traversal.forEachRemaining(p -> {
+//            try {
+//                handler.handle(p, false);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        });
+//    }
 
     @Override
     public void queryForValues(GraphElementHandler<Path> handler, Range range, LabelsFilter labelsFilter) {
@@ -81,7 +114,9 @@ public class EdgesClient implements GraphClient<Path> {
 
     @Override
     public long count(LabelsFilter labelsFilter) {
-        return traversal(Range.ALL, labelsFilter).count().next();
+        Long count = traversal(Range.ALL, labelsFilter).count().next();
+        stats.setEdgeCount(count);
+        return count;
     }
 
     @Override
@@ -98,6 +133,11 @@ public class EdgesClient implements GraphClient<Path> {
     public String getLabelFrom(Path input) {
         Map<?, Object> properties = input.get(0);
         return String.valueOf(properties.get(T.label));
+    }
+
+    @Override
+    public void updateStats(String label) {
+        stats.incrementEdgeStats(label);
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {

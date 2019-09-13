@@ -97,6 +97,10 @@ public class PropertiesMetadata {
         }
     }
 
+    public Iterable<String> labels(){
+        return metadata.keySet();
+    }
+
     private boolean isToken(Object key) {
         return key.equals(T.label) || key.equals(T.id) || key.equals(T.key) || key.equals(T.value);
     }

@@ -23,10 +23,11 @@ public enum Scope {
         @Override
         public Collection<MetadataSpecification<?>> metadataSpecifications(List<String> nodeLabels,
                                                                            List<String> edgeLabels,
-                                                                           boolean tokensOnly) {
+                                                                           boolean tokensOnly,
+                                                                           ExportStats stats) {
             return Arrays.asList(
-                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly),
-                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly)
+                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly, stats),
+                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly, stats)
             );
         }
     },
@@ -34,9 +35,10 @@ public enum Scope {
         @Override
         public Collection<MetadataSpecification<?>> metadataSpecifications(List<String> nodeLabels,
                                                                            List<String> edgeLabels,
-                                                                           boolean tokensOnly) {
+                                                                           boolean tokensOnly,
+                                                                           ExportStats stats) {
             return Collections.singletonList(
-                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly)
+                    new MetadataSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly, stats)
             );
         }
     },
@@ -44,9 +46,10 @@ public enum Scope {
         @Override
         public Collection<MetadataSpecification<?>> metadataSpecifications(List<String> nodeLabels,
                                                                            List<String> edgeLabels,
-                                                                           boolean tokensOnly) {
+                                                                           boolean tokensOnly,
+                                                                           ExportStats stats) {
             return Collections.singletonList(
-                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly)
+                    new MetadataSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly, stats)
             );
         }
     };
@@ -66,6 +69,7 @@ public enum Scope {
     public abstract Collection<MetadataSpecification<?>> metadataSpecifications(
             List<String> nodeLabels,
             List<String> edgeLabels,
-            boolean tokensOnly);
+            boolean tokensOnly,
+            ExportStats stats);
 
 }

@@ -29,4 +29,6 @@ public interface GraphClient<T> {
     Collection<String> labels();
 
     String getLabelFrom(T input);
+
+    void updateStats(String label);
 }

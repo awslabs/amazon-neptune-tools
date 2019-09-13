@@ -14,10 +14,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
-import com.amazonaws.services.neptune.propertygraph.MetadataSamplingSpecification;
-import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.propertygraph.Scope;
+import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.Format;
 import com.amazonaws.services.neptune.propertygraph.io.Output;
@@ -124,11 +121,15 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
             TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
 
+            ExportStats stats = new ExportStats();
+
             Collection<MetadataSpecification<?>> metadataSpecifications =
-                    scope.metadataSpecifications(nodeLabels, edgeLabels, tokensOnly);
+                    scope.metadataSpecifications(nodeLabels, edgeLabels, tokensOnly, stats);
 
             PropertiesMetadataCollection metadataCollection =
                     metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g).execute();
+
+            stats.prepare(metadataCollection);
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 
@@ -141,8 +142,11 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             );
             exportJob.execute();
 
+            System.err.println();
             System.err.println(format.description() + " files   : " + directories.directory());
             System.err.println("Config file : " + configFilePath);
+            System.err.println();
+            System.err.println(stats.toString());
 
             output.writeCommandResult(directories.directory());
 

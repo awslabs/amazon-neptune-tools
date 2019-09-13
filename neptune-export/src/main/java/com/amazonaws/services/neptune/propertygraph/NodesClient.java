@@ -26,10 +26,12 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
+    private final ExportStats stats;
 
-    public NodesClient(GraphTraversalSource g, boolean tokensOnly) {
+    public NodesClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
         this.g = g;
         this.tokensOnly = tokensOnly;
+        this.stats = stats;
     }
 
     @Override
@@ -70,7 +72,9 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
 
     @Override
     public long count(LabelsFilter labelsFilter) {
-        return traversal(Range.ALL, labelsFilter).count().next();
+        Long count = traversal(Range.ALL, labelsFilter).count().next();
+        stats.setNodeCount(count);
+        return count;
     }
 
     @Override
@@ -86,6 +90,11 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
     @Override
     public String getLabelFrom(Map<?, Object> input) {
         return String.valueOf(input.get(T.label));
+    }
+
+    @Override
+    public void updateStats(String label) {
+        stats.incrementNodeStats(label);
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {

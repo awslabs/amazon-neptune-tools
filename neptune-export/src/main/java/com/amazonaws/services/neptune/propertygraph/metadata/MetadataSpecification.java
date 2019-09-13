@@ -26,11 +26,16 @@ public class MetadataSpecification<T> {
     private final MetadataType<T> metadataType;
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;
+    private final ExportStats stats;
 
-    public MetadataSpecification(MetadataType<T> metadataType, LabelsFilter labelsFilter, boolean tokensOnly) {
+    public MetadataSpecification(MetadataType<T> metadataType,
+                                 LabelsFilter labelsFilter,
+                                 boolean tokensOnly,
+                                 ExportStats stats) {
         this.metadataType = metadataType;
         this.labelsFilter = labelsFilter;
         this.tokensOnly = tokensOnly;
+        this.stats = stats;
     }
 
     public void scan(PropertiesMetadataCollection metadataCollection, GraphTraversalSource g) {
@@ -38,7 +43,7 @@ public class MetadataSpecification<T> {
             return;
         }
 
-        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly);
+        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly, stats);
 
         graphClient.queryForMetadata(
                 new Handler(metadataType, metadataCollection),
@@ -51,7 +56,7 @@ public class MetadataSpecification<T> {
             return;
         }
 
-        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly);
+        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly, stats);
         Collection<String> labels = labelsFilter.resolveLabels(graphClient);
 
         for (String label : labels) {
@@ -67,7 +72,7 @@ public class MetadataSpecification<T> {
     }
 
     public RangeFactory createRangeFactory(GraphTraversalSource g, ConcurrencyConfig concurrencyConfig) {
-        return RangeFactory.create(metadataType.graphClient(g, tokensOnly), labelsFilter, concurrencyConfig);
+        return RangeFactory.create(metadataType.graphClient(g, tokensOnly, stats), labelsFilter, concurrencyConfig);
     }
 
     public ExportPropertyGraphTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,
@@ -79,7 +84,7 @@ public class MetadataSpecification<T> {
         return new ExportPropertyGraphTask<>(
                 metadataCollection.propertyMetadataFor(metadataType),
                 labelsFilter,
-                metadataType.graphClient(g, tokensOnly),
+                metadataType.graphClient(g, tokensOnly, stats),
                 metadataType.writerFactory(),
                 targetConfig,
                 rangeFactory,
