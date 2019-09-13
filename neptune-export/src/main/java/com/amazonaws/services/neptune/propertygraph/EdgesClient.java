@@ -59,6 +59,8 @@ public class EdgesClient implements GraphClient<Path> {
         });
     }
 
+    // suggested simplification: g.E().project('from','edge','to').by(outV().id()).by(id()).by(inV().id())
+
     @Override
     public void queryForValues(GraphElementHandler<Path> handler, Range range, LabelsFilter labelsFilter) {
         GraphTraversal<? extends Element, Path> traversal = range.applyRange(labelsFilter.apply(g.E())).as("e").

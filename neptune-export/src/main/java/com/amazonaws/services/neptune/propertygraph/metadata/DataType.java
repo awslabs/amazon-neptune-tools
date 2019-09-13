@@ -191,6 +191,7 @@ public enum DataType {
         generator.writeString(value.toString());
     }
 
+
     public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
         generator.writeStringField(key, value.toString());
     }
