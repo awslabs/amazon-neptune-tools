@@ -44,19 +44,19 @@ public class MetadataTypes {
         }
     };
 
-    public static final MetadataType<Path> Edges = new MetadataType<Path>() {
+    public static final MetadataType<Map<String, Object>> Edges = new MetadataType<Map<String, Object>>() {
         @Override
         public String name() {
             return "edges";
         }
 
         @Override
-        public GraphClient<Path> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
             return new EdgesClient(g, tokensOnly, stats);
         }
 
         @Override
-        public WriterFactory<Path> writerFactory() {
+        public WriterFactory<Map<String, Object>> writerFactory() {
             return new EdgesWriterFactory();
         }
     };

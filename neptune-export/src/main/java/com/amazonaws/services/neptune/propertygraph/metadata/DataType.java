@@ -35,34 +35,34 @@ public enum DataType {
 
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeBoolean((boolean)value);
+            generator.writeBoolean((boolean) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeBooleanField(key, (boolean)value);
+            generator.writeBooleanField(key, (boolean) value);
         }
     },
-    Byte{
+    Byte {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((byte)value);
+            generator.writeNumber((byte) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (byte)value);
+            generator.writeNumberField(key, (byte) value);
         }
     },
-    Short{
+    Short {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((short)value);
+            generator.writeNumber((short) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (short)value);
+            generator.writeNumberField(key, (short) value);
         }
     },
     Integer {
@@ -73,45 +73,45 @@ public enum DataType {
 
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((int)value);
+            generator.writeNumber((int) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (int)value);
+            generator.writeNumberField(key, (int) value);
         }
     },
     Long {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((long)value);
+            generator.writeNumber((long) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (long)value);
+            generator.writeNumberField(key, (long) value);
         }
     },
-    Float{
+    Float {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((float)value);
+            generator.writeNumber((float) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (float)value);
+            generator.writeNumberField(key, (float) value);
         }
     },
-    Double{
+    Double {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((double)value);
+            generator.writeNumber((double) value);
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (double)value);
+            generator.writeNumberField(key, (double) value);
         }
     },
     String {
@@ -137,8 +137,13 @@ public enum DataType {
     Date {
         @Override
         public String format(Object value) {
-            java.util.Date date = (java.util.Date) value;
-            return DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
+            try {
+                java.util.Date date = (java.util.Date) value;
+                return DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
+
+            } catch (ClassCastException e) {
+                return value.toString();
+            }
         }
 
         @Override
@@ -166,7 +171,7 @@ public enum DataType {
             return newType;
         } else if (oldType == None) {
             return newType;
-        } else if (oldType == Boolean){
+        } else if (oldType == Boolean) {
             return String;
         } else if (oldType == String || newType == String) {
             return String;

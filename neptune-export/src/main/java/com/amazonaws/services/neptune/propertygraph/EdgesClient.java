@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
-public class EdgesClient implements GraphClient<Path> {
+public class EdgesClient implements GraphClient<Map<String, Object>> {
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
@@ -61,48 +61,21 @@ public class EdgesClient implements GraphClient<Path> {
         });
     }
 
-//    // suggested simplification: g.E().project('from','edge','to').by(outV().id()).by(id()).by(inV().id())
-//
-//    @Override
-//    public void queryForValues(GraphElementHandler<Path> handler, Range range, LabelsFilter labelsFilter) {
-//
-//        GraphTraversal<? extends Element, Map<String, Object>> t =
-//                range.applyRange(labelsFilter.apply(g.E())).
-//                        project("properties", "from", "to").
-//                        by(tokensOnly ?
-//                                valueMap(true, "~TOKENS-ONLY") :
-//                                valueMap(true)).
-//                        by(inV().id()).
-//                        by(outV().id());
-//
-//        t.forEachRemaining(e -> e.);
-//
-//
-//        GraphTraversal<? extends Element, Path> traversal = range.applyRange(labelsFilter.apply(g.E())).as("e").
-//                inV().select("e").outV().
-//                path().
-//                by(tokensOnly ? valueMap(true, "~TOKENS-ONLY") : valueMap(true)).
-//                by(__.id()).
-//                by(__.id()).
-//                by(__.id());
-//        traversal.forEachRemaining(p -> {
-//            try {
-//                handler.handle(p, false);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        });
-//    }
-
     @Override
-    public void queryForValues(GraphElementHandler<Path> handler, Range range, LabelsFilter labelsFilter) {
-        GraphTraversal<? extends Element, Path> traversal = range.applyRange(labelsFilter.apply(g.E())).as("e").
-                inV().select("e").outV().
-                path().
-                by( tokensOnly ?  valueMap(true, "~TOKENS-ONLY") : valueMap(true)).
-                by(__.id()).
-                by(__.id()).
-                by(__.id());
+    public void queryForValues(GraphElementHandler<Map<String, Object>> handler, Range range, LabelsFilter labelsFilter) {
+
+        GraphTraversal<? extends Element, Map<String, Object>> traversal =
+                range.applyRange(labelsFilter.apply(g.E())).
+                        project("properties", "from", "to").
+                        by(tokensOnly ?
+                                valueMap(true, "~TOKENS-ONLY") :
+                                valueMap(true)).
+                        by(outV().id()).
+                        by(inV().id());
+
+
+
+
         traversal.forEachRemaining(p -> {
             try {
                 handler.handle(p, false);
@@ -130,8 +103,8 @@ public class EdgesClient implements GraphClient<Path> {
     }
 
     @Override
-    public String getLabelFrom(Path input) {
-        Map<?, Object> properties = input.get(0);
+    public String getLabelFrom(Map<String, Object> input) {
+        Map<?, Object> properties = (Map<?, Object>) input.get("properties");
         return String.valueOf(properties.get(T.label));
     }
 
