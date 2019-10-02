@@ -1,7 +1,18 @@
+/*
+Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this file except in compliance with the License.
+A copy of the License is located at
+    http://www.apache.org/licenses/LICENSE-2.0
+or in the "license" file accompanying this file. This file is distributed
+on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+express or implied. See the License for the specific language governing
+permissions and limitations under the License.
+*/
+
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 
 import java.util.HashMap;
@@ -15,21 +26,20 @@ public class ExportStats {
     private final Map<String, LabelStats> nodeStats = new HashMap<>();
     private final Map<String, LabelStats> edgeStats = new HashMap<>();
 
-    public void setNodeCount(long value){
+    public void setNodeCount(long value) {
         nodeCount = value;
     }
 
-    public void setEdgeCount(long value){
+    public void setEdgeCount(long value) {
         edgeCount = value;
     }
 
 
-
-    public void incrementNodeStats(String label){
+    public void incrementNodeStats(String label) {
         nodeStats.get(label).increment();
     }
 
-    public void incrementEdgeStats(String label){
+    public void incrementEdgeStats(String label) {
         edgeStats.get(label).increment();
     }
 
@@ -67,8 +77,7 @@ public class ExportStats {
     }
 
 
-
-    private static class LabelStats{
+    private static class LabelStats {
         private final String label;
         private final AtomicLong count = new AtomicLong(0);
 
@@ -76,11 +85,11 @@ public class ExportStats {
             this.label = label;
         }
 
-        public void increment(){
+        public void increment() {
             count.incrementAndGet();
         }
 
-        public long count(){
+        public long count() {
             return count.get();
         }
 
