@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
 import com.amazonaws.services.neptune.propertygraph.EdgesClient;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.NodesClient;
 import com.amazonaws.services.neptune.propertygraph.io.EdgesWriterFactory;
@@ -33,8 +34,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public GraphClient<Map<?, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly) {
-            return new NodesClient(g, tokensOnly);
+        public GraphClient<Map<?, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
+            return new NodesClient(g, tokensOnly, stats);
         }
 
         @Override
@@ -43,19 +44,19 @@ public class MetadataTypes {
         }
     };
 
-    public static final MetadataType<Path> Edges = new MetadataType<Path>() {
+    public static final MetadataType<Map<String, Object>> Edges = new MetadataType<Map<String, Object>>() {
         @Override
         public String name() {
             return "edges";
         }
 
         @Override
-        public GraphClient<Path> graphClient(GraphTraversalSource g, boolean tokensOnly) {
-            return new EdgesClient(g, tokensOnly);
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
+            return new EdgesClient(g, tokensOnly, stats);
         }
 
         @Override
-        public WriterFactory<Path> writerFactory() {
+        public WriterFactory<Map<String, Object>> writerFactory() {
             return new EdgesWriterFactory();
         }
     };

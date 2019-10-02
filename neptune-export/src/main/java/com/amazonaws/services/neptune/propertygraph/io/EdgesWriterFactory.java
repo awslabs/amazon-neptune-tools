@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
-public class EdgesWriterFactory implements WriterFactory<Path> {
+public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
 
     @Override
     public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
@@ -30,7 +30,7 @@ public class EdgesWriterFactory implements WriterFactory<Path> {
     }
 
     @Override
-    public GraphElementHandler<Path> createLabelWriter(Printer printer) {
+    public GraphElementHandler<Map<String, Object>> createLabelWriter(Printer printer) {
         return new EdgeWriter(printer);
     }
 }

@@ -13,15 +13,22 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.auth.ConnectionConfig;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.handler.ssl.ApplicationProtocolNegotiator;
+import io.netty.handler.ssl.SslContext;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSessionContext;
+import java.util.List;
+
 public class NeptuneGremlinClient implements AutoCloseable {
 
-    public static final int DEFAULT_BATCH_SIZE = 64;
+    public static final int DEFAULT_BATCH_SIZE = 128;
 
     public static NeptuneGremlinClient create(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) {
         return create(connectionConfig, concurrencyConfig, DEFAULT_BATCH_SIZE);
@@ -31,7 +38,7 @@ public class NeptuneGremlinClient implements AutoCloseable {
         Cluster.Builder builder = Cluster.build()
                 .port(connectionConfig.port())
                 .enableSsl(connectionConfig.useSsl())
-                .serializer(Serializers.GRYO_V3D0)
+                .serializer(Serializers.GRAPHBINARY_V1D0)
                 .maxWaitForConnection(10000)
                 .resultIterationBatchSize(batchSize);
 

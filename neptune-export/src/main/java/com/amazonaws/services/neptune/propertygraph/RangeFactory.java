@@ -23,6 +23,7 @@ public class RangeFactory {
             System.err.println("Calculating " + graphClient.description() + " ranges");
             long limit = min(graphClient.count(labelsFilter), config.limit());
             long rangeSize = (limit / config.concurrency()) + 1;
+            System.err.println("Limit: " + limit + ", Size: " + rangeSize);
             return new RangeFactory(rangeSize, limit, config.skip());
         }
 

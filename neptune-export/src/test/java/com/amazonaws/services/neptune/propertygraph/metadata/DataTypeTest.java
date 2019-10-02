@@ -12,13 +12,16 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
-import com.amazonaws.services.neptune.propertygraph.ExportStats;
-import com.amazonaws.services.neptune.propertygraph.GraphClient;
-import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.junit.Test;
 
-public interface MetadataType<T> {
-    String name();
-    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats);
-    WriterFactory<T> writerFactory();
+import static org.junit.Assert.*;
+
+public class DataTypeTest {
+
+    @Test
+    public void emptyStringDateValueShouldReturnEmptyString(){
+        String result = DataType.Date.format("");
+        assertEquals("", result);
+    }
+
 }

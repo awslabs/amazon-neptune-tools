@@ -9,13 +9,16 @@
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ --exclude-type-definitions ] [ --format <format> ]
-                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
+                    [ --lb-port <loadBalancerPort> ] [ --limit <limit> ]
+                    [ --log-level <log level> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
-                    [ {-p | --port} <port> ] [ {-r | --range} <range> ]
+                    [ {-o | --output} <output> ] [ {-p | --port} <port> ]
+                    [ {-r | --range | --range-size} <rangeSize> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
-                    [ --sample-size <sampleSize> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ --sample-size <sampleSize> ] [ --skip <skip> ]
+                    [ {-t | --tag} <tag> ] [ --tokens-only ] [ --use-iam-auth ]
+                    [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -55,7 +58,7 @@
     
             --exclude-type-definitions
                 Exclude type definitions from column headers (optional, default
-                false)
+                'false')
     
                 This option may occur a maximum of 1 times
     
@@ -65,6 +68,7 @@
     
                 This options value is restricted to the following set of values:
                     csv
+                    csvNoHeaders
                     json
     
                 This option may occur a maximum of 1 times
@@ -78,6 +82,12 @@
     
                 This options value represents a port and must fall in one of the
                 following port ranges: 1-1023, 1024-49151
+    
+    
+            --limit <limit>
+                Maximum number of items to export (optional)
+    
+                This option may occur a maximum of 1 times
     
     
             --log-level <log level>
@@ -108,6 +118,16 @@
                 one option may be specified
     
     
+            -o <output>, --output <output>
+                Output target (optional, default 'file')
+    
+                This options value is restricted to the following set of values:
+                    files
+                    stdout
+    
+                This option may occur a maximum of 1 times
+    
+    
             -p <port>, --port <port>
                 Neptune port (optional, default 8182)
     
@@ -118,8 +138,8 @@
                 following port ranges: 1-1023, 1024-49151
     
     
-            -r <range>, --range <range>
-                Range (optional)
+            -r <rangeSize>, --range <rangeSize>, --range-size <rangeSize>
+                Number of items to fetch per request (optional)
     
                 This option may occur a maximum of 1 times
     
@@ -148,8 +168,20 @@
                 This option may occur a maximum of 1 times
     
     
+            --skip <skip>
+                Number of items to skip (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
             -t <tag>, --tag <tag>
                 Directory prefix (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --tokens-only
+                Export tokens (~id, ~label) only
     
                 This option may occur a maximum of 1 times
     

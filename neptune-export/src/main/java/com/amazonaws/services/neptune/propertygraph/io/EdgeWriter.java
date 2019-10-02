@@ -12,13 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class EdgeWriter implements GraphElementHandler<Path> {
+public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
 
     private final Printer printer;
 
@@ -27,10 +26,10 @@ public class EdgeWriter implements GraphElementHandler<Path> {
     }
 
     @Override
-    public void handle(Path path, boolean allowTokens) throws IOException {
-        String from = path.get(3);
-        String to = path.get(1);
-        Map<?, Object> properties = path.get(0);
+    public void handle(Map<String, Object> map, boolean allowTokens) throws IOException {
+        String from = String.valueOf(map.get("from"));
+        String to = String.valueOf(map.get("to"));
+        Map<?, Object> properties = (Map<?, Object>) map.get("properties");
         String id = String.valueOf(properties.get(T.id));
         String label = String.valueOf(properties.get(T.label));
 

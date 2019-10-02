@@ -84,6 +84,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         if (!labelWriters.containsKey(label)) {
             createWriterFor(label);
         }
+        graphClient.updateStats(label);
         labelWriters.get(label).handle(input, allowTokens);
     }
 

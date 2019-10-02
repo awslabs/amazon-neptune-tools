@@ -20,19 +20,18 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class NodesClient implements GraphClient<Map<?, Object>> {
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
+    private final ExportStats stats;
 
-    public NodesClient(GraphTraversalSource g, boolean tokensOnly) {
+    public NodesClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
         this.g = g;
         this.tokensOnly = tokensOnly;
+        this.stats = stats;
     }
 
     @Override
@@ -42,6 +41,7 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
 
     @Override
     public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);
@@ -72,7 +72,9 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
 
     @Override
     public long count(LabelsFilter labelsFilter) {
-        return traversal(Range.ALL, labelsFilter).count().next();
+        Long count = traversal(Range.ALL, labelsFilter).count().next();
+        stats.setNodeCount(count);
+        return count;
     }
 
     @Override
@@ -88,6 +90,11 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
     @Override
     public String getLabelFrom(Map<?, Object> input) {
         return String.valueOf(input.get(T.label));
+    }
+
+    @Override
+    public void updateStats(String label) {
+        stats.incrementNodeStats(label);
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {
