@@ -61,6 +61,10 @@ _neptune-export_ uses long-running queries to generate the metadata and the data
 
 For large datasets, we recommend running this tool against a standalone database instance that has been restored from a snapshot of your database.
 
+### Serializer
+
+The latest version of _neptune-export_ uses the [GraphBinary](http://tinkerpop.apache.org/docs/3.4.0/upgrade/#_graphbinary) serialization format introduced in Gremlin 3.4.x. Previous versions of _neptune-export_ used Gryo. To revert to using Gryo, supply `--serializer GRYO_V3D0`.
+
 ## Exporting the Results of User-Supplied Queries
 
 _neptune-export_'s [`export-pg-from-queries`](docs/export-pg-from-queries.md) command allows you to supply groups of Gremlin queries and export the results to CSV or JSON.
@@ -83,7 +87,7 @@ If using parallel export, we recommend setting the concurrency level to the numb
 
 ### Batching
 
-Queries whose results contain very large rows can sometimes trigger a `CorruptedFrameException`. If this happens, adjust the batch size (`--batch-size`) to reduce the number of results returned to the client in a batch (the default is 64).
+Queries whose results contain very large rows can sometimes trigger a `CorruptedFrameException`. If this happens, you can either adjust the batch size (`--batch-size`) to reduce the number of results returned to the client in a batch (the default is 64), or increase the frame size (`--max-content-length`, default value 65536).
 
 ## Exporting an RDF Graph
               

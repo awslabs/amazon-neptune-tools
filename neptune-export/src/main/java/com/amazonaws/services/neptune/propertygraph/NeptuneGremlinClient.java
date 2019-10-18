@@ -38,9 +38,10 @@ public class NeptuneGremlinClient implements AutoCloseable {
         Cluster.Builder builder = Cluster.build()
                 .port(connectionConfig.port())
                 .enableSsl(connectionConfig.useSsl())
-                .serializer(Serializers.GRAPHBINARY_V1D0)
+                .serializer(connectionConfig.serializer())
                 .maxWaitForConnection(10000)
-                .resultIterationBatchSize(batchSize);
+                .resultIterationBatchSize(batchSize)
+                .maxContentLength(connectionConfig.maxContentLength());
 
         if (connectionConfig.useIamAuth()) {
             if (connectionConfig.isDirectConnection()) {

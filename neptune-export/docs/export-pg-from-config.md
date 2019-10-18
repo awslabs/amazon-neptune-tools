@@ -12,12 +12,14 @@
                     [ --exclude-type-definitions ] [ --format <format> ]
                     [ --lb-port <loadBalancerPort> ] [ --limit <limit> ]
                     [ --log-level <log level> ]
+                    [ --max-content-length <maxContentLength> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
                     [ {-r | --range | --range-size} <rangeSize> ]
-                    [ {-s | --scope} <scope> ] [ --skip <skip> ]
-                    [ {-t | --tag} <tag> ] [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-s | --scope} <scope> ] [ --serializer <serializer> ]
+                    [ --skip <skip> ] [ {-t | --tag} <tag> ] [ --use-iam-auth ]
+                    [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -113,6 +115,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --max-content-length <maxContentLength>
+                Max content length (optional, default 65536)
+    
+                This option may occur a maximum of 1 times
+    
+    
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be exported (optional, default all labels)
     
@@ -161,6 +169,17 @@
                     all
                     nodes
                     edges
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --serializer <serializer>
+                Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
+                (optional, default 'GRAPHBINARY_V1D0')
+    
+                This options value is restricted to the following set of values:
+                    GRAPHBINARY_V1D0
+                    GRYO_V3D0
     
                 This option may occur a maximum of 1 times
     

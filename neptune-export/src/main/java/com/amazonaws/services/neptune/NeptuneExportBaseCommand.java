@@ -3,6 +3,7 @@ package com.amazonaws.services.neptune;
 import com.amazonaws.services.neptune.auth.ConnectionConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
+import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,8 +58,26 @@ public abstract class NeptuneExportBaseCommand {
     @Once
     protected int loadBalancerPort = 80;
 
+    @Option(name = {"--serializer"}, description = "Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0' (optional, default 'GRAPHBINARY_V1D0')")
+    @AllowedValues(allowedValues = {"GRAPHBINARY_V1D0", "GRYO_V3D0"})
+    @Once
+    protected String serializer = "GRAPHBINARY_V1D0";
+
+    @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 65536)")
+    @Once
+    protected int maxContentLength = 65536;
+
     public ConnectionConfig connectionConfig() {
-        return new ConnectionConfig(endpoints, port, networkLoadBalancerEndpoint, applicationLoadBalancerEndpoint, loadBalancerPort, useIamAuth, useSsl);
+        return new ConnectionConfig(
+                endpoints,
+                port,
+                networkLoadBalancerEndpoint,
+                applicationLoadBalancerEndpoint,
+                loadBalancerPort,
+                useIamAuth,
+                useSsl,
+                Serializers.valueOf(serializer),
+                maxContentLength);
     }
 
     public void applyLogLevel() {
