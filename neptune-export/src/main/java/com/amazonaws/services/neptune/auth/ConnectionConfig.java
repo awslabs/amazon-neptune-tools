@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.auth;
 
+import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
+
 import java.util.Collection;
 import java.util.Collections;
 
@@ -24,6 +26,8 @@ public class ConnectionConfig {
     private final int lbPort;
     private final boolean useIamAuth;
     private final boolean useSsl;
+    private final Serializers serializer;
+    private final int maxContentLength;
 
     public ConnectionConfig(Collection<String> neptuneEndpoints,
                             int neptunePort,
@@ -31,7 +35,7 @@ public class ConnectionConfig {
                             String albEndpoint,
                             int lbPort,
                             boolean useIamAuth,
-                            boolean useSsl) {
+                            boolean useSsl, Serializers serializer, int maxContentLength) {
         this.neptuneEndpoints = neptuneEndpoints;
         this.neptunePort = neptunePort;
         this.nlbEndpoint = nlbEndpoint;
@@ -39,6 +43,8 @@ public class ConnectionConfig {
         this.lbPort = lbPort;
         this.useIamAuth = useIamAuth;
         this.useSsl = useSsl;
+        this.serializer = serializer;
+        this.maxContentLength = maxContentLength;
     }
 
     public Collection<String> endpoints() {
@@ -65,6 +71,14 @@ public class ConnectionConfig {
 
     public boolean useSsl() {
         return useSsl;
+    }
+
+    public Serializers serializer() {
+        return serializer;
+    }
+
+    public int maxContentLength() {
+        return maxContentLength;
     }
 
     public HandshakeRequestConfig handshakeRequestConfig() {

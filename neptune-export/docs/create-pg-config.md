@@ -8,11 +8,13 @@
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
+                    [ --max-content-length <maxContentLength> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-p | --port} <port> ] [ {-s | --scope} <scope> ]
                     [ --sample ] [ --sample-size <sampleSize> ]
-                    [ {-t | --tag} <tag> ] [ --use-iam-auth ] [ --use-ssl ]
+                    [ --serializer <serializer> ] [ {-t | --tag} <tag> ]
+                    [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -68,6 +70,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --max-content-length <maxContentLength>
+                Max content length (optional, default 65536)
+    
+                This option may occur a maximum of 1 times
+    
+    
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be included in config (optional, default all
                 labels)
@@ -114,6 +122,17 @@
     
             --sample-size <sampleSize>
                 Property metadata sample size (optional, default 1000
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --serializer <serializer>
+                Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
+                (optional, default 'GRAPHBINARY_V1D0')
+    
+                This options value is restricted to the following set of values:
+                    GRAPHBINARY_V1D0
+                    GRYO_V3D0
     
                 This option may occur a maximum of 1 times
     

@@ -6,9 +6,10 @@
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
+                    [ --max-content-length <maxContentLength> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
-                    [ {-p | --port} <port> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-p | --port} <port> ] [ --serializer <serializer> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -60,6 +61,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --max-content-length <maxContentLength>
+                Max content length (optional, default 65536)
+    
+                This option may occur a maximum of 1 times
+    
+    
             --nlb-endpoint <networkLoadBalancerEndpoint>
                 Network load balancer endpoint (optional: use only if connecting to
                 an IAM DB enabled Neptune cluster through a network load balancer
@@ -80,6 +87,17 @@
     
                 This options value represents a port and must fall in one of the
                 following port ranges: 1-1023, 1024-49151
+    
+    
+            --serializer <serializer>
+                Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
+                (optional, default 'GRAPHBINARY_V1D0')
+    
+                This options value is restricted to the following set of values:
+                    GRAPHBINARY_V1D0
+                    GRYO_V3D0
+    
+                This option may occur a maximum of 1 times
     
     
             -t <tag>, --tag <tag>

@@ -11,10 +11,12 @@
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
                     [ --include-type-definitions ] [ --lb-port <loadBalancerPort> ]
                     [ --log-level <log level> ]
+                    [ --max-content-length <maxContentLength> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
-                    [ {-q | --queries} <queries>... ] [ {-t | --tag} <tag> ]
-                    [ --two-pass-analysis ] [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-q | --queries} <queries>... ] [ --serializer <serializer> ]
+                    [ {-t | --tag} <tag> ] [ --two-pass-analysis ]
+                    [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -108,6 +110,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --max-content-length <maxContentLength>
+                Max content length (optional, default 65536)
+    
+                This option may occur a maximum of 1 times
+    
+    
             --nlb-endpoint <networkLoadBalancerEndpoint>
                 Network load balancer endpoint (optional: use only if connecting to
                 an IAM DB enabled Neptune cluster through a network load balancer
@@ -143,6 +151,17 @@
             -q <queries>, --queries <queries>
                 Gremlin queries (format: name="semi-colon-separated list of
                 queries")
+    
+            --serializer <serializer>
+                Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
+                (optional, default 'GRAPHBINARY_V1D0')
+    
+                This options value is restricted to the following set of values:
+                    GRAPHBINARY_V1D0
+                    GRYO_V3D0
+    
+                This option may occur a maximum of 1 times
+    
     
             -t <tag>, --tag <tag>
                 Directory prefix (optional)
