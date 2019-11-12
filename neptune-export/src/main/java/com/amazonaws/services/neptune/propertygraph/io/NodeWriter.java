@@ -12,12 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import org.apache.tinkerpop.gremlin.structure.T;
-
 import java.io.IOException;
 import java.util.Map;
 
-public class NodeWriter implements GraphElementHandler<Map<?, Object>> {
+public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
     private final Printer printer;
 
@@ -27,9 +25,11 @@ public class NodeWriter implements GraphElementHandler<Map<?, Object>> {
 
 
     @Override
-    public void handle(Map<?, Object> properties, boolean allowTokens) throws IOException {
-        String id = String.valueOf(properties.get(T.id));
-        String label = String.valueOf(properties.get(T.label));
+    public void handle(Map<String, Object> map, boolean allowTokens) throws IOException {
+
+        Map<?, Object> properties = (Map<?, Object>) map.get("properties");
+        String id = (String) map.get("id");
+        String label = (String) map.get("label");
 
         printer.printStartRow();
         printer.printNode(id, label);

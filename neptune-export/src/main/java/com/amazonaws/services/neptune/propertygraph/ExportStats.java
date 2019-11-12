@@ -15,16 +15,15 @@ package com.amazonaws.services.neptune.propertygraph;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ExportStats {
     private long nodeCount = 0;
     private long edgeCount = 0;
 
-    private final Map<String, LabelStats> nodeStats = new HashMap<>();
-    private final Map<String, LabelStats> edgeStats = new HashMap<>();
+    private final ConcurrentHashMap<String, LabelStats> nodeStats = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LabelStats> edgeStats = new ConcurrentHashMap<>();
 
     public void setNodeCount(long value) {
         nodeCount = value;
@@ -36,11 +35,11 @@ public class ExportStats {
 
 
     public void incrementNodeStats(String label) {
-        nodeStats.get(label).increment();
+        nodeStats.computeIfAbsent(label, LabelStats::new).increment();
     }
 
     public void incrementEdgeStats(String label) {
-        edgeStats.get(label).increment();
+        edgeStats.computeIfAbsent(label, LabelStats::new).increment();
     }
 
     public void prepare(PropertiesMetadataCollection metadataCollection) {

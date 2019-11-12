@@ -30,8 +30,8 @@ public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
         String from = String.valueOf(map.get("from"));
         String to = String.valueOf(map.get("to"));
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
-        String id = String.valueOf(properties.get(T.id));
-        String label = String.valueOf(properties.get(T.label));
+        String id = (String) map.get("id");
+        String label = (String) map.get("label");
 
         printer.printStartRow();
         printer.printEdge(id, label, from, to);

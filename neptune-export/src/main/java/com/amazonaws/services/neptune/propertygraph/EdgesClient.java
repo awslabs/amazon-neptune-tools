@@ -17,15 +17,13 @@ import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.WithOptions;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
@@ -64,17 +62,22 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     @Override
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler, Range range, LabelsFilter labelsFilter) {
 
+        GraphTraversal<Edge, Edge> t = tokensOnly ?
+                g.withSideEffect("x", new HashMap<String, Object>()).E():
+                g.E();
+
+
         GraphTraversal<? extends Element, Map<String, Object>> traversal =
-                range.applyRange(labelsFilter.apply(g.E())).
-                        project("properties", "from", "to").
+                range.applyRange(labelsFilter.apply(t)).
+                        project("id", "label", "properties", "from", "to").
+                        by(T.id).
+                        by(T.label).
                         by(tokensOnly ?
-                                valueMap(true, "~TOKENS-ONLY") :
-                                valueMap(true)).
+                                select("x"):
+                                valueMap()
+                        ).
                         by(outV().id()).
                         by(inV().id());
-
-
-
 
         traversal.forEachRemaining(p -> {
             try {
@@ -104,8 +107,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
 
     @Override
     public String getLabelFrom(Map<String, Object> input) {
-        Map<?, Object> properties = (Map<?, Object>) input.get("properties");
-        return String.valueOf(properties.get(T.label));
+        return (String) input.get("label");
     }
 
     @Override

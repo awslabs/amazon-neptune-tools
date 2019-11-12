@@ -27,19 +27,19 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MetadataTypes {
-    public static final MetadataType<Map<?, Object>> Nodes = new MetadataType<Map<?, Object>>() {
+    public static final MetadataType<Map<String, Object>> Nodes = new MetadataType<Map<String, Object>>() {
         @Override
         public String name() {
             return "nodes";
         }
 
         @Override
-        public GraphClient<Map<?, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
             return new NodesClient(g, tokensOnly, stats);
         }
 
         @Override
-        public WriterFactory<Map<?, Object>> writerFactory() {
+        public WriterFactory<Map<String, Object>> writerFactory() {
             return new NodesWriterFactory();
         }
     };

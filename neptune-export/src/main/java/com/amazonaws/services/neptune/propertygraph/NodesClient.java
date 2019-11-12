@@ -22,7 +22,10 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import java.io.IOException;
 import java.util.*;
 
-public class NodesClient implements GraphClient<Map<?, Object>> {
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.select;
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
+
+public class NodesClient implements GraphClient<Map<String, Object>> {
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
@@ -56,10 +59,16 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
     }
 
     @Override
-    public void queryForValues(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
-        GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
-                traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
-                traversal(range, labelsFilter).valueMap(true);
+    public void queryForValues(GraphElementHandler<Map<String, Object>> handler, Range range, LabelsFilter labelsFilter) {
+
+        GraphTraversal<? extends Element, Map<String, Object>> t = traversal(range, labelsFilter).
+                project("id", "label", "properties").
+                by(T.id).
+                by(T.label).
+                by(tokensOnly ?
+                        select("x") :
+                        valueMap()
+                );
 
         t.forEachRemaining(m -> {
             try {
@@ -88,8 +97,8 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
     }
 
     @Override
-    public String getLabelFrom(Map<?, Object> input) {
-        return String.valueOf(input.get(T.label));
+    public String getLabelFrom(Map<String, Object> input) {
+        return (String) input.get("label");
     }
 
     @Override
@@ -98,6 +107,9 @@ public class NodesClient implements GraphClient<Map<?, Object>> {
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {
-        return range.applyRange(labelsFilter.apply(g.V()));
+        GraphTraversal<Vertex, Vertex> t = tokensOnly ?
+                g.withSideEffect("x", new HashMap<String, Object>()).V() :
+                g.V();
+        return range.applyRange(labelsFilter.apply(t));
     }
 }

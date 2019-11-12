@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
-public class NodesWriterFactory implements WriterFactory<Map<?, Object>> {
+public class NodesWriterFactory implements WriterFactory<Map<String, Object>> {
 
     @Override
     public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
@@ -29,7 +29,7 @@ public class NodesWriterFactory implements WriterFactory<Map<?, Object>> {
     }
 
     @Override
-    public GraphElementHandler<Map<?, Object>> createLabelWriter(Printer printer) {
+    public GraphElementHandler<Map<String, Object>> createLabelWriter(Printer printer) {
         return new NodeWriter(printer);
     }
 }
