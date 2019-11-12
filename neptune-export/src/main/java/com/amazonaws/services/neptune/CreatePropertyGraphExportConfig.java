@@ -15,7 +15,7 @@ package com.amazonaws.services.neptune;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
 import com.amazonaws.services.neptune.util.Timer;
@@ -76,9 +76,9 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
             java.nio.file.Path configFilePath = directories.configFilePath();
 
             ExportStats stats = new ExportStats();
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false, stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(nodeLabels, edgeLabels, false, stats);
 
-            MetadataCommand metadataCommand = metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g);
+            MetadataCommand metadataCommand = metadataSamplingSpecification.createMetadataCommand(exportSpecifications, g);
             PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();

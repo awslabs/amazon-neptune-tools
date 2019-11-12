@@ -22,7 +22,7 @@ import com.amazonaws.services.neptune.propertygraph.io.Format;
 import com.amazonaws.services.neptune.propertygraph.io.Output;
 import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromConfigFile;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
@@ -112,10 +112,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
             ExportStats stats = new ExportStats();
             stats.prepare(metadataCollection);
 
-            Collection<MetadataSpecification<?>> metadataSpecifications = scope.metadataSpecifications(nodeLabels, edgeLabels, false, stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(nodeLabels, edgeLabels, false, stats);
 
             ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                    metadataSpecifications,
+                    exportSpecifications,
                     metadataCollection,
                     g,
                     concurrencyConfig,

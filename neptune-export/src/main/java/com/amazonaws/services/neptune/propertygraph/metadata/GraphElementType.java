@@ -17,7 +17,7 @@ import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-public interface MetadataType<T> {
+public interface GraphElementType<T> {
     String name();
     GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats);
     WriterFactory<T> writerFactory();
