@@ -19,7 +19,6 @@ import com.amazonaws.services.neptune.propertygraph.NodesClient;
 import com.amazonaws.services.neptune.propertygraph.io.EdgesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.NodesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
-import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Arrays;
@@ -27,24 +26,24 @@ import java.util.Collection;
 import java.util.Map;
 
 public class MetadataTypes {
-    public static final MetadataType<Map<?, Object>> Nodes = new MetadataType<Map<?, Object>>() {
+    public static final GraphElementType<Map<String, Object>> Nodes = new GraphElementType<Map<String, Object>>() {
         @Override
         public String name() {
             return "nodes";
         }
 
         @Override
-        public GraphClient<Map<?, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
             return new NodesClient(g, tokensOnly, stats);
         }
 
         @Override
-        public WriterFactory<Map<?, Object>> writerFactory() {
+        public WriterFactory<Map<String, Object>> writerFactory() {
             return new NodesWriterFactory();
         }
     };
 
-    public static final MetadataType<Map<String, Object>> Edges = new MetadataType<Map<String, Object>>() {
+    public static final GraphElementType<Map<String, Object>> Edges = new GraphElementType<Map<String, Object>>() {
         @Override
         public String name() {
             return "edges";
@@ -61,7 +60,7 @@ public class MetadataTypes {
         }
     };
 
-    public static Collection<MetadataType<?>> values() {
+    public static Collection<GraphElementType<?>> values() {
         return Arrays.asList(Nodes, Edges);
     }
 }

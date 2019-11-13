@@ -15,7 +15,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -26,18 +26,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ExportPropertyGraphJob {
-    private final Collection<MetadataSpecification<?>> metadataSpecifications;
+    private final Collection<ExportSpecification<?>> exportSpecifications;
     private final PropertiesMetadataCollection propertiesMetadataCollection;
     private final GraphTraversalSource g;
     private final ConcurrencyConfig concurrencyConfig;
     private final TargetConfig targetConfig;
 
-    public ExportPropertyGraphJob(Collection<MetadataSpecification<?>> metadataSpecifications,
+    public ExportPropertyGraphJob(Collection<ExportSpecification<?>> exportSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
                                   ConcurrencyConfig concurrencyConfig,
                                   TargetConfig targetConfig) {
-        this.metadataSpecifications = metadataSpecifications;
+        this.exportSpecifications = exportSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
         this.concurrencyConfig = concurrencyConfig;
@@ -46,18 +46,18 @@ public class ExportPropertyGraphJob {
 
     public void execute() throws Exception {
 
-        for (MetadataSpecification metadataSpecification : metadataSpecifications) {
+        for (ExportSpecification exportSpecification : exportSpecifications) {
 
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
+                System.err.println("Creating " + exportSpecification.description() + " " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
 
-                RangeFactory rangeFactory = metadataSpecification.createRangeFactory(g, concurrencyConfig);
+                RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, concurrencyConfig);
                 Status status = new Status();
 
                 ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
 
                 for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-                    ExportPropertyGraphTask exportTask = metadataSpecification.createExportTask(
+                    ExportPropertyGraphTask exportTask = exportSpecification.createExportTask(
                             propertiesMetadataCollection,
                             g,
                             targetConfig,

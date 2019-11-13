@@ -18,22 +18,22 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import java.util.Collection;
 
 public class CreateMetadataFromGraphScan implements MetadataCommand {
-    private final Collection<MetadataSpecification<?>> metadataSpecifications;
+    private final Collection<ExportSpecification<?>> exportSpecifications;
     private final GraphTraversalSource g;
 
-    public CreateMetadataFromGraphScan(Collection<MetadataSpecification<?>> metadataSpecifications,
+    public CreateMetadataFromGraphScan(Collection<ExportSpecification<?>> exportSpecifications,
                                        GraphTraversalSource g) {
-        this.metadataSpecifications = metadataSpecifications;
+        this.exportSpecifications = exportSpecifications;
         this.g = g;
     }
 
     @Override
     public PropertiesMetadataCollection execute() throws Exception {
         PropertiesMetadataCollection metadataCollection = new PropertiesMetadataCollection();
-        for (MetadataSpecification metadataSpecification : metadataSpecifications) {
+        for (ExportSpecification exportSpecification : exportSpecifications) {
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " metadata");
-                metadataSpecification.scan(metadataCollection, g);
+                System.err.println("Creating " + exportSpecification.description() + " metadata");
+                exportSpecification.scan(metadataCollection, g);
             }
         }
         return metadataCollection;

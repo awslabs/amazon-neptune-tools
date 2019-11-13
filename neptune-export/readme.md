@@ -45,7 +45,7 @@ All three commands allow you to supply vertex and edge label filters.
  
 ### Token-only export
 
-For some offline use cases you may want to export only the structural data in the graph: that is, just the labels and IDs of vertices and edges. `export-pg` allows you to specify a `--tokens-only` flag. A token-only export does not scan for metadata, nor does it export any property data: for vertices it simply exports `~id` and `~label`; for edges, it exports `~id`, `~from`, `~to` and `~label`. You can still use label filters to determine exactly which vertices and edges will be exported.
+For some offline use cases you may want to export only the structural data in the graph: that is, just the labels and IDs of vertices and edges. `export-pg` allows you to specify a `--tokens-only` option with the value `nodes`, `edges` or `both`. A token-only export does not scan for metadata, nor does it export any property data: for vertices it simply exports `~id` and `~label`; for edges, it exports `~id`, `~from`, `~to` and `~label`. You can still use label filters to determine exactly which vertices and edges will be exported.
  
 ### Parallel export
 

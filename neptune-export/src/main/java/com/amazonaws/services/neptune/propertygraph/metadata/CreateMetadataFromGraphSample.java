@@ -19,14 +19,14 @@ import java.util.Collection;
 
 public class CreateMetadataFromGraphSample implements MetadataCommand {
 
-    private final Collection<MetadataSpecification<?>> metadataSpecifications;
+    private final Collection<ExportSpecification<?>> exportSpecifications;
     private final GraphTraversalSource g;
     private final long sampleSize;
 
-    public CreateMetadataFromGraphSample(Collection<MetadataSpecification<?>> metadataSpecifications,
+    public CreateMetadataFromGraphSample(Collection<ExportSpecification<?>> exportSpecifications,
                                          GraphTraversalSource g,
                                          long sampleSize) {
-        this.metadataSpecifications = metadataSpecifications;
+        this.exportSpecifications = exportSpecifications;
         this.sampleSize = sampleSize;
         this.g = g;
     }
@@ -35,10 +35,10 @@ public class CreateMetadataFromGraphSample implements MetadataCommand {
     public PropertiesMetadataCollection execute() throws Exception {
 
         PropertiesMetadataCollection metadataCollection = new PropertiesMetadataCollection();
-        for (MetadataSpecification metadataSpecification : metadataSpecifications) {
+        for (ExportSpecification exportSpecification : exportSpecifications) {
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + metadataSpecification.description() + " metadata");
-                metadataSpecification.sample(metadataCollection, g, sampleSize);
+                System.err.println("Creating " + exportSpecification.description() + " metadata");
+                exportSpecification.sample(metadataCollection, g, sampleSize);
             }
         }
         return metadataCollection;

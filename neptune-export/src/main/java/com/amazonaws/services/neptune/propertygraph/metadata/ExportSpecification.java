@@ -22,17 +22,17 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import java.util.Collection;
 import java.util.Map;
 
-public class MetadataSpecification<T> {
-    private final MetadataType<T> metadataType;
+public class ExportSpecification<T> {
+    private final GraphElementType<T> graphElementType;
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;
     private final ExportStats stats;
 
-    public MetadataSpecification(MetadataType<T> metadataType,
-                                 LabelsFilter labelsFilter,
-                                 boolean tokensOnly,
-                                 ExportStats stats) {
-        this.metadataType = metadataType;
+    public ExportSpecification(GraphElementType<T> graphElementType,
+                               LabelsFilter labelsFilter,
+                               boolean tokensOnly,
+                               ExportStats stats) {
+        this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
@@ -43,10 +43,10 @@ public class MetadataSpecification<T> {
             return;
         }
 
-        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly, stats);
+        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats);
 
         graphClient.queryForMetadata(
-                new Handler(metadataType, metadataCollection),
+                new Handler(graphElementType, metadataCollection),
                 Range.ALL,
                 labelsFilter);
     }
@@ -56,23 +56,23 @@ public class MetadataSpecification<T> {
             return;
         }
 
-        GraphClient<T> graphClient = metadataType.graphClient(g, tokensOnly, stats);
+        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats);
         Collection<String> labels = labelsFilter.resolveLabels(graphClient);
 
         for (String label : labels) {
             graphClient.queryForMetadata(
-                    new Handler(metadataType, metadataCollection),
+                    new Handler(graphElementType, metadataCollection),
                     new Range(0, sampleSize),
                     SpecifiedLabels.forLabels(label));
         }
     }
 
     public String description() {
-        return metadataType.name();
+        return graphElementType.name();
     }
 
     public RangeFactory createRangeFactory(GraphTraversalSource g, ConcurrencyConfig concurrencyConfig) {
-        return RangeFactory.create(metadataType.graphClient(g, tokensOnly, stats), labelsFilter, concurrencyConfig);
+        return RangeFactory.create(graphElementType.graphClient(g, tokensOnly, stats), labelsFilter, concurrencyConfig);
     }
 
     public ExportPropertyGraphTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,
@@ -82,10 +82,10 @@ public class MetadataSpecification<T> {
                                                        Status status,
                                                        int index) {
         return new ExportPropertyGraphTask<>(
-                metadataCollection.propertyMetadataFor(metadataType),
+                metadataCollection.propertyMetadataFor(graphElementType),
                 labelsFilter,
-                metadataType.graphClient(g, tokensOnly, stats),
-                metadataType.writerFactory(),
+                graphElementType.graphClient(g, tokensOnly, stats),
+                graphElementType.writerFactory(),
                 targetConfig,
                 rangeFactory,
                 status,
@@ -95,19 +95,19 @@ public class MetadataSpecification<T> {
 
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
 
-        private final MetadataType metadataType;
+        private final GraphElementType graphElementType;
         private final PropertiesMetadataCollection metadataCollection;
         private final Status status = new Status();
 
-        private Handler(MetadataType metadataType, PropertiesMetadataCollection metadataCollection) {
-            this.metadataType = metadataType;
+        private Handler(GraphElementType graphElementType, PropertiesMetadataCollection metadataCollection) {
+            this.graphElementType = graphElementType;
             this.metadataCollection = metadataCollection;
         }
 
         @Override
         public void handle(Map<?, Object> properties, boolean allowTokens) {
             status.update();
-            metadataCollection.update(metadataType, properties, allowTokens);
+            metadataCollection.update(graphElementType, properties, allowTokens);
         }
 
         @Override

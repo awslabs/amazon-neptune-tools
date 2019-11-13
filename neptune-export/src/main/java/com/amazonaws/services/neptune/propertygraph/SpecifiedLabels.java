@@ -12,13 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SpecifiedLabels implements LabelsFilter {
@@ -46,5 +45,19 @@ public class SpecifiedLabels implements LabelsFilter {
     @Override
     public Collection<String> resolveLabels(GraphClient<?> graphClient) {
         return labels;
+    }
+
+    @Override
+    public String[] getPropertiesForLabels(PropertiesMetadata propertiesMetadata) {
+        Set<String> properties = new HashSet<>();
+
+        for (String label : labels) {
+            Map<Object, PropertyTypeInfo> metadata = propertiesMetadata.propertyMetadataFor(label);
+            for (PropertyTypeInfo propertyTypeInfo : metadata.values()) {
+                properties.add(propertyTypeInfo.nameWithoutDataType());
+            }
+        }
+
+        return properties.toArray(new String[]{});
     }
 }

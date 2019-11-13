@@ -12,13 +12,38 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
-import com.amazonaws.services.neptune.propertygraph.ExportStats;
-import com.amazonaws.services.neptune.propertygraph.GraphClient;
-import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+public enum TokensOnly {
+    off,
+    nodes {
+        @Override
+        public boolean nodeTokensOnly() {
+            return true;
+        }
 
-public interface MetadataType<T> {
-    String name();
-    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats);
-    WriterFactory<T> writerFactory();
+    },
+    edges {
+        @Override
+        public boolean edgeTokensOnly() {
+            return true;
+        }
+    },
+    both {
+        @Override
+        public boolean nodeTokensOnly() {
+            return true;
+        }
+
+        @Override
+        public boolean edgeTokensOnly() {
+            return true;
+        }
+    };
+
+    public boolean nodeTokensOnly() {
+        return false;
+    }
+
+    public boolean edgeTokensOnly() {
+        return false;
+    }
 }

@@ -15,7 +15,7 @@ package com.amazonaws.services.neptune.propertygraph;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromGraphSample;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromGraphScan;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
@@ -30,12 +30,12 @@ public class MetadataSamplingSpecification {
         this.sampleSize = sampleSize;
     }
 
-    public MetadataCommand createMetadataCommand(Collection<MetadataSpecification<?>> metadataSpecifications,
+    public MetadataCommand createMetadataCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                  GraphTraversalSource g) {
         if (sample) {
-            return new CreateMetadataFromGraphSample(metadataSpecifications, g, sampleSize);
+            return new CreateMetadataFromGraphSample(exportSpecifications, g, sampleSize);
         } else {
-            return new CreateMetadataFromGraphScan(metadataSpecifications, g);
+            return new CreateMetadataFromGraphScan(exportSpecifications, g);
         }
     }
 }

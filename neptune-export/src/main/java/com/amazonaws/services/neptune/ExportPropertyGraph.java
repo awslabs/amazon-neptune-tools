@@ -19,9 +19,10 @@ import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.Format;
 import com.amazonaws.services.neptune.propertygraph.io.Output;
 import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
+import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -103,9 +104,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Once
     private boolean excludeTypeDefinitions = false;
 
-    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only")
+    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off')")
     @Once
-    private boolean tokensOnly = false;
+    @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
+    private TokensOnly tokensOnly = TokensOnly.off;
 
     @Override
     public void run() {
@@ -123,18 +125,18 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
             ExportStats stats = new ExportStats();
 
-            Collection<MetadataSpecification<?>> metadataSpecifications =
-                    scope.metadataSpecifications(nodeLabels, edgeLabels, tokensOnly, stats);
+            Collection<ExportSpecification<?>> exportSpecifications =
+                    scope.exportSpecifications(nodeLabels, edgeLabels, tokensOnly, stats);
 
             PropertiesMetadataCollection metadataCollection =
-                    metadataSamplingSpecification.createMetadataCommand(metadataSpecifications, g).execute();
+                    metadataSamplingSpecification.createMetadataCommand(exportSpecifications, g).execute();
 
             stats.prepare(metadataCollection);
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();
 
             ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                    metadataSpecifications,
+                    exportSpecifications,
                     metadataCollection,
                     g,
                     concurrencyConfig,

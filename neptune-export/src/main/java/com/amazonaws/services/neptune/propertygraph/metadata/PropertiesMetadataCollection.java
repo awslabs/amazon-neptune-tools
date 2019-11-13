@@ -24,36 +24,36 @@ public class PropertiesMetadataCollection {
 
     public static PropertiesMetadataCollection fromJson(JsonNode json) {
 
-        Map<MetadataType<?>, PropertiesMetadata> metadataCollection = new HashMap<>();
+        Map<GraphElementType<?>, PropertiesMetadata> metadataCollection = new HashMap<>();
 
-        for (MetadataType<?> metadataType : MetadataTypes.values()) {
-            JsonNode node = json.path(metadataType.name());
+        for (GraphElementType<?> graphElementType : MetadataTypes.values()) {
+            JsonNode node = json.path(graphElementType.name());
             if (!node.isMissingNode() && node.isArray()) {
-                metadataCollection.put(metadataType, PropertiesMetadata.fromJson((ArrayNode) node));
+                metadataCollection.put(graphElementType, PropertiesMetadata.fromJson((ArrayNode) node));
             }
         }
 
         return new PropertiesMetadataCollection(metadataCollection);
     }
 
-    private final Map<MetadataType<?>, PropertiesMetadata> metadataCollection;
+    private final Map<GraphElementType<?>, PropertiesMetadata> metadataCollection;
 
     public PropertiesMetadataCollection() {
         this(new HashMap<>());
     }
 
-    public PropertiesMetadataCollection(Map<MetadataType<?>, PropertiesMetadata> metadataCollection) {
+    public PropertiesMetadataCollection(Map<GraphElementType<?>, PropertiesMetadata> metadataCollection) {
         this.metadataCollection = metadataCollection;
     }
 
-    public void update(MetadataType<?> metadataType, Map<?, Object> properties, boolean allowStructuralElements) {
-        if (!metadataCollection.containsKey(metadataType)) {
-            metadataCollection.put(metadataType, new PropertiesMetadata());
+    public void update(GraphElementType<?> graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
+        if (!metadataCollection.containsKey(graphElementType)) {
+            metadataCollection.put(graphElementType, new PropertiesMetadata());
         }
-        metadataCollection.get(metadataType).update(properties, allowStructuralElements);
+        metadataCollection.get(graphElementType).update(properties, allowStructuralElements);
     }
 
-    public PropertiesMetadata propertyMetadataFor(MetadataType type) {
+    public PropertiesMetadata propertyMetadataFor(GraphElementType type) {
         if (!metadataCollection.containsKey(type)) {
             metadataCollection.put(type, new PropertiesMetadata());
         }
@@ -63,7 +63,7 @@ public class PropertiesMetadataCollection {
     public ObjectNode toJson() {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
-        for (Map.Entry<MetadataType<?>, PropertiesMetadata> entry : metadataCollection.entrySet()) {
+        for (Map.Entry<GraphElementType<?>, PropertiesMetadata> entry : metadataCollection.entrySet()) {
             String key = entry.getKey().name();
             ArrayNode arrayNode = entry.getValue().toJson();
             json.set(key, arrayNode);
