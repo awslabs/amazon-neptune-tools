@@ -18,8 +18,8 @@
                     [ {-r | --range | --range-size} <rangeSize> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
                     [ --sample-size <sampleSize> ] [ --serializer <serializer> ]
-                    [ --skip <skip> ] [ {-t | --tag} <tag> ] [ --tokens-only ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ --skip <skip> ] [ {-t | --tag} <tag> ]
+                    [ --tokens-only <tokensOnly> ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -198,8 +198,14 @@
                 This option may occur a maximum of 1 times
     
     
-            --tokens-only
-                Export tokens (~id, ~label) only
+            --tokens-only <tokensOnly>
+                Export tokens (~id, ~label) only (optional, default 'off')
+    
+                This options value is restricted to the following set of values:
+                    off
+                    nodes
+                    edges
+                    both
     
                 This option may occur a maximum of 1 times
     

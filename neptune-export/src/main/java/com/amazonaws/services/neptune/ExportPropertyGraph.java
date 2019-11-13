@@ -22,6 +22,7 @@ import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
+import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -103,9 +104,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Once
     private boolean excludeTypeDefinitions = false;
 
-    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only")
+    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off')")
     @Once
-    private boolean tokensOnly = false;
+    @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
+    private TokensOnly tokensOnly = TokensOnly.off;
 
     @Override
     public void run() {

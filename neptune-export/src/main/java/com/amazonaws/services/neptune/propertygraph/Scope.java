@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
+import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,11 +24,19 @@ public enum Scope {
         @Override
         public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
                                                                        List<String> edgeLabels,
-                                                                       boolean tokensOnly,
+                                                                       TokensOnly tokensOnly,
                                                                        ExportStats stats) {
             return Arrays.asList(
-                    new ExportSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly, stats),
-                    new ExportSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly, stats)
+                    new ExportSpecification<>(
+                            MetadataTypes.Nodes,
+                            Scope.labelsFilter(nodeLabels),
+                            tokensOnly.nodeTokensOnly(),
+                            stats),
+                    new ExportSpecification<>(
+                            MetadataTypes.Edges,
+                            Scope.labelsFilter(edgeLabels),
+                            tokensOnly.edgeTokensOnly(),
+                            stats)
             );
         }
     },
@@ -35,10 +44,14 @@ public enum Scope {
         @Override
         public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
                                                                        List<String> edgeLabels,
-                                                                       boolean tokensOnly,
+                                                                       TokensOnly tokensOnly,
                                                                        ExportStats stats) {
             return Collections.singletonList(
-                    new ExportSpecification<>(MetadataTypes.Nodes, Scope.labelsFilter(nodeLabels), tokensOnly, stats)
+                    new ExportSpecification<>(
+                            MetadataTypes.Nodes,
+                            Scope.labelsFilter(nodeLabels),
+                            tokensOnly.nodeTokensOnly(),
+                            stats)
             );
         }
     },
@@ -46,10 +59,14 @@ public enum Scope {
         @Override
         public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
                                                                        List<String> edgeLabels,
-                                                                       boolean tokensOnly,
+                                                                       TokensOnly tokensOnly,
                                                                        ExportStats stats) {
             return Collections.singletonList(
-                    new ExportSpecification<>(MetadataTypes.Edges, Scope.labelsFilter(edgeLabels), tokensOnly, stats)
+                    new ExportSpecification<>(
+                            MetadataTypes.Edges,
+                            Scope.labelsFilter(edgeLabels),
+                            tokensOnly.edgeTokensOnly(),
+                            stats)
             );
         }
     };
@@ -69,7 +86,7 @@ public enum Scope {
     public abstract Collection<ExportSpecification<?>> exportSpecifications(
             List<String> nodeLabels,
             List<String> edgeLabels,
-            boolean tokensOnly,
+            TokensOnly tokensOnly,
             ExportStats stats);
 
 }

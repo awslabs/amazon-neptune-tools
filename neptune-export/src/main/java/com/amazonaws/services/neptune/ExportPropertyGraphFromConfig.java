@@ -24,6 +24,7 @@ import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromConfigFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
@@ -112,7 +113,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
             ExportStats stats = new ExportStats();
             stats.prepare(metadataCollection);
 
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(nodeLabels, edgeLabels, false, stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(nodeLabels, edgeLabels, TokensOnly.off, stats);
 
             ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                     exportSpecifications,

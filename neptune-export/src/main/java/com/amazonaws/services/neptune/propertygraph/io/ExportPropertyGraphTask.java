@@ -65,7 +65,11 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                 else
                 {
                     CountingHandler handler = new CountingHandler(this);
-                    graphClient.queryForValues(handler, range, labelsFilter);
+
+                    labelsFilter.getPropertiesForLabels(propertiesMetadata);
+
+
+                    graphClient.queryForValues(handler, range, labelsFilter, propertiesMetadata);
                     if (range.difference() > handler.counter() || rangeFactory.isExhausted()) {
                         status.halt();
                     }

@@ -13,11 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import org.apache.tinkerpop.gremlin.process.traversal.Path;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
-import org.apache.tinkerpop.gremlin.process.traversal.step.util.WithOptions;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
@@ -60,7 +58,10 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForValues(GraphElementHandler<Map<String, Object>> handler, Range range, LabelsFilter labelsFilter) {
+    public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
+                               Range range,
+                               LabelsFilter labelsFilter,
+                               PropertiesMetadata propertiesMetadata) {
 
         GraphTraversal<Edge, Edge> t = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).E():
@@ -74,7 +75,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                         by(T.label).
                         by(tokensOnly ?
                                 select("x"):
-                                valueMap()
+                                valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
                         ).
                         by(outV().id()).
                         by(inV().id());

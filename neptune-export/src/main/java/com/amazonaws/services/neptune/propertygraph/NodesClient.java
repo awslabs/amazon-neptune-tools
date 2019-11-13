@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -59,7 +60,10 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForValues(GraphElementHandler<Map<String, Object>> handler, Range range, LabelsFilter labelsFilter) {
+    public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
+                               Range range,
+                               LabelsFilter labelsFilter,
+                               PropertiesMetadata propertiesMetadata) {
 
         GraphTraversal<? extends Element, Map<String, Object>> t = traversal(range, labelsFilter).
                 project("id", "label", "properties").
@@ -67,7 +71,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
                 by(T.label).
                 by(tokensOnly ?
                         select("x") :
-                        valueMap()
+                        valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
                 );
 
         t.forEachRemaining(m -> {
