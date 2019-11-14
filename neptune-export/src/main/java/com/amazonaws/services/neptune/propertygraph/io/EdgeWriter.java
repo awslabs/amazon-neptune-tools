@@ -12,8 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import org.apache.tinkerpop.gremlin.structure.T;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -35,7 +33,7 @@ public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
 
         printer.printStartRow();
         printer.printEdge(id, label, from, to);
-        printer.printProperties(properties);
+        printer.printProperties(id, "ep", properties);
         printer.printEndRow();
     }
 

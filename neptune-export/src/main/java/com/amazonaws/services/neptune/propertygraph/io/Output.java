@@ -42,6 +42,7 @@ public enum Output {
     };
 
     public abstract PrintWriter createPrintWriter(Path filePath) throws IOException;
+
     public abstract void writeCommandResult(Object result);
 
 }

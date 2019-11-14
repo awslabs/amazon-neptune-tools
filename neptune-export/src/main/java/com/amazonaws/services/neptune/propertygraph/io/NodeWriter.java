@@ -33,7 +33,7 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
         printer.printStartRow();
         printer.printNode(id, label);
-        printer.printProperties(properties);
+        printer.printProperties(id, "vp", properties);
         printer.printEndRow();
     }
 

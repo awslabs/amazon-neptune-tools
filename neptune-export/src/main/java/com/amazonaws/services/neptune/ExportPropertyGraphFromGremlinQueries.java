@@ -69,7 +69,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json"})
+    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
     private Format format = Format.csv;
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")

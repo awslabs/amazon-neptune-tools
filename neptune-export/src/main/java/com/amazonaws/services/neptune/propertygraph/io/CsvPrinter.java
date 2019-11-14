@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
@@ -84,6 +85,11 @@ public class CsvPrinter implements Printer {
                 commaPrinter.printComma();
             }
         }
+    }
+
+    @Override
+    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
+        printProperties(properties);
     }
 
     @Override

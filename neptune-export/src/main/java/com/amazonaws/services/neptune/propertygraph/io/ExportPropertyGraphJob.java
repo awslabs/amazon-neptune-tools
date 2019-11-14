@@ -49,7 +49,7 @@ public class ExportPropertyGraphJob {
         for (ExportSpecification exportSpecification : exportSpecifications) {
 
             try (Timer timer = new Timer()) {
-                System.err.println("Creating " + exportSpecification.description() + " " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
+                System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
 
                 RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, concurrencyConfig);
                 Status status = new Status();

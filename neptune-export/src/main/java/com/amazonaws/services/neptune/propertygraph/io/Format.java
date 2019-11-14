@@ -72,6 +72,24 @@ public enum Format implements FileExtension {
         public String description() {
             return "CSV (no headers)";
         }
+    },
+    neptuneStreamsJson{
+        @Override
+        public String suffix() {
+            return "json";
+        }
+
+        @Override
+        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+            JsonGenerator generator = new JsonFactory().createGenerator(writer);
+            generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
+            return new NeptuneStreamsJsonPrinter(generator, metadata);
+        }
+
+        @Override
+        public String description() {
+            return "JSON (Neptune Streams format)";
+        }
     };
 
     abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
