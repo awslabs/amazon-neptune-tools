@@ -20,8 +20,8 @@ import java.nio.file.Path;
 public enum Output {
     files {
         @Override
-        public PrintWriter createPrintWriter(Path filePath) throws IOException {
-            return new PrintWriter(new FileWriter(filePath.toFile()));
+        public OutputWriter createOutputWriter(Path filePath) throws IOException {
+            return new PrintOutputWriter(new FileWriter(filePath.toFile()));
         }
 
         @Override
@@ -31,17 +31,28 @@ public enum Output {
     },
     stdout {
         @Override
-        public PrintWriter createPrintWriter(Path filePath) {
-            return new PrintWriter(System.out);
+        public OutputWriter createOutputWriter(Path filePath) {
+            return new PrintOutputWriter(System.out);
         }
 
         @Override
         public void writeCommandResult(Object result) {
             System.err.println(result);
         }
+    },
+    stream{
+        @Override
+        public OutputWriter createOutputWriter(Path filePath) throws IOException {
+            return new StreamOutputWriter();
+        }
+
+        @Override
+        public void writeCommandResult(Object result) {
+            System.out.println(result);
+        }
     };
 
-    public abstract PrintWriter createPrintWriter(Path filePath) throws IOException;
+    public abstract OutputWriter createOutputWriter(Path filePath) throws IOException;
 
     public abstract void writeCommandResult(Object result);
 

@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Map;
 
 public enum Format implements FileExtension {
@@ -30,8 +29,8 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer);
+        Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new JsonPrinter(generator, metadata);
         }
@@ -48,7 +47,7 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+        Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
             return new CsvPrinter(writer, metadata, true, includeTypeDefinitions);
         }
 
@@ -64,7 +63,7 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+        Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
             return new CsvPrinter(writer, metadata, false, includeTypeDefinitions);
         }
 
@@ -80,8 +79,8 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer);
+        Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new NeptuneStreamsJsonPrinter(generator, metadata);
         }
@@ -92,7 +91,7 @@ public enum Format implements FileExtension {
         }
     };
 
-    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
+    abstract Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
 
     public abstract String description();
 }

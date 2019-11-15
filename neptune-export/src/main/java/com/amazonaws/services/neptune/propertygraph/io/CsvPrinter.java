@@ -16,26 +16,25 @@ import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public class CsvPrinter implements Printer {
 
-    private final PrintWriter printer;
+    private final OutputWriter writer;
     private final Map<Object, PropertyTypeInfo> metadata;
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
 
-    public CsvPrinter(PrintWriter printer,
+    public CsvPrinter(OutputWriter writer,
                       Map<Object, PropertyTypeInfo> metadata,
                       boolean includeHeaders,
                       boolean includeTypeDefinitions) {
-        this.printer = printer;
+        this.writer = writer;
         this.metadata = metadata;
-        this.commaPrinter = new CommaPrinter(printer);
+        this.commaPrinter = new CommaPrinter(writer);
         this.includeHeaders = includeHeaders;
         this.includeTypeDefinitions = includeTypeDefinitions;
     }
@@ -45,7 +44,7 @@ public class CsvPrinter implements Printer {
         if (includeHeaders) {
             for (String column : columns) {
                 commaPrinter.printComma();
-                printer.print(column);
+                writer.print(column);
             }
         }
     }
@@ -56,12 +55,12 @@ public class CsvPrinter implements Printer {
             for (PropertyTypeInfo property : remainingColumns) {
                 commaPrinter.printComma();
                 if (includeTypeDefinitions) {
-                    printer.print(property.nameWithDataType());
+                    writer.print(property.nameWithDataType());
                 } else {
-                    printer.print(property.nameWithoutDataType());
+                    writer.print(property.nameWithoutDataType());
                 }
             }
-            printer.print(System.lineSeparator());
+            writer.print(System.lineSeparator());
         }
     }
 
@@ -79,7 +78,7 @@ public class CsvPrinter implements Printer {
                 String formattedValue = isList(value) ?
                         formatList(value, dataType) :
                         dataType.format(value);
-                printer.print(formattedValue);
+                writer.print(formattedValue);
 
             } else {
                 commaPrinter.printComma();
@@ -95,21 +94,21 @@ public class CsvPrinter implements Printer {
     @Override
     public void printEdge(String id, String label, String from, String to) {
         commaPrinter.printComma();
-        printer.print(id);
+        writer.print(id);
         commaPrinter.printComma();
-        printer.print(label);
+        writer.print(label);
         commaPrinter.printComma();
-        printer.print(from);
+        writer.print(from);
         commaPrinter.printComma();
-        printer.print(to);
+        writer.print(to);
     }
 
     @Override
     public void printNode(String id, String label) {
         commaPrinter.printComma();
-        printer.print(id);
+        writer.print(id);
         commaPrinter.printComma();
-        printer.print(label);
+        writer.print(label);
     }
 
     @Override
@@ -119,7 +118,7 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void printEndRow() {
-        printer.print(System.lineSeparator());
+        writer.print(System.lineSeparator());
     }
 
     private String formatList(Object value, DataType dataType) {
@@ -133,20 +132,20 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void close() throws Exception {
-        printer.close();
+        writer.close();
     }
 
     private static class CommaPrinter {
-        private final PrintWriter printer;
+        private final OutputWriter outputWriter;
         private boolean printComma = false;
 
-        private CommaPrinter(PrintWriter printer) {
-            this.printer = printer;
+        private CommaPrinter(OutputWriter outputWriter) {
+            this.outputWriter = outputWriter;
         }
 
         void printComma() {
             if (printComma) {
-                printer.print(",");
+                outputWriter.print(",");
             } else {
                 printComma = true;
             }

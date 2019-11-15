@@ -45,22 +45,22 @@ public class TargetConfig {
     public Printer createPrintWriterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
         java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
-        PrintWriter printWriter =  output.createPrintWriter(filePath);
+        OutputWriter outputWriter =  output.createOutputWriter(filePath);
 
-        return format.createPrinter(printWriter, metadata, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
     public Printer createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         java.nio.file.Path filePath = directories.createFilePath(directories.edgesDirectory(), name, index, format);
-        PrintWriter printWriter = output.createPrintWriter(filePath);
+        OutputWriter outputWriter = output.createOutputWriter(filePath);
 
-        return format.createPrinter(printWriter, metadata, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
     public Printer createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         java.nio.file.Path filePath = directories.createFilePath(directories.nodesDirectory(), name, index, format);
-        PrintWriter printWriter = output.createPrintWriter(filePath);
+        OutputWriter outputWriter = output.createOutputWriter(filePath);
 
-        return format.createPrinter(printWriter, metadata, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 }
