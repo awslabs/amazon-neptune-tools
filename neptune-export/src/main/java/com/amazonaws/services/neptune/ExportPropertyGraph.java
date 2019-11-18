@@ -16,24 +16,19 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
-import com.amazonaws.services.neptune.propertygraph.io.Format;
-import com.amazonaws.services.neptune.propertygraph.io.Output;
+import com.amazonaws.services.neptune.propertygraph.io.KinesisConfig;
 import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
@@ -51,36 +46,7 @@ import java.util.List;
         "Parallel export using 2 threads, with each thread processing batches of 1000 nodes or edges"
 })
 @Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON")
-public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
-
-    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be exported (optional, default all labels)",
-            arity = 1)
-    private List<String> nodeLabels = new ArrayList<>();
-
-    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be exported (optional, default all labels)",
-            arity = 1)
-    private List<String> edgeLabels = new ArrayList<>();
-
-    @Option(name = {"-r", "--range", "--range-size"}, description = "Number of items to fetch per request (optional)")
-    @Once
-    private long rangeSize = -1;
-
-    @Option(name = {"--limit"}, description = "Maximum number of items to export (optional)")
-    @Once
-    private long limit = Long.MAX_VALUE;
-
-    @Option(name = {"--skip"}, description = "Number of items to skip (optional)")
-    @Once
-    private long skip = 0;
-
-    @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
-    @Once
-    private int concurrency = 1;
-
-    @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all')")
-    @Once
-    @AllowedValues(allowedValues = {"all", "nodes", "edges"})
-    private Scope scope = Scope.all;
+public class ExportPropertyGraph extends NeptuneExportPropertyGraphBaseCommand implements Runnable {
 
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata")
     @Once
@@ -89,25 +55,6 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000")
     @Once
     private long sampleSize = 1000;
-
-    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
-    @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
-    private Format format = Format.csv;
-
-    @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
-    @Once
-    @AllowedValues(allowedValues = {"files", "stdout"})
-    private Output output = Output.files;
-
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
-    @Once
-    private boolean excludeTypeDefinitions = false;
-
-    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off')")
-    @Once
-    @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
-    private TokensOnly tokensOnly = TokensOnly.off;
 
     @Override
     public void run() {
@@ -121,7 +68,8 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);
             java.nio.file.Path configFilePath = directories.configFilePath().toAbsolutePath();
 
-            TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
+            KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions, kinesisConfig);
 
             ExportStats stats = new ExportStats();
 

@@ -16,7 +16,6 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -26,12 +25,18 @@ public class TargetConfig {
     private final Format format;
     private final Output output;
     private final boolean includeTypeDefinitions;
+    private final KinesisConfig kinesisConfig;
 
-    public TargetConfig(Directories directories, Format format, Output output, boolean includeTypeDefinitions) {
+    public TargetConfig(Directories directories,
+                        Format format,
+                        Output output,
+                        boolean includeTypeDefinitions,
+                        KinesisConfig kinesisConfig) {
         this.directories = directories;
         this.format = format;
         this.output = output;
         this.includeTypeDefinitions = includeTypeDefinitions;
+        this.kinesisConfig = kinesisConfig;
     }
 
     public String formatDescription() {
@@ -45,21 +50,21 @@ public class TargetConfig {
     public Printer createPrintWriterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
         java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
-        OutputWriter outputWriter =  output.createOutputWriter(filePath);
+        OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
     public Printer createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         java.nio.file.Path filePath = directories.createFilePath(directories.edgesDirectory(), name, index, format);
-        OutputWriter outputWriter = output.createOutputWriter(filePath);
+        OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
     public Printer createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         java.nio.file.Path filePath = directories.createFilePath(directories.nodesDirectory(), name, index, format);
-        OutputWriter outputWriter = output.createOutputWriter(filePath);
+        OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }

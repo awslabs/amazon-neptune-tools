@@ -14,13 +14,12 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Path;
 
 public enum Output {
     files {
         @Override
-        public OutputWriter createOutputWriter(Path filePath) throws IOException {
+        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
             return new PrintOutputWriter(new FileWriter(filePath.toFile()));
         }
 
@@ -31,7 +30,7 @@ public enum Output {
     },
     stdout {
         @Override
-        public OutputWriter createOutputWriter(Path filePath) {
+        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) {
             return new PrintOutputWriter(System.out);
         }
 
@@ -42,8 +41,8 @@ public enum Output {
     },
     stream{
         @Override
-        public OutputWriter createOutputWriter(Path filePath) throws IOException {
-            return new StreamOutputWriter();
+        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
+            return new StreamOutputWriter(kinesisConfig);
         }
 
         @Override
@@ -52,7 +51,7 @@ public enum Output {
         }
     };
 
-    public abstract OutputWriter createOutputWriter(Path filePath) throws IOException;
+    public abstract OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException;
 
     public abstract void writeCommandResult(Object result);
 

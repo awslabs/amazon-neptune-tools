@@ -48,6 +48,16 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     }
 
     @Override
+    public void start() {
+        // Do nothing
+    }
+
+    @Override
+    public void finish() {
+        // Do nothing
+    }
+
+    @Override
     public Writer writer() {
         return this;
     }

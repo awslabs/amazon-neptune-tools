@@ -19,10 +19,7 @@ import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
-import com.amazonaws.services.neptune.propertygraph.io.Format;
-import com.amazonaws.services.neptune.propertygraph.io.Output;
-import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
-import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.*;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateQueriesFromFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveQueries;
 import com.amazonaws.services.neptune.util.Timer;
@@ -69,12 +66,12 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
+    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json"})
     private Format format = Format.csv;
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
     @Once
-    @AllowedValues(allowedValues = {"files", "stdout"})
+    @AllowedValues(allowedValues = {"files", "stdout", "stream"})
     private Output output = Output.files;
 
     @Option(name = {"--two-pass-analysis"}, description = "Perform two-pass analysis of query results (optional, default 'false')")
@@ -85,6 +82,14 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     @Once
     private boolean includeTypeDefinitions = false;
 
+    @Option(name = {"--stream-name"}, description = "Name of an Amazon Kinesis Data Stream")
+    @Once
+    protected String streamName;
+
+    @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located")
+    @Once
+    protected String region;
+
     @Override
     public void run() {
         ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency);
@@ -94,7 +99,8 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = Directories.createFor(DirectoryStructure.GremlinQueries, directory, tag);
-            TargetConfig targetConfig = new TargetConfig(directories, format, output, includeTypeDefinitions);
+            KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
+            TargetConfig targetConfig = new TargetConfig(directories, format, output, includeTypeDefinitions, kinesisConfig);
 
             QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
 

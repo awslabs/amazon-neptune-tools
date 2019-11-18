@@ -32,7 +32,7 @@ public enum Format implements FileExtension {
         Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
-            return new JsonPrinter(generator, metadata);
+            return new JsonPrinter(writer, generator, metadata);
         }
 
         @Override
@@ -82,7 +82,7 @@ public enum Format implements FileExtension {
         Printer createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
-            return new NeptuneStreamsJsonPrinter(generator, metadata);
+            return new NeptuneStreamsJsonPrinter(writer, generator, metadata);
         }
 
         @Override

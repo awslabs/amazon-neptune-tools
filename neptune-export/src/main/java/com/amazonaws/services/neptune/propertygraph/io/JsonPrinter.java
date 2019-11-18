@@ -23,10 +23,12 @@ import java.util.Map;
 
 public class JsonPrinter implements Printer {
 
+    private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
 
-    public JsonPrinter(JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public JsonPrinter(OutputWriter writer, JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+        this.writer = writer;
         this.generator = generator;
         this.metadata = metadata;
     }
@@ -96,12 +98,15 @@ public class JsonPrinter implements Printer {
 
     @Override
     public void printStartRow() throws IOException {
+        writer.start();
         generator.writeStartObject();
     }
 
     @Override
     public void printEndRow() throws IOException {
+        generator.flush();
         generator.writeEndObject();
+        writer.finish();
     }
 
     @Override

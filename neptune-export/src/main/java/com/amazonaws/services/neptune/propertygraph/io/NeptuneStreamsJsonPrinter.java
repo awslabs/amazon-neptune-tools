@@ -23,10 +23,14 @@ import java.util.Map;
 
 public class NeptuneStreamsJsonPrinter implements Printer {
 
+    private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
 
-    public NeptuneStreamsJsonPrinter(JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public NeptuneStreamsJsonPrinter(OutputWriter writer,
+                                     JsonGenerator generator,
+                                     Map<Object, PropertyTypeInfo> metadata) throws IOException {
+        this.writer = writer;
         this.generator = generator;
         this.metadata = metadata;
     }
@@ -93,11 +97,13 @@ public class NeptuneStreamsJsonPrinter implements Printer {
 
     @Override
     public void printStartRow() throws IOException {
-
+        writer.start();
     }
 
     @Override
     public void printEndRow() throws IOException {
+        generator.flush();
+        writer.finish();
     }
 
     @Override

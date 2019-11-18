@@ -15,6 +15,11 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import java.io.Writer;
 
 public interface OutputWriter extends AutoCloseable {
+
+    void start();
+
+    void finish();
+
     void print(String s);
 
     Writer writer();

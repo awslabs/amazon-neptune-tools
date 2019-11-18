@@ -113,12 +113,14 @@ public class CsvPrinter implements Printer {
 
     @Override
     public void printStartRow() {
+        writer.start();
         commaPrinter.init();
     }
 
     @Override
     public void printEndRow() {
         writer.print(System.lineSeparator());
+        writer.finish();
     }
 
     private String formatList(Object value, DataType dataType) {
