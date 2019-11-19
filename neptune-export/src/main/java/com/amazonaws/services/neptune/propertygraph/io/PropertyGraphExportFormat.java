@@ -13,16 +13,16 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.FileExtension;
+import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Map;
 
-public enum Format implements FileExtension {
+public enum PropertyGraphExportFormat implements FileExtension {
     json {
         @Override
         public String suffix() {
@@ -30,10 +30,10 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
-            return new JsonPrinter(generator, metadata);
+            return new JsonPropertyGraphPrinter(writer, generator, metadata);
         }
 
         @Override
@@ -48,8 +48,8 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
-            return new CsvPrinter(writer, metadata, true, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+            return new CsvPropertyGraphPrinter(writer, metadata, true, includeTypeDefinitions);
         }
 
         @Override
@@ -64,17 +64,35 @@ public enum Format implements FileExtension {
         }
 
         @Override
-        Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
-            return new CsvPrinter(writer, metadata, false, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
+            return new CsvPropertyGraphPrinter(writer, metadata, false, includeTypeDefinitions);
         }
 
         @Override
         public String description() {
             return "CSV (no headers)";
         }
+    },
+    neptuneStreamsJson{
+        @Override
+        public String suffix() {
+            return "json";
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
+            generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
+            return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator, metadata);
+        }
+
+        @Override
+        public String description() {
+            return "JSON (Neptune Streams format)";
+        }
     };
 
-    abstract Printer createPrinter(PrintWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
+    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
 
     public abstract String description();
 }

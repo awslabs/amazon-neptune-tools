@@ -17,22 +17,22 @@ import java.util.Map;
 
 public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
 
-    private final Printer printer;
+    private final PropertyGraphPrinter propertyGraphPrinter;
 
-    public QueryWriter(Printer printer) {
-        this.printer = printer;
+    public QueryWriter(PropertyGraphPrinter propertyGraphPrinter) {
+        this.propertyGraphPrinter = propertyGraphPrinter;
     }
 
     @Override
     public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
-        printer.printStartRow();
-        printer.printProperties(properties);
-        printer.printEndRow();
+        propertyGraphPrinter.printStartRow();
+        propertyGraphPrinter.printProperties(properties);
+        propertyGraphPrinter.printEndRow();
     }
 
     @Override
     public void close() throws Exception {
-        printer.close();
+        propertyGraphPrinter.close();
     }
 }

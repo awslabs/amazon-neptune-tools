@@ -27,14 +27,14 @@ import java.util.Queue;
 public class QueryTask implements Runnable {
     private final Queue<NamedQuery> queries;
     private final NeptuneGremlinClient.QueryClient queryClient;
-    private final TargetConfig targetConfig;
+    private final PropertyGraphTargetConfig targetConfig;
     private final boolean twoPassAnalysis;
     private final Status status;
     private final int index;
 
     public QueryTask(Queue<NamedQuery> queries,
                      NeptuneGremlinClient.QueryClient queryClient,
-                     TargetConfig targetConfig,
+                     PropertyGraphTargetConfig targetConfig,
                      boolean twoPassAnalysis,
                      Status status,
                      int index) {
@@ -142,18 +142,19 @@ public class QueryTask implements Runnable {
             this.propertiesMetadata = propertiesMetadata;
         }
 
-        private void createWriterFor(String name, Map<?, ?> properties, boolean allowStructuralElements) {
+        private void createWriter(Map<?, ?> properties, boolean allowStructuralElements) {
             try {
+
                 if (!propertiesMetadata.hasMetadataFor(name)) {
                     propertiesMetadata.update(name, properties, allowStructuralElements);
                 }
 
                 Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
 
-                Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
-                printer.printHeaderRemainingColumns(propertyMetadata.values());
+                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.values());
 
-                labelWriters.put(name, writerFactory.createLabelWriter(printer));
+                labelWriters.put(name, writerFactory.createLabelWriter(propertyGraphPrinter));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -164,7 +165,7 @@ public class QueryTask implements Runnable {
         public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
             if (!labelWriters.containsKey(name)) {
-                createWriterFor(name, properties, allowTokens);
+                createWriter(properties, allowTokens);
             }
 
             labelWriters.get(name).handle(properties, allowTokens);

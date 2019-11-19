@@ -10,17 +10,17 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.io;
+package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import java.io.Writer;
 
-import java.io.IOException;
-import java.util.Map;
+public interface OutputWriter extends AutoCloseable {
 
-public interface WriterFactory<T> {
+    void start();
 
-    PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException;
+    void finish();
 
-    GraphElementHandler<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
+    void print(String s);
 
+    Writer writer();
 }

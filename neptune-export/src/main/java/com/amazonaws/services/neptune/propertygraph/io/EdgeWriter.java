@@ -12,17 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import org.apache.tinkerpop.gremlin.structure.T;
-
 import java.io.IOException;
 import java.util.Map;
 
 public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
 
-    private final Printer printer;
+    private final PropertyGraphPrinter propertyGraphPrinter;
 
-    public EdgeWriter(Printer printer) {
-        this.printer = printer;
+    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter) {
+        this.propertyGraphPrinter = propertyGraphPrinter;
     }
 
     @Override
@@ -33,14 +31,14 @@ public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
         String id = (String) map.get("id");
         String label = (String) map.get("label");
 
-        printer.printStartRow();
-        printer.printEdge(id, label, from, to);
-        printer.printProperties(properties);
-        printer.printEndRow();
+        propertyGraphPrinter.printStartRow();
+        propertyGraphPrinter.printEdge(id, label, from, to);
+        propertyGraphPrinter.printProperties(id, "ep", properties);
+        propertyGraphPrinter.printEndRow();
     }
 
     @Override
     public void close() throws Exception {
-        printer.close();
+        propertyGraphPrinter.close();
     }
 }

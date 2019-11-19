@@ -12,27 +12,22 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.rdf.io;
 
-import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
-import com.amazonaws.services.neptune.rdf.Prefixes;
 
 public class ExportRdfGraphJob {
 
     private final NeptuneSparqlClient client;
-    private final Directories directories;
+    private final RdfTargetConfig targetConfig;
 
-    public ExportRdfGraphJob(NeptuneSparqlClient client, Directories directories) {
+    public ExportRdfGraphJob(NeptuneSparqlClient client, RdfTargetConfig targetConfig) {
         this.client = client;
-        this.directories = directories;
+        this.targetConfig = targetConfig;
     }
 
     public void execute() throws Exception {
 
         System.err.println("Creating statement files");
 
-        java.nio.file.Path filePath = directories.createFilePath(
-                directories.statementsDirectory(), "statements", 0, () -> "ttl");
-
-        client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", filePath);
+        client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", targetConfig);
     }
 }

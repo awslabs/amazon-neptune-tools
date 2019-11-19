@@ -12,22 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.rdf.io;
 
-import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.rdf.Prefixes;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
-import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
+import org.eclipse.rdf4j.rio.nquads.NQuadsWriter;
 
-import java.io.IOException;
+public class EnhancedNQuadsWriter extends NQuadsWriter {
 
-public class EnhancedTurtleWriter extends TurtleWriter {
 
     private final OutputWriter writer;
     private final Prefixes prefixes;
     private final Status status = new Status();
 
-    public EnhancedTurtleWriter(OutputWriter writer, Prefixes prefixes) {
+    public EnhancedNQuadsWriter(OutputWriter writer, Prefixes prefixes) {
         super(writer.writer());
         this.writer = writer;
         this.prefixes = prefixes;
@@ -35,7 +34,6 @@ public class EnhancedTurtleWriter extends TurtleWriter {
 
     @Override
     public void handleStatement(Statement statement) throws RDFHandlerException {
-
         prefixes.parse(statement.getSubject().stringValue(), this);
         prefixes.parse(statement.getPredicate().toString(), this);
         prefixes.parse(statement.getObject().stringValue(), this);
@@ -49,10 +47,9 @@ public class EnhancedTurtleWriter extends TurtleWriter {
     }
 
     @Override
-    protected void writeNamespace(String prefix, String name)
-            throws IOException {
+    public void handleNamespace(String prefix, String name) {
         writer.start();
-        super.writeNamespace(prefix, name);
+        super.handleNamespace(prefix, name);
         writer.finish();
     }
 }

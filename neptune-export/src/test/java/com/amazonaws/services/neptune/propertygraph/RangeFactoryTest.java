@@ -25,7 +25,8 @@ public class RangeFactoryTest {
         RangeFactory rangeFactory = RangeFactory.create(
                 mock(GraphClient.class),
                 AllLabels.INSTANCE,
-                new ConcurrencyConfig(1, 1000, 0, 2500));
+                new RangeConfig(1000, 0, 2500),
+                new ConcurrencyConfig(1));
 
         Range range1 = rangeFactory.nextRange();
         assertEquals("range(0, 1000)", range1.toString());
@@ -42,7 +43,8 @@ public class RangeFactoryTest {
         RangeFactory rangeFactory = RangeFactory.create(
                 mock(GraphClient.class),
                 AllLabels.INSTANCE,
-                new ConcurrencyConfig(1, 1000, 0, 2000));
+                new RangeConfig(1000, 0, 2000),
+                new ConcurrencyConfig(1));
 
         rangeFactory.nextRange();
         assertFalse(rangeFactory.isExhausted());
@@ -56,7 +58,8 @@ public class RangeFactoryTest {
         RangeFactory rangeFactory = RangeFactory.create(
                 mock(GraphClient.class),
                 AllLabels.INSTANCE,
-                new ConcurrencyConfig(1, 10, 20, 10));
+                new RangeConfig(10, 20, 10),
+                new ConcurrencyConfig(1));
 
         Range range1 = rangeFactory.nextRange();
         assertEquals("range(20, 30)", range1.toString());

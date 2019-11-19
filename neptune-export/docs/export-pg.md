@@ -5,6 +5,7 @@
     SYNOPSIS
             neptune-export.sh export-pg
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
+                    [ {-b | --batch-size} <batchSize> ]
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ {-el | --edge-label} <edgeLabels>... ]
@@ -16,10 +17,11 @@
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
                     [ {-r | --range | --range-size} <rangeSize> ]
-                    [ {-s | --scope} <scope> ] [ --sample ]
+                    [ --region <region> ] [ {-s | --scope} <scope> ] [ --sample ]
                     [ --sample-size <sampleSize> ] [ --serializer <serializer> ]
-                    [ --skip <skip> ] [ {-t | --tag} <tag> ]
-                    [ --tokens-only <tokensOnly> ] [ --use-iam-auth ] [ --use-ssl ]
+                    [ --skip <skip> ] [ --stream-name <streamName> ]
+                    [ {-t | --tag} <tag> ] [ --tokens-only <tokensOnly> ]
+                    [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -32,6 +34,13 @@
     
                 This option is part of the group 'load-balancer' from which only
                 one option may be specified
+    
+    
+            -b <batchSize>, --batch-size <batchSize>
+                Batch size (optional, default 64). Reduce this number if your
+                queries trigger CorruptedFrameExceptions.
+    
+                This option may occur a maximum of 1 times
     
     
             -cn <concurrency>, --concurrency <concurrency>
@@ -55,7 +64,8 @@
                 want to load balance requests across a cluster
     
             -el <edgeLabels>, --edge-label <edgeLabels>
-                Labels of edges to be exported (optional, default all labels)
+                Labels of edges to be included in config (optional, default all
+                labels)
     
             --exclude-type-definitions
                 Exclude type definitions from column headers (optional, default
@@ -71,6 +81,7 @@
                     csv
                     csvNoHeaders
                     json
+                    neptuneStreamsJson
     
                 This option may occur a maximum of 1 times
     
@@ -111,7 +122,8 @@
     
     
             -nl <nodeLabels>, --node-label <nodeLabels>
-                Labels of nodes to be exported (optional, default all labels)
+                Labels of nodes to be included in config (optional, default all
+                labels)
     
             --nlb-endpoint <networkLoadBalancerEndpoint>
                 Network load balancer endpoint (optional: use only if connecting to
@@ -131,6 +143,7 @@
                 This options value is restricted to the following set of values:
                     files
                     stdout
+                    stream
     
                 This option may occur a maximum of 1 times
     
@@ -147,6 +160,12 @@
     
             -r <rangeSize>, --range <rangeSize>, --range-size <rangeSize>
                 Number of items to fetch per request (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --region <region>
+                AWS Region in which your Amazon Kinesis Data Stream is located
     
                 This option may occur a maximum of 1 times
     
@@ -188,6 +207,12 @@
     
             --skip <skip>
                 Number of items to skip (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --stream-name <streamName>
+                Name of an Amazon Kinesis Data Stream
     
                 This option may occur a maximum of 1 times
     

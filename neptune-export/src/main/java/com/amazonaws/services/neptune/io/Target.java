@@ -10,18 +10,17 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.io;
+package com.amazonaws.services.neptune.io;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Path;
 
-public enum Output {
+public enum Target {
     files {
         @Override
-        public PrintWriter createPrintWriter(Path filePath) throws IOException {
-            return new PrintWriter(new FileWriter(filePath.toFile()));
+        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
+            return new PrintOutputWriter(new FileWriter(filePath.toFile()));
         }
 
         @Override
@@ -31,17 +30,29 @@ public enum Output {
     },
     stdout {
         @Override
-        public PrintWriter createPrintWriter(Path filePath) {
-            return new PrintWriter(System.out);
+        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) {
+            return new PrintOutputWriter(System.out);
         }
 
         @Override
         public void writeCommandResult(Object result) {
             System.err.println(result);
         }
+    },
+    stream{
+        @Override
+        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
+            return new StreamOutputWriter(kinesisConfig);
+        }
+
+        @Override
+        public void writeCommandResult(Object result) {
+            System.out.println(result);
+        }
     };
 
-    public abstract PrintWriter createPrintWriter(Path filePath) throws IOException;
+    public abstract OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException;
+
     public abstract void writeCommandResult(Object result);
 
 }

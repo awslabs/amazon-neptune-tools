@@ -12,28 +12,24 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
-import com.amazonaws.services.neptune.propertygraph.io.Format;
-import com.amazonaws.services.neptune.propertygraph.io.Output;
-import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-import java.util.ArrayList;
+import javax.inject.Inject;
 import java.util.Collection;
-import java.util.List;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
@@ -53,83 +49,52 @@ import java.util.List;
 @Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON")
 public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
 
-    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be exported (optional, default all labels)",
-            arity = 1)
-    private List<String> nodeLabels = new ArrayList<>();
+    @Inject
+    private CommonConnectionModule connection = new CommonConnectionModule();
 
-    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be exported (optional, default all labels)",
-            arity = 1)
-    private List<String> edgeLabels = new ArrayList<>();
+    @Inject
+    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
 
-    @Option(name = {"-r", "--range", "--range-size"}, description = "Number of items to fetch per request (optional)")
-    @Once
-    private long rangeSize = -1;
+    @Inject
+    private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
-    @Option(name = {"--limit"}, description = "Maximum number of items to export (optional)")
-    @Once
-    private long limit = Long.MAX_VALUE;
+    @Inject
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
-    @Option(name = {"--skip"}, description = "Number of items to skip (optional)")
-    @Once
-    private long skip = 0;
+    @Inject
+    private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
 
-    @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
-    @Once
-    private int concurrency = 1;
+    @Inject
+    private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
-    @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all')")
-    @Once
-    @AllowedValues(allowedValues = {"all", "nodes", "edges"})
-    private Scope scope = Scope.all;
+    @Inject
+    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule();
 
-    @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata")
-    @Once
-    private boolean sample = false;
-
-    @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000")
-    @Once
-    private long sampleSize = 1000;
-
-    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
-    @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json"})
-    private Format format = Format.csv;
-
-    @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
-    @Once
-    @AllowedValues(allowedValues = {"files", "stdout"})
-    private Output output = Output.files;
+    @Inject
+    private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
     @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
     @Once
     private boolean excludeTypeDefinitions = false;
 
-    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off')")
-    @Once
-    @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
-    private TokensOnly tokensOnly = TokensOnly.off;
-
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(concurrency, rangeSize, skip, limit);
-        MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connectionConfig(), concurrencyConfig);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 
-            Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, directory, tag);
+            Directories directories = fileSystem.createDirectories(DirectoryStructure.PropertyGraph);
             java.nio.file.Path configFilePath = directories.configFilePath().toAbsolutePath();
 
-            TargetConfig targetConfig = new TargetConfig(directories, format, output, !excludeTypeDefinitions);
+            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
             ExportStats stats = new ExportStats();
 
-            Collection<ExportSpecification<?>> exportSpecifications =
-                    scope.exportSpecifications(nodeLabels, edgeLabels, tokensOnly, stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
 
             PropertiesMetadataCollection metadataCollection =
-                    metadataSamplingSpecification.createMetadataCommand(exportSpecifications, g).execute();
+                    sampling.createMetadataCommand(exportSpecifications, g).execute();
 
             stats.prepare(metadataCollection);
 
@@ -139,18 +104,18 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     exportSpecifications,
                     metadataCollection,
                     g,
-                    concurrencyConfig,
-                    targetConfig
-            );
+                    range.config(),
+                    concurrency.config(),
+                    targetConfig);
             exportJob.execute();
 
             System.err.println();
-            System.err.println(format.description() + " files   : " + directories.directory());
+            System.err.println(target.description() + " files : " + directories.directory());
             System.err.println("Config file : " + configFilePath);
             System.err.println();
             System.err.println(stats.toString());
 
-            output.writeCommandResult(directories.directory());
+            target.writeCommandResult(directories.directory());
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");

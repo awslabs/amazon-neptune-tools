@@ -5,6 +5,8 @@
     SYNOPSIS
             neptune-export.sh create-pg-config
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
+                    [ {-b | --batch-size} <batchSize> ]
+                    [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
@@ -14,7 +16,7 @@
                     [ {-p | --port} <port> ] [ {-s | --scope} <scope> ]
                     [ --sample ] [ --sample-size <sampleSize> ]
                     [ --serializer <serializer> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ --tokens-only <tokensOnly> ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -27,6 +29,19 @@
     
                 This option is part of the group 'load-balancer' from which only
                 one option may be specified
+    
+    
+            -b <batchSize>, --batch-size <batchSize>
+                Batch size (optional, default 64). Reduce this number if your
+                queries trigger CorruptedFrameExceptions.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            -cn <concurrency>, --concurrency <concurrency>
+                Concurrency (optional)
+    
+                This option may occur a maximum of 1 times
     
     
             -d <directory>, --dir <directory>
@@ -139,6 +154,18 @@
     
             -t <tag>, --tag <tag>
                 Directory prefix (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --tokens-only <tokensOnly>
+                Export tokens (~id, ~label) only (optional, default 'off')
+    
+                This options value is restricted to the following set of values:
+                    off
+                    nodes
+                    edges
+                    both
     
                 This option may occur a maximum of 1 times
     

@@ -18,16 +18,19 @@ import static java.lang.Math.min;
 
 public class RangeFactory {
 
-    public static RangeFactory create(GraphClient<?> graphClient, LabelsFilter labelsFilter, ConcurrencyConfig config) {
-        if (config.isUnboundedParallelExecution()) {
+    public static RangeFactory create(GraphClient<?> graphClient,
+                                      LabelsFilter labelsFilter,
+                                      RangeConfig rangeConfig,
+                                      ConcurrencyConfig concurrencyConfig) {
+        if (concurrencyConfig.isUnboundedParallelExecution(rangeConfig)) {
             System.err.println("Calculating " + graphClient.description() + " ranges");
-            long limit = min(graphClient.count(labelsFilter), config.limit());
-            long rangeSize = (limit / config.concurrency()) + 1;
+            long limit = min(graphClient.count(labelsFilter), rangeConfig.limit());
+            long rangeSize = (limit / concurrencyConfig.concurrency()) + 1;
             System.err.println("Limit: " + limit + ", Size: " + rangeSize);
-            return new RangeFactory(rangeSize, limit, config.skip());
+            return new RangeFactory(rangeSize, limit, rangeConfig.skip());
         }
 
-        return new RangeFactory(config.rangeSize(), config.limit(), config.skip());
+        return new RangeFactory(rangeConfig.rangeSize(), rangeConfig.limit(), rangeConfig.skip());
     }
 
     private final long rangeSize;

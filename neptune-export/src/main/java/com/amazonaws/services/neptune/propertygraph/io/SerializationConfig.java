@@ -12,15 +12,27 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+public class SerializationConfig {
 
-import java.io.IOException;
-import java.util.Map;
+    private final String serializer;
+    private final int maxContentLength;
+    private final int batchSize;
 
-public interface WriterFactory<T> {
+    public SerializationConfig(String serializer, int maxContentLength, int batchSize) {
+        this.serializer = serializer;
+        this.maxContentLength = maxContentLength;
+        this.batchSize = batchSize;
+    }
 
-    PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException;
+    public String serializer() {
+        return serializer;
+    }
 
-    GraphElementHandler<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
+    public int maxContentLength() {
+        return maxContentLength;
+    }
 
+    public int batchSize() {
+        return batchSize;
+    }
 }

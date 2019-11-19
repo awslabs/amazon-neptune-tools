@@ -10,17 +10,30 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.io;
+package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+public class RangeConfig {
 
-import java.io.IOException;
-import java.util.Map;
+    private final long rangeSize;
+    private final long skip;
+    private final long limit;
 
-public interface WriterFactory<T> {
 
-    PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException;
+    public RangeConfig(long rangeSize, long skip, long limit) {
+        this.rangeSize = rangeSize;
+        this.skip = skip;
+        this.limit = limit;
+    }
 
-    GraphElementHandler<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
+    public long rangeSize() {
+        return rangeSize;
+    }
 
+    public long skip() {
+        return skip;
+    }
+
+    public long limit() {
+        return limit;
+    }
 }

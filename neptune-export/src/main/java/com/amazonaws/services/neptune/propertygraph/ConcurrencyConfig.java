@@ -18,45 +18,28 @@ import static java.lang.Math.max;
 
 public class ConcurrencyConfig {
     private final int concurrency;
-    private final long rangeSize;
-    private final long skip;
-    private final long limit;
+
+//    public ConcurrencyConfig(int concurrency) {
+//
+//        this(concurrency, -1, 0, Long.MAX_VALUE);
+//    }
 
     public ConcurrencyConfig(int concurrency) {
-
-        this(concurrency, -1, 0, Long.MAX_VALUE);
-    }
-
-    public ConcurrencyConfig(int concurrency, long rangeSize, long skip, long limit) {
 
         if (concurrency < 1){
             throw new IllegalArgumentException("Concurrency must be >= 1");
         }
 
         this.concurrency = concurrency;
-        this.rangeSize = rangeSize;
-        this.skip = skip;
-        this.limit = limit;
+
     }
 
     public int concurrency() {
         return concurrency;
     }
 
-    long rangeSize() {
-        return rangeSize;
-    }
-
-    public long skip() {
-        return skip;
-    }
-
-    public long limit() {
-        return limit;
-    }
-
-    boolean isUnboundedParallelExecution(){
-        return concurrency > 1 && rangeSize == -1;
+    boolean isUnboundedParallelExecution(RangeConfig rangeConfig){
+        return concurrency > 1 && rangeConfig.rangeSize() == -1;
     }
 
     Cluster.Builder applyTo(Cluster.Builder clusterBuilder){

@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -21,12 +22,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class JsonPrinter implements Printer {
+public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
+    private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
 
-    public JsonPrinter(JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+        this.writer = writer;
         this.generator = generator;
         this.metadata = metadata;
     }
@@ -76,6 +79,11 @@ public class JsonPrinter implements Printer {
     }
 
     @Override
+    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
+        printProperties(properties);
+    }
+
+    @Override
     public void printEdge(String id, String label, String from, String to) throws IOException {
         generator.writeStringField("~id", id);
         generator.writeStringField("~label", label);
@@ -91,12 +99,15 @@ public class JsonPrinter implements Printer {
 
     @Override
     public void printStartRow() throws IOException {
+        writer.start();
         generator.writeStartObject();
     }
 
     @Override
     public void printEndRow() throws IOException {
+        generator.flush();
         generator.writeEndObject();
+        writer.finish();
     }
 
     @Override

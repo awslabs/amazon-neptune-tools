@@ -14,7 +14,8 @@
                     [ --max-content-length <maxContentLength> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
-                    [ {-q | --queries} <queries>... ] [ --serializer <serializer> ]
+                    [ {-q | --queries} <queries>... ] [ --region <region> ]
+                    [ --serializer <serializer> ] [ --stream-name <streamName> ]
                     [ {-t | --tag} <tag> ] [ --two-pass-analysis ]
                     [ --use-iam-auth ] [ --use-ssl ]
     
@@ -76,6 +77,7 @@
                     csv
                     csvNoHeaders
                     json
+                    neptuneStreamsJson
     
                 This option may occur a maximum of 1 times
     
@@ -134,6 +136,7 @@
                 This options value is restricted to the following set of values:
                     files
                     stdout
+                    stream
     
                 This option may occur a maximum of 1 times
     
@@ -152,6 +155,12 @@
                 Gremlin queries (format: name="semi-colon-separated list of
                 queries")
     
+            --region <region>
+                AWS Region in which your Amazon Kinesis Data Stream is located
+    
+                This option may occur a maximum of 1 times
+    
+    
             --serializer <serializer>
                 Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
                 (optional, default 'GRAPHBINARY_V1D0')
@@ -159,6 +168,12 @@
                 This options value is restricted to the following set of values:
                     GRAPHBINARY_V1D0
                     GRYO_V3D0
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --stream-name <streamName>
+                Name of an Amazon Kinesis Data Stream
     
                 This option may occur a maximum of 1 times
     

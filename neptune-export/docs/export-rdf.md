@@ -5,10 +5,11 @@
             neptune-export.sh export-rdf
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
-                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
-                    [ --max-content-length <maxContentLength> ]
+                    [ --format <format> ] [ --lb-port <loadBalancerPort> ]
+                    [ --log-level <log level> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
-                    [ {-p | --port} <port> ] [ --serializer <serializer> ]
+                    [ {-o | --output} <output> ] [ {-p | --port} <port> ]
+                    [ --region <region> ] [ --stream-name <streamName> ]
                     [ {-t | --tag} <tag> ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
@@ -38,6 +39,17 @@
                 Neptune endpoint(s) – supply multiple instance endpoints if you
                 want to load balance requests across a cluster
     
+            --format <format>
+                Output format (optional, default 'turtle'
+    
+                This options value is restricted to the following set of values:
+                    turtle
+                    nquads
+                    neptuneStreamsJson
+    
+                This option may occur a maximum of 1 times
+    
+    
             --lb-port <loadBalancerPort>
                 Load balancer port (optional, default 80)
     
@@ -61,12 +73,6 @@
                 This option may occur a maximum of 1 times
     
     
-            --max-content-length <maxContentLength>
-                Max content length (optional, default 65536)
-    
-                This option may occur a maximum of 1 times
-    
-    
             --nlb-endpoint <networkLoadBalancerEndpoint>
                 Network load balancer endpoint (optional: use only if connecting to
                 an IAM DB enabled Neptune cluster through a network load balancer
@@ -79,6 +85,17 @@
                 one option may be specified
     
     
+            -o <output>, --output <output>
+                Output target (optional, default 'file')
+    
+                This options value is restricted to the following set of values:
+                    files
+                    stdout
+                    stream
+    
+                This option may occur a maximum of 1 times
+    
+    
             -p <port>, --port <port>
                 Neptune port (optional, default 8182)
     
@@ -89,13 +106,14 @@
                 following port ranges: 1-1023, 1024-49151
     
     
-            --serializer <serializer>
-                Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
-                (optional, default 'GRAPHBINARY_V1D0')
+            --region <region>
+                AWS Region in which your Amazon Kinesis Data Stream is located
     
-                This options value is restricted to the following set of values:
-                    GRAPHBINARY_V1D0
-                    GRYO_V3D0
+                This option may occur a maximum of 1 times
+    
+    
+            --stream-name <streamName>
+                Name of an Amazon Kinesis Data Stream
     
                 This option may occur a maximum of 1 times
     
