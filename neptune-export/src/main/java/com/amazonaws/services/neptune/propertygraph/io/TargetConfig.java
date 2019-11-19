@@ -28,10 +28,8 @@ public class TargetConfig {
     private final KinesisConfig kinesisConfig;
 
     public TargetConfig(Directories directories,
-                        Format format,
-                        Output output,
-                        boolean includeTypeDefinitions,
-                        KinesisConfig kinesisConfig) {
+                        KinesisConfig kinesisConfig, boolean includeTypeDefinitions, Format format,
+                        Output output) {
         this.directories = directories;
         this.format = format;
         this.output = output;

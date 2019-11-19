@@ -12,20 +12,18 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.metadata.*;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
-import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-import java.util.ArrayList;
+import javax.inject.Inject;
 import java.util.Collection;
-import java.util.List;
 
 @Examples(examples = {
         "bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
@@ -39,43 +37,38 @@ import java.util.List;
 @Command(name = "create-pg-config", description = "Create a property graph export metadata config file")
 public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
-    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be included in config (optional, default all labels)",
-            arity = 1)
-    private List<String> nodeLabels = new ArrayList<>();
+    @Inject
+    private CommonConnectionModule connection = new CommonConnectionModule();
 
-    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be included in config (optional, default all labels)",
-            arity = 1)
-    private List<String> edgeLabels = new ArrayList<>();
+    @Inject
+    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
 
-    @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all')")
-    @Once
-    @AllowedValues(allowedValues = {"all", "nodes", "edges"})
-    private Scope scope = Scope.all;
+    @Inject
+    private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
-    @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata")
-    @Once
-    private boolean sample = false;
+    @Inject
+    private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule(false);
 
-    @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000")
-    @Once
-    private long sampleSize = 1000;
+    @Inject
+    private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
+
+    @Inject
+    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule();
 
     @Override
     public void run() {
-        ConcurrencyConfig concurrencyConfig = new ConcurrencyConfig(1);
-        MetadataSamplingSpecification metadataSamplingSpecification = new MetadataSamplingSpecification(sample, sampleSize);
 
         try (Timer timer = new Timer();
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connectionConfig(), concurrencyConfig);
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 
-            Directories directories = Directories.createFor(DirectoryStructure.Config, directory, tag);
+            Directories directories = fileSystem.createDirectories(DirectoryStructure.Config);
             java.nio.file.Path configFilePath = directories.configFilePath();
 
             ExportStats stats = new ExportStats();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(nodeLabels, edgeLabels, TokensOnly.off, stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
 
-            MetadataCommand metadataCommand = metadataSamplingSpecification.createMetadataCommand(exportSpecifications, g);
+            MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
             PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
 
             new SaveMetadataConfig(metadataCollection, configFilePath).execute();

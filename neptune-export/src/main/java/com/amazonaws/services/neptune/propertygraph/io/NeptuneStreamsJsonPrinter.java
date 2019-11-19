@@ -67,15 +67,8 @@ public class NeptuneStreamsJsonPrinter implements Printer {
                 if (isList(value)) {
 
                     List<?> values = (List<?>) value;
-                    if (values.size() > 1) {
-//                        generator.writeFieldName(formattedKey);
-//                        generator.writeStartArray();
-//                        for (Object v : values) {
-//                            dataType.printTo(generator, v);
-//                        }
-//                        generator.writeEndArray();
-                    } else {
-                        printRecord(id, type, formattedKey, values.get(0), dataType);
+                    for (Object o : values) {
+                        printRecord(id, type, formattedKey, o, dataType);
                     }
 
                 } else {

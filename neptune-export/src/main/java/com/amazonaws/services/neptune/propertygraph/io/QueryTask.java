@@ -142,15 +142,16 @@ public class QueryTask implements Runnable {
             this.propertiesMetadata = propertiesMetadata;
         }
 
-        private void createWriterFor(String name, Map<?, ?> properties, boolean allowStructuralElements) {
+        private void createWriter(Map<?, ?> properties, boolean allowStructuralElements) {
             try {
+
                 if (!propertiesMetadata.hasMetadataFor(name)) {
                     propertiesMetadata.update(name, properties, allowStructuralElements);
                 }
 
                 Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
-
                 Printer printer = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
+
                 printer.printHeaderRemainingColumns(propertyMetadata.values());
 
                 labelWriters.put(name, writerFactory.createLabelWriter(printer));
@@ -164,7 +165,7 @@ public class QueryTask implements Runnable {
         public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
             if (!labelWriters.containsKey(name)) {
-                createWriterFor(name, properties, allowTokens);
+                createWriter(properties, allowTokens);
             }
 
             labelWriters.get(name).handle(properties, allowTokens);

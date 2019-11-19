@@ -71,8 +71,14 @@ public class ExportSpecification<T> {
         return graphElementType.name();
     }
 
-    public RangeFactory createRangeFactory(GraphTraversalSource g, ConcurrencyConfig concurrencyConfig) {
-        return RangeFactory.create(graphElementType.graphClient(g, tokensOnly, stats), labelsFilter, concurrencyConfig);
+    public RangeFactory createRangeFactory(GraphTraversalSource g,
+                                           RangeConfig rangeConfig,
+                                           ConcurrencyConfig concurrencyConfig) {
+        return RangeFactory.create(
+                graphElementType.graphClient(g, tokensOnly, stats),
+                labelsFilter,
+                rangeConfig,
+                concurrencyConfig);
     }
 
     public ExportPropertyGraphTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,

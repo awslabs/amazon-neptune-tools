@@ -12,19 +12,17 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.CommonConnectionModule;
+import com.amazonaws.services.neptune.cli.CommonFileSystemModule;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.propertygraph.io.Output;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
-import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.*;
 
-import java.io.File;
-import java.util.List;
+import javax.inject.Inject;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output "},
@@ -35,13 +33,19 @@ import java.util.List;
 @Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle")
 public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
 
+    @Inject
+    private CommonConnectionModule connection = new CommonConnectionModule();
+
+    @Inject
+    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
+
     @Override
     public void run() {
 
         try (Timer timer = new Timer();
-             NeptuneSparqlClient client = NeptuneSparqlClient.create(endpoints, port, useIamAuth)) {
+             NeptuneSparqlClient client = NeptuneSparqlClient.create(connection.config())) {
 
-            Directories directories = Directories.createFor(DirectoryStructure.Rdf, directory, tag);
+            Directories directories = fileSystem.createDirectories(DirectoryStructure.Rdf);
 
             ExportRdfGraphJob job = new ExportRdfGraphJob(client, directories);
             job.execute();

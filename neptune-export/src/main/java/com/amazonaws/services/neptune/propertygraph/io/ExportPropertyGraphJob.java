@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
@@ -29,17 +30,20 @@ public class ExportPropertyGraphJob {
     private final Collection<ExportSpecification<?>> exportSpecifications;
     private final PropertiesMetadataCollection propertiesMetadataCollection;
     private final GraphTraversalSource g;
+    private final RangeConfig rangeConfig;
     private final ConcurrencyConfig concurrencyConfig;
     private final TargetConfig targetConfig;
 
     public ExportPropertyGraphJob(Collection<ExportSpecification<?>> exportSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
+                                  RangeConfig rangeConfig,
                                   ConcurrencyConfig concurrencyConfig,
                                   TargetConfig targetConfig) {
         this.exportSpecifications = exportSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;
+        this.rangeConfig = rangeConfig;
         this.concurrencyConfig = concurrencyConfig;
         this.targetConfig = targetConfig;
     }
@@ -51,7 +55,7 @@ public class ExportPropertyGraphJob {
             try (Timer timer = new Timer()) {
                 System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
 
-                RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, concurrencyConfig);
+                RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
                 Status status = new Status();
 
                 ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());

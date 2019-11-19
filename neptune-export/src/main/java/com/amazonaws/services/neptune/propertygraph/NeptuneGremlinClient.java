@@ -13,35 +13,26 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.auth.ConnectionConfig;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.handler.ssl.ApplicationProtocolNegotiator;
-import io.netty.handler.ssl.SslContext;
+import com.amazonaws.services.neptune.propertygraph.io.SerializationConfig;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
-import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSessionContext;
-import java.util.List;
-
 public class NeptuneGremlinClient implements AutoCloseable {
 
-    public static final int DEFAULT_BATCH_SIZE = 128;
+    public static final int DEFAULT_BATCH_SIZE = 64;
 
-    public static NeptuneGremlinClient create(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) {
-        return create(connectionConfig, concurrencyConfig, DEFAULT_BATCH_SIZE);
-    }
-
-    public static NeptuneGremlinClient create(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, int batchSize) {
+    public static NeptuneGremlinClient create(ConnectionConfig connectionConfig,
+                                              ConcurrencyConfig concurrencyConfig,
+                                              SerializationConfig serializationConfig) {
         Cluster.Builder builder = Cluster.build()
                 .port(connectionConfig.port())
                 .enableSsl(connectionConfig.useSsl())
-                .serializer(connectionConfig.serializer())
+                .serializer(serializationConfig.serializer())
                 .maxWaitForConnection(10000)
-                .resultIterationBatchSize(batchSize)
-                .maxContentLength(connectionConfig.maxContentLength());
+                .resultIterationBatchSize(serializationConfig.batchSize())
+                .maxContentLength(serializationConfig.maxContentLength());
 
         if (connectionConfig.useIamAuth()) {
             if (connectionConfig.isDirectConnection()) {

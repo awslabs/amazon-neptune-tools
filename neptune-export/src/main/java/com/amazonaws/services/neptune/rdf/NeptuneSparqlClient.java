@@ -16,6 +16,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.neptune.auth.NeptuneSigV4SignerException;
 import com.amazonaws.neptune.client.rdf4j.NeptuneSparqlRepository;
+import com.amazonaws.services.neptune.auth.ConnectionConfig;
 import com.amazonaws.services.neptune.rdf.io.EnhancedTurtleWriter;
 import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import org.apache.http.client.HttpClient;
@@ -50,15 +51,14 @@ public class NeptuneSparqlClient implements AutoCloseable {
 
     private static final ParserConfig PARSER_CONFIG = new ParserConfig().addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
 
-    public static NeptuneSparqlClient create(Collection<String> endpoints, int port, boolean useIamAuth) {
-
-        if (useIamAuth) {
+    public static NeptuneSparqlClient create(ConnectionConfig config){
+        if (config.useIamAuth()) {
             String serviceRegion = EnvironmentVariableUtils.getMandatoryEnv("SERVICE_REGION");
             AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
             return new NeptuneSparqlClient(
-                    endpoints.stream().map(e -> {
+                    config.endpoints().stream().map(e -> {
                         try {
-                            return updateParser(new NeptuneSparqlRepository(sparqlEndpount(e, port), credentialsProvider, serviceRegion));
+                            return updateParser(new NeptuneSparqlRepository(sparqlEndpount(e, config.port()), credentialsProvider, serviceRegion));
                         } catch (NeptuneSigV4SignerException e1) {
                             throw new RuntimeException(e1);
                         }
@@ -68,8 +68,8 @@ public class NeptuneSparqlClient implements AutoCloseable {
         } else {
 
             return new NeptuneSparqlClient(
-                    endpoints.stream().map(e ->
-                            updateParser(new SPARQLRepository(sparqlEndpount(e, port)))).
+                    config.endpoints().stream().map(e ->
+                            updateParser(new SPARQLRepository(sparqlEndpount(e, config.port())))).
                             peek(AbstractRepository::init).
                             collect(Collectors.toList()));
         }
