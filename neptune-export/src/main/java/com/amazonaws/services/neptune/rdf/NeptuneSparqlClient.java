@@ -18,10 +18,9 @@ import com.amazonaws.neptune.auth.NeptuneSigV4SignerException;
 import com.amazonaws.neptune.client.rdf4j.NeptuneSparqlRepository;
 import com.amazonaws.services.neptune.auth.ConnectionConfig;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.rdf.io.EnhancedNQuadsWriter;
-import com.amazonaws.services.neptune.rdf.io.EnhancedTurtleWriter;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.eclipse.rdf4j.http.client.HttpClientSessionManager;
 import org.eclipse.rdf4j.http.client.RDF4JProtocolSession;
@@ -152,9 +151,10 @@ public class NeptuneSparqlClient implements AutoCloseable {
                     Value o = bindingSet.getValue("o");
                     Value g = bindingSet.getValue("g");
 
+
                     IRI subject = factory.createIRI(s.stringValue());
                     IRI predicate = factory.createIRI(p.stringValue());
-                    IRI graph = factory.createIRI(g.stringValue());
+                    IRI graph = getNonDefaultNamedGraph(g, factory);
 
                     Statement statement = factory.createStatement(subject, predicate, o, graph);
 
@@ -165,6 +165,16 @@ public class NeptuneSparqlClient implements AutoCloseable {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private IRI getNonDefaultNamedGraph(Value g, ValueFactory factory) {
+        String s = g.stringValue();
+
+        if (StringUtils.isEmpty(s) || s.equalsIgnoreCase("http://aws.amazon.com/neptune/vocab/v01/DefaultNamedGraph")){
+            return null;
+        }
+
+        return factory.createIRI(s);
     }
 
     private SPARQLRepository chooseRepository() {

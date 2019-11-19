@@ -48,7 +48,7 @@ public enum RdfExportFormat implements FileExtension {
     neptuneStreamsJson {
         @Override
         RDFWriter createWriter(OutputWriter writer, Prefixes prefixes) {
-            return new EnhancedNQuadsWriter(writer, prefixes);
+            return new NeptuneStreamsJsonNQuadsWriter(writer);
         }
 
         @Override

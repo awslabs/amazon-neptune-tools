@@ -21,6 +21,8 @@ import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 
+import java.nio.file.Path;
+
 public class RdfTargetModule {
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
@@ -43,5 +45,9 @@ public class RdfTargetModule {
 
     public RdfTargetConfig config(Directories directories) {
         return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
+    }
+
+    public void writeCommandResult(Path path){
+        output.writeCommandResult(path);
     }
 }
