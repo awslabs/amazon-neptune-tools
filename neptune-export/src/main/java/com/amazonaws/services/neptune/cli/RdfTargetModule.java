@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.cli;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
@@ -27,6 +28,11 @@ public class RdfTargetModule {
     @AllowedValues(allowedValues = {"files", "stdout", "stream"})
     private Target output = Target.files;
 
+    @Option(name = {"--format"}, description = "Output format (optional, default 'turtle'")
+    @Once
+    @AllowedValues(allowedValues = {"turtle", "nquads", "neptuneStreamsJson"})
+    private RdfExportFormat format = RdfExportFormat.turtle;
+
     @Option(name = {"--stream-name"}, description = "Name of an Amazon Kinesis Data Stream")
     @Once
     private String streamName;
@@ -36,6 +42,6 @@ public class RdfTargetModule {
     private String region;
 
     public RdfTargetConfig config(Directories directories) {
-        return new RdfTargetConfig(directories, output, new KinesisConfig(streamName, region));
+        return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
     }
 }

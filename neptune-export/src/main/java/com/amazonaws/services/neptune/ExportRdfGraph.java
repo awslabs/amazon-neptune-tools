@@ -17,7 +17,6 @@ import com.amazonaws.services.neptune.cli.CommonFileSystemModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
 import com.amazonaws.services.neptune.util.Timer;
@@ -52,7 +51,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.Rdf);
 
-            ExportRdfGraphJob job = new ExportRdfGraphJob(client, directories, target.config(directories));
+            ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
             job.execute();
 
             System.err.println();

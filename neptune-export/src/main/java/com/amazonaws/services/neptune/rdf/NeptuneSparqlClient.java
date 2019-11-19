@@ -18,7 +18,7 @@ import com.amazonaws.neptune.auth.NeptuneSigV4SignerException;
 import com.amazonaws.neptune.client.rdf4j.NeptuneSparqlRepository;
 import com.amazonaws.services.neptune.auth.ConnectionConfig;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.io.PrintOutputWriter;
+import com.amazonaws.services.neptune.rdf.io.EnhancedNQuadsWriter;
 import com.amazonaws.services.neptune.rdf.io.EnhancedTurtleWriter;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
@@ -38,12 +38,11 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.base.AbstractRepository;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.ParserConfig;
+import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.joda.time.DateTime;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -116,16 +115,14 @@ public class NeptuneSparqlClient implements AutoCloseable {
         this.repositories = repositories;
     }
 
-    public void executeQuery(String sparql, Path file, RdfTargetConfig targetConfig) throws IOException {
-        Prefixes prefixes = new Prefixes();
-
+    public void executeQuery(String sparql, RdfTargetConfig targetConfig) throws IOException {
         SPARQLRepository repository = chooseRepository();
         ValueFactory factory = repository.getValueFactory();
 
         try (RepositoryConnection connection = repository.getConnection();
              OutputWriter outputWriter = targetConfig.createOutputWriter()) {
 
-            EnhancedTurtleWriter writer = new EnhancedTurtleWriter(outputWriter, prefixes);
+            RDFWriter writer = targetConfig.createRDFWriter(outputWriter);
 
             connection.prepareTupleQuery(sparql).evaluate(new TupleQueryResultHandler() {
                 @Override
@@ -153,11 +150,13 @@ public class NeptuneSparqlClient implements AutoCloseable {
                     Value s = bindingSet.getValue("s");
                     Value p = bindingSet.getValue("p");
                     Value o = bindingSet.getValue("o");
+                    Value g = bindingSet.getValue("g");
 
                     IRI subject = factory.createIRI(s.stringValue());
                     IRI predicate = factory.createIRI(p.stringValue());
+                    IRI graph = factory.createIRI(g.stringValue());
 
-                    Statement statement = factory.createStatement(subject, predicate, o);
+                    Statement statement = factory.createStatement(subject, predicate, o, graph);
 
                     writer.handleStatement(statement);
                 }

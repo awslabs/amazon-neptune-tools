@@ -48,7 +48,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        throw new RuntimeException("Neptune Streams JSON is not support for this command");
+        throw new RuntimeException("Neptune Streams JSON is not supported for this command");
     }
 
     @Override

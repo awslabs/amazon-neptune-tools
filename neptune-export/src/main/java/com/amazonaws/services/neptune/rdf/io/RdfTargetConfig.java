@@ -16,6 +16,8 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.rdf.Prefixes;
+import org.eclipse.rdf4j.rio.RDFWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,11 +27,13 @@ public class RdfTargetConfig {
     private final Directories directories;
     private final Target output;
     private final KinesisConfig kinesisConfig;
+    private final RdfExportFormat format;
 
-    public RdfTargetConfig(Directories directories, Target output, KinesisConfig kinesisConfig) {
+    public RdfTargetConfig(Directories directories, KinesisConfig kinesisConfig, Target output, RdfExportFormat format) {
         this.directories = directories;
         this.output = output;
         this.kinesisConfig = kinesisConfig;
+        this.format = format;
     }
 
     public OutputWriter createOutputWriter() throws IOException {
@@ -37,8 +41,12 @@ public class RdfTargetConfig {
                 directories.statementsDirectory(),
                 "statements",
                 0,
-                () -> "ttl");
+                format);
 
         return output.createOutputWriter(filePath, kinesisConfig);
+    }
+
+    public RDFWriter createRDFWriter(OutputWriter outputWriter){
+        return format.createWriter(outputWriter, new Prefixes());
     }
 }
