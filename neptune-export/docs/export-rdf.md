@@ -5,10 +5,12 @@
             neptune-export.sh export-rdf
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
                     {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
-                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
+                    [ --format <format> ] [ --lb-port <loadBalancerPort> ]
+                    [ --log-level <log level> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
-                    [ {-p | --port} <port> ] [ {-t | --tag} <tag> ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-o | --output} <output> ] [ {-p | --port} <port> ]
+                    [ --region <region> ] [ --stream-name <streamName> ]
+                    [ {-t | --tag} <tag> ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -36,6 +38,17 @@
             -e <endpoint>, --endpoint <endpoint>
                 Neptune endpoint(s) – supply multiple instance endpoints if you
                 want to load balance requests across a cluster
+    
+            --format <format>
+                Output format (optional, default 'turtle'
+    
+                This options value is restricted to the following set of values:
+                    turtle
+                    nquads
+                    neptuneStreamsJson
+    
+                This option may occur a maximum of 1 times
+    
     
             --lb-port <loadBalancerPort>
                 Load balancer port (optional, default 80)
@@ -72,6 +85,17 @@
                 one option may be specified
     
     
+            -o <output>, --output <output>
+                Output target (optional, default 'file')
+    
+                This options value is restricted to the following set of values:
+                    files
+                    stdout
+                    stream
+    
+                This option may occur a maximum of 1 times
+    
+    
             -p <port>, --port <port>
                 Neptune port (optional, default 8182)
     
@@ -80,6 +104,18 @@
     
                 This options value represents a port and must fall in one of the
                 following port ranges: 1-1023, 1024-49151
+    
+    
+            --region <region>
+                AWS Region in which your Amazon Kinesis Data Stream is located
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --stream-name <streamName>
+                Name of an Amazon Kinesis Data Stream
+    
+                This option may occur a maximum of 1 times
     
     
             -t <tag>, --tag <tag>
