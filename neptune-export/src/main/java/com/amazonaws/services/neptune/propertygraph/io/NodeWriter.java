@@ -17,10 +17,10 @@ import java.util.Map;
 
 public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
-    private final Printer printer;
+    private final PropertyGraphPrinter propertyGraphPrinter;
 
-    public NodeWriter(Printer printer) {
-        this.printer = printer;
+    public NodeWriter(PropertyGraphPrinter propertyGraphPrinter) {
+        this.propertyGraphPrinter = propertyGraphPrinter;
     }
 
 
@@ -31,14 +31,14 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
         String id = (String) map.get("id");
         String label = (String) map.get("label");
 
-        printer.printStartRow();
-        printer.printNode(id, label);
-        printer.printProperties(id, "vp", properties);
-        printer.printEndRow();
+        propertyGraphPrinter.printStartRow();
+        propertyGraphPrinter.printNode(id, label);
+        propertyGraphPrinter.printProperties(id, "vp", properties);
+        propertyGraphPrinter.printEndRow();
     }
 
     @Override
     public void close() throws Exception {
-        printer.close();
+        propertyGraphPrinter.close();
     }
 }

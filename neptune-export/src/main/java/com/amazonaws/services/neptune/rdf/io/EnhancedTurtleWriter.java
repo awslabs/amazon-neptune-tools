@@ -13,21 +13,23 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.rdf.io;
 
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.rdf.Prefixes;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
 
 import java.io.IOException;
-import java.io.Writer;
 
 public class EnhancedTurtleWriter extends TurtleWriter {
 
+    private final OutputWriter writer;
     private final Prefixes prefixes;
     private final Status status = new Status();
 
-    public EnhancedTurtleWriter(Writer writer, Prefixes prefixes) {
-        super(writer);
+    public EnhancedTurtleWriter(OutputWriter writer, Prefixes prefixes) {
+        super(writer.writer());
+        this.writer = writer;
         this.prefixes = prefixes;
     }
 
@@ -38,7 +40,9 @@ public class EnhancedTurtleWriter extends TurtleWriter {
         prefixes.parse(statement.getPredicate().toString(), this);
         prefixes.parse(statement.getObject().stringValue(), this);
 
+        writer.start();
         super.handleStatement(statement);
+        writer.finish();
 
         status.update();
     }
@@ -46,6 +50,8 @@ public class EnhancedTurtleWriter extends TurtleWriter {
     @Override
     protected void writeNamespace(String prefix, String name)
             throws IOException {
-        // Do nothing
+        writer.start();
+        super.writeNamespace(prefix, name);
+        writer.finish();
     }
 }

@@ -20,7 +20,7 @@ import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
 import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
-import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateQueriesFromFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveQueries;
 import com.amazonaws.services.neptune.util.Timer;
@@ -90,7 +90,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.GremlinQueries);
 
-            TargetConfig targetConfig = target.config(directories, includeTypeDefinitions);
+            PropertyGraphTargetConfig targetConfig = target.config(directories, includeTypeDefinitions);
             QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
 
             directories.createSubdirectories(

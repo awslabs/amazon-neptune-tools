@@ -19,8 +19,8 @@ import java.util.Map;
 
 public interface WriterFactory<T> {
 
-    Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException;
+    PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException;
 
-    GraphElementHandler<T> createLabelWriter(Printer printer);
+    GraphElementHandler<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
 
 }

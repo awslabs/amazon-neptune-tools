@@ -16,7 +16,7 @@ import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphTask;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
@@ -83,7 +83,7 @@ public class ExportSpecification<T> {
 
     public ExportPropertyGraphTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,
                                                        GraphTraversalSource g,
-                                                       TargetConfig targetConfig,
+                                                       PropertyGraphTargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
                                                        int index) {

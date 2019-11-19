@@ -10,7 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.io;
+package com.amazonaws.services.neptune.io;
+
+import com.amazonaws.services.neptune.io.OutputWriter;
 
 import java.io.*;
 
@@ -61,4 +63,5 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     public Writer writer() {
         return this;
     }
+
 }

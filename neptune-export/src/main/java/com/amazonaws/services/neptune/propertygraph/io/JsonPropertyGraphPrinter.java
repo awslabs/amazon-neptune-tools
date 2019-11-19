@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -21,15 +22,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class NeptuneStreamsJsonPrinter implements Printer {
+public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
 
-    public NeptuneStreamsJsonPrinter(OutputWriter writer,
-                                     JsonGenerator generator,
-                                     Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         this.writer = writer;
         this.generator = generator;
         this.metadata = metadata;
@@ -47,11 +46,6 @@ public class NeptuneStreamsJsonPrinter implements Printer {
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        throw new RuntimeException("Neptune Streams JSON is not support for this command");
-    }
-
-    @Override
-    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
         for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
 
             Object key = entry.getKey();
@@ -65,37 +59,54 @@ public class NeptuneStreamsJsonPrinter implements Printer {
                 Object value = properties.get(key);
 
                 if (isList(value)) {
-
                     List<?> values = (List<?>) value;
-                    for (Object o : values) {
-                        printRecord(id, type, formattedKey, o, dataType);
+                    if (values.size() > 1) {
+                        generator.writeFieldName(formattedKey);
+                        generator.writeStartArray();
+                        for (Object v : values) {
+                            dataType.printTo(generator, v);
+                        }
+                        generator.writeEndArray();
+                    } else {
+                        dataType.printTo(generator, formattedKey, values.get(0));
                     }
 
                 } else {
-                    printRecord(id, type, formattedKey, value, dataType);
+                    dataType.printTo(generator, formattedKey, value);
                 }
             }
         }
     }
 
     @Override
+    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
+        printProperties(properties);
+    }
+
+    @Override
     public void printEdge(String id, String label, String from, String to) throws IOException {
-        printRecord(id, "e", "label", label, DataType.String, from, to);
+        generator.writeStringField("~id", id);
+        generator.writeStringField("~label", label);
+        generator.writeStringField("~from", from);
+        generator.writeStringField("~to", to);
     }
 
     @Override
     public void printNode(String id, String label) throws IOException {
-        printRecord(id, "vl", "label", label, DataType.String);
+        generator.writeStringField("~id", id);
+        generator.writeStringField("~label", label);
     }
 
     @Override
     public void printStartRow() throws IOException {
         writer.start();
+        generator.writeStartObject();
     }
 
     @Override
     public void printEndRow() throws IOException {
         generator.flush();
+        generator.writeEndObject();
         writer.finish();
     }
 
@@ -104,45 +115,7 @@ public class NeptuneStreamsJsonPrinter implements Printer {
         generator.close();
     }
 
-    private void printRecord(String id, String type, String key, Object value, DataType dataType) throws IOException {
-        printRecord(id, type, key, value, dataType, null, null);
-    }
-
-    private void printRecord(String id, String type, String key, Object value, DataType dataType, String from, String to) throws IOException {
-
-        generator.writeStartObject();
-
-        generator.writeObjectFieldStart("eventId");
-        generator.writeNumberField("commitNum", -1);
-        generator.writeNumberField("opNum", 0);
-        generator.writeEndObject();
-
-        generator.writeObjectFieldStart("data");
-        generator.writeStringField("id", id);
-        generator.writeStringField("type", type);
-        generator.writeStringField("key", key);
-
-        generator.writeObjectFieldStart("value");
-        dataType.printTo(generator, "value", value);
-        generator.writeStringField("dataType", dataType.name());
-        generator.writeEndObject();
-
-        if (from != null) {
-            generator.writeStringField("from", from);
-        }
-        if (to != null) {
-            generator.writeStringField("to", to);
-        }
-
-        generator.writeEndObject();
-
-        generator.writeStringField("op", "ADD");
-        generator.writeEndObject();
-
-    }
-
     private boolean isList(Object value) {
         return value.getClass().isAssignableFrom(java.util.ArrayList.class);
     }
 }
-

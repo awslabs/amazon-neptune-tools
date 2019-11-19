@@ -13,23 +13,28 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.io.KinesisConfig;
+import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class TargetConfig {
+public class PropertyGraphTargetConfig {
 
     private final Directories directories;
-    private final Format format;
-    private final Output output;
+    private final PropertyGraphExportFormat format;
+    private final Target output;
     private final boolean includeTypeDefinitions;
     private final KinesisConfig kinesisConfig;
 
-    public TargetConfig(Directories directories,
-                        KinesisConfig kinesisConfig, boolean includeTypeDefinitions, Format format,
-                        Output output) {
+    public PropertyGraphTargetConfig(Directories directories,
+                                     KinesisConfig kinesisConfig,
+                                     boolean includeTypeDefinitions,
+                                     PropertyGraphExportFormat format,
+                                     Target output) {
         this.directories = directories;
         this.format = format;
         this.output = output;
@@ -45,7 +50,7 @@ public class TargetConfig {
         return output.name();
     }
 
-    public Printer createPrintWriterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public PropertyGraphPrinter createPrinterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         Path directory = directories.resultsDirectory().resolve(name);
         java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
         OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
@@ -53,14 +58,14 @@ public class TargetConfig {
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
-    public Printer createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public PropertyGraphPrinter createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         java.nio.file.Path filePath = directories.createFilePath(directories.edgesDirectory(), name, index, format);
         OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
-    public Printer createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public PropertyGraphPrinter createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         java.nio.file.Path filePath = directories.createFilePath(directories.nodesDirectory(), name, index, format);
         OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
 

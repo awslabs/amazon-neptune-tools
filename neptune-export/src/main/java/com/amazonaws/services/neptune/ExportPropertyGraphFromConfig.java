@@ -18,7 +18,7 @@ import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
-import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromConfigFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
@@ -82,7 +82,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.PropertyGraph);
-            TargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
             PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
 

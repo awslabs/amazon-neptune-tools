@@ -10,13 +10,13 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.io;
+package com.amazonaws.services.neptune.io;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public enum Output {
+public enum Target {
     files {
         @Override
         public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {

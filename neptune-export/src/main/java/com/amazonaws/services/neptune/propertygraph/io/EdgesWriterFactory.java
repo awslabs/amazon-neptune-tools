@@ -13,24 +13,22 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
-import org.apache.tinkerpop.gremlin.process.traversal.Path;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Map;
 
 public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
 
     @Override
-    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
-        Printer printer = targetConfig.createPrinterForEdges(name, index, metadata);
-        printer.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
+    public PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException {
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, index, metadata);
+        propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
 
-        return printer;
+        return propertyGraphPrinter;
     }
 
     @Override
-    public GraphElementHandler<Map<String, Object>> createLabelWriter(Printer printer) {
-        return new EdgeWriter(printer);
+    public GraphElementHandler<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
+        return new EdgeWriter(propertyGraphPrinter);
     }
 }

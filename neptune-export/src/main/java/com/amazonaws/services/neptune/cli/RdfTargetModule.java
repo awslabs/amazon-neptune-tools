@@ -13,22 +13,14 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.Target;
-import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.io.KinesisConfig;
-import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
+import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 
-import java.nio.file.Path;
-
-public class PropertyGraphTargetModule {
-
-    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
-    @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
-    private PropertyGraphExportFormat format = PropertyGraphExportFormat.csv;
+public class RdfTargetModule {
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
     @Once
@@ -43,16 +35,7 @@ public class PropertyGraphTargetModule {
     @Once
     private String region;
 
-    public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
-        KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output);
-    }
-
-    public String description(){
-        return format.description();
-    }
-
-    public void writeCommandResult(Path path){
-        output.writeCommandResult(path);
+    public RdfTargetConfig config(Directories directories) {
+        return new RdfTargetConfig(directories, output, new KinesisConfig(streamName, region));
     }
 }

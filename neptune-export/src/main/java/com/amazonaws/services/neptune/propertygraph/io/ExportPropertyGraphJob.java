@@ -32,14 +32,14 @@ public class ExportPropertyGraphJob {
     private final GraphTraversalSource g;
     private final RangeConfig rangeConfig;
     private final ConcurrencyConfig concurrencyConfig;
-    private final TargetConfig targetConfig;
+    private final PropertyGraphTargetConfig targetConfig;
 
     public ExportPropertyGraphJob(Collection<ExportSpecification<?>> exportSpecifications,
                                   PropertiesMetadataCollection propertiesMetadataCollection,
                                   GraphTraversalSource g,
                                   RangeConfig rangeConfig,
                                   ConcurrencyConfig concurrencyConfig,
-                                  TargetConfig targetConfig) {
+                                  PropertyGraphTargetConfig targetConfig) {
         this.exportSpecifications = exportSpecifications;
         this.propertiesMetadataCollection = propertiesMetadataCollection;
         this.g = g;

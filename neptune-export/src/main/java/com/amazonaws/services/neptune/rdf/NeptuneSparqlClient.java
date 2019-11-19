@@ -17,7 +17,10 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.neptune.auth.NeptuneSigV4SignerException;
 import com.amazonaws.neptune.client.rdf4j.NeptuneSparqlRepository;
 import com.amazonaws.services.neptune.auth.ConnectionConfig;
+import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.io.PrintOutputWriter;
 import com.amazonaws.services.neptune.rdf.io.EnhancedTurtleWriter;
+import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import org.apache.http.client.HttpClient;
 import org.eclipse.rdf4j.http.client.HttpClientSessionManager;
@@ -40,9 +43,7 @@ import org.joda.time.DateTime;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public class NeptuneSparqlClient implements AutoCloseable {
 
     private static final ParserConfig PARSER_CONFIG = new ParserConfig().addNonFatalError(BasicParserSettings.VERIFY_URI_SYNTAX);
 
-    public static NeptuneSparqlClient create(ConnectionConfig config){
+    public static NeptuneSparqlClient create(ConnectionConfig config) {
         if (config.useIamAuth()) {
             String serviceRegion = EnvironmentVariableUtils.getMandatoryEnv("SERVICE_REGION");
             AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
@@ -115,16 +116,16 @@ public class NeptuneSparqlClient implements AutoCloseable {
         this.repositories = repositories;
     }
 
-    public void executeQuery(String sparql, Path file) throws IOException {
+    public void executeQuery(String sparql, Path file, RdfTargetConfig targetConfig) throws IOException {
         Prefixes prefixes = new Prefixes();
 
         SPARQLRepository repository = chooseRepository();
         ValueFactory factory = repository.getValueFactory();
 
         try (RepositoryConnection connection = repository.getConnection();
-             Writer fileWriter = new FileWriter(file.toFile())) {
+             OutputWriter outputWriter = targetConfig.createOutputWriter()) {
 
-            EnhancedTurtleWriter writer = new EnhancedTurtleWriter(fileWriter, prefixes);
+            EnhancedTurtleWriter writer = new EnhancedTurtleWriter(outputWriter, prefixes);
 
             connection.prepareTupleQuery(sparql).evaluate(new TupleQueryResultHandler() {
                 @Override
@@ -162,9 +163,9 @@ public class NeptuneSparqlClient implements AutoCloseable {
                 }
 
             });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        prefixes.addTo(file);
     }
 
     private SPARQLRepository chooseRepository() {

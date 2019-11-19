@@ -17,7 +17,7 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
-import com.amazonaws.services.neptune.propertygraph.io.TargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.propertygraph.metadata.SaveMetadataConfig;
@@ -87,7 +87,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             Directories directories = fileSystem.createDirectories(DirectoryStructure.PropertyGraph);
             java.nio.file.Path configFilePath = directories.configFilePath().toAbsolutePath();
 
-            TargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
             ExportStats stats = new ExportStats();
 

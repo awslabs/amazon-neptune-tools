@@ -29,13 +29,13 @@ public class QueryJob {
     private final Queue<NamedQuery> queries;
     private final NeptuneGremlinClient.QueryClient queryClient;
     private final ConcurrencyConfig concurrencyConfig;
-    private final TargetConfig targetConfig;
+    private final PropertyGraphTargetConfig targetConfig;
     private final boolean twoPassAnalysis;
 
     public QueryJob(Collection<NamedQuery> queries,
                     NeptuneGremlinClient.QueryClient queryClient,
                     ConcurrencyConfig concurrencyConfig,
-                    TargetConfig targetConfig,
+                    PropertyGraphTargetConfig targetConfig,
                     boolean twoPassAnalysis){
         this.queries = new ConcurrentLinkedQueue<>(queries);
         this.queryClient = queryClient;

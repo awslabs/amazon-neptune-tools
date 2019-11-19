@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-public interface Printer extends AutoCloseable {
+public interface PropertyGraphPrinter extends AutoCloseable {
     void printHeaderMandatoryColumns(String... columns);
 
     void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns);

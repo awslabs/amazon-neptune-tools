@@ -30,7 +30,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
     private final WriterFactory<T> writerFactory;
-    private final TargetConfig targetConfig;
+    private final PropertyGraphTargetConfig targetConfig;
     private final RangeFactory rangeFactory;
     private final Status status;
     private final int index;
@@ -40,7 +40,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
-                                   TargetConfig targetConfig,
+                                   PropertyGraphTargetConfig targetConfig,
                                    RangeFactory rangeFactory,
                                    Status status,
                                    int index) {
@@ -109,10 +109,10 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                 propertyMetadata = new HashMap<>();
             }
 
-            Printer printer = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
-            printer.printHeaderRemainingColumns(propertyMetadata.values());
+            PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
+            propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.values());
 
-            labelWriters.put(label, writerFactory.createLabelWriter(printer));
+            labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
 
         } catch (IOException e) {
             throw new RuntimeException(e);

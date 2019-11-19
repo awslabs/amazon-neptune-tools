@@ -15,19 +15,17 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.Map;
 
 public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
 
     @Override
-    public Printer createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, TargetConfig targetConfig) throws IOException {
-        return targetConfig.createPrintWriterForQueries(name, index, metadata);
+    public PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException {
+        return targetConfig.createPrinterForQueries(name, index, metadata);
     }
 
     @Override
-    public GraphElementHandler<Map<?, ?>> createLabelWriter(Printer printer) {
-        return new QueryWriter(printer);
+    public GraphElementHandler<Map<?, ?>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
+        return new QueryWriter(propertyGraphPrinter);
     }
 }

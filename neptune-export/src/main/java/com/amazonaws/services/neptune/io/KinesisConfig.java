@@ -11,7 +11,7 @@ permissions and limitations under the License.
 */
 
 
-package com.amazonaws.services.neptune.propertygraph.io;
+package com.amazonaws.services.neptune.io;
 
 import com.amazonaws.services.kinesis.producer.KinesisProducer;
 import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;

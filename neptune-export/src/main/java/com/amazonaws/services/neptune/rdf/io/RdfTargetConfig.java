@@ -13,30 +13,32 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.rdf.io;
 
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
-import com.amazonaws.services.neptune.rdf.Prefixes;
+import com.amazonaws.services.neptune.io.Target;
 
-public class ExportRdfGraphJob {
+import java.io.IOException;
+import java.nio.file.Path;
 
-    private final NeptuneSparqlClient client;
+public class RdfTargetConfig {
+
     private final Directories directories;
-    private final RdfTargetConfig targetConfig;
+    private final Target output;
+    private final KinesisConfig kinesisConfig;
 
-    public ExportRdfGraphJob(NeptuneSparqlClient client, Directories directories, RdfTargetConfig targetConfig) {
-        this.client = client;
+    public RdfTargetConfig(Directories directories, Target output, KinesisConfig kinesisConfig) {
         this.directories = directories;
-        this.targetConfig = targetConfig;
+        this.output = output;
+        this.kinesisConfig = kinesisConfig;
     }
 
-    public void execute() throws Exception {
+    public OutputWriter createOutputWriter() throws IOException {
+        Path filePath = directories.createFilePath(
+                directories.statementsDirectory(),
+                "statements",
+                0,
+                () -> "ttl");
 
-        System.err.println("Creating statement files");
-
-        java.nio.file.Path filePath = directories.createFilePath(
-                directories.statementsDirectory(), "statements", 0, () -> "ttl");
-
-        client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", filePath, targetConfig);
-        //prefixes.addTo(filePath);
+        return output.createOutputWriter(filePath, kinesisConfig);
     }
 }

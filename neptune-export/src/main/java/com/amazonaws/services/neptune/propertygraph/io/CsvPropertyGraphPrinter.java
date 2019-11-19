@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
@@ -20,7 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class CsvPrinter implements Printer {
+public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final Map<Object, PropertyTypeInfo> metadata;
@@ -28,10 +29,10 @@ public class CsvPrinter implements Printer {
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
 
-    public CsvPrinter(OutputWriter writer,
-                      Map<Object, PropertyTypeInfo> metadata,
-                      boolean includeHeaders,
-                      boolean includeTypeDefinitions) {
+    public CsvPropertyGraphPrinter(OutputWriter writer,
+                                   Map<Object, PropertyTypeInfo> metadata,
+                                   boolean includeHeaders,
+                                   boolean includeTypeDefinitions) {
         this.writer = writer;
         this.metadata = metadata;
         this.commaPrinter = new CommaPrinter(writer);
