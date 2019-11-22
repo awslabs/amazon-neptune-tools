@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
+    private String partitionKey = UUID.randomUUID().toString();
 
     public NeptuneStreamsJsonPropertyGraphPrinter(OutputWriter writer,
                                                   JsonGenerator generator,
@@ -86,18 +88,20 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     @Override
     public void printNode(String id, String label) throws IOException {
-        printRecord(id, "vl", "label", label, DataType.String);
+        String[] labels = label.split("::");
+        for (String l : labels) {
+            printRecord(id, "vl", "label", l, DataType.String);
+        }
     }
 
     @Override
     public void printStartRow() throws IOException {
-        writer.start();
+        partitionKey = UUID.randomUUID().toString();
     }
 
     @Override
     public void printEndRow() throws IOException {
-        generator.flush();
-        writer.finish();
+
     }
 
     @Override
@@ -110,6 +114,8 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     private void printRecord(String id, String type, String key, Object value, DataType dataType, String from, String to) throws IOException {
+
+        writer.start();
 
         generator.writeStartObject();
 
@@ -139,6 +145,9 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
         generator.writeStringField("op", "ADD");
         generator.writeEndObject();
+        generator.flush();
+
+        writer.finish(partitionKey);
 
     }
 

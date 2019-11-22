@@ -19,6 +19,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,6 +28,8 @@ import java.util.*;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
 public class EdgesClient implements GraphClient<Map<String, Object>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(EdgesClient.class);
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
@@ -47,6 +51,8 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);
+
+        logger.info(GremlinQueryDebugger.queryAsString(t));
 
         t.forEachRemaining(m -> {
             try {
@@ -79,6 +85,8 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                         ).
                         by(outV().id()).
                         by(inV().id());
+
+        logger.info(GremlinQueryDebugger.queryAsString(t));
 
         traversal.forEachRemaining(p -> {
             try {

@@ -16,7 +16,6 @@ import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.io.Status;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.*;
 import org.eclipse.rdf4j.rio.nquads.NQuadsWriter;
@@ -25,6 +24,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.UUID;
 
 public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
 
@@ -35,9 +35,7 @@ public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
     public NeptuneStreamsJsonNQuadsWriter(OutputWriter outputWriter) {
         this.outputWriter = outputWriter;
         try {
-            this.generator = new JsonFactory().
-                    createGenerator(outputWriter.writer()).
-                    setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
+            this.generator = new JsonFactory().createGenerator(outputWriter.writer());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -105,14 +103,15 @@ public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
             nQuadsWriter.startRDF();
             nQuadsWriter.handleStatement(statement);
             nQuadsWriter.endRDF();
-            generator.writeString(stringWriter.toString());
+            generator.writeString(stringWriter.toString().replace(System.lineSeparator(), ""));
 
             generator.writeEndObject();
 
             generator.writeStringField("op", "ADD");
             generator.writeEndObject();
+            generator.flush();
 
-            outputWriter.finish();
+            outputWriter.finish(UUID.randomUUID().toString());
 
             status.update();
 

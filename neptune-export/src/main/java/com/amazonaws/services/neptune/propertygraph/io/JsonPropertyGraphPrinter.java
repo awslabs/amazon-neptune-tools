@@ -21,12 +21,14 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
+    private String partitionKey = UUID.randomUUID().toString();
 
     public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
         this.writer = writer;
@@ -99,6 +101,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printStartRow() throws IOException {
+        partitionKey = UUID.randomUUID().toString();
         writer.start();
         generator.writeStartObject();
     }
@@ -107,7 +110,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     public void printEndRow() throws IOException {
         generator.flush();
         generator.writeEndObject();
-        writer.finish();
+        writer.finish(partitionKey);
     }
 
     @Override

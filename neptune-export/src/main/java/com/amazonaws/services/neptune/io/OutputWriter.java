@@ -18,7 +18,7 @@ public interface OutputWriter extends AutoCloseable {
 
     void start();
 
-    void finish();
+    void finish(String partitionKey);
 
     void print(String s);
 

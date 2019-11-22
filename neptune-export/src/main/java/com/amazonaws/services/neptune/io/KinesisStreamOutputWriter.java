@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
-public class StreamOutputWriter extends Writer implements OutputWriter {
+public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
 
     private final String streamName;
     private final KinesisProducer kinesisProducer;
@@ -36,7 +36,7 @@ public class StreamOutputWriter extends Writer implements OutputWriter {
 
     List<Future<UserRecordResult>> putFutures = new LinkedList<>();
 
-    public StreamOutputWriter(KinesisConfig kinesisConfig) {
+    public KinesisStreamOutputWriter(KinesisConfig kinesisConfig) {
         this.streamName = kinesisConfig.streamName();
         this.kinesisProducer = kinesisConfig.client();
     }
@@ -47,14 +47,14 @@ public class StreamOutputWriter extends Writer implements OutputWriter {
     }
 
     @Override
-    public void finish() {
+    public void finish(String partitionKey) {
         String s = writer.toString();
 
         if (StringUtils.isNotEmpty(s)) {
 
             try {
                 ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
-                putFutures.add(kinesisProducer.addUserRecord(streamName, UUID.randomUUID().toString(), data));
+                putFutures.add(kinesisProducer.addUserRecord(streamName, partitionKey, data));
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -80,7 +80,7 @@ public class StreamOutputWriter extends Writer implements OutputWriter {
 
     @Override
     public void flush() throws IOException {
-
+        writer.flush();
     }
 
     @Override
