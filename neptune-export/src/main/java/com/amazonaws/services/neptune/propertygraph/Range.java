@@ -31,18 +31,11 @@ public class Range {
 
     public GraphTraversal<? extends Element, ?> applyRange(GraphTraversal<? extends Element, ?> traversal) {
 
-        // Workaround for R12 issue
         if (end == -1) {
-            return isEmpty() ? traversal : traversal.skip(-1);
+            return traversal;
         } else {
-            return isEmpty() ? traversal.range(start, end) : traversal.skip(1).range(start, end);
+            return traversal.range(start, end);
         }
-
-//        if (end == -1) {
-//            return traversal;
-//        } else {
-//            return traversal.range(start, end);
-//        }
     }
 
     public long difference() {

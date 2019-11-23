@@ -32,9 +32,8 @@ public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
     private final String streamName;
     private final KinesisProducer kinesisProducer;
 
-    private StringWriter writer = new StringWriter();
-
-    List<Future<UserRecordResult>> putFutures = new LinkedList<>();
+    private StringWriter writer;
+    private int opCount;
 
     public KinesisStreamOutputWriter(KinesisConfig kinesisConfig) {
         this.streamName = kinesisConfig.streamName();
@@ -42,24 +41,26 @@ public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
     }
 
     @Override
-    public void start() {
-
+    public void startCommit() {
+        writer = new StringWriter();
+        writer.write("[");
+        opCount = 0;
     }
 
     @Override
-    public void finish(String partitionKey) {
+    public void endCommit(String partitionKey) {
+
+        writer.write("]");
         String s = writer.toString();
 
         if (StringUtils.isNotEmpty(s)) {
 
             try {
                 ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
-                putFutures.add(kinesisProducer.addUserRecord(streamName, partitionKey, data));
+                kinesisProducer.addUserRecord(streamName, partitionKey, data);
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
-
-            writer = new StringWriter();
         }
     }
 
@@ -74,13 +75,25 @@ public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
     }
 
     @Override
+    public void startOp() {
+        if (opCount > 0){
+            writer.write(",");
+        }
+        opCount++;
+    }
+
+    @Override
+    public void endOp() {
+
+    }
+
+    @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
         writer.write(cbuf, off, len);
     }
 
     @Override
     public void flush() throws IOException {
-        writer.flush();
     }
 
     @Override

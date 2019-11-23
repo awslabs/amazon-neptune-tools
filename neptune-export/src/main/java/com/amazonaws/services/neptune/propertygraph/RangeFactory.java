@@ -12,25 +12,32 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Math.min;
 
 public class RangeFactory {
 
+    private static final Logger logger = LoggerFactory.getLogger(RangeFactory.class);
+
     public static RangeFactory create(GraphClient<?> graphClient,
                                       LabelsFilter labelsFilter,
                                       RangeConfig rangeConfig,
                                       ConcurrencyConfig concurrencyConfig) {
-        if (concurrencyConfig.isUnboundedParallelExecution(rangeConfig)) {
-            System.err.println("Calculating " + graphClient.description() + " ranges");
-            long limit = min(graphClient.count(labelsFilter), rangeConfig.limit());
-            long rangeSize = (limit / concurrencyConfig.concurrency()) + 1;
-            System.err.println("Limit: " + limit + ", Size: " + rangeSize);
-            return new RangeFactory(rangeSize, limit, rangeConfig.skip());
-        }
+        long elementCount = graphClient.count(labelsFilter);
 
-        return new RangeFactory(rangeConfig.rangeSize(), rangeConfig.limit(), rangeConfig.skip());
+        if (concurrencyConfig.isUnboundedParallelExecution(rangeConfig)) {
+            logger.info("Calculating " + graphClient.description() + " ranges");
+            long limit = min(elementCount, rangeConfig.limit());
+            long rangeSize = (limit / concurrencyConfig.concurrency()) + 1;
+            logger.info("Limit: " + limit + ", Size: " + rangeSize);
+            return new RangeFactory(rangeSize, limit, rangeConfig.skip());
+        } else {
+            return new RangeFactory(rangeConfig.rangeSize(), rangeConfig.limit(), rangeConfig.skip());
+        }
     }
 
     private final long rangeSize;

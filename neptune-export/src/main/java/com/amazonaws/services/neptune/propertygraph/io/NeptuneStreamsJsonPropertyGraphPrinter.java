@@ -22,13 +22,19 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrinter {
+
+    private final static AtomicLong COMMIT_NUM_GENERATOR = new AtomicLong(1);
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
     private final Map<Object, PropertyTypeInfo> metadata;
+
     private String partitionKey = UUID.randomUUID().toString();
+    private long commitNum = 1;
+    private int opNum = 1;
 
     public NeptuneStreamsJsonPropertyGraphPrinter(OutputWriter writer,
                                                   JsonGenerator generator,
@@ -97,16 +103,21 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     @Override
     public void printStartRow() throws IOException {
         partitionKey = UUID.randomUUID().toString();
+        commitNum = COMMIT_NUM_GENERATOR.getAndIncrement();
+        opNum = 1;
+
+        writer.startCommit();
     }
 
     @Override
     public void printEndRow() throws IOException {
-
+        writer.endCommit(partitionKey);
     }
 
     @Override
     public void close() throws Exception {
         generator.close();
+        writer.close();
     }
 
     private void printRecord(String id, String type, String key, Object value, DataType dataType) throws IOException {
@@ -115,13 +126,12 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     private void printRecord(String id, String type, String key, Object value, DataType dataType, String from, String to) throws IOException {
 
-        writer.start();
-
+        writer.startOp();
         generator.writeStartObject();
 
         generator.writeObjectFieldStart("eventId");
-        generator.writeNumberField("commitNum", -1);
-        generator.writeNumberField("opNum", 0);
+        generator.writeNumberField("commitNum", commitNum);
+        generator.writeNumberField("opNum", opNum++);
         generator.writeEndObject();
 
         generator.writeObjectFieldStart("data");
@@ -146,9 +156,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
         generator.writeStringField("op", "ADD");
         generator.writeEndObject();
         generator.flush();
-
-        writer.finish(partitionKey);
-
+        writer.endOp();
     }
 
     private boolean isList(Object value) {

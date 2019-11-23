@@ -41,17 +41,17 @@ public class EnhancedNQuadsWriter extends NQuadsWriter {
         prefixes.parse(statement.getObject().stringValue(), this);
         prefixes.parse(statement.getContext().stringValue(), this);
 
-        writer.start();
+        writer.startCommit();
         super.handleStatement(statement);
-        writer.finish(UUID.randomUUID().toString());
+        writer.endCommit(UUID.randomUUID().toString());
 
         status.update();
     }
 
     @Override
     public void handleNamespace(String prefix, String name) {
-        writer.start();
+        writer.startCommit();
         super.handleNamespace(prefix, name);
-        writer.finish(UUID.randomUUID().toString());
+        writer.endCommit(UUID.randomUUID().toString());
     }
 }

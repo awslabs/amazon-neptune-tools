@@ -42,9 +42,9 @@ public class EnhancedTurtleWriter extends TurtleWriter {
         prefixes.parse(statement.getObject().stringValue(), this);
         prefixes.parse(statement.getContext().stringValue(), this);
 
-        writer.start();
+        writer.startCommit();
         super.handleStatement(statement);
-        writer.finish(UUID.randomUUID().toString());
+        writer.endCommit(UUID.randomUUID().toString());
 
         status.update();
     }
@@ -52,8 +52,8 @@ public class EnhancedTurtleWriter extends TurtleWriter {
     @Override
     protected void writeNamespace(String prefix, String name)
             throws IOException {
-        writer.start();
+        writer.startCommit();
         super.writeNamespace(prefix, name);
-        writer.finish(UUID.randomUUID().toString());
+        writer.endCommit(UUID.randomUUID().toString());
     }
 }

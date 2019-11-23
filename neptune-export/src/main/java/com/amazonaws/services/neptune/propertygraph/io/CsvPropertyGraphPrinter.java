@@ -117,14 +117,14 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printStartRow() {
         partitionKey = UUID.randomUUID().toString();
-        writer.start();
+        writer.startCommit();
         commaPrinter.init();
     }
 
     @Override
     public void printEndRow() {
         writer.print(System.lineSeparator());
-        writer.finish(partitionKey);
+        writer.endCommit(partitionKey);
     }
 
     private String formatList(Object value, DataType dataType) {

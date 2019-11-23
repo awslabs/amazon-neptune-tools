@@ -85,7 +85,7 @@ public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
     public void handleStatement(Statement statement) throws RDFHandlerException {
 
         try {
-            outputWriter.start();
+            outputWriter.startCommit();
 
             generator.writeStartObject();
 
@@ -111,7 +111,7 @@ public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
             generator.writeEndObject();
             generator.flush();
 
-            outputWriter.finish(UUID.randomUUID().toString());
+            outputWriter.endCommit(UUID.randomUUID().toString());
 
             status.update();
 

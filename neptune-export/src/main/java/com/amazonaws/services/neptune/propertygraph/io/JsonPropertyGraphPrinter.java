@@ -102,7 +102,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printStartRow() throws IOException {
         partitionKey = UUID.randomUUID().toString();
-        writer.start();
+        writer.startCommit();
         generator.writeStartObject();
     }
 
@@ -110,7 +110,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     public void printEndRow() throws IOException {
         generator.flush();
         generator.writeEndObject();
-        writer.finish(partitionKey);
+        writer.endCommit(partitionKey);
     }
 
     @Override
