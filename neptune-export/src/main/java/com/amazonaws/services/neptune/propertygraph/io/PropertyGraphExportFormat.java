@@ -82,7 +82,6 @@ public enum PropertyGraphExportFormat implements FileExtension {
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
-            generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator, metadata);
         }
 

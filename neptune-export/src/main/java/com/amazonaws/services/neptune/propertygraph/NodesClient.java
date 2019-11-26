@@ -14,11 +14,15 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import org.apache.tinkerpop.gremlin.groovy.jsr223.GroovyTranslator;
+import org.apache.tinkerpop.gremlin.process.traversal.Bytecode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -27,6 +31,8 @@ import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.select
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
 
 public class NodesClient implements GraphClient<Map<String, Object>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(NodesClient.class);
 
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
@@ -49,6 +55,8 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);
+
+        logger.info(GremlinQueryDebugger.queryAsString(t));
 
         t.forEachRemaining(m -> {
             try {
@@ -73,6 +81,8 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
                         select("x") :
                         valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
                 );
+
+        logger.info(GremlinQueryDebugger.queryAsString(t));
 
         t.forEachRemaining(m -> {
             try {

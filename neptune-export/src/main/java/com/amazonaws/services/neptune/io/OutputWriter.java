@@ -16,11 +16,15 @@ import java.io.Writer;
 
 public interface OutputWriter extends AutoCloseable {
 
-    void start();
+    void startCommit();
 
-    void finish();
+    void endCommit(String partitionKey);
 
     void print(String s);
 
     Writer writer();
+
+    void startOp();
+
+    void endOp();
 }

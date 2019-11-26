@@ -19,6 +19,8 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.nquads.NQuadsWriter;
 
+import java.util.UUID;
+
 public class EnhancedNQuadsWriter extends NQuadsWriter {
 
 
@@ -39,17 +41,17 @@ public class EnhancedNQuadsWriter extends NQuadsWriter {
         prefixes.parse(statement.getObject().stringValue(), this);
         prefixes.parse(statement.getContext().stringValue(), this);
 
-        writer.start();
+        writer.startCommit();
         super.handleStatement(statement);
-        writer.finish();
+        writer.endCommit(UUID.randomUUID().toString());
 
         status.update();
     }
 
     @Override
     public void handleNamespace(String prefix, String name) {
-        writer.start();
+        writer.startCommit();
         super.handleNamespace(prefix, name);
-        writer.finish();
+        writer.endCommit(UUID.randomUUID().toString());
     }
 }

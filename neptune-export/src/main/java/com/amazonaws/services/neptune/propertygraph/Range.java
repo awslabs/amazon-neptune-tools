@@ -30,6 +30,7 @@ public class Range {
     }
 
     public GraphTraversal<? extends Element, ?> applyRange(GraphTraversal<? extends Element, ?> traversal) {
+
         if (end == -1) {
             return traversal;
         } else {
@@ -37,7 +38,7 @@ public class Range {
         }
     }
 
-    public long difference(){
+    public long difference() {
         return abs(end) - start;
     }
 

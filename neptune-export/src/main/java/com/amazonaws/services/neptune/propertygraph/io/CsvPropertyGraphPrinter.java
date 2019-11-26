@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
@@ -28,6 +29,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
+    private String partitionKey = UUID.randomUUID().toString();
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    Map<Object, PropertyTypeInfo> metadata,
@@ -114,14 +116,15 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printStartRow() {
-        writer.start();
+        partitionKey = UUID.randomUUID().toString();
+        writer.startCommit();
         commaPrinter.init();
     }
 
     @Override
     public void printEndRow() {
         writer.print(System.lineSeparator());
-        writer.finish();
+        writer.endCommit(partitionKey);
     }
 
     private String formatList(Object value, DataType dataType) {

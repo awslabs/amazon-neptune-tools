@@ -12,8 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.neptune.io.OutputWriter;
-
 import java.io.*;
 
 public class PrintOutputWriter extends PrintWriter implements OutputWriter {
@@ -50,12 +48,12 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     }
 
     @Override
-    public void start() {
+    public void startCommit() {
         // Do nothing
     }
 
     @Override
-    public void finish() {
+    public void endCommit(String partitionKey) {
         // Do nothing
     }
 
@@ -64,4 +62,13 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
         return this;
     }
 
+    @Override
+    public void startOp() {
+        // Do nothing
+    }
+
+    @Override
+    public void endOp() {
+        // Do nothing
+    }
 }
