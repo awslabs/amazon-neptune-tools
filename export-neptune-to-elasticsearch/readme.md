@@ -6,7 +6,7 @@ This solution allows you to index existing data in an Amazon Neptune database in
 
 Once you have populated ElasticSearch with your existing Neptune data, you can remove this solution from your account.
 
-### Prerequisites
+## Prerequisites
 
 Before provisioning the solution ensure the following conditions are met:
   
@@ -23,7 +23,7 @@ _neptune-export_ uses long-running queries to generate the metadata and the data
 
 The export process uses SSL to connect to Neptune. It currently supports IAM Database Authentication for Gremlin, but not SPARQL.
     
-### Installation
+## Installation
 
   1. Launch the [Neptune-to-ElasticSearch CloudFormation stack](https://ianrob-examples.s3-eu-west-1.amazonaws.com/cloudformation-templates/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.json) for your Region from the table below.
   
@@ -55,7 +55,7 @@ The export process uses SSL to connect to Neptune. It currently supports IAM Dat
 |Asia Pacific (Sydney) | [<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://ap-southeast-2.console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/create/review?templateURL=https://ianrob-examples.s3-eu-west-1.amazonaws.com/cloudformation-templates/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.json&stackName=export-to-es) |
 |Asia Pacific (Tokyo) | [<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/create/review?templateURL=https://ianrob-examples.s3-eu-west-1.amazonaws.com/cloudformation-templates/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.json&stackName=export-to-es) |
 
-### Solution overview
+## Solution overview
 
 ![Export Neptune to ElasticSearch](export-neptune-to-elasticsearch.png)
 
@@ -63,7 +63,7 @@ The export process uses SSL to connect to Neptune. It currently supports IAM Dat
   2. The export process uses AWS Batch to host and execute _neptune-export_, which exports data from Neptune and publishes it to an Amazon Kinesis Data Stream in the [Neptune Streams format](https://docs.aws.amazon.com/neptune/latest/userguide/streams-change-formats.html).
   3. A second AWS Lambda function polls the Kinesis Stream and publishes records to your Amazon ElasticSearch cluster. This function uses the same parsing and publishing code as the Neptune Streams ElasticSearch integration solution.
 
-### Monitoring and troubleshooting
+## Monitoring and troubleshooting
 
 To diagnose issues with the export from Neptune to Kinesis, consult the Amazon CloudWatch logs for your AWS Batch __export-neptune-to-kinesis-job__. These logs will indicate whether _neptune-export_ was successfully downloaded to the batch instance, and the progress of the export job. When reviewing the logs, ensure that:
 
