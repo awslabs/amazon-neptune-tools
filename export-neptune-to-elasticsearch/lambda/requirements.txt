@@ -1,0 +1,10 @@
+protobuf==3.5.1
+six==1.11.0
+elasticsearch==6.4.0
+rdflib
+retrying
+requests
+requests_aws4auth
+cachetools
+certifi
+aws-kinesis-agg
