@@ -14,6 +14,13 @@ Exports Amazon Neptune data to CSV for Property Graph or Turtle for RDF graphs.
 
 You can use [neptune-export](neptune-export/) to export an Amazon Neptune database to the bulk load CSV format used by the Amazon Neptune bulk loader for Property Graph or Turtle for RDF graphs. Alternatively, you can supply your own queries to neptune-export and unload the results to CSV or Turtle.
 
+### Export Neptune to ElasticSearch
+Backfills ElasticSearch with data from an existing Amazon Neptune database.
+
+The [Neptune Full-Text Search](https://docs.aws.amazon.com/neptune/latest/userguide/full-text-search-cfn-create.html) CloudFormation templates provide a mechanism for indexing all _new_ data that is added to an Amazon Neptune database in ElasticSearch. However, there are situations in which you may want to index _existing_ data in a Neptune database prior to enabling the full-text search integration.
+
+You can use this [export Neptune to ElasticSearch solution](export-neptune-to-elasticsearch/) to index existing data in an Amazon Neptune database in ElasticSearch.
+
 ### Glue Neptune
 
 [glue-neptune](glue-neptune/) is a Python library for AWS Glue that helps writing data to Amazon Neptune from Glue jobs. With glue-neptune you can:
