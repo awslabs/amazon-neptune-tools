@@ -728,7 +728,7 @@
         },
         "ComputeEnvironmentName": {
           "Fn::Sub": [
-            "export-neptune-to-kinesis-computre-environment-${id}",
+            "export-neptune-to-kinesis-compute-environment-${id}",
             {
               "id": {
                 "Fn::Select": [
