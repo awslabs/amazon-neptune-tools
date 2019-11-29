@@ -101,7 +101,34 @@
       "Type": "AWS::Kinesis::Stream",
       "Properties": {
         "Name": {
-          "Fn::Sub": "neptune-export-${AWS::StackName}"
+          "Fn::Sub": [
+            "neptune-export-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         },
         "ShardCount": 1
       }
@@ -215,7 +242,34 @@
         },
         "Description": "Neptune Streams polling framework",
         "LayerName": {
-          "Fn::Sub": "neptune-streams-layer-${AWS::StackName}"
+          "Fn::Sub": [
+            "neptune-streams-layer-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     },
@@ -243,7 +297,34 @@
         },
         "Description": "Neptune Streams polling framework",
         "LayerName": {
-          "Fn::Sub": "neptune-to-es-layer-${AWS::StackName}"
+          "Fn::Sub": [
+            "neptune-to-es-layer-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     },
@@ -251,7 +332,34 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "FunctionName": {
-          "Fn::Sub": "export-neptune-to-kinesis-${AWS::StackName}"
+          "Fn::Sub": [
+            "export-neptune-to-kinesis-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         },
         "Handler": "export_neptune_to_kinesis.lambda_handler",
         "Role": {
@@ -301,7 +409,34 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "FunctionName": {
-          "Fn::Sub": "kinesis-to-elasticsearch-${AWS::StackName}"
+          "Fn::Sub": [
+            "kinesis-to-elasticsearch-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         },
         "Handler": "kinesis_to_elasticsearch.lambda_bulk_handler",
         "Role": {
@@ -592,7 +727,34 @@
           ]
         },
         "ComputeEnvironmentName": {
-          "Fn::Sub": "export-neptune-to-kinesis-compute-environment"
+          "Fn::Sub": [
+            "export-neptune-to-kinesis-computre-environment-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         },
         "ComputeResources": {
           "MaxvCpus": 128,
@@ -639,7 +801,34 @@
         "State": "ENABLED",
         "Priority": 1,
         "JobQueueName": {
-          "Fn::Sub": "export-neptune-to-kinesis-queue"
+          "Fn::Sub": [
+            "export-neptune-to-kinesis-queue-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         }
       }
     },
@@ -649,7 +838,34 @@
       "Properties": {
         "Type": "container",
         "JobDefinitionName": {
-          "Fn::Sub": "export-neptune-to-kinesis-job"
+          "Fn::Sub": [
+            "export-neptune-to-kinesis-job-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
         },
         "ContainerProperties": {
           "Memory": 2000,
