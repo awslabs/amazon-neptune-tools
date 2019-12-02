@@ -28,7 +28,9 @@ def trigger_neptune_export():
     neptune_port = os.environ['NEPTUNE_PORT']
     neptune_engine = os.environ['NEPTUNE_ENGINE']
     stream_name = os.environ['STREAM_NAME']
+    job_suffix = os.environ['JOB_SUFFIX']
     region = os.environ['AWS_REGION']
+    
     use_iam_auth = '' if neptune_engine == 'sparql' else ' --use-iam-auth'
     
     export_command = 'export-pg' if neptune_engine == 'gremlin' else 'export-rdf'
@@ -46,9 +48,9 @@ def trigger_neptune_export():
     logger.info('Command: {}'.format(command))
     
     submit_job_response = client.submit_job(
-        jobName='export-neptune-to-kinesis-{}'.format(round(datetime.utcnow().timestamp() * 1000)),
-        jobQueue='export-neptune-to-kinesis-queue',
-        jobDefinition='export-neptune-to-kinesis-job',
+        jobName='export-neptune-to-kinesis-{}-{}'.format(job_suffix, round(datetime.utcnow().timestamp() * 1000)),
+        jobQueue='export-neptune-to-kinesis-queue-{}'.format(job_suffix),
+        jobDefinition='export-neptune-to-kinesis-job-{}'.format(job_suffix),
         containerOverrides={
             'command': [
                 'sh',

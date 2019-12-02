@@ -396,6 +396,36 @@
             "NEPTUNE_EXPORT_JAR_URI": "https://aws-neptune-customer-samples-eu-west-1.s3-eu-west-1.amazonaws.com/neptune-sagemaker/bin/neptune-export/neptune-export.jar",
             "STREAM_NAME": {
               "Ref": "KinesisStream"
+            },
+            "JOB_SUFFIX": {
+              "Fn::Sub": [
+                "${id}",
+                {
+                  "id": {
+                    "Fn::Select": [
+                      0,
+                      {
+                        "Fn::Split": [
+                          "-",
+                          {
+                            "Fn::Select": [
+                              2,
+                              {
+                                "Fn::Split": [
+                                  "/",
+                                  {
+                                    "Ref": "AWS::StackId"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
             }
           }
         },
