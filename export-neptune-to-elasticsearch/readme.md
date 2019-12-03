@@ -2,7 +2,7 @@
 
 The [Neptune Full-text Search](https://docs.aws.amazon.com/neptune/latest/userguide/full-text-search-cfn-create.html) CloudFormation templates provide a mechanism for indexing all _new_ data that is added to an Amazon Neptune database in Elasticsearch. However, there are situations in which you may want to index _existing_ data in a Neptune database prior to enabling the full-text search integration.
 
-This solution allows you to index existing data in an Amazon Neptune database in ElasticSearch.
+This solution allows you to index existing data in an Amazon Neptune database in Elasticsearch.
 
 Once you have populated Elasticsearch with your existing Neptune data, you can remove this solution from your account.
 
