@@ -38,7 +38,7 @@ public class SaveMetadataConfig {
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), UTF_8))) {
             ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             String json = objectWriter.writeValueAsString(metadataCollection.toJson());
-            logger.debug(json);
+            logger.info(json);
             writer.write(json);
         }
     }

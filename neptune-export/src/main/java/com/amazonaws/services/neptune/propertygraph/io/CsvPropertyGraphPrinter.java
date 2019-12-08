@@ -90,7 +90,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
+    public void printProperties(String id, String streamOperation, Map<?, ?> properties) throws IOException {
         printProperties(properties);
     }
 

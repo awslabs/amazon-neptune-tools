@@ -25,7 +25,13 @@ public class KinesisConfig {
     public KinesisConfig(String streamName, String region) {
         this.streamName = streamName;
         this.client = (StringUtils.isNotEmpty(region) && StringUtils.isNotEmpty(streamName)) ?
-                new KinesisProducer(new KinesisProducerConfiguration().setRegion(region)) :
+                new KinesisProducer(
+//                        new KinesisProducerConfiguration().
+//                                setRegion(region).
+//                                setRateLimit(100).
+//                                setRecordTtl(Integer.MAX_VALUE)) :
+                new KinesisProducerConfiguration().
+                        setRegion(region)) :
                 null;
     }
 

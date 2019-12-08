@@ -60,7 +60,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
-    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
+    public void printProperties(String id, String streamOperation, Map<?, ?> properties) throws IOException {
         for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
 
             Object key = entry.getKey();
@@ -77,12 +77,31 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
                     List<?> values = (List<?>) value;
                     for (Object o : values) {
-                        printRecord(id, type, formattedKey, o, dataType);
+                        printRecord(id, streamOperation, formattedKey, o, dataType);
                     }
 
                 } else {
-                    printRecord(id, type, formattedKey, value, dataType);
+                    printRecord(id, streamOperation, formattedKey, value, dataType);
                 }
+            }
+        }
+    }
+
+    public void printPropertiesAlt(String id, String streamOperation, Map<?, ?> properties) throws IOException {
+
+        for (Map.Entry<?, ?> entry : properties.entrySet()) {
+            String key = String.valueOf(entry.getKey());
+            Object value = entry.getValue();
+            DataType dataType = DataType.dataTypeFor(value.getClass());
+            if (isList(value)) {
+
+                List<?> values = (List<?>) value;
+                for (Object o : values) {
+                    printRecord(id, streamOperation, key, o, dataType);
+                }
+
+            } else {
+                printRecord(id, streamOperation, key, value, dataType);
             }
         }
     }
@@ -120,11 +139,11 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
         writer.close();
     }
 
-    private void printRecord(String id, String type, String key, Object value, DataType dataType) throws IOException {
-        printRecord(id, type, key, value, dataType, null, null);
+    private void printRecord(String id, String streamOperation, String key, Object value, DataType dataType) throws IOException {
+        printRecord(id, streamOperation, key, value, dataType, null, null);
     }
 
-    private void printRecord(String id, String type, String key, Object value, DataType dataType, String from, String to) throws IOException {
+    private void printRecord(String id, String streamOperation, String key, Object value, DataType dataType, String from, String to) throws IOException {
 
         writer.startOp();
         generator.writeStartObject();
@@ -136,7 +155,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
         generator.writeObjectFieldStart("data");
         generator.writeStringField("id", id);
-        generator.writeStringField("type", type);
+        generator.writeStringField("type", streamOperation);
         generator.writeStringField("key", key);
 
         generator.writeObjectFieldStart("value");
