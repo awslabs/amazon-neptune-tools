@@ -29,6 +29,22 @@
       "Description": "A VPC security group that neptune-export can use to access the Neptune cluster in your VPC.",
       "Type": "String"
     },
+    "Concurrency": {
+      "Type": "Number",
+      "Default": 1,
+      "MinValue": 1,
+      "MaxValue": 8,
+      "Description": "Deterines number of parallel export clients (Gremlin engine only) and number of shards in the Kinesis Stream ."
+    },
+    "ExportScope": {
+      "Description": "Determines whether to export both nodes and edges, or nodes or edges only (Gremlin engine only).",
+      "Default": "all",
+      "AllowedValues": [
+        "all",
+        "edges",
+        "nodes"
+      ]
+    },
     "ElasticSearchClientSecurityGroup": {
       "Description": "A VPC security group that AWS lambda can use to access the ElasticSearch cluster in your VPC.",
       "Type": "String"
@@ -78,6 +94,8 @@
             "NeptuneEndpoint",
             "NeptunePort",
             "NeptuneEngine",
+            "ExportScope",
+            "Concurrency",
             "NeptuneClientSecurityGroup"
           ]
         },
@@ -130,7 +148,9 @@
             }
           ]
         },
-        "ShardCount": 1
+        "ShardCount": {
+          "Ref": "Concurrency"
+        }
       }
     },
     "LambdaSelfReferencingSecurityGroup": {
@@ -397,6 +417,12 @@
             "STREAM_NAME": {
               "Ref": "KinesisStream"
             },
+            "EXPORT_SCOPE": {
+              "Ref": "ExportScope"
+            },
+            "CONCURRENCY": {
+              "Ref": "Concurrency"
+            },
             "JOB_SUFFIX": {
               "Fn::Sub": [
                 "${id}",
@@ -536,7 +562,9 @@
         "MemorySize": 128,
         "Runtime": "python3.6",
         "Timeout": "900",
-        "ReservedConcurrentExecutions": 8,
+        "ReservedConcurrentExecutions": {
+          "Ref": "Concurrency"
+        },
         "VpcConfig": {
           "SecurityGroupIds": [
             {

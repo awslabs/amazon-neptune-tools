@@ -30,12 +30,15 @@ def trigger_neptune_export():
     stream_name = os.environ['STREAM_NAME']
     job_suffix = os.environ['JOB_SUFFIX']
     region = os.environ['AWS_REGION']
+    concurrency = os.environ['CONCURRENCY']
+    scope = os.environ['EXPORT_SCOPE']
     
-    use_iam_auth = '' if neptune_engine == 'sparql' else ' --use-iam-auth'
-    
+    use_iam_auth = '' if neptune_engine == 'sparql' else ' --use-iam-auth' 
     export_command = 'export-pg' if neptune_engine == 'gremlin' else 'export-rdf'
-    
-    command = 'wget {} && export SERVICE_REGION="{}" && java -jar neptune-export.jar {} -e {} -p {} -d results --output stream --stream-name {} --region {} --format neptuneStreamsJson --log-level info --use-ssl{}'.format(
+    concurrency_param = ' --concurrency {}'.format(concurrency) if neptune_engine == 'gremlin' else ''
+    scope_param = ' --scope {}'.format(scope) if neptune_engine == 'gremlin' else ''
+        
+    command = 'wget {} && export SERVICE_REGION="{}" && java -jar neptune-export.jar {} -e {} -p {} -d results --output stream --stream-name {} --region {} --format neptuneStreamsJson --log-level info --use-ssl{}{}{}'.format(
         neptune_export_jar_uri, 
         region,
         export_command, 
@@ -43,7 +46,9 @@ def trigger_neptune_export():
         neptune_port,
         stream_name, 
         region,
-        use_iam_auth)
+        use_iam_auth,
+        concurrency_param,
+        scope_param)
         
     logger.info('Command: {}'.format(command))
     
