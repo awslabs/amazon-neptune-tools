@@ -52,7 +52,7 @@ public class ExportPropertyGraphJob {
 
         for (ExportSpecification exportSpecification : exportSpecifications) {
 
-            try (Timer timer = new Timer()) {
+            try (Timer timer = new Timer("exporting " + exportSpecification.description())) {
                 System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
 
                 RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);

@@ -31,7 +31,7 @@ public class CreateMetadataFromGraphScan implements MetadataCommand {
     public PropertiesMetadataCollection execute() throws Exception {
         PropertiesMetadataCollection metadataCollection = new PropertiesMetadataCollection();
         for (ExportSpecification exportSpecification : exportSpecifications) {
-            try (Timer timer = new Timer()) {
+            try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from graph scan")) {
                 System.err.println("Creating " + exportSpecification.description() + " metadata");
                 exportSpecification.scan(metadataCollection, g);
             }

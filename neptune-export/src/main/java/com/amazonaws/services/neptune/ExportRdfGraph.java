@@ -46,7 +46,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     @Override
     public void run() {
 
-        try (Timer timer = new Timer();
+        try (Timer timer = new Timer("export-rdf");
              NeptuneSparqlClient client = NeptuneSparqlClient.create(connection.config())) {
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.Rdf);

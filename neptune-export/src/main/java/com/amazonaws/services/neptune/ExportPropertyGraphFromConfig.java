@@ -77,7 +77,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Override
     public void run() {
 
-        try (Timer timer = new Timer();
+        try (Timer timer = new Timer("export-pg-from-config");
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 

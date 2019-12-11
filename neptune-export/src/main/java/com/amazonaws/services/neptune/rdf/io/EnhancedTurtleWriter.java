@@ -20,7 +20,6 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
 
 import java.io.IOException;
-import java.util.UUID;
 
 public class EnhancedTurtleWriter extends TurtleWriter {
 
@@ -44,7 +43,7 @@ public class EnhancedTurtleWriter extends TurtleWriter {
 
         writer.startCommit();
         super.handleStatement(statement);
-        writer.endCommit(UUID.randomUUID().toString());
+        writer.endCommit();
 
         status.update();
     }
@@ -54,6 +53,6 @@ public class EnhancedTurtleWriter extends TurtleWriter {
             throws IOException {
         writer.startCommit();
         super.writeNamespace(prefix, name);
-        writer.endCommit(UUID.randomUUID().toString());
+        writer.endCommit();
     }
 }

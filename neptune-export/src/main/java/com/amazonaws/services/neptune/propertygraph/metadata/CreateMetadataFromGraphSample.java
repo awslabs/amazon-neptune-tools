@@ -36,7 +36,7 @@ public class CreateMetadataFromGraphSample implements MetadataCommand {
 
         PropertiesMetadataCollection metadataCollection = new PropertiesMetadataCollection();
         for (ExportSpecification exportSpecification : exportSpecifications) {
-            try (Timer timer = new Timer()) {
+            try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from sampling graph")) {
                 System.err.println("Creating " + exportSpecification.description() + " metadata");
                 exportSpecification.sample(metadataCollection, g, sampleSize);
             }

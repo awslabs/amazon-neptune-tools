@@ -16,9 +16,15 @@ public class Timer implements AutoCloseable {
 
     private final long start = System.currentTimeMillis();
 
+    private final String description;
+
+    public Timer(String description) {
+        this.description = description;
+    }
+
     @Override
     public void close() throws Exception {
         System.err.println();
-        System.err.println(String.format("Completed in %s seconds", (System.currentTimeMillis() - start) / 1000));
+        System.err.println(String.format("Completed %s in %s seconds", description, (System.currentTimeMillis() - start) / 1000));
     }
 }

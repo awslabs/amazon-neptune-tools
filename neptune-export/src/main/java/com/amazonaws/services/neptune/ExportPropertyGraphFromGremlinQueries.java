@@ -84,7 +84,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     @Override
     public void run() {
 
-        try (Timer timer = new Timer();
+        try (Timer timer = new Timer("export-pg-from-queries");
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 

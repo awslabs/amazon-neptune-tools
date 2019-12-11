@@ -23,6 +23,8 @@ import java.util.Collection;
 
 public class PropertyGraphMetadataSamplingModule {
 
+    private final RequiresMetadata requiresMetadata;
+
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata")
     @Once
     private boolean sample = false;
@@ -31,8 +33,13 @@ public class PropertyGraphMetadataSamplingModule {
     @Once
     private long sampleSize = 1000;
 
+    public PropertyGraphMetadataSamplingModule(RequiresMetadata requiresMetadata) {
+        this.requiresMetadata = requiresMetadata;
+    }
+
     public MetadataCommand createMetadataCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                  GraphTraversalSource g){
-        return new MetadataSamplingSpecification(sample, sampleSize).createMetadataCommand(exportSpecifications, g);
+        return new MetadataSamplingSpecification(sample, sampleSize, requiresMetadata.requiresMetadata())
+                .createMetadataCommand(exportSpecifications, g);
     }
 }

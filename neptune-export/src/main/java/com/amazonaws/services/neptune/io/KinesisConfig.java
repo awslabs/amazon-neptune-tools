@@ -20,33 +20,24 @@ import org.apache.commons.lang.StringUtils;
 public class KinesisConfig {
 
     private final String streamName;
-    private final KinesisProducer client;
+    private final KinesisProducer kinesisProducer;
 
     public KinesisConfig(String streamName, String region) {
         this.streamName = streamName;
-        this.client = (StringUtils.isNotEmpty(region) && StringUtils.isNotEmpty(streamName)) ?
-                new KinesisProducer(
-//                        new KinesisProducerConfiguration().
-//                                setRegion(region).
-//                                setRateLimit(100).
-//                                setRecordTtl(Integer.MAX_VALUE)) :
-                new KinesisProducerConfiguration().
-                        setRegion(region)) :
+        this.kinesisProducer = (StringUtils.isNotEmpty(region) && StringUtils.isNotEmpty(streamName)) ?
+                new KinesisProducer(new KinesisProducerConfiguration()
+                        .setRegion(region)
+                        .setRateLimit(100)
+                        .setRecordTtl(Integer.MAX_VALUE)) :
                 null;
     }
 
-    public String streamName() {
-        if (StringUtils.isEmpty(streamName)) {
-            throw new IllegalArgumentException("You must supply an Amazon Kinesis Data Stream name using the --stream-name option");
-        }
-        return streamName;
-    }
+    public StreamSink createSink() {
 
-    public KinesisProducer client() {
-        if (client == null) {
-            throw new IllegalArgumentException("You must supply a region using the --region option and an Amazon Kinesis Data Stream name using the --stream-name option");
-
+        if (kinesisProducer == null){
+            throw new IllegalArgumentException("You must supply an AWS Region and Amazon Kinesis Data Stream name");
         }
-        return client;
+
+        return new StreamSink(kinesisProducer, streamName);
     }
 }

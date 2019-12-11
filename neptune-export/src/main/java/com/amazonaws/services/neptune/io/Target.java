@@ -39,10 +39,10 @@ public enum Target {
             System.err.println(result);
         }
     },
-    stream{
+    stream {
         @Override
         public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
-            return new KinesisStreamOutputWriter(kinesisConfig);
+            return new KinesisStreamOutputWriter(kinesisConfig.createSink());
         }
 
         @Override

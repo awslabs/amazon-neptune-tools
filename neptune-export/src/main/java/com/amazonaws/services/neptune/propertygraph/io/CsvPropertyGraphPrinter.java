@@ -124,7 +124,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printEndRow() {
         writer.print(System.lineSeparator());
-        writer.endCommit(partitionKey);
+        writer.endCommit();
     }
 
     private String formatList(Object value, DataType dataType) {

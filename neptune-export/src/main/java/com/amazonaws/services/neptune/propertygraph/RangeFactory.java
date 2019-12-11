@@ -34,9 +34,9 @@ public class RangeFactory {
             long limit = min(elementCount, rangeConfig.limit());
             long rangeSize = (limit / concurrencyConfig.concurrency()) + 1;
             logger.info("Limit: " + limit + ", Size: " + rangeSize);
-            return new RangeFactory(rangeSize, limit, rangeConfig.skip());
+            return new RangeFactory(rangeSize, limit, rangeConfig.skip(), elementCount);
         } else {
-            return new RangeFactory(rangeConfig.rangeSize(), rangeConfig.limit(), rangeConfig.skip());
+            return new RangeFactory(rangeConfig.rangeSize(), rangeConfig.limit(), rangeConfig.skip(), elementCount);
         }
     }
 
@@ -44,9 +44,9 @@ public class RangeFactory {
     private final long rangeLimit;
     private final AtomicLong currentEnd;
 
-    private RangeFactory(long rangeSize, long limit, long skip) {
+    private RangeFactory(long rangeSize, long limit, long skip, long max) {
         this.rangeSize = rangeSize;
-        this.rangeLimit = limit + skip;
+        this.rangeLimit = min((limit + skip), max) ;
         this.currentEnd =  new AtomicLong(skip);
     }
 

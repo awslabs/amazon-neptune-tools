@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
@@ -23,7 +24,7 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 
 import java.nio.file.Path;
 
-public class PropertyGraphTargetModule {
+public class PropertyGraphTargetModule implements RequiresMetadata {
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
@@ -54,5 +55,10 @@ public class PropertyGraphTargetModule {
 
     public void writeCommandResult(Path path){
         output.writeCommandResult(path);
+    }
+
+    @Override
+    public boolean requiresMetadata() {
+        return format.requiresMetadata();
     }
 }

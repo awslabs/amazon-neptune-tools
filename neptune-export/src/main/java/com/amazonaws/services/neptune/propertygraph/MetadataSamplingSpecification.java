@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromGraphSample;
-import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromGraphScan;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataCommand;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.metadata.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
@@ -24,14 +21,20 @@ public class MetadataSamplingSpecification {
 
     private final boolean sample;
     private final long sampleSize;
+    private final boolean requiresMetadata;
 
-    public MetadataSamplingSpecification(boolean sample, long sampleSize) {
+    public MetadataSamplingSpecification(boolean sample, long sampleSize, boolean requiresMetadata) {
         this.sample = sample;
         this.sampleSize = sampleSize;
+        this.requiresMetadata = requiresMetadata;
     }
 
     public MetadataCommand createMetadataCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                  GraphTraversalSource g) {
+        if (!requiresMetadata){
+            return PropertiesMetadataCollection::new;
+        }
+
         if (sample) {
             return new CreateMetadataFromGraphSample(exportSpecifications, g, sampleSize);
         } else {

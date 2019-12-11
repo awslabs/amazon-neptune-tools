@@ -53,7 +53,7 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     }
 
     @Override
-    public void endCommit(String partitionKey) {
+    public void endCommit() {
         // Do nothing
     }
 

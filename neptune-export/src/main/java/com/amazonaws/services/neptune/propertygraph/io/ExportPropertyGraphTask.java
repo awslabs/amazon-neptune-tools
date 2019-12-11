@@ -13,12 +13,15 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StreamPublisher;
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 import com.amazonaws.services.neptune.propertygraph.Range;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -67,7 +70,6 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                     CountingHandler handler = new CountingHandler(this);
 
                     labelsFilter.getPropertiesForLabels(propertiesMetadata);
-
 
                     graphClient.queryForValues(handler, range, labelsFilter, propertiesMetadata);
                     if (range.difference() > handler.counter() || rangeFactory.isExhausted()) {
