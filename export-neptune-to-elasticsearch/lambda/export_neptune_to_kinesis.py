@@ -20,6 +20,7 @@ from datetime import datetime
 client = boto3.client('batch')
 
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def trigger_neptune_export():
 
@@ -32,13 +33,14 @@ def trigger_neptune_export():
     region = os.environ['AWS_REGION']
     concurrency = os.environ['CONCURRENCY']
     scope = os.environ['EXPORT_SCOPE']
-    
+    range_size = os.environ['RANGE_SIZE']
+        
     use_iam_auth = '' if neptune_engine == 'sparql' else ' --use-iam-auth' 
     export_command = 'export-pg' if neptune_engine == 'gremlin' else 'export-rdf'
     concurrency_param = ' --concurrency {}'.format(concurrency) if neptune_engine == 'gremlin' else ''
     scope_param = ' --scope {}'.format(scope) if neptune_engine == 'gremlin' else ''
-        
-    command = 'wget {} && export SERVICE_REGION="{}" && java -jar neptune-export.jar {} -e {} -p {} -d results --output stream --stream-name {} --region {} --format neptuneStreamsJson --log-level info --use-ssl{}{}{}'.format(
+            
+    command = 'wget {} && export SERVICE_REGION="{}" && java -Xms4g -Xmx4g -jar neptune-export.jar {} -e {} -p {} -d results --output stream --stream-name {} --region {} --format neptuneStreamsJson --range-size {} --log-level info --use-ssl{}{}{}'.format(
         neptune_export_jar_uri, 
         region,
         export_command, 
@@ -46,6 +48,7 @@ def trigger_neptune_export():
         neptune_port,
         stream_name, 
         region,
+        range_size,
         use_iam_auth,
         concurrency_param,
         scope_param)

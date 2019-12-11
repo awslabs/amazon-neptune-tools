@@ -33,10 +33,25 @@
       "Type": "Number",
       "Default": 1,
       "MinValue": 1,
-      "MaxValue": 8,
-      "Description": "Deterines number of parallel export clients (Gremlin engine only) and number of shards in the Kinesis Stream ."
+      "MaxValue": 4,
+      "Description": "Determines number of client threads in neptune-export (we recommend leaving it single-threaded)."
+    },
+    "KinesisShardCount": {
+      "Type": "Number",
+      "Default": 32,
+      "MinValue": 1,
+      "MaxValue": 64,
+      "Description": "Determines number of shards in the Kinesis Stream and degree of parallelism when importing to ElasticSearch."
+    },
+    "RangeSize": {
+      "Type": "Number",
+      "Default": 250000,
+      "MinValue": 1,
+      "MaxValue": 1000000,
+      "Description": "Determines number of nodes or relationships fetched from Neptune per request (a higher number can reduce the number of range offset scans over the course of the export, but will increase memory pressure on the Neptune client)."
     },
     "ExportScope": {
+      "Type": "String",
       "Description": "Determines whether to export both nodes and edges, or nodes or edges only (Gremlin engine only).",
       "Default": "all",
       "AllowedValues": [
@@ -44,6 +59,13 @@
         "edges",
         "nodes"
       ]
+    },
+    "BatchSize": {
+      "Type": "Number",
+      "Default": 200,
+      "MinValue": 1,
+      "MaxValue": 10000,
+      "Description": "Number of records to retrieve from Kinesis Stream in a batch. (A single property graph Kinesis Stream record may contain multiple Neptune Streams records)."
     },
     "ElasticSearchClientSecurityGroup": {
       "Description": "A VPC security group that AWS lambda can use to access the ElasticSearch cluster in your VPC.",
@@ -96,6 +118,7 @@
             "NeptuneEngine",
             "ExportScope",
             "Concurrency",
+            "RangeSize",
             "NeptuneClientSecurityGroup"
           ]
         },
@@ -108,10 +131,40 @@
             "NumberOfShards",
             "NumberOfReplica",
             "GeoLocationFields",
-            "ElasticSearchClientSecurityGroup"
+            "ElasticSearchClientSecurityGroup",
+            "KinesisShardCount",
+            "BatchSize"
           ]
         }
       ]
+    }
+  },
+  "Mappings": {
+    "ConcurrencyMap": {
+      "1": {
+        "Value": "4"
+      },
+      "2": {
+        "Value": "8"
+      },
+      "3": {
+        "Value": "12"
+      },
+      "4": {
+        "Value": "16"
+      },
+      "5": {
+        "Value": "20"
+      },
+      "6": {
+        "Value": "24"
+      },
+      "7": {
+        "Value": "28"
+      },
+      "8": {
+        "Value": "32"
+      }
     }
   },
   "Resources": {
@@ -149,7 +202,7 @@
           ]
         },
         "ShardCount": {
-          "Ref": "Concurrency"
+          "Ref": "KinesisShardCount"
         }
       }
     },
@@ -423,6 +476,9 @@
             "CONCURRENCY": {
               "Ref": "Concurrency"
             },
+            "RANGE_SIZE":{
+              "Ref": "RangeSize"
+            },
             "JOB_SUFFIX": {
               "Fn::Sub": [
                 "${id}",
@@ -556,14 +612,17 @@
             },
             "NEPTUNE_ENGINE": {
               "Ref": "NeptuneEngine"
+            },
+            "STREAM_NAME": {
+              "Ref": "KinesisStream"
             }
           }
         },
-        "MemorySize": 128,
+        "MemorySize": 512,
         "Runtime": "python3.6",
         "Timeout": "900",
         "ReservedConcurrentExecutions": {
-          "Ref": "Concurrency"
+          "Ref": "KinesisShardCount"
         },
         "VpcConfig": {
           "SecurityGroupIds": [
@@ -597,7 +656,9 @@
             "Arn"
           ]
         },
-        "BatchSize": 10,
+        "BatchSize": {
+          "Ref": "BatchSize"
+        },
         "StartingPosition": "LATEST"
       }
     },
@@ -926,14 +987,21 @@
           ]
         },
         "ContainerProperties": {
-          "Memory": 2000,
+          "Memory": 8000,
+          "Ulimits": [
+            {
+              "HardLimit": 10000,
+              "Name": "nofile",
+              "SoftLimit": 10000
+            }
+          ],
           "JobRoleArn": {
             "Fn::GetAtt": [
               "BatchJobRole",
               "Arn"
             ]
           },
-          "Vcpus": 4,
+          "Vcpus": 8,
           "Image": "openjdk:8",
           "Environment": [
 
