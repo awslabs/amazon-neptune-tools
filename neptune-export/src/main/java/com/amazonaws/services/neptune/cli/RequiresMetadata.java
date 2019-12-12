@@ -10,21 +10,8 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.util;
+package com.amazonaws.services.neptune.cli;
 
-public class Timer implements AutoCloseable {
-
-    private final long start = System.currentTimeMillis();
-
-    private final String description;
-
-    public Timer(String description) {
-        this.description = description;
-    }
-
-    @Override
-    public void close() throws Exception {
-        System.err.println();
-        System.err.println(String.format("Completed %s in %s seconds", description, (System.currentTimeMillis() - start) / 1000));
-    }
+public interface RequiresMetadata {
+    boolean requiresMetadata();
 }

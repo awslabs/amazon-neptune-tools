@@ -15,15 +15,20 @@ package com.amazonaws.services.neptune.propertygraph;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RangeFactoryTest {
 
     @Test
     public void singleThreadedWithNoUpperLimitReturnsConsecutiveRanges(){
 
+        GraphClient graphClient = mock(GraphClient.class);
+        when(graphClient.count(any())).thenReturn(2250L);
+
         RangeFactory rangeFactory = RangeFactory.create(
-                mock(GraphClient.class),
+                graphClient,
                 AllLabels.INSTANCE,
                 new RangeConfig(1000, 0, 2500),
                 new ConcurrencyConfig(1));
@@ -35,13 +40,21 @@ public class RangeFactoryTest {
         assertEquals("range(1000, 2000)", range2.toString());
 
         Range range3 = rangeFactory.nextRange();
-        assertEquals("range(2000, 2500)", range3.toString());
+        assertEquals("range(2000, 2250)", range3.toString());
+
+        Range range4 = rangeFactory.nextRange();
+        assertEquals("range(2250, 2250)", range4.toString());
+        assertTrue(range4.isEmpty());
     }
 
     @Test
     public void shouldIndicateThatItIsExhausted(){
+
+        GraphClient graphClient = mock(GraphClient.class);
+        when(graphClient.count(any())).thenReturn(5000L);
+
         RangeFactory rangeFactory = RangeFactory.create(
-                mock(GraphClient.class),
+                graphClient,
                 AllLabels.INSTANCE,
                 new RangeConfig(1000, 0, 2000),
                 new ConcurrencyConfig(1));
@@ -55,8 +68,12 @@ public class RangeFactoryTest {
 
     @Test
     public void shouldCalculateRangesStartingFromSkipNumber(){
+
+        GraphClient graphClient = mock(GraphClient.class);
+        when(graphClient.count(any())).thenReturn(30L);
+
         RangeFactory rangeFactory = RangeFactory.create(
-                mock(GraphClient.class),
+                graphClient,
                 AllLabels.INSTANCE,
                 new RangeConfig(10, 20, 10),
                 new ConcurrencyConfig(1));

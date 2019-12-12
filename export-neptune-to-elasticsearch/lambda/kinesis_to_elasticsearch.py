@@ -12,6 +12,7 @@
 #  permissions and limitations under the License.
 
 from aws_kinesis_agg.deaggregator import deaggregate_records, iter_deaggregate_records
+#from metrics_publisher import MetricsPublisher
 import importlib
 import logging
 import base64
@@ -20,24 +21,9 @@ import os
 import json
 import neptune_to_es
 
-logger = logging.getLogger()
-
-def get_handler_instance(handler_name):
-
-    """
-    Get Handler instance given a handler name with module
-    :param handler_name: the handler class name with module.
-    :return: Handler instance
-
-    """
-    try:
-        parts = handler_name.rsplit('.', 1)
-        module = importlib.import_module(parts[0])
-        cls = getattr(module, parts[1])
-        return cls()
-    except Exception as e:
-        logger.error("Error occurred while creating handler instance for {} - {}.".format(handler_name, str(e)))
-        raise e
+neptune_engine = os.environ['NEPTUNE_ENGINE']
+stream_name = os.environ['STREAM_NAME']
+handler_name = 'neptune_to_es.neptune_sparql_es_handler.ElasticSearchSparqlHandler' if neptune_engine == 'sparql' else 'neptune_to_es.neptune_gremlin_es_handler.ElasticSearchGremlinHandler'
 
 # Dummy values
 os.environ["StreamRecordsBatchSize"] = "100"
@@ -47,12 +33,37 @@ os.environ["LeaseTable"] = ""
 os.environ["LoggingLevel"] = "INFO"
 os.environ["MaxPollingInterval"] = "1"
 os.environ["NeptuneStreamEndpoint"] = ""
-
-neptune_engine = os.environ['NEPTUNE_ENGINE']
-handler_name = 'neptune_to_es.neptune_sparql_es_handler.ElasticSearchSparqlHandler' if neptune_engine == 'sparql' else 'neptune_to_es.neptune_gremlin_es_handler.ElasticSearchGremlinHandler'
-
 os.environ["StreamRecordsHandler"] = handler_name
-logger.info('Handler: {}'.format(handler_name))
+
+logger = logging.getLogger()
+#metrics_publisher_client = MetricsPublisher()
+
+def get_handler_instance(handler_name, retry_count=0):
+
+    """
+    Get Handler instance given a handler name with module
+    :param handler_name: the handler class name with module.
+    :return: Handler instance
+
+    """
+    logger.info('Handler: {}'.format(handler_name))
+    
+    try:
+        parts = handler_name.rsplit('.', 1)
+        module = importlib.import_module(parts[0])
+        cls = getattr(module, parts[1])
+        return cls()
+    except Exception as e:
+        error_msg = str(e)
+        if 'resource_already_exists_exception' in error_msg:
+            if retry_count > 3:           
+                logger.info('Elastic Search Index - amazon_neptune already exist')
+                raise e;
+            else:
+                return get_handler_instance(handler_name, retry_count + 1)
+        else:
+            logger.error('Error occurred while creating handler instance for {} - {}.'.format(handler_name, error_msg))
+            raise e
 
 handler = get_handler_instance(handler_name)
 
@@ -89,7 +100,9 @@ def lambda_bulk_handler(event, context):
     logger.info('{} records to process'.format(total_records))    
     
     for result in handler.handle_records(log_stream):
-        logger.info('{} records processed'.format(result.records_processed))
+        records_processed = result.records_processed
+        logger.info('{} records processed'.format(records_processed))
+        #metrics_publisher_client.publish_metrics(metrics_publisher_client.generate_record_processed_metrics(records_processed))
         
     logger.info('Finished bulk loading')
         

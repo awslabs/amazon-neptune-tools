@@ -24,7 +24,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
-import java.util.UUID;
 
 public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
 
@@ -111,7 +110,7 @@ public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
             generator.writeEndObject();
             generator.flush();
 
-            outputWriter.endCommit(UUID.randomUUID().toString());
+            outputWriter.endCommit();
 
             status.update();
 

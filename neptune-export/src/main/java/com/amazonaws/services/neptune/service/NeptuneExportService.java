@@ -114,7 +114,8 @@ public class NeptuneExportService {
             try {
                 upload.waitForUploadResult();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
+                logger.log(e.getMessage());
             }
         }
     }
@@ -130,6 +131,7 @@ public class NeptuneExportService {
 
             upload.waitForCompletion();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             logger.log(e.getMessage());
         }
     }
@@ -152,6 +154,7 @@ public class NeptuneExportService {
             try {
                 download.waitForCompletion();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 logger.log(e.getMessage());
             }
 

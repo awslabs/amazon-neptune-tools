@@ -30,18 +30,14 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
-    private final Map<Object, PropertyTypeInfo> metadata;
 
     private String partitionKey = UUID.randomUUID().toString();
     private long commitNum = 1;
     private int opNum = 1;
 
-    public NeptuneStreamsJsonPropertyGraphPrinter(OutputWriter writer,
-                                                  JsonGenerator generator,
-                                                  Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public NeptuneStreamsJsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator) throws IOException {
         this.writer = writer;
         this.generator = generator;
-        this.metadata = metadata;
     }
 
     @Override
@@ -60,29 +56,24 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
-    public void printProperties(String id, String type, Map<?, ?> properties) throws IOException {
-        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
+    public void printProperties(String id, String streamOperation, Map<?, ?> properties) throws IOException {
 
-            Object key = entry.getKey();
-            PropertyTypeInfo propertyTypeInfo = entry.getValue();
+        for (Map.Entry<?, ?> entry : properties.entrySet()) {
+            String key = String.valueOf(entry.getKey());
+            Object value = entry.getValue();
 
-            DataType dataType = propertyTypeInfo.dataType();
-            String formattedKey = propertyTypeInfo.nameWithoutDataType();
+            PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
+            propertyTypeInfo.accept(value);
 
-            if (properties.containsKey(key)) {
+            if (isList(value)) {
 
-                Object value = properties.get(key);
-
-                if (isList(value)) {
-
-                    List<?> values = (List<?>) value;
-                    for (Object o : values) {
-                        printRecord(id, type, formattedKey, o, dataType);
-                    }
-
-                } else {
-                    printRecord(id, type, formattedKey, value, dataType);
+                List<?> values = (List<?>) value;
+                for (Object o : values) {
+                    printRecord(id, streamOperation, key, o, propertyTypeInfo.dataType());
                 }
+
+            } else {
+                printRecord(id, streamOperation, key, value, propertyTypeInfo.dataType());
             }
         }
     }
@@ -111,7 +102,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     @Override
     public void printEndRow() throws IOException {
-        writer.endCommit(partitionKey);
+        writer.endCommit();
     }
 
     @Override
@@ -120,11 +111,11 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
         writer.close();
     }
 
-    private void printRecord(String id, String type, String key, Object value, DataType dataType) throws IOException {
-        printRecord(id, type, key, value, dataType, null, null);
+    private void printRecord(String id, String streamOperation, String key, Object value, DataType dataType) throws IOException {
+        printRecord(id, streamOperation, key, value, dataType, null, null);
     }
 
-    private void printRecord(String id, String type, String key, Object value, DataType dataType, String from, String to) throws IOException {
+    private void printRecord(String id, String streamOperation, String key, Object value, DataType dataType, String from, String to) throws IOException {
 
         writer.startOp();
         generator.writeStartObject();
@@ -136,7 +127,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
         generator.writeObjectFieldStart("data");
         generator.writeStringField("id", id);
-        generator.writeStringField("type", type);
+        generator.writeStringField("type", streamOperation);
         generator.writeStringField("key", key);
 
         generator.writeObjectFieldStart("value");

@@ -95,7 +95,11 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
     @Override
     public long count(LabelsFilter labelsFilter) {
-        Long count = traversal(Range.ALL, labelsFilter).count().next();
+        GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
+
+        logger.info(GremlinQueryDebugger.queryAsString(t));
+
+        Long count = t.next();
         stats.setNodeCount(count);
         return count;
     }
@@ -105,6 +109,9 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         // Using dedup can cause MemoryLimitExceededException on large datasets, so do the dedup in the set
 
         GraphTraversal<Vertex, String> traversal = g.V().label();
+
+        logger.info(GremlinQueryDebugger.queryAsString(traversal));
+
         Set<String> labels = new HashSet<>();
         traversal.forEachRemaining(labels::add);
         return labels;

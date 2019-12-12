@@ -18,7 +18,7 @@ public interface OutputWriter extends AutoCloseable {
 
     void startCommit();
 
-    void endCommit(String partitionKey);
+    void endCommit();
 
     void print(String s);
 

@@ -68,7 +68,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule();
+    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(target);
 
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
@@ -80,7 +80,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Override
     public void run() {
 
-        try (Timer timer = new Timer();
+        try (Timer timer = new Timer("export-pg");
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 

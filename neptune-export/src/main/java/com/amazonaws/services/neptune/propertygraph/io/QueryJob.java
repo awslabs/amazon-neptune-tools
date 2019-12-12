@@ -45,7 +45,7 @@ public class QueryJob {
     }
 
     public void execute() throws Exception {
-        try (Timer timer = new Timer()) {
+        try (Timer timer = new Timer("exporting results from queries")) {
             System.err.println("Writing query results to " + targetConfig.outputDescription() + " as " + targetConfig.formatDescription());
 
             Status status = new Status();

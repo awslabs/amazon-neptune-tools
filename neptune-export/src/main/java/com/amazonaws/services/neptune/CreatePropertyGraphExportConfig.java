@@ -53,12 +53,12 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule();
+    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(() -> true);
 
     @Override
     public void run() {
 
-        try (Timer timer = new Timer();
+        try (Timer timer = new Timer("create-pg-config");
              NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 

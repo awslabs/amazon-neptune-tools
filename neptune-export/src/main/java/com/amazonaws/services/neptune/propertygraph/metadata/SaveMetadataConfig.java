@@ -14,6 +14,8 @@ package com.amazonaws.services.neptune.propertygraph.metadata;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -24,6 +26,8 @@ public class SaveMetadataConfig {
     private final PropertiesMetadataCollection metadataCollection;
     private final Path configFilePath;
 
+    private static final Logger logger = LoggerFactory.getLogger(SaveMetadataConfig.class);
+
     public SaveMetadataConfig(PropertiesMetadataCollection metadataCollection, Path configFilePath) {
         this.metadataCollection = metadataCollection;
         this.configFilePath = configFilePath;
@@ -33,7 +37,9 @@ public class SaveMetadataConfig {
         File file = configFilePath.toFile();
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), UTF_8))) {
             ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-            writer.write(objectWriter.writeValueAsString(metadataCollection.toJson()));
+            String json = objectWriter.writeValueAsString(metadataCollection.toJson());
+            logger.info(json);
+            writer.write(json);
         }
     }
 }

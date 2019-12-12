@@ -12,55 +12,39 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.kinesis.producer.KinesisProducer;
-import com.amazonaws.services.kinesis.producer.UserRecordResult;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Future;
 
 public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
 
-    private final String streamName;
-    private final KinesisProducer kinesisProducer;
 
+    private final StreamSink streamSink;
     private StringWriter writer;
     private int opCount;
 
-    public KinesisStreamOutputWriter(KinesisConfig kinesisConfig) {
-        this.streamName = kinesisConfig.streamName();
-        this.kinesisProducer = kinesisConfig.client();
+    public KinesisStreamOutputWriter(StreamSink streamSink) {
+        this.streamSink = streamSink;
     }
 
     @Override
     public void startCommit() {
+
         writer = new StringWriter();
         writer.write("[");
         opCount = 0;
     }
 
     @Override
-    public void endCommit(String partitionKey) {
+    public void endCommit() {
 
         writer.write("]");
         String s = writer.toString();
 
         if (StringUtils.isNotEmpty(s)) {
-
-            try {
-                ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
-                kinesisProducer.addUserRecord(streamName, partitionKey, data);
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            streamSink.add(s);
         }
     }
 
@@ -76,7 +60,7 @@ public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
 
     @Override
     public void startOp() {
-        if (opCount > 0){
+        if (opCount > 0) {
             writer.write(",");
         }
         opCount++;
@@ -98,6 +82,6 @@ public class KinesisStreamOutputWriter extends Writer implements OutputWriter {
 
     @Override
     public void close() throws IOException {
-        kinesisProducer.flushSync();
+        streamSink.stop();
     }
 }

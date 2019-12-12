@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.cli.RequiresMetadata;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
@@ -22,8 +23,13 @@ import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 import java.io.IOException;
 import java.util.Map;
 
-public enum PropertyGraphExportFormat implements FileExtension {
+public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata {
     json {
+        @Override
+        public boolean requiresMetadata() {
+            return true;
+        }
+
         @Override
         public String suffix() {
             return "json";
@@ -43,6 +49,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     csv {
         @Override
+        public boolean requiresMetadata() {
+            return true;
+        }
+
+        @Override
         public String suffix() {
             return "csv";
         }
@@ -58,6 +69,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
     },
     csvNoHeaders {
+        @Override
+        public boolean requiresMetadata() {
+            return true;
+        }
+
         @Override
         public String suffix() {
             return "csv";
@@ -75,6 +91,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     neptuneStreamsJson{
         @Override
+        public boolean requiresMetadata() {
+            return false;
+        }
+
+        @Override
         public String suffix() {
             return "json";
         }
@@ -82,7 +103,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
-            return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator, metadata);
+            return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator);
         }
 
         @Override
