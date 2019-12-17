@@ -2,6 +2,11 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Exports Neptune to ElasticSearch",
   "Parameters": {
+    "KeyPairName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the export EC2 instance.",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription": "Must be the name of an existing EC2 KeyPair in the Region."
+    },
     "Subnet1": {
       "Description": "Subnet in your Neptune/ElasticSearch VPC with route to the internet.",
       "Type": "AWS::EC2::Subnet::Id"
@@ -31,24 +36,17 @@
     },
     "Concurrency": {
       "Type": "Number",
-      "Default": 1,
+      "Default": 2,
       "MinValue": 1,
-      "MaxValue": 4,
-      "Description": "Determines number of client threads in neptune-export (we recommend leaving it single-threaded)."
+      "MaxValue": 8,
+      "Description": "Determines number of client threads in neptune-export."
     },
     "KinesisShardCount": {
       "Type": "Number",
-      "Default": 32,
+      "Default": 8,
       "MinValue": 1,
       "MaxValue": 64,
       "Description": "Determines number of shards in the Kinesis Stream and degree of parallelism when importing to ElasticSearch."
-    },
-    "RangeSize": {
-      "Type": "Number",
-      "Default": 250000,
-      "MinValue": 1,
-      "MaxValue": 1000000,
-      "Description": "Determines number of nodes or relationships fetched from Neptune per request (a higher number can reduce the number of range offset scans over the course of the export, but will increase memory pressure on the Neptune client)."
     },
     "ExportScope": {
       "Type": "String",
@@ -62,7 +60,7 @@
     },
     "BatchSize": {
       "Type": "Number",
-      "Default": 200,
+      "Default": 100,
       "MinValue": 1,
       "MaxValue": 10000,
       "Description": "Number of records to retrieve from Kinesis Stream in a batch. (A single property graph Kinesis Stream record may contain multiple Neptune Streams records)."
@@ -104,6 +102,7 @@
             "default": "Network Configuration"
           },
           "Parameters": [
+            "KeyPairName",
             "VPC",
             "Subnet1"
           ]
@@ -117,8 +116,6 @@
             "NeptunePort",
             "NeptuneEngine",
             "ExportScope",
-            "Concurrency",
-            "RangeSize",
             "NeptuneClientSecurityGroup"
           ]
         },
@@ -131,7 +128,15 @@
             "NumberOfShards",
             "NumberOfReplica",
             "GeoLocationFields",
-            "ElasticSearchClientSecurityGroup",
+            "ElasticSearchClientSecurityGroup"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Advanced"
+          },
+          "Parameters": [
+            "Concurrency",
             "KinesisShardCount",
             "BatchSize"
           ]
@@ -475,9 +480,6 @@
             },
             "CONCURRENCY": {
               "Ref": "Concurrency"
-            },
-            "RANGE_SIZE":{
-              "Ref": "RangeSize"
             },
             "JOB_SUFFIX": {
               "Fn::Sub": [
@@ -830,6 +832,50 @@
         "IpProtocol": "-1"
       }
     },
+    "LaunchTemplate": {
+      "Type": "AWS::EC2::LaunchTemplate",
+      "Properties": {
+        "LaunchTemplateName": "increase-container-volume",
+        "LaunchTemplateData": {
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "MIME-Version: 1.0\n",
+                  "Content-Type: multipart/mixed; boundary=\"==MYBOUNDARY==\"\n",
+                  "\n",
+                  "--==MYBOUNDARY==\n",
+                  "Content-Type: text/cloud-config; charset=\"us-ascii\"\n",
+                  "\n",
+                  "runcmd:\n",
+                  "- file_system_id_01=/dev/nvme2n1\n",
+                  "- my_directory=/mnt/neptune\n",
+                  "\n",
+                  "- mkdir -p ${my_directory}\n",
+                  "- echo \"${file_system_id_01} ${my_directory} auto defaults 0 0\" >> /etc/fstab\n",
+                  "- mkfs -t ext4 ${file_system_id_01}\n",
+                  "- mount ${file_system_id_01} ${my_directory}\n",
+                  "\n",
+                  "--==MYBOUNDARY==--\n"
+                ]
+              ]
+            }
+          },
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sdb",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "VolumeType": "io1",
+                "Iops": "50000",
+                "VolumeSize": "1000"
+              }
+            }
+          ]
+        }
+      }
+    },
     "ComputeEnvironment": {
       "Type": "AWS::Batch::ComputeEnvironment",
       "DependsOn": [
@@ -876,6 +922,14 @@
           ]
         },
         "ComputeResources": {
+          "Ec2KeyPair": {
+            "Ref": "KeyPairName"
+          },
+          "LaunchTemplate": {
+            "LaunchTemplateId": {
+              "Ref": "LaunchTemplate"
+            }
+          },
           "MaxvCpus": 128,
           "SecurityGroupIds": [
             {
@@ -899,7 +953,7 @@
             ]
           },
           "InstanceTypes": [
-            "optimal"
+            "m5d.2xlarge"
           ]
         },
         "State": "ENABLED"
@@ -987,7 +1041,7 @@
           ]
         },
         "ContainerProperties": {
-          "Memory": 8000,
+          "Memory": 16000,
           "Ulimits": [
             {
               "HardLimit": 10000,
@@ -1005,6 +1059,21 @@
           "Image": "openjdk:8",
           "Environment": [
 
+          ],
+          "Volumes": [
+            {
+              "Host": {
+                "SourcePath": "/mnt/neptune"
+              },
+              "Name": "neptune"
+            }
+          ],
+          "MountPoints": [
+            {
+              "ContainerPath": "/neptune",
+              "ReadOnly": false,
+              "SourceVolume": "neptune"
+            }
           ]
         }
       }
