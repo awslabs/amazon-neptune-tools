@@ -31,7 +31,6 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     private final OutputWriter writer;
     private final JsonGenerator generator;
 
-    private String partitionKey = UUID.randomUUID().toString();
     private long commitNum = 1;
     private int opNum = 1;
 
@@ -93,7 +92,6 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     @Override
     public void printStartRow() throws IOException {
-        partitionKey = UUID.randomUUID().toString();
         commitNum = COMMIT_NUM_GENERATOR.getAndIncrement();
         opNum = 1;
 
@@ -102,6 +100,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
     @Override
     public void printEndRow() throws IOException {
+        generator.flush();
         writer.endCommit();
     }
 

@@ -27,4 +27,6 @@ public interface OutputWriter extends AutoCloseable {
     void startOp();
 
     void endOp();
+
+    void close() throws Exception;
 }

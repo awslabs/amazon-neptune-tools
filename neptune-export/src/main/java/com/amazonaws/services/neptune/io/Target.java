@@ -42,7 +42,11 @@ public enum Target {
     stream {
         @Override
         public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
-            return new KinesisStreamOutputWriter(kinesisConfig.createSink());
+
+            return new FileToStreamOutputWriter(
+                    new KinesisStreamPrintOutputWriter(new FileWriter(filePath.toFile())),
+                    filePath,
+                    kinesisConfig);
         }
 
         @Override
