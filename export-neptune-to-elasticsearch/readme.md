@@ -79,5 +79,5 @@ To diagnose issues with the indexing of data in Amazon ElasticSearch, consult th
 | Neptune | ElasticSearch | Vertices | Edges | Concurrency | Kinesis Shards | Batch Size | Duration |
 | ------- | ------------- | -------- | ----- | ----------- | -------------- | ---------- | -------- |
 | r4.2xlarge | 5.large | 21932 | 66622 | 2 | 8 | 100 | 47 seconds |
-| r5.12xlarge | r5.4xlarge | 281,707,103 | 1,770,726,703 | 4 | 32 | 200 | 20 hours |
+| r5.12xlarge | r5.4xlarge | 281,707,103 | 1,770,726,703 | 4 | 32 | 200 | 4 hours |
 
