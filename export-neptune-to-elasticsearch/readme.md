@@ -76,27 +76,8 @@ To diagnose issues with the indexing of data in Amazon ElasticSearch, consult th
 
 ### Example performance
 
-#### Small
-
-| ---- | ---- |
-| Neptune | r4.2xlarge |
-| ElasticSearch | r5.large |
-| Vertices | 21932 |
-| Edges | 66622 |
-| Concurrency | 2 |
-| Kinesis Shards | 8 |
-| Batch Size | 100 |
-| Duration | 47 seconds |
-
-#### Large
-
-| ---- | ---- |
-| Neptune | r5.12xlarge |
-| ElasticSearch | r5.4xlarge |
-| Vertices | 281,707,103 |
-| Edges | 1,770,726,703 |
-| Concurrency | 4 |
-| Kinesis Shards | 32 |
-| Batch Size | 200 |
-| Duration | 20 hours |
+| Neptune | ElasticSearch | Vertices | Edges | Concurrency | Kinesis Shards | Batch Size | Duration |
+| ------- | ------------- | -------- | ----- | ----------- | -------------- | ---------- | -------- |
+| r4.2xlarge | 5.large | 21932 | 66622 | 2 | 8 | 100 | 47 seconds |
+| r5.12xlarge | r5.4xlarge | 281,707,103 | 1,770,726,703 | 4 | 32 | 200 | 20 hours |
 
