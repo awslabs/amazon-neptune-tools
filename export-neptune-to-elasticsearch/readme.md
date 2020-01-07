@@ -70,7 +70,7 @@ To diagnose issues with the export from Neptune to Kinesis, consult the Amazon C
   - _neptune-export_ has been successfully downloaded to the Batch compute instance
   - _neptune-export_ has successfully exported nodes and relationships from Neptune and published them to Kinesis
   
-If your job is stuck in a RUNNABLE state, you may need to review the network and security settings for your AWS Batch compute environment. See 'Verify the network and security settings of the compute environment' in [this knowledge article](https://aws.amazon.com/premiumsupport/knowledge-center/batch-job-stuck-runnable-status/).
+If your job is stuck in a RUNNABLE state, you may need to review the network and security settings for your AWS Batch compute environment. See __Verify the network and security settings of the compute environment__ in [this knowledge article](https://aws.amazon.com/premiumsupport/knowledge-center/batch-job-stuck-runnable-status/).
 
 To diagnose issues with the indexing of data in Amazon ElasticSearch, consult the Amazon CloudWatch logs for your __kinesis-to-elasticsearch__ AWS Lambda function. These logs will show the Lambda connecting to ElasticSearch, and will indicate how many records from the Kinesis Stream have been processed.
 
