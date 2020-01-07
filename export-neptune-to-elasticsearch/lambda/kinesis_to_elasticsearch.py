@@ -90,7 +90,12 @@ def lambda_bulk_handler(event, context):
         }
         
     for user_record in user_records:
-        records = json.loads(base64.b64decode(user_record['kinesis']['data']))
+        records_json = base64.b64decode(user_record['kinesis']['data'])
+        try:          
+            records = json.loads(records_json)
+        except Exception as e:
+            logger.error('Error parsing JSON: \'{}\': {}'.format(records_json, str(e)))
+            raise e
         for record in records:
             log_stream['records'].append(record)
             log_stream['lastEventId']['commitNum'] = record['eventId']['commitNum']

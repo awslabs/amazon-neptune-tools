@@ -28,77 +28,45 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-public class StreamPublisher implements Runnable {
+public class Stream {
 
-    private final BlockingQueue<String> queue;
     private final KinesisProducer kinesisProducer;
     private final String streamName;
-    private final CountDownLatch latch = new CountDownLatch(1);
 
-    private volatile boolean allowContinue = true;
+    private static final Logger logger = LoggerFactory.getLogger(Stream.class);
 
-    private static final Logger logger = LoggerFactory.getLogger(StreamPublisher.class);
-
-    public StreamPublisher(BlockingQueue<String> queue, KinesisProducer kinesisProducer, String streamName) {
-        this.queue = queue;
+    public Stream(KinesisProducer kinesisProducer, String streamName) {
         this.kinesisProducer = kinesisProducer;
         this.streamName = streamName;
     }
 
-    @Override
-    public void run() {
-        while (allowContinue) {
-            processRecord();
+    public void publish(String s) {
+        if (StringUtils.isNotEmpty(s) && s.length() > 2) {
+
+            try {
+                if (kinesisProducer.getOutstandingRecordsCount() > (10000)) {
+                    Thread.sleep(1);
+                }
+                ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
+
+                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, UUID.randomUUID().toString(), data);
+                Futures.addCallback(future, CALLBACK);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.error(e.getMessage());
+            } catch (UnsupportedEncodingException e) {
+                logger.error(e.getMessage());
+            }
         }
-        latch.countDown();
     }
 
-    public void stop() {
 
-        allowContinue = false;
-
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error(e.getMessage());
-        }
-
-        while (!queue.isEmpty()) {
-            processRecord();
-        }
-
+    public void flushRecords() {
         kinesisProducer.flushSync();
     }
 
-    private void processRecord() {
-        try {
-            if (kinesisProducer.getOutstandingRecordsCount() > (3000)) {
-                Thread.sleep(1);
-            }
-
-            String record = queue.poll(1, TimeUnit.SECONDS);
-            if (StringUtils.isNotEmpty(record)) {
-
-                ByteBuffer data = ByteBuffer.wrap(record.getBytes(StandardCharsets.UTF_8.name()));
-
-                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, UUID.randomUUID().toString(), data);
-                Futures.addCallback(future, callback);
-            }
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            logger.error(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static FutureCallback<UserRecordResult> callback = new FutureCallback<UserRecordResult>() {
+    private static final FutureCallback<UserRecordResult> CALLBACK = new FutureCallback<UserRecordResult>() {
         @Override
         public void onSuccess(UserRecordResult userRecordResult) {
             if (!userRecordResult.isSuccessful()) {
@@ -126,5 +94,4 @@ public class StreamPublisher implements Runnable {
         }
         return builder.toString();
     }
-
 }

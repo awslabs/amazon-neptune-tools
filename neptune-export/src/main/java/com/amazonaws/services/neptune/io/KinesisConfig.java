@@ -13,31 +13,33 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
-import com.amazonaws.services.kinesis.producer.KinesisProducer;
-import com.amazonaws.services.kinesis.producer.KinesisProducerConfiguration;
+import com.amazonaws.services.kinesis.producer.*;
+import com.google.common.util.concurrent.FutureCallback;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class KinesisConfig {
 
-    private final String streamName;
-    private final KinesisProducer kinesisProducer;
+    private final Stream stream;
 
     public KinesisConfig(String streamName, String region) {
-        this.streamName = streamName;
-        this.kinesisProducer = (StringUtils.isNotEmpty(region) && StringUtils.isNotEmpty(streamName)) ?
-                new KinesisProducer(new KinesisProducerConfiguration()
-                        .setRegion(region)
-                        .setRateLimit(100)
-                        .setRecordTtl(Integer.MAX_VALUE)) :
+
+        this.stream = (StringUtils.isNotEmpty(region) && StringUtils.isNotEmpty(streamName)) ?
+                new Stream(
+                        new KinesisProducer(new KinesisProducerConfiguration()
+                                .setRegion(region)
+                                .setRateLimit(100)
+                                .setRecordTtl(Integer.MAX_VALUE)), streamName) :
                 null;
     }
 
-    public StreamSink createSink() {
-
-        if (kinesisProducer == null){
+    public Stream stream() {
+        if (stream == null) {
             throw new IllegalArgumentException("You must supply an AWS Region and Amazon Kinesis Data Stream name");
         }
-
-        return new StreamSink(kinesisProducer, streamName);
+        return stream;
     }
 }

@@ -14,19 +14,41 @@ package com.amazonaws.services.neptune.io;
 
 import java.io.Writer;
 
-public interface OutputWriter extends AutoCloseable {
+public class KinesisStreamPrintOutputWriter extends PrintOutputWriter {
 
-    void startCommit();
+    private int opCount;
 
-    void endCommit();
 
-    void print(String s);
+    KinesisStreamPrintOutputWriter(Writer out) {
+        super(out);
+    }
 
-    Writer writer();
+    @Override
+    public void startCommit() {
+        opCount = 0;
+        write("[");
+    }
 
-    void startOp();
+    @Override
+    public void endCommit() {
+        write("]");
+        write(System.lineSeparator());
+    }
 
-    void endOp();
+    @Override
+    public Writer writer() {
+        return this;
+    }
 
-    void close() throws Exception;
+    @Override
+    public void startOp() {
+        if (opCount > 0) {
+            write(",");
+        }
+        opCount++;
+    }
+
+    @Override
+    public void endOp(){
+    }
 }

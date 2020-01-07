@@ -77,6 +77,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                 }
             }
         }
+
     }
 
     @Override
@@ -106,8 +107,8 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printEndRow() throws IOException {
-        generator.flush();
         generator.writeEndObject();
+        generator.flush();
         writer.endCommit();
     }
 
