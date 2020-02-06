@@ -16,7 +16,7 @@ mvn clean install
 
 ### Usage
 
-  - [`convert-csv`](neo4j-to-neptune/docs/convert-csv.md)
+  - [`convert-csv`](docs/convert-csv.md)
  
 ## Migration Process
 
@@ -55,7 +55,7 @@ The path that you specify for the export file will be resolved relative to the N
  
 ### Convert CSV
 
-Use the [`convert-csv`](neo4j-to-neptune/docs/convert-csv.md) command-line utility to convert the CSV exported from Neo4j into the Neptune Gremlin bulk load CSV format.
+Use the [`convert-csv`](docs/convert-csv.md) command-line utility to convert the CSV exported from Neo4j into the Neptune Gremlin bulk load CSV format.
 
 The utility has two required parameters: the path to the Neo4j export file and the name of a directory where the converted CSV files will be written. There are also optional parameters that allow you to specify node and relationship multi-valued property policies and turn on data type inferencing.
 
