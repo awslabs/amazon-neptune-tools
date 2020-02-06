@@ -21,6 +21,9 @@ The [Neptune Full-text Search](https://docs.aws.amazon.com/neptune/latest/usergu
 
 You can use this [export Neptune to Elasticsearch solution](export-neptune-to-elasticsearch/) to index existing data in an Amazon Neptune database in Elasticsearch.
 
+### Neo4j to Neptune
+A [command-line utility](neo4j-to-neptune/readme.md) for migrating data to Neptune from Neo4j.
+
 ### Glue Neptune
 
 [glue-neptune](glue-neptune/) is a Python library for AWS Glue that helps writing data to Amazon Neptune from Glue jobs. With glue-neptune you can:
