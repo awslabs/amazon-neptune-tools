@@ -20,7 +20,120 @@ With _neptune-python-utils_ you can:
 This creates a zip file: `target/neptune_python_utils.zip`. 
 
 When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket. You can then refer to _neptune-python-utils_ from your Glue Development Endpoint or Glue job. See [Using Python Libraries with AWS Glue](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-libraries.html). 
- 
+
+## Examples
+
+### Querying
+
+The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_ENDPOINT` environment variables to create a connection to the Gremlin endpoint. It automatically uses the session credentials to connect to the database if IAM DB Auth is enabled.
+
+```
+from neptune_python_utils.gremlin_utils import GremlinUtils
+
+gremlin_utils = GremlinUtils()
+
+conn = gremlin_utils.remote_connection()
+g = gremlin_utils.traversal_source(connection=conn)
+
+print(g.V().limit(10).valueMap().toList())
+
+conn.close()
+```
+
+If you want to supply your own endpoint information, you can use `neptune_endpoint` and `neptune_port` parameters to an `Endpoints` object:
+
+```
+from neptune_python_utils.gremlin_utils import GremlinUtils
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com')
+gremlin_utils = GremlinUtils(endpoints)
+
+conn = gremlin_utils.remote_connection()
+g = gremlin_utils.traversal_source(connection=conn)
+
+print(g.V().limit(10).valueMap().toList())
+
+conn.close()
+```
+
+If you want to supply your own credentials, you can supply a `Credentials` object to the `Endpoints`. Here we're simply getting the credentials from the session (you don't normally have to do this – _neptune-python-utils_ will get credentials from the provider chain automatically).
+
+```
+from neptune_python_utils.gremlin_utils import GremlinUtils
+from neptune_python_utils.endpoints import Endpoints
+import boto3
+
+session = boto3.session.Session()
+credentials = session.get_credentials()
+
+endpoints = Endpoints(
+    neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com',
+    credentials=credentials)
+
+gremlin_utils = GremlinUtils(endpoints)
+
+conn = gremlin_utils.remote_connection()
+g = gremlin_utils.traversal_source(connection=conn)
+
+print(g.V().limit(10).valueMap().toList())
+
+conn.close()
+```
+
+### Sessioned client
+
+The following code creates a sessioend client. All requests sent using this client will be executed in a single implicit transaction. The transaction will commit when the sessioned client is close (we're using a `with` block here to close the session). The transaction will be rolled back if an exception occurs:
+
+```
+from neptune_python_utils.gremlin_utils import GremlinUtils
+
+gremlin_utils = GremlinUtils()
+
+try:
+    with gremlin_utils.sessioned_client() as client:
+        client.submit("g.addV('User').property(T.id, 'person-x')").all().result()
+        client.submit("g.addV('User').property(T.id, 'person-y')").all().result()
+        client.submit("g.V('person-x').addE('KNOWS').to(V('person-y'))").all().result()
+except Exception as err:
+    print('Error: {}'.format(err))
+    print('Rolling back session')
+    
+g = gremlin_utils.traversal_source()
+
+print(g.V('person-x').outE('KNOWS').count().next())
+
+gremlin_utils.close()
+``` 
+
+### Bulk loading data into Neptune
+
+`BulkLoad` automatically supports IAM DB Auth, just as `GremlinUtils` does. You can supply an `Endpoints` object with custom credentials to the `endpoints` parameter of the `BulkLoad` constructor if necessary.
+
+To bulk load and block until the load is complete:
+
+```
+from neptune_python_utils.bulkload import BulkLoad
+
+bulkload = BulkLoad(
+	source='s3://...', 
+	update_single_cardinality_properties=True)
+bulkload.load()
+```
+
+Alternatively you can invoke the load and check the status using the returned `BulkLoadStatus` object:
+
+```
+from neptune_python_utils.bulkload import BulkLoad
+
+bulkload = BulkLoad(source='s3://ianrob-neptune-lhr/mysql-to-neptune/', update_single_cardinality_properties=True)
+load_status = bulkload.load_async()
+
+status, json = load_status.status(details=True, errors=True)
+print(json)
+
+load_status.wait()
+```
 
 ## Using neptune-python-utils with AWS Glue
 
