@@ -25,7 +25,7 @@ When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket.
 
 ### Querying
 
-The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_ENDPOINT` environment variables to create a connection to the Gremlin endpoint. It automatically uses the session credentials to connect to the database if IAM DB Auth is enabled.
+The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_PORT` environment variables to create a connection to the Gremlin endpoint. It automatically uses the credntial provider chain to connect to the database if IAM DB Auth is enabled.
 
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
@@ -57,7 +57,7 @@ print(g.V().limit(10).valueMap().toList())
 conn.close()
 ```
 
-If you want to supply your own credentials, you can supply a `Credentials` object to the `Endpoints`. Here we're simply getting the credentials from the session (you don't normally have to do this – _neptune-python-utils_ will get credentials from the provider chain automatically).
+If you want to supply your own credentials, you can supply a `Credentials` object to the `Endpoints` object. Here we're simply getting the credentials from the session (you don't normally have to do this – _neptune-python-utils_ will get credentials from the provider chain automatically).
 
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
@@ -83,7 +83,7 @@ conn.close()
 
 ### Sessioned client
 
-The following code creates a sessioend client. All requests sent using this client will be executed in a single implicit transaction. The transaction will commit when the sessioned client is close (we're using a `with` block here to close the session). The transaction will be rolled back if an exception occurs:
+The following code creates a sessioned client. All requests sent using this client will be executed in a single implicit transaction. The transaction will commit when the sessioned client is close (we're using a `with` block here to close the session). The transaction will be rolled back if an exception occurs:
 
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
@@ -126,7 +126,9 @@ Alternatively you can invoke the load and check the status using the returned `B
 ```
 from neptune_python_utils.bulkload import BulkLoad
 
-bulkload = BulkLoad(source='s3://ianrob-neptune-lhr/mysql-to-neptune/', update_single_cardinality_properties=True)
+bulkload = BulkLoad(
+	source='s3://ianrob-neptune-lhr/mysql-to-neptune/', 
+	update_single_cardinality_properties=True)
 load_status = bulkload.load_async()
 
 status, json = load_status.status(details=True, errors=True)
