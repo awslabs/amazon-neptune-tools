@@ -139,6 +139,136 @@ load_status.wait()
 
 ## Using neptune-python-utils with AWS Glue
 
+### Connecting to Neptune from an AWS Glue job using IAM DB Auth
+
+To connect to an IAM DB Auth-enabled Neptune database from an AWS Glue job, complete the following steps:
+
+#### 1. Create a Neptune access role that your AWS Glue job can assume
+
+Create an IAM Neptune access IAM role with a policy that allows connections to your Neptune database using IAM database authentication. For example:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "neptune-db:connect",
+            "Resource": "arn:aws:neptune-db:eu-west-1:111111111111:*/*",
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+Instead of `*/*` you should consider restricting access to a specific cluster. See [Creating and Using an IAM Policy for IAM Database Access](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html#iam-auth-policy) for more details.
+
+#### 2. Create a trust relationship that allows the Neptune access role to be assumed by your Glue job's IAM role
+
+If your AWS Glue job runs with the `MyGlueIAMRole` IAM role, then create a trust relationship attached to the Neptune access role created in Step 1. that looks like this:
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::111111111111:role/MyGlueIAMRole"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+#### 3. Attach a policy to your Glue job's IAM role allowing it to assume the Neptune access role
+
+If your Neptune access IAM role, as created in Step 1., has the ARN `arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole`, attach the following inline policy to your Glue job's IAM role:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Resource": "arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole",
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+#### 4. In your PySpark job or Python shell script, assume the access role and create a Credentials object
+
+Assuming your Neptune access IAM role, as created in Step 1., has the ARN `arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole`, you can assume the role like this:
+
+```
+import boto3, uuid
+from botocore.credentials import Credentials
+
+region = 'eu-west-1'
+role_arn = 'arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole'
+
+sts = boto3.client('sts', region_name=region)
+
+role = sts.assume_role(
+    RoleArn=role_arn,
+    RoleSessionName=uuid.uuid4().hex,
+    DurationSeconds=3600
+)
+
+credentials = Credentials(
+    access_key=role['Credentials']['AccessKeyId'], 
+    secret_key=role['Credentials']['SecretAccessKey'], 
+    token=role['Credentials']['SessionToken'])
+```
+
+This `Credentials` object can then be passed to an `Endpoints` object:
+
+```
+from neptune_python_utils.gremlin_utils import GremlinUtils
+from neptune_python_utils.endpoints import Endpoints
+import boto3
+
+session = boto3.session.Session()
+credentials = session.get_credentials()
+
+endpoints = Endpoints(credentials=credentials)
+
+gremlin_utils = GremlinUtils(endpoints)
+
+conn = gremlin_utils.remote_connection()
+g = gremlin_utils.traversal_source(connection=conn)
+
+print(g.V().limit(10).valueMap().toList())
+
+conn.close()
+```
+
+If using a `GlueNeptuneConnectionInfo` object to get Neptune connection information from the Glue Data Catalog, simply pass the region and Neptune access IAM role ARN to the `GlueNeptuneConnectionInfo` constructor:
+
+```
+import sys
+
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+
+from neptune_python_utils.glue_neptune_connection_info import GlueNeptuneConnectionInfo
+from neptune_python_utils.endpoints import Endpoints
+
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'AWS_REGION', 'CONNECT_TO_NEPTUNE_ROLE_ARN'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+ 
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+endpoints = GlueNeptuneConnectionInfo(args['AWS_REGION'], args['CONNECT_TO_NEPTUNE_ROLE_ARN']).neptune_endpoints('neptune-db')
+```
+
 ### Examples
 
 See [Migrating from MySQL to Amazon Neptune using AWS Glue](https://github.com/aws-samples/amazon-neptune-samples/tree/master/gremlin/glue-neptune).
