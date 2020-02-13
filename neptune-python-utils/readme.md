@@ -145,7 +145,7 @@ To connect to an IAM DB Auth-enabled Neptune database from an AWS Glue job, comp
 
 #### 1. Create a Neptune access role that your AWS Glue job can assume
 
-Create an IAM Neptune access IAM role with a policy that allows connections to your Neptune database using IAM database authentication. For example:
+Create a Neptune access IAM role with a policy that allows connections to your Neptune database using IAM database authentication. For example:
 
 ```
 {
@@ -183,7 +183,7 @@ If your AWS Glue job runs with the `MyGlueIAMRole` IAM role, then create a trust
 
 #### 3. Attach a policy to your Glue job's IAM role allowing it to assume the Neptune access role
 
-If your Neptune access IAM role, as created in Step 1., has the ARN `arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole`, attach the following inline policy to your Glue job's IAM role:
+If your Neptune access IAM role as created in Step 1. has the ARN `arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole`, attach the following inline policy to your Glue job's IAM role:
 
 ```
 {
@@ -200,7 +200,7 @@ If your Neptune access IAM role, as created in Step 1., has the ARN `arn:aws:iam
 
 #### 4. In your PySpark job or Python shell script, assume the access role and create a Credentials object
 
-Assuming your Neptune access IAM role, as created in Step 1., has the ARN `arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole`, you can assume the role like this:
+Assuming your Neptune access IAM role as created in Step 1. has the ARN `arn:aws:iam::111111111111:role/GlueConnectToNeptuneRole`, you can assume the role like this:
 
 ```
 import boto3, uuid
@@ -266,7 +266,10 @@ glueContext = GlueContext(sc)
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
 
-endpoints = GlueNeptuneConnectionInfo(args['AWS_REGION'], args['CONNECT_TO_NEPTUNE_ROLE_ARN']).neptune_endpoints('neptune-db')
+region = args['AWS_REGION']
+role_arn = args['CONNECT_TO_NEPTUNE_ROLE_ARN']
+
+endpoints = GlueNeptuneConnectionInfo(region, role_arn).neptune_endpoints('neptune-db')
 ```
 
 ### Examples
