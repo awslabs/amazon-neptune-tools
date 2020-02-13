@@ -1,6 +1,6 @@
 # neptune-python-utils
 
-_neptune-python-utils_ is a Python 3 library that simplifies using the [Gremlin-Python](https://pypi.org/project/gremlinpython/) librray when connecting to Amazon Neptune. The library makes it easy to configure your driver to support [IAM DB Authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html), create sessioned interactions with Neptune, and write data to Amazon Neptune from AWS Glue jobs.
+_neptune-python-utils_ is a Python 3 library that simplifies using [Gremlin-Python](https://pypi.org/project/gremlinpython/) to connect to Amazon Neptune. The library makes it easy to configure your driver to support [IAM DB Authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html), create sessioned interactions with Neptune, and write data to Amazon Neptune from AWS Glue jobs.
 
 You can use _neptune-python-utils_ in AWS Lambda functions, Jupyter notebooks, AWS Glue PySpark and Python shell jobs, and in your own Python applications.
 
@@ -17,9 +17,9 @@ With _neptune-python-utils_ you can:
 
 `sh build.sh`
 
-This creates a zip file: `target/glue_neptune.zip`. Copy this zip file to an S3 bucket.
+This creates a zip file: `target/neptune_python_utils.zip`. 
 
-When using AWS Glue to write data to Neptune, you can then refer to _neptune-python-utils_ from your Glue Development Endpoint or Glue job. See [Using Python Libraries with AWS Glue](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-libraries.html). 
+When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket. You can then refer to _neptune-python-utils_ from your Glue Development Endpoint or Glue job. See [Using Python Libraries with AWS Glue](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-libraries.html). 
  
 
 ## Using neptune-python-utils with AWS Glue
