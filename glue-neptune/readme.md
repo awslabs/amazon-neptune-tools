@@ -1,5 +1,7 @@
 # glue-neptune
 
+__Updated Feb 2020: This library is now deprecated in favour of [_neptune_python_utils_](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune_python_utils)__
+
 _glue-neptune_ is a Python library for AWS Glue that helps writing data to Amazon Neptune from Glue jobs.
 
 With _glue-neptune_ you can:
@@ -18,7 +20,7 @@ You can then refer to this library from your Glue Development Endpoint or Glue j
  
 ## Examples
 
-See [Migrating from MySQL to Amazon Neptune using AWS Glue](https://github.com/iansrobinson/amazon-neptune-samples/tree/master/gremlin/glue-neptune).
+See [Migrating from MySQL to Amazon Neptune using AWS Glue](https://github.com/aws-samples/amazon-neptune-samples/tree/master/gremlin/glue-neptune).
  
 ## Cross Account/Region Datasources
 If you have a datasource in a different region and/or different account from Glue and your Neptune database, you can follow the instructions in this [blog](https://aws.amazon.com/blogs/big-data/create-cross-account-and-cross-region-aws-glue-connections/) to allow access.
