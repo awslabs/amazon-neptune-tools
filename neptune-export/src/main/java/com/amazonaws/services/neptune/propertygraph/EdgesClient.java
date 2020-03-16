@@ -122,7 +122,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public String getLabelFrom(Map<String, Object> input) {
+    public String getLabelsAsStringToken(Map<String, Object> input) {
         return (String) input.get("label");
     }
 

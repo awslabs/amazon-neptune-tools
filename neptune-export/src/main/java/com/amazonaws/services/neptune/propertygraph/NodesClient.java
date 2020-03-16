@@ -14,8 +14,6 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
-import org.apache.tinkerpop.gremlin.groovy.jsr223.GroovyTranslator;
-import org.apache.tinkerpop.gremlin.process.traversal.Bytecode;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -27,8 +25,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.label;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.select;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.valueMap;
+
 
 public class NodesClient implements GraphClient<Map<String, Object>> {
 
@@ -76,7 +76,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, Map<String, Object>> t = traversal(range, labelsFilter).
                 project("id", "label", "properties").
                 by(T.id).
-                by(T.label).
+                by(label().fold()).
                 by(tokensOnly ?
                         select("x") :
                         valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
@@ -118,8 +118,14 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public String getLabelFrom(Map<String, Object> input) {
-        return (String) input.get("label");
+    public String getLabelsAsStringToken(Map<String, Object> input) {
+
+        List<String> labels = (List<String>) input.get("label");
+        if (labels.size() > 1){
+            return labels.toString();
+        } else {
+            return labels.get(0);
+        }
     }
 
     @Override

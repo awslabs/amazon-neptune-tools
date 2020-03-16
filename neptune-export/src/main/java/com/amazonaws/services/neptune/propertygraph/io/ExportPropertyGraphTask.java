@@ -83,7 +83,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     @Override
     public void handle(T input, boolean allowTokens) throws IOException {
         status.update();
-        String label = graphClient.getLabelFrom(input);
+        String label = graphClient.getLabelsAsStringToken(input);
         if (!labelWriters.containsKey(label)) {
             createWriterFor(label);
         }

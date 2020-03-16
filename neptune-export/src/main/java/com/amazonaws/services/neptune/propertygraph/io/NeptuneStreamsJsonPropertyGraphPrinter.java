@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrinter {
@@ -83,8 +82,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
-    public void printNode(String id, String label) throws IOException {
-        String[] labels = label.split("::");
+    public void printNode(String id, List<String> labels) throws IOException {
         for (String l : labels) {
             printRecord(id, "vl", "label", l, DataType.String);
         }

@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.rdf.io;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.rdf.Prefixes;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
@@ -39,7 +40,11 @@ public class EnhancedTurtleWriter extends TurtleWriter {
         prefixes.parse(statement.getSubject().stringValue(), this);
         prefixes.parse(statement.getPredicate().toString(), this);
         prefixes.parse(statement.getObject().stringValue(), this);
-        prefixes.parse(statement.getContext().stringValue(), this);
+
+        Resource context = statement.getContext();
+        if (context != null){
+            prefixes.parse(context.stringValue(), this);
+        }
 
         writer.startCommit();
         super.handleStatement(statement);

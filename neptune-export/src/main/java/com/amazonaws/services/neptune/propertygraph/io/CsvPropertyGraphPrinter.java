@@ -107,11 +107,11 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printNode(String id, String label) {
+    public void printNode(String id, List<String> labels) {
         commaPrinter.printComma();
         writer.print(id);
         commaPrinter.printComma();
-        writer.print(label);
+        writer.print(String.join(";", labels));
     }
 
     @Override

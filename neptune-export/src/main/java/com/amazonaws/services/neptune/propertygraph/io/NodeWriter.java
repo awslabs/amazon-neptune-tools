@@ -13,7 +13,10 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
@@ -29,10 +32,10 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
         String id = (String) map.get("id");
-        String label = (String) map.get("label");
+        List<String> labels = (List<String>) map.get("label");
 
         propertyGraphPrinter.printStartRow();
-        propertyGraphPrinter.printNode(id, label);
+        propertyGraphPrinter.printNode(id, labels);
         propertyGraphPrinter.printProperties(id, "vp", properties);
         propertyGraphPrinter.printEndRow();
     }

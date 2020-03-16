@@ -15,8 +15,10 @@
 import json
 import urllib.request
 import os
+import sys
 import time
 from neptune_python_utils.endpoints import Endpoints
+from urllib.error import HTTPError
 
 class BulkLoad:
     
@@ -84,9 +86,16 @@ class BulkLoad:
         request_parameters = loader_endpoint.prepare_request('POST', json_string)
         request_parameters.headers['Content-Type'] = 'application/json'
         req = urllib.request.Request(request_parameters.uri, data=json_bytes, headers=request_parameters.headers)
-        response = urllib.request.urlopen(req)
-        json_response = json.loads(response.read().decode('utf8'))
-        return json_response['payload']['loadId']
+        try:
+            response = urllib.request.urlopen(req)
+            json_response = json.loads(response.read().decode('utf8'))
+            return json_response['payload']['loadId']
+        except HTTPError as e:
+            exc_info = sys.exc_info()
+            if e.code == 500:
+                raise Exception(json.loads(e.read().decode('utf8'))) from None
+            else:
+                raise exc_info[0].with_traceback(exc_info[1], exc_info[2])
     
     def load_async(self):
         localised_source = self.source.replace('${AWS_REGION}', self.region)
@@ -117,13 +126,20 @@ class BulkLoadStatus:
         }
         request_parameters = self.load_status_endpoint.prepare_request(querystring=params)
         req = urllib.request.Request(request_parameters.uri, headers=request_parameters.headers)
-        response = urllib.request.urlopen(req)
-        json_response = json.loads(response.read().decode('utf8'))
-        status = json_response['payload']['overallStatus']['status']
-        return (status, json_response)
+        try:
+            response = urllib.request.urlopen(req)
+            json_response = json.loads(response.read().decode('utf8'))
+            status = json_response['payload']['overallStatus']['status']
+            return (status, json_response)
+        except HTTPError as e:
+            exc_info = sys.exc_info()
+            if e.code == 500:
+                raise Exception(json.loads(e.read().decode('utf8'))) from None
+            else:
+                raise exc_info[0].with_traceback(exc_info[1], exc_info[2])
     
     def uri(self):
-        return self.status_uri
+        return self.load_status_endpoint
     
     def wait(self, interval=2):
         while True:
