@@ -32,7 +32,7 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
         String id = (String) map.get("id");
-        String labels = String.join("::", (List<String>) map.get("label"));
+        List<String> labels = (List<String>) map.get("label");
 
         propertyGraphPrinter.printStartRow();
         propertyGraphPrinter.printNode(id, labels);

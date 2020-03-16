@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public interface PropertyGraphPrinter extends AutoCloseable {
@@ -29,7 +30,7 @@ public interface PropertyGraphPrinter extends AutoCloseable {
 
     void printEdge(String id, String label, String from, String to) throws IOException;
 
-    void printNode(String id, String label) throws IOException;
+    void printNode(String id, List<String> labels) throws IOException;
 
     void printStartRow() throws IOException;
 

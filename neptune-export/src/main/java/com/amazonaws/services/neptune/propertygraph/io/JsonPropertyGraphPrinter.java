@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
@@ -94,9 +93,9 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printNode(String id, String label) throws IOException {
+    public void printNode(String id, List<String> labels) throws IOException {
         generator.writeStringField("~id", id);
-        generator.writeStringField("~label", label);
+        generator.writeStringField("~label", String.join("::", labels));
     }
 
     @Override
