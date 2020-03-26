@@ -58,6 +58,11 @@
         "nodes"
       ]
     },
+	"AdditionalParams": {
+        "Type": "String",
+        "Description": "Allows you to specify additional parameters to neptune-export, e.g. '--max-content-length 131072'. See https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export for documentation of neptune-export params.",
+        "Default": ""
+	},
     "BatchSize": {
       "Type": "Number",
       "Default": 100,
@@ -116,7 +121,8 @@
             "NeptunePort",
             "NeptuneEngine",
             "ExportScope",
-            "NeptuneClientSecurityGroup"
+            "NeptuneClientSecurityGroup",
+			"AdditionalParams"
           ]
         },
         {
@@ -480,6 +486,9 @@
             },
             "CONCURRENCY": {
               "Ref": "Concurrency"
+            },
+            "ADDITIONAL_PARAMS": {
+              "Ref": "AdditionalParams"
             },
             "JOB_SUFFIX": {
               "Fn::Sub": [
