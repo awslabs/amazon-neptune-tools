@@ -14,10 +14,7 @@ package com.amazonaws.services.neptune.util;
 
 import org.junit.Test;
 
-import java.io.StringWriter;
-import java.util.ArrayList;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class S3ObjectInfoTest {
 
