@@ -98,7 +98,7 @@ pending_work = Queue()
 # Location of the Neptune endpoint and port
 writer = os.environ["NEPTUNE_WRITER"]
 port = os.environ["NEPTUNE_PORT"]
-neptune_gremlin_endpoint = 'ws://' + writer + ':' + port + '/gremlin'
+neptune_gremlin_endpoint = 'wss://' + writer + ':' + port + '/gremlin'
 
 # Obtain a graph traversal source for the remote endpoint.
 graph=Graph()
