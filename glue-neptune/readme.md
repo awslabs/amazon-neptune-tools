@@ -1,6 +1,6 @@
 # glue-neptune
 
-__Updated Feb 2020: This library is now deprecated in favour of [_neptune_python_utils_](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune_python_utils)__
+__Updated Feb 2020: This library is now deprecated in favour of [_neptune-python-utils_](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-python-utils)__
 
 _glue-neptune_ is a Python library for AWS Glue that helps writing data to Amazon Neptune from Glue jobs.
 
