@@ -49,4 +49,8 @@ public class RdfTargetConfig {
     public RDFWriter createRDFWriter(OutputWriter outputWriter){
         return format.createWriter(outputWriter, new Prefixes());
     }
+
+    public RdfExportFormat format() {
+        return format;
+    }
 }

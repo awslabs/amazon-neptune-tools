@@ -29,6 +29,10 @@ public enum RdfExportFormat implements FileExtension {
             return "ttl";
         }
 
+        @Override
+        public String description() {
+            return "Turtle";
+        }
 
     },
     nquads {
@@ -43,6 +47,11 @@ public enum RdfExportFormat implements FileExtension {
             return "nq";
         }
 
+        @Override
+        public String description() {
+            return "NQUADS";
+        }
+
 
     },
     neptuneStreamsJson {
@@ -55,8 +64,16 @@ public enum RdfExportFormat implements FileExtension {
         public String suffix() {
             return "json";
         }
+
+        @Override
+        public String description() {
+            return "JSON (Neptune Streams format)";
+        }
+
     };
 
     abstract RDFWriter createWriter(OutputWriter writer, Prefixes prefixes);
+
+    public abstract String description();
 
 }

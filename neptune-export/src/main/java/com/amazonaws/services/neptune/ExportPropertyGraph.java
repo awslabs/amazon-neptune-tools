@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
@@ -50,6 +51,9 @@ import java.util.Collection;
 public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+
+    @Inject
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
@@ -81,7 +85,8 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     public void run() {
 
         try (Timer timer = new Timer("export-pg");
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
+             Cluster cluster = cloneStrategy.cloneCluster(connection.config());
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster.connectionConfig(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.PropertyGraph);
@@ -109,7 +114,6 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     targetConfig);
             exportJob.execute();
 
-            System.err.println();
             System.err.println(target.description() + " files : " + directories.directory());
             System.err.println("Config file : " + configFilePath);
             System.err.println();

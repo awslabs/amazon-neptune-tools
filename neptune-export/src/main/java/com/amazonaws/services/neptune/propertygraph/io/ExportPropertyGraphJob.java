@@ -50,7 +50,7 @@ public class ExportPropertyGraphJob {
 
     public void execute() throws Exception {
 
-        for (ExportSpecification exportSpecification : exportSpecifications) {
+        for (ExportSpecification<?> exportSpecification : exportSpecifications) {
 
             try (Timer timer = new Timer("exporting " + exportSpecification.description())) {
                 System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
@@ -61,7 +61,7 @@ public class ExportPropertyGraphJob {
                 ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
 
                 for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-                    ExportPropertyGraphTask exportTask = exportSpecification.createExportTask(
+                    ExportPropertyGraphTask<?> exportTask = exportSpecification.createExportTask(
                             propertiesMetadataCollection,
                             g,
                             targetConfig,
