@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.NamedQueries;
@@ -47,6 +48,9 @@ import java.util.List;
         })
 @Command(name = "export-pg-from-queries", description = "Export property graph to CSV or JSON from Gremlin queries")
 public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseCommand implements Runnable {
+
+    @Inject
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule();
@@ -85,7 +89,8 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     public void run() {
 
         try (Timer timer = new Timer("export-pg-from-queries");
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
+             Cluster cluster = cloneStrategy.cloneCluster(connection.config());
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster.connectionConfig(), concurrency.config(), serialization.config());
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.GremlinQueries);

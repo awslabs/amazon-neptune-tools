@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.metadata.*;
@@ -38,6 +39,9 @@ import java.util.Collection;
 public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+
+    @Inject
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
@@ -59,7 +63,8 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     public void run() {
 
         try (Timer timer = new Timer("create-pg-config");
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
+             Cluster cluster = cloneStrategy.cloneCluster(connection.config());
+             NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster.connectionConfig(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.Config);

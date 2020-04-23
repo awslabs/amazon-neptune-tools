@@ -23,7 +23,7 @@ public class ConnectionConfig {
     private final String albEndpoint;
     private final int lbPort;
     private final boolean useIamAuth;
-    private final boolean useSsl;
+    private boolean useSsl;
 
     public ConnectionConfig(Collection<String> neptuneEndpoints,
                             int neptunePort,
@@ -79,5 +79,17 @@ public class ConnectionConfig {
 
     public boolean isDirectConnection() {
         return nlbEndpoint == null && albEndpoint == null;
+    }
+
+    public String nlbEndpoint() {
+        return nlbEndpoint;
+    }
+
+    public String albEndpoint() {
+        return albEndpoint;
+    }
+
+    public int lbPort() {
+        return lbPort;
     }
 }

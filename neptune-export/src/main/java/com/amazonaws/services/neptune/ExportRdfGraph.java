@@ -12,9 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
 import com.amazonaws.services.neptune.cli.CommonFileSystemModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
@@ -35,6 +37,9 @@ import javax.inject.Inject;
 public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+
+    @Inject
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
@@ -47,14 +52,14 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     public void run() {
 
         try (Timer timer = new Timer("export-rdf");
-             NeptuneSparqlClient client = NeptuneSparqlClient.create(connection.config())) {
+             Cluster cluster = cloneStrategy.cloneCluster(connection.config());
+             NeptuneSparqlClient client = NeptuneSparqlClient.create(cluster.connectionConfig())) {
 
             Directories directories = fileSystem.createDirectories(DirectoryStructure.Rdf);
 
             ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
             job.execute();
 
-            System.err.println();
             target.writeCommandResult(directories.directory());
 
         } catch (Exception e) {
