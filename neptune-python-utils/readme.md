@@ -30,6 +30,8 @@ The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_PORT` e
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
 
+GremlinUtils.init_statics(globals())
+
 gremlin_utils = GremlinUtils()
 
 conn = gremlin_utils.remote_connection()
@@ -45,6 +47,8 @@ If you want to supply your own endpoint information, you can use `neptune_endpoi
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
 from neptune_python_utils.endpoints import Endpoints
+
+GremlinUtils.init_statics(globals())
 
 endpoints = Endpoints(neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com')
 gremlin_utils = GremlinUtils(endpoints)
@@ -63,6 +67,8 @@ If you want to supply your own credentials, you can supply a `Credentials` objec
 from neptune_python_utils.gremlin_utils import GremlinUtils
 from neptune_python_utils.endpoints import Endpoints
 import boto3
+
+GremlinUtils.init_statics(globals())
 
 session = boto3.session.Session()
 credentials = session.get_credentials()
@@ -87,6 +93,8 @@ The following code creates a sessioned client. All requests sent using this clie
 
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
+
+GremlinUtils.init_statics(globals())
 
 gremlin_utils = GremlinUtils()
 
