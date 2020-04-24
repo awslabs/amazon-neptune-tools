@@ -101,11 +101,11 @@ public class ExportSpecification<T> {
 
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
 
-        private final GraphElementType graphElementType;
+        private final GraphElementType<?> graphElementType;
         private final PropertiesMetadataCollection metadataCollection;
         private final Status status = new Status();
 
-        private Handler(GraphElementType graphElementType, PropertiesMetadataCollection metadataCollection) {
+        private Handler(GraphElementType<?> graphElementType, PropertiesMetadataCollection metadataCollection) {
             this.graphElementType = graphElementType;
             this.metadataCollection = metadataCollection;
         }

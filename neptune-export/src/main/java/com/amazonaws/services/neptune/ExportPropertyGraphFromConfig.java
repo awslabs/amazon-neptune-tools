@@ -19,8 +19,8 @@ import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromConfigFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.util.Timer;
@@ -85,8 +85,12 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
             Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+            JsonResource<PropertiesMetadataCollection> configFileResource = new JsonResource<>(
+                    "Config file",
+                    configFile,
+                    PropertiesMetadataCollection.class);
 
-            PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
+            PropertiesMetadataCollection metadataCollection = configFileResource.get();
 
             ExportStats stats = new ExportStats();
             stats.prepare(metadataCollection);
@@ -102,12 +106,13 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                     targetConfig);
             exportJob.execute();
 
-            System.err.println(target.description() + " files : " + directories.directory());
-            System.err.println("Config file : " + configFile.getAbsolutePath());
+            directories.writeRootDirectoryPathAsMessage(target.description(), target);
+            configFileResource.writeResourcePathAsMessage(target);
+
             System.err.println();
             System.err.println(stats.toString());
 
-            target.writeCommandResult(directories.directory());
+            directories.writeRootDirectoryPathAsReturnValue(target);
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");
