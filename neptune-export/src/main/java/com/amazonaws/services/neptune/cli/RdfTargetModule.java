@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.io.KinesisConfig;
-import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
@@ -26,9 +23,8 @@ import com.github.rvesse.airline.annotations.restrictions.Required;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 
-public class RdfTargetModule {
+public class RdfTargetModule implements CommandWriter {
 
     @Option(name = {"-d", "--dir"}, description = "Root directory for output")
     @Required
@@ -66,7 +62,13 @@ public class RdfTargetModule {
         return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
     }
 
-    public void writeCommandResult(Path path){
-        output.writeCommandResult(path);
+    @Override
+    public void writeReturnValue(String value){
+        output.writeReturnValue(value);
+    }
+
+    @Override
+    public void writeMessage(String value) {
+        output.writeMessage(value);
     }
 }

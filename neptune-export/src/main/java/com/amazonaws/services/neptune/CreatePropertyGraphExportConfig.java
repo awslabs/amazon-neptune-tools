@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.metadata.*;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
@@ -68,7 +69,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
              GraphTraversalSource g = client.newTraversalSource()) {
 
             Directories directories = target.createDirectories(DirectoryStructure.Config);
-            java.nio.file.Path configFilePath = directories.configFilePath();
+            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
 
             ExportStats stats = new ExportStats();
             Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
@@ -76,10 +77,10 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
             MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
             PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
 
-            new SaveMetadataConfig(metadataCollection, configFilePath).execute();
+            configFileResource.save(metadataCollection);
+            configFileResource.writeResourcePathAsMessage(target);
 
-            System.err.println("Config file : " + configFilePath);
-            System.out.println(configFilePath);
+            directories.writeConfigFilePathAsReturnValue(target);
 
         } catch (Exception e) {
             System.err.println("An error occurred while creating export config:");

@@ -20,10 +20,9 @@ import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
-import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.CreateQueriesFromFile;
-import com.amazonaws.services.neptune.propertygraph.metadata.SaveQueries;
+import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -91,26 +90,28 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
             Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
+            JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?
+                    new JsonResource<>("Queries file", queriesFile, NamedQueriesCollection.class) :
+                    directories.queriesResource();
 
             PropertyGraphTargetConfig targetConfig = target.config(directories, includeTypeDefinitions);
-            QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
+            NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
 
-            directories.createSubdirectories(
-                    directories.resultsDirectory(),
-                    queriesInfo.namedQueriesCollection().names());
+            directories.createResultsSubdirectories(namedQueries.names());
 
             QueryJob queryJob = new QueryJob(
-                    queriesInfo.namedQueriesCollection().flatten(),
+                    namedQueries.flatten(),
                     queryClient,
                     concurrency.config(),
                     targetConfig,
                     twoPassAnalysis);
             queryJob.execute();
 
-            System.err.println(target.description() + " files : " + directories.resultsDirectory());
-            System.err.println("Queries file : " + queriesInfo.queriesFile());
+            directories.writeResultsDirectoryPathAsMessage(target.description(), target);
 
-            target.writeCommandResult(directories.directory());
+            queriesResource.writeResourcePathAsMessage(target);
+
+            directories.writeRootDirectoryPathAsReturnValue(target);
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");
@@ -119,34 +120,15 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
     }
 
-    private QueriesInfo getNamedQueriesCollection(List<NamedQueries> queries,
-                                                  File queriesFile,
-                                                  Directories directories) throws IOException {
+    private NamedQueriesCollection getNamedQueriesCollection(List<NamedQueries> queries,
+                                                             File queriesFile,
+                                                             JsonResource<NamedQueriesCollection> queriesResource) throws IOException {
         if (queriesFile == null) {
             NamedQueriesCollection namedQueries = new NamedQueriesCollection(queries);
-            new SaveQueries(namedQueries, directories.queriesFilePath()).execute();
-            return new QueriesInfo(namedQueries, directories.queriesFilePath());
+            queriesResource.save(namedQueries);
+            return namedQueries;
         } else {
-            NamedQueriesCollection namedQueries = new CreateQueriesFromFile(queriesFile).execute();
-            return new QueriesInfo(namedQueries, queriesFile.toPath());
-        }
-    }
-
-    private static class QueriesInfo {
-        private final NamedQueriesCollection namedQueriesCollection;
-        private final java.nio.file.Path queriesFile;
-
-        private QueriesInfo(NamedQueriesCollection namedQueriesCollection, java.nio.file.Path queriesFile) {
-            this.namedQueriesCollection = namedQueriesCollection;
-            this.queriesFile = queriesFile;
-        }
-
-        public NamedQueriesCollection namedQueriesCollection() {
-            return namedQueriesCollection;
-        }
-
-        public java.nio.file.Path queriesFile() {
-            return queriesFile;
+            return queriesResource.get();
         }
     }
 }

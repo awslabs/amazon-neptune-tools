@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
+import com.amazonaws.services.neptune.propertygraph.io.Jsonizable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PropertiesMetadataCollection {
+public class PropertiesMetadataCollection implements Jsonizable {
 
     public static PropertiesMetadataCollection fromJson(JsonNode json) {
 
@@ -53,14 +54,15 @@ public class PropertiesMetadataCollection {
         metadataCollection.get(graphElementType).update(properties, allowStructuralElements);
     }
 
-    public PropertiesMetadata propertyMetadataFor(GraphElementType type) {
+    public PropertiesMetadata propertyMetadataFor(GraphElementType<?> type) {
         if (!metadataCollection.containsKey(type)) {
             metadataCollection.put(type, new PropertiesMetadata());
         }
         return metadataCollection.get(type);
     }
 
-    public ObjectNode toJson() {
+    @Override
+    public JsonNode toJson() {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         for (Map.Entry<GraphElementType<?>, PropertiesMetadata> entry : metadataCollection.entrySet()) {

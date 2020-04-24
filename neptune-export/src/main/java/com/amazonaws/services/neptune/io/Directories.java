@@ -12,6 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,44 +64,70 @@ public class Directories {
         this.tag = tag;
     }
 
-    public Path directory() {
-        return directory.toAbsolutePath();
+    public void writeRootDirectoryPathAsMessage(String fileType, CommandWriter writer){
+        writer.writeMessage(fileType + " files : " + directory.toAbsolutePath().toString());
     }
 
-    public Path nodesDirectory() {
-        return nodesDirectory.toAbsolutePath();
+    public void writeRootDirectoryPathAsReturnValue(CommandWriter writer){
+        writer.writeReturnValue(directory.toAbsolutePath().toString());
     }
 
-    public Path edgesDirectory() {
-        return edgesDirectory.toAbsolutePath();
+    public void writeConfigFilePathAsReturnValue(CommandWriter writer){
+        writer.writeReturnValue(configFilePath().toAbsolutePath().toString());
     }
 
-    public Path statementsDirectory() {
-        return statementsDirectory.toAbsolutePath();
+    public void writeResultsDirectoryPathAsMessage(String fileType, CommandWriter writer){
+        writer.writeMessage(fileType + " files : " + resultsDirectory.toAbsolutePath().toString());
     }
 
-    public Path resultsDirectory() {
-        return resultsDirectory.toAbsolutePath();
+    public Path createNodesFilePath(String name, int index, FileExtension extension){
+        return createFilePath(nodesDirectory, name, index, extension);
     }
 
-    public Path configFilePath() {
-        return directory.resolve(CONFIG_FILE).toAbsolutePath();
+    public Path createEdgesFilePath(String name, int index, FileExtension extension){
+        return createFilePath(edgesDirectory, name, index, extension);
     }
 
-    public Path queriesFilePath() {
-        return directory.resolve(QUERIES_FILE).toAbsolutePath();
+    public Path createStatementsFilePath(String name, int index, FileExtension extension){
+        return createFilePath(statementsDirectory, name, index, extension);
     }
 
-    public Path createFilePath(Path directory, String name, int index, FileExtension extension) {
+    public Path createQueryResultsFilePath(String name, int index, FileExtension extension){
+        Path directory = resultsDirectory.resolve(name);
+        return createFilePath(directory, name, index, extension);
+    }
+
+    public void createResultsSubdirectories(Collection<String> subdirectoryNames) throws IOException {
+        for (String subdirectoryName : subdirectoryNames) {
+            Files.createDirectories(resultsDirectory.resolve(subdirectoryName));
+        }
+    }
+
+    public JsonResource<PropertiesMetadataCollection> configFileResource() {
+        return new JsonResource<>("Config file",
+                configFilePath().toFile(),
+                PropertiesMetadataCollection.class);
+    }
+
+    public JsonResource<NamedQueriesCollection> queriesResource() {
+        return new JsonResource<>("Queries file",
+                queriesFilePath().toFile(),
+                NamedQueriesCollection.class);
+    }
+
+    private Path createFilePath(Path directory, String name, int index, FileExtension extension) {
         String filename = tag.isEmpty() ?
                 String.format("%s-%s.%s", name, index, extension.suffix()) :
                 String.format("%s-%s-%s.%s", tag, name, index, extension.suffix());
         return directory.resolve(filename);
     }
 
-    public void createSubdirectories(Path parentDirectory, Collection<String> subdirectoryNames) throws IOException {
-        for (String subdirectoryName : subdirectoryNames) {
-            Files.createDirectories(parentDirectory.resolve(subdirectoryName));
-        }
+    private Path configFilePath() {
+        return directory.resolve(CONFIG_FILE).toAbsolutePath();
     }
+
+    private Path queriesFilePath() {
+        return directory.resolve(QUERIES_FILE).toAbsolutePath();
+    }
+
 }

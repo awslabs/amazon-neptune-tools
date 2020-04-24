@@ -56,7 +56,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
             ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
             job.execute();
 
-            target.writeCommandResult(directories.directory());
+            directories.writeRootDirectoryPathAsReturnValue(target);
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");
