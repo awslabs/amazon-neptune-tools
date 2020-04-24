@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 
@@ -69,8 +70,8 @@ public class NeptuneExportService {
         TransferManager transferManager = TransferManagerBuilder.standard().build();
 
         clearTempFiles();
-        downloadFile(transferManager, configFileS3Path, args, "--config-file");
-        downloadFile(transferManager, queriesFileS3Path, args, "--queries");
+        updateArgs(args, "--config-file", downloadFile(transferManager, configFileS3Path));
+        updateArgs(args, "--queries", downloadFile(transferManager, queriesFileS3Path));
 
         File outputDirectory = executeCommand(args);
 
@@ -78,6 +79,8 @@ public class NeptuneExportService {
 
         uploadExportFilesToS3(transferManager, outputDirectory, outputS3ObjectInfo);
         uploadCompletionFileToS3(transferManager, outputDirectory, outputS3ObjectInfo);
+
+        transferManager.shutdownNow();
 
         return outputS3ObjectInfo;
     }
@@ -91,6 +94,12 @@ public class NeptuneExportService {
         File directory = new File(TEMP_PATH);
         if (directory.exists() && directory.isDirectory()) {
             FileUtils.deleteDirectory(directory);
+        }
+    }
+
+    private void updateArgs(Args args, String option, String value) {
+        if (StringUtils.isNotEmpty(value)) {
+            args.addOption(option, value);
         }
     }
 
@@ -136,30 +145,31 @@ public class NeptuneExportService {
         }
     }
 
-    private void downloadFile(TransferManager transferManager, String s3Path, Args args, String option) {
+    private String downloadFile(TransferManager transferManager, String s3Path) {
 
-        if (!s3Path.isEmpty()) {
-
-            S3ObjectInfo configFileS3ObjectInfo = new S3ObjectInfo(s3Path);
-            File file = configFileS3ObjectInfo.createDownloadFile(TEMP_PATH);
-
-            logger.log("Bucket: " + configFileS3ObjectInfo.bucket());
-            logger.log("Key   : " + configFileS3ObjectInfo.key());
-            logger.log("File  : " + file);
-
-            Download download = transferManager.download(
-                    configFileS3ObjectInfo.bucket(),
-                    configFileS3ObjectInfo.key(),
-                    file);
-            try {
-                download.waitForCompletion();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                logger.log(e.getMessage());
-            }
-
-            args.addOption(option, file.getAbsolutePath());
+        if (s3Path.isEmpty()) {
+            return null;
         }
+
+        S3ObjectInfo configFileS3ObjectInfo = new S3ObjectInfo(s3Path);
+        File file = configFileS3ObjectInfo.createDownloadFile(TEMP_PATH);
+
+        logger.log("Bucket: " + configFileS3ObjectInfo.bucket());
+        logger.log("Key   : " + configFileS3ObjectInfo.key());
+        logger.log("File  : " + file);
+
+        Download download = transferManager.download(
+                configFileS3ObjectInfo.bucket(),
+                configFileS3ObjectInfo.key(),
+                file);
+        try {
+            download.waitForCompletion();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.log(e.getMessage());
+        }
+
+        return file.getAbsolutePath();
     }
 
     private File executeCommand(Args args) throws IOException {

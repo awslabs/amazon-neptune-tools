@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.io.Target;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
@@ -20,10 +21,24 @@ import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.github.rvesse.airline.annotations.restrictions.PathKind;
+import com.github.rvesse.airline.annotations.restrictions.Required;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class RdfTargetModule {
+
+    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
+    @Required
+    @com.github.rvesse.airline.annotations.restrictions.Path(mustExist = false, kind = PathKind.DIRECTORY)
+    @Once
+    private File directory;
+
+    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
+    @Once
+    private String tag = "";
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
     @Once
@@ -42,6 +57,10 @@ public class RdfTargetModule {
     @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located")
     @Once
     private String region;
+
+    public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
+        return Directories.createFor(directoryStructure, directory, tag );
+    }
 
     public RdfTargetConfig config(Directories directories) {
         return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
