@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.io.Target;
 import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
@@ -21,10 +22,24 @@ import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.github.rvesse.airline.annotations.restrictions.PathKind;
+import com.github.rvesse.airline.annotations.restrictions.Required;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class PropertyGraphTargetModule implements RequiresMetadata {
+
+    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
+    @Required
+    @com.github.rvesse.airline.annotations.restrictions.Path(mustExist = false, kind = PathKind.DIRECTORY)
+    @Once
+    private File directory;
+
+    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
+    @Once
+    private String tag = "";
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
@@ -43,6 +58,10 @@ public class PropertyGraphTargetModule implements RequiresMetadata {
     @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located")
     @Once
     private String region;
+
+    public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
+        return Directories.createFor(directoryStructure, directory, tag );
+    }
 
     public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);

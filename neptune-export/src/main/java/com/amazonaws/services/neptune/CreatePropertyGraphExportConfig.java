@@ -45,7 +45,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
-    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
@@ -67,7 +67,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
              NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster.connectionConfig(), concurrency.config(), serialization.config());
              GraphTraversalSource g = client.newTraversalSource()) {
 
-            Directories directories = fileSystem.createDirectories(DirectoryStructure.Config);
+            Directories directories = target.createDirectories(DirectoryStructure.Config);
             java.nio.file.Path configFilePath = directories.configFilePath();
 
             ExportStats stats = new ExportStats();

@@ -14,7 +14,6 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
-import com.amazonaws.services.neptune.cli.CommonFileSystemModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
 import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
@@ -43,9 +42,6 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
-    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
-
-    @Inject
     private RdfTargetModule target = new RdfTargetModule();
 
     @Override
@@ -55,7 +51,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
              Cluster cluster = cloneStrategy.cloneCluster(connection.config());
              NeptuneSparqlClient client = NeptuneSparqlClient.create(cluster.connectionConfig())) {
 
-            Directories directories = fileSystem.createDirectories(DirectoryStructure.Rdf);
+            Directories directories = target.createDirectories(DirectoryStructure.Rdf);
 
             ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
             job.execute();

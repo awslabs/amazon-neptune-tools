@@ -56,9 +56,6 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
-    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
-
-    @Inject
     private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
@@ -93,7 +90,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
              NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster.connectionConfig(), concurrency.config(), serialization.config());
              NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
-            Directories directories = fileSystem.createDirectories(DirectoryStructure.GremlinQueries);
+            Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
 
             PropertyGraphTargetConfig targetConfig = target.config(directories, includeTypeDefinitions);
             QueriesInfo queriesInfo = getNamedQueriesCollection(queries, queriesFile, directories);
