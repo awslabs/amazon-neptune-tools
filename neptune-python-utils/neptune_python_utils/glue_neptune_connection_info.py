@@ -12,9 +12,8 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 
-import sys, boto3, os, uuid
+import sys, boto3
 from urllib.parse import urlparse
-from botocore.credentials import Credentials
 from neptune_python_utils.endpoints import Endpoints
 
 class GlueNeptuneConnectionInfo:
@@ -37,7 +36,7 @@ class GlueNeptuneConnectionInfo:
         
         'jdbc:wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin'
         
-        – this method will return:
+        – this method will return:
         
         'wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin' 
         
@@ -53,18 +52,4 @@ class GlueNeptuneConnectionInfo:
         host = netloc_parts[0]
         port = netloc_parts[1]
         
-        sts = boto3.client('sts', region_name=self.region)
-        
-        role = sts.assume_role(
-            RoleArn=self.role_arn,
-            RoleSessionName=uuid.uuid4().hex,
-            DurationSeconds=3600
-        )
-        
-        credentials = Credentials(
-            access_key=role['Credentials']['AccessKeyId'], 
-            secret_key=role['Credentials']['SecretAccessKey'], 
-            token=role['Credentials']['SessionToken'])
-        
-        return Endpoints(neptune_endpoint=host, neptune_port=port, region_name=self.region, credentials=credentials)
-        
+        return Endpoints(neptune_endpoint=host, neptune_port=port, region_name=self.region, role_arn=self.role_arn)

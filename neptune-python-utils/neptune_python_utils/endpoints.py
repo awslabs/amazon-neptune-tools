@@ -12,7 +12,23 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 
-import sys, os, base64, datetime, hashlib, hmac, boto3, urllib
+import sys, os, base64, datetime, hashlib, hmac, boto3, urllib, uuid, threading
+from botocore.credentials import Credentials
+from botocore.credentials import RefreshableCredentials
+
+def synchronized_method(method):
+    
+    outer_lock = threading.Lock()
+    lock_name = "__"+method.__name__+"_lock"+"__"
+    
+    def sync_method(self, *args, **kws):
+        with outer_lock:
+            if not hasattr(self, lock_name): setattr(self, lock_name, threading.Lock())
+            lock = getattr(self, lock_name)
+            with lock:
+                return method(self, *args, **kws)  
+
+    return sync_method
 
 class RequestParameters:
     
@@ -23,22 +39,63 @@ class RequestParameters:
 
 class Endpoint:
     
-    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials): 
+    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None): 
+        
+        if credentials is None and role_arn is None:
+            raise Exception('You must supply either a credentials or role_arn')
+        
         self.protocol = protocol
         self.neptune_endpoint = neptune_endpoint
         self.neptune_port = neptune_port
         self.suffix = suffix
         self.region = region
         self.credentials = credentials
-        
+        self.role_arn = role_arn
+    
     def __str__(self):
         return self.value()
+        
+    @synchronized_method
+    def _get_credentials(self):        
+
+        if self.credentials is None:
+            sts = boto3.client('sts', region_name=self.region)
+            
+            role = sts.assume_role(
+                RoleArn=self.role_arn,
+                RoleSessionName=uuid.uuid4().hex,
+                DurationSeconds=3600
+            )
+            
+            self.credentials = RefreshableCredentials.create_from_metadata(
+                metadata=self._new_credentials(),
+                refresh_using=self._new_credentials,
+                method="sts-assume-role",
+            )
+        
+        return self.credentials.get_frozen_credentials()
+               
+    def _new_credentials(self):
+        sts = boto3.client('sts', region_name=self.region)
+        
+        role = sts.assume_role(
+            RoleArn=self.role_arn,
+            RoleSessionName=uuid.uuid4().hex,
+            DurationSeconds=3600
+        )
+        
+        return {
+            'access_key': role['Credentials']['AccessKeyId'],
+            'secret_key': role['Credentials']['SecretAccessKey'], 
+            'token': role['Credentials']['SessionToken'],
+             'expiry_time': role['Credentials']['Expiration'].isoformat()
+        }
         
     def value(self):
         return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
         
     def prepare_request(self, method='GET', payload='', querystring={}):
-        credentials = self.credentials.get_frozen_credentials()
+        credentials =  self._get_credentials()
         access_key = credentials.access_key
         secret_key = credentials.secret_key
         session_token = credentials.token
@@ -115,7 +172,7 @@ class Endpoint:
 
 class Endpoints:
     
-    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None):
+    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None, role_arn=None):
         
         if neptune_endpoint is None:
             assert ('NEPTUNE_CLUSTER_ENDPOINT' in os.environ), 'neptune_endpoint is missing.'
@@ -131,9 +188,10 @@ class Endpoints:
         session = boto3.session.Session()
         
         self.region = region_name if region_name is not None else session.region_name
+        self.role_arn = role_arn
         
         if credentials is None:
-            self.credentials = session.get_credentials()
+            self.credentials = session.get_credentials() if role_arn is None else None
         else:
             self.credentials = credentials
             
@@ -160,5 +218,5 @@ class Endpoints:
         return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql/stream')
     
     def __endpoint(self, protocol, neptune_endpoint, neptune_port, suffix):
-        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials)
+        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn)
   
