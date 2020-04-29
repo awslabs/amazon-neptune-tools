@@ -253,6 +253,8 @@ print(g.V().limit(10).valueMap().toList())
 conn.close()
 ```
 
+Credentials generated via `sts.assume_role()` last an hour. If you have a long running Glue job, you may want to create a `RefreshableCredentials` object. See [this article](https://dev.to/li_chastina/auto-refresh-aws-tokens-using-iam-role-and-boto3-2cjf) for more details.
+
 If using a `GlueNeptuneConnectionInfo` object to get Neptune connection information from the Glue Data Catalog, simply pass the region and Neptune access IAM role ARN to the `GlueNeptuneConnectionInfo` constructor:
 
 ```
