@@ -30,6 +30,8 @@ The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_PORT` e
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
 
+GremlinUtils.init_statics(globals())
+
 gremlin_utils = GremlinUtils()
 
 conn = gremlin_utils.remote_connection()
@@ -45,6 +47,8 @@ If you want to supply your own endpoint information, you can use `neptune_endpoi
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
 from neptune_python_utils.endpoints import Endpoints
+
+GremlinUtils.init_statics(globals())
 
 endpoints = Endpoints(neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com')
 gremlin_utils = GremlinUtils(endpoints)
@@ -63,6 +67,8 @@ If you want to supply your own credentials, you can supply a `Credentials` objec
 from neptune_python_utils.gremlin_utils import GremlinUtils
 from neptune_python_utils.endpoints import Endpoints
 import boto3
+
+GremlinUtils.init_statics(globals())
 
 session = boto3.session.Session()
 credentials = session.get_credentials()
@@ -87,6 +93,8 @@ The following code creates a sessioned client. All requests sent using this clie
 
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
+
+GremlinUtils.init_statics(globals())
 
 gremlin_utils = GremlinUtils()
 
@@ -245,6 +253,8 @@ print(g.V().limit(10).valueMap().toList())
 conn.close()
 ```
 
+Credentials generated via `sts.assume_role()` last an hour. If you have a long running Glue job, you may want to create a `RefreshableCredentials` object. See [this article](https://dev.to/li_chastina/auto-refresh-aws-tokens-using-iam-role-and-boto3-2cjf) for more details.
+
 If using a `GlueNeptuneConnectionInfo` object to get Neptune connection information from the Glue Data Catalog, simply pass the region and Neptune access IAM role ARN to the `GlueNeptuneConnectionInfo` constructor:
 
 ```
@@ -272,7 +282,119 @@ role_arn = args['CONNECT_TO_NEPTUNE_ROLE_ARN']
 endpoints = GlueNeptuneConnectionInfo(region, role_arn).neptune_endpoints('neptune-db')
 ```
 
-### Examples
+### Using neptune-python-utils to insert or upsert data from an AWS Glue job
+
+The code below, taken from the sample Glue job [export-from-mysql-to-neptune.py](https://github.com/aws-samples/amazon-neptune-samples/blob/master/gremlin/glue-neptune/glue-jobs/mysql-neptune/export-from-mysql-to-neptune.py), shows extracting data from several tables in an RDBMS, formatting the dynamic frame columns according to the Neptune bulk load CSV column headings format, and then bulk loading direct into Neptune.
+
+Parallel inserts and upserts can sometimes trigger a `ConcurrentModifcationException`. _neptune-python-utils_ will attempt 5 retries for each batch should such exceptions occur. 
+
+```
+import sys, boto3, os
+
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from awsglue.transforms import ApplyMapping
+from awsglue.transforms import RenameField
+from awsglue.transforms import SelectFields
+from awsglue.dynamicframe import DynamicFrame
+from pyspark.sql.functions import lit
+from pyspark.sql.functions import format_string
+from gremlin_python import statics
+from gremlin_python.structure.graph import Graph
+from gremlin_python.process.graph_traversal import __
+from gremlin_python.process.strategies import *
+from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
+from gremlin_python.process.traversal import *
+from neptune_python_utils.glue_neptune_connection_info import GlueNeptuneConnectionInfo
+from neptune_python_utils.glue_gremlin_client import GlueGremlinClient
+from neptune_python_utils.glue_gremlin_csv_transforms import GlueGremlinCsvTransforms
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.gremlin_utils import GremlinUtils
+
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'DATABASE_NAME', 'NEPTUNE_CONNECTION_NAME', 'AWS_REGION', 'CONNECT_TO_NEPTUNE_ROLE_ARN'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+ 
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+database = args['DATABASE_NAME']
+product_table = 'salesdb_product'
+product_category_table = 'salesdb_product_category'
+supplier_table = 'salesdb_supplier'
+
+# Create Gremlin client
+
+gremlin_endpoints = GlueNeptuneConnectionInfo(args['AWS_REGION'], args['CONNECT_TO_NEPTUNE_ROLE_ARN']).neptune_endpoints(args['NEPTUNE_CONNECTION_NAME'])
+gremlin_client = GlueGremlinClient(gremlin_endpoints)
+
+# Create Product vertices
+
+print("Creating Product vertices...")
+
+# 1. Get data from source SQL database
+datasource0 = glueContext.create_dynamic_frame.from_catalog(database = database, table_name = product_table, transformation_ctx = "datasource0")
+datasource1 = glueContext.create_dynamic_frame.from_catalog(database = database, table_name = product_category_table, transformation_ctx = "datasource1")
+datasource2 = datasource0.join( ["CATEGORY_ID"],["CATEGORY_ID"], datasource1, transformation_ctx = "join")
+
+# 2. Map fields to bulk load CSV column headings format
+applymapping1 = ApplyMapping.apply(frame = datasource2, mappings = [("NAME", "string", "name:String", "string"), ("UNIT_PRICE", "decimal(10,2)", "unitPrice", "string"), ("PRODUCT_ID", "int", "productId", "int"), ("QUANTITY_PER_UNIT", "int", "quantityPerUnit:Int", "int"), ("CATEGORY_ID", "int", "category_id", "int"), ("SUPPLIER_ID", "int", "supplierId", "int"), ("CATEGORY_NAME", "string", "category:String", "string"), ("DESCRIPTION", "string", "description:String", "string"), ("IMAGE_URL", "string", "imageUrl:String", "string")], transformation_ctx = "applymapping1")
+
+# 3. Append prefixes to values in ID columns (ensures vertices for diffferent types have unique IDs across graph)
+applymapping1 = GlueGremlinCsvTransforms.create_prefixed_columns(applymapping1, [('~id', 'productId', 'p'),('~to', 'supplierId', 's')])
+
+# 4. Select fields for upsert
+selectfields1 = SelectFields.apply(frame = applymapping1, paths = ["~id", "name:String", "category:String", "description:String", "unitPrice", "quantityPerUnit:Int", "imageUrl:String"], transformation_ctx = "selectfields1")
+
+# 5. Upsert batches of vertices
+selectfields1.toDF().foreachPartition(gremlin_client.upsert_vertices('Product', batch_size=100))
+
+# Create Supplier vertices
+
+print("Creating Supplier vertices...")
+
+# 1. Get data from source SQL database
+datasource3 = glueContext.create_dynamic_frame.from_catalog(database = database, table_name = supplier_table, transformation_ctx = "datasource3")
+
+# 2. Map fields to bulk load CSV column headings format
+applymapping2 = ApplyMapping.apply(frame = datasource3, mappings = [("COUNTRY", "string", "country:String", "string"), ("ADDRESS", "string", "address:String", "string"), ("NAME", "string", "name:String", "string"), ("STATE", "string", "state:String", "string"), ("SUPPLIER_ID", "int", "supplierId", "int"), ("CITY", "string", "city:String", "string"), ("PHONE", "string", "phone:String", "string")], transformation_ctx = "applymapping1")
+
+# 3. Append prefixes to values in ID columns (ensures vertices for diffferent types have unique IDs across graph)
+applymapping2 = GlueGremlinCsvTransforms.create_prefixed_columns(applymapping2, [('~id', 'supplierId', 's')])
+
+# 4. Select fields for upsert
+selectfields3 = SelectFields.apply(frame = applymapping2, paths = ["~id", "country:String", "address:String", "city:String", "phone:String", "name:String", "state:String"], transformation_ctx = "selectfields3")
+
+# 5. Upsert batches of vertices
+selectfields3.toDF().foreachPartition(gremlin_client.upsert_vertices('Supplier', batch_size=100))
+
+# SUPPLIER edges
+
+print("Creating SUPPLIER edges...")
+
+# 1. Reuse existing DF, but rename ~id column to ~from
+applymapping1 = RenameField.apply(applymapping1, "~id", "~from")
+
+# 2. Create unique edge IDs
+applymapping1 = GlueGremlinCsvTransforms.create_edge_id_column(applymapping1, '~from', '~to')
+
+# 3. Select fields for upsert
+selectfields2 = SelectFields.apply(frame = applymapping1, paths = ["~id", "~from", "~to"], transformation_ctx = "selectfields2")
+
+# 4. Upsert batches of edges
+selectfields2.toDF().foreachPartition(gremlin_client.upsert_edges('SUPPLIER', batch_size=100))
+
+# End
+
+job.commit()
+
+print("Done")
+```
+
+### Further Examples
 
 See [Migrating from MySQL to Amazon Neptune using AWS Glue](https://github.com/aws-samples/amazon-neptune-samples/tree/master/gremlin/glue-neptune).
  
