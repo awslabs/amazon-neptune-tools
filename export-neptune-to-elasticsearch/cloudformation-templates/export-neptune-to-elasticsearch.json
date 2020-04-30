@@ -1,1124 +1,1133 @@
 {
-  "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Exports Neptune to ElasticSearch",
-  "Parameters": {
-    "KeyPairName": {
-      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the export EC2 instance.",
-      "Type": "AWS::EC2::KeyPair::KeyName",
-      "ConstraintDescription": "Must be the name of an existing EC2 KeyPair in the Region."
-    },
-    "Subnet1": {
-      "Description": "Subnet in your Neptune/ElasticSearch VPC with route to the internet.",
-      "Type": "AWS::EC2::Subnet::Id"
-    },
-    "NeptuneEndpoint": {
-      "Description": "Neptune endpoint. E.g. mycluster-xxxxyyyy.cluster-yyyyzzzz.us-east-1.neptune.amazonaws.com",
-      "AllowedPattern": "^(.+)$",
-      "ConstraintDescription": "Value cannot be blank. Must be a valid Neptune endpoint.",
-      "Type": "String"
-    },
-    "NeptunePort": {
-      "Description": "Neptune port.",
-      "Type": "String",
-      "Default": "8182"
-    },
-    "NeptuneEngine": {
-      "Description": "Neptune engine.",
-      "Type": "String",
-      "AllowedValues": [
-        "gremlin",
-        "sparql"
-      ]
-    },
-    "NeptuneClientSecurityGroup": {
-      "Description": "A VPC security group that neptune-export can use to access the Neptune cluster in your VPC.",
-      "Type": "String"
-    },
-    "Concurrency": {
-      "Type": "Number",
-      "Default": 2,
-      "MinValue": 1,
-      "MaxValue": 8,
-      "Description": "Determines number of client threads in neptune-export."
-    },
-    "KinesisShardCount": {
-      "Type": "Number",
-      "Default": 8,
-      "MinValue": 1,
-      "MaxValue": 64,
-      "Description": "Determines number of shards in the Kinesis Stream and degree of parallelism when importing to ElasticSearch."
-    },
-    "ExportScope": {
-      "Type": "String",
-      "Description": "Determines whether to export both nodes and edges, or nodes or edges only (Gremlin engine only).",
-      "Default": "all",
-      "AllowedValues": [
-        "all",
-        "edges",
-        "nodes"
-      ]
-    },
-    "BatchSize": {
-      "Type": "Number",
-      "Default": 100,
-      "MinValue": 1,
-      "MaxValue": 10000,
-      "Description": "Number of records to retrieve from Kinesis Stream in a batch. (A single property graph Kinesis Stream record may contain multiple Neptune Streams records)."
-    },
-    "ElasticSearchClientSecurityGroup": {
-      "Description": "A VPC security group that AWS lambda can use to access the ElasticSearch cluster in your VPC.",
-      "Type": "String"
-    },
-    "VPC": {
-      "Description": "ID of the VPC containing your Neptune and ElasticSearch clusters.",
-      "Type": "AWS::EC2::VPC::Id"
-    },
-    "ElasticSearchEndpoint": {
-      "Type": "String",
-      "AllowedPattern": "^(?!https://)(.+)$",
-      "ConstraintDescription": "Value cannot be blank. Must be a valid cluster endpoint without 'https://' prefix.",
-      "Description": "ElasticSearch VPC endpoint (without 'https://' prefix). E.g. vpc-neptunestream.us-east-1.es.amazonaws.com"
-    },
-    "NumberOfShards": {
-      "Type": "Number",
-      "Default": 5,
-      "Description": "Number of shards for ElasticSearch index. Default value is 5."
-    },
-    "NumberOfReplica": {
-      "Type": "Number",
-      "Default": 1,
-      "Description": "Number of replicas for ElasticSearch index. Default value is 1."
-    },
-    "GeoLocationFields": {
-      "Type": "String",
-      "Description": "Comma-delimited list of property keys to be mapped to Geo Point type in ElasticSearch. For example: location,area. Currently, for a field to be mapped to Geo Point type, value should be in the format 'latitude,longitude', e.g. '41.33,-11.69'"
-    }
-  },
-  "Metadata": {
-    "AWS::CloudFormation::Interface": {
-      "ParameterGroups": [
-        {
-          "Label": {
-            "default": "Network Configuration"
-          },
-          "Parameters": [
-            "KeyPairName",
-            "VPC",
-            "Subnet1"
-          ]
-        },
-        {
-          "Label": {
-            "default": "Neptune Configuration"
-          },
-          "Parameters": [
-            "NeptuneEndpoint",
-            "NeptunePort",
-            "NeptuneEngine",
-            "ExportScope",
-            "NeptuneClientSecurityGroup"
-          ]
-        },
-        {
-          "Label": {
-            "default": "ElasticSearch Configuration"
-          },
-          "Parameters": [
-            "ElasticSearchEndpoint",
-            "NumberOfShards",
-            "NumberOfReplica",
-            "GeoLocationFields",
-            "ElasticSearchClientSecurityGroup"
-          ]
-        },
-        {
-          "Label": {
-            "default": "Advanced"
-          },
-          "Parameters": [
-            "Concurrency",
-            "KinesisShardCount",
-            "BatchSize"
-          ]
-        }
-      ]
-    }
-  },
-  "Mappings": {
-    "ConcurrencyMap": {
-      "1": {
-        "Value": "4"
-      },
-      "2": {
-        "Value": "8"
-      },
-      "3": {
-        "Value": "12"
-      },
-      "4": {
-        "Value": "16"
-      },
-      "5": {
-        "Value": "20"
-      },
-      "6": {
-        "Value": "24"
-      },
-      "7": {
-        "Value": "28"
-      },
-      "8": {
-        "Value": "32"
-      }
-    }
-  },
-  "Resources": {
-    "KinesisStream": {
-      "Type": "AWS::Kinesis::Stream",
-      "Properties": {
-        "Name": {
-          "Fn::Sub": [
-            "neptune-export-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "ShardCount": {
-          "Ref": "KinesisShardCount"
-        }
-      }
-    },
-    "LambdaSelfReferencingSecurityGroup": {
-      "Properties": {
-        "GroupDescription": "Self-referencing security group for Lambda",
-        "VpcId": {
-          "Ref": "VPC"
-        }
-      },
-      "Type": "AWS::EC2::SecurityGroup"
-    },
-    "LambdaSelfReferencingSecurityGroupIngress": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "DependsOn": "LambdaSelfReferencingSecurityGroup",
-      "Properties": {
-        "GroupId": {
-          "Fn::GetAtt": [
-            "LambdaSelfReferencingSecurityGroup",
-            "GroupId"
-          ]
-        },
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "LambdaSelfReferencingSecurityGroup",
-            "GroupId"
-          ]
-        },
-        "IpProtocol": "-1"
-      }
-    },
-    "LambdaExecutionRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "lambda.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/",
-        "Policies": [
-          {
-            "PolicyName": "lambda-execution-role",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "logs:CreateLogGroup",
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents",
-                    "ec2:CreateNetworkInterface",
-                    "ec2:DescribeNetworkInterfaces",
-                    "ec2:DeleteNetworkInterface",
-                    "es:ESHttpDelete",
-                    "es:ESHttpGet",
-                    "es:ESHttpHead",
-                    "es:ESHttpPost",
-                    "es:ESHttpPut",
-                    "kinesis:DescribeStream",
-                    "kinesis:DescribeStreamSummary",
-                    "kinesis:GetRecords",
-                    "kinesis:GetShardIterator",
-                    "kinesis:ListShards",
-                    "kinesis:ListStreams",
-                    "kinesis:SubscribeToShard",
-                    "batch:SubmitJob"
-                  ],
-                  "Resource": "*"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "NeptuneStreamsLayer": {
-      "Type": "AWS::Lambda::LayerVersion",
-      "Properties": {
-        "CompatibleRuntimes": [
-          "python3.6"
-        ],
-        "Content": {
-          "S3Bucket": {
-            "Fn::Sub": "aws-neptune-customer-samples-${AWS::Region}"
-          },
-          "S3Key": {
-            "Fn::Join": [
-              "/",
-              [
-                "neptune-stream",
-                "lambda",
-                "python36",
-                "neptune-streams-layer.zip"
-              ]
-            ]
-          }
-        },
-        "Description": "Neptune Streams polling framework",
-        "LayerName": {
-          "Fn::Sub": [
-            "neptune-streams-layer-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    },
-    "NeptuneToElasticSearchLayer": {
-      "Type": "AWS::Lambda::LayerVersion",
-      "Properties": {
-        "CompatibleRuntimes": [
-          "python3.6"
-        ],
-        "Content": {
-          "S3Bucket": {
-            "Fn::Sub": "aws-neptune-customer-samples-${AWS::Region}"
-          },
-          "S3Key": {
-            "Fn::Join": [
-              "/",
-              [
-                "neptune-stream",
-                "lambda",
-                "python36",
-                "neptune-es-layer.zip"
-              ]
-            ]
-          }
-        },
-        "Description": "Neptune Streams polling framework",
-        "LayerName": {
-          "Fn::Sub": [
-            "neptune-to-es-layer-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    },
-    "NeptuneExportLambda": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "FunctionName": {
-          "Fn::Sub": [
-            "export-neptune-to-kinesis-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "Handler": "export_neptune_to_kinesis.lambda_handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "LambdaExecutionRole",
-            "Arn"
-          ]
-        },
-        "Code": {
-          "S3Bucket": {
-            "Fn::Join": [
-              "",
-              [
-                "aws-neptune-customer-samples-",
-                {
-                  "Ref": "AWS::Region"
-                }
-              ]
-            ]
-          },
-          "S3Key": "neptune-sagemaker/lambda/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.zip"
-        },
-        "Environment": {
-          "Variables": {
-            "NEPTUNE_ENDPOINT": {
-              "Ref": "NeptuneEndpoint"
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Exports Neptune to ElasticSearch",
+	"Parameters": {
+		"KeyPairName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the export EC2 instance.",
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"ConstraintDescription": "Must be the name of an existing EC2 KeyPair in the Region."
+		},
+		"Subnet1": {
+			"Description": "Subnet in your Neptune/ElasticSearch VPC with route to the internet.",
+			"Type": "AWS::EC2::Subnet::Id"
+		},
+		"NeptuneEndpoint": {
+			"Description": "Neptune endpoint. E.g. mycluster-xxxxyyyy.cluster-yyyyzzzz.us-east-1.neptune.amazonaws.com",
+			"AllowedPattern": "^(.+)$",
+			"ConstraintDescription": "Value cannot be blank. Must be a valid Neptune endpoint.",
+			"Type": "String"
+		},
+		"NeptunePort": {
+			"Description": "Neptune port.",
+			"Type": "String",
+			"Default": "8182"
+		},
+		"NeptuneEngine": {
+			"Description": "Neptune engine.",
+			"Type": "String",
+			"AllowedValues": [
+				"gremlin",
+				"sparql"
+			]
+		},
+		"NeptuneClientSecurityGroup": {
+			"Description": "A VPC security group that neptune-export can use to access the Neptune cluster in your VPC.",
+			"Type": "String"
+		},
+		"Concurrency": {
+			"Type": "Number",
+			"Default": 2,
+			"MinValue": 1,
+			"MaxValue": 8,
+			"Description": "Determines number of client threads in neptune-export."
+		},
+		"KinesisShardCount": {
+			"Type": "Number",
+			"Default": 8,
+			"MinValue": 1,
+			"MaxValue": 64,
+			"Description": "Determines number of shards in the Kinesis Stream and degree of parallelism when importing to ElasticSearch."
+		},
+		"ExportScope": {
+			"Type": "String",
+			"Description": "Determines whether to export both nodes and edges, or nodes or edges only (Gremlin engine only).",
+			"Default": "all",
+			"AllowedValues": [
+				"all",
+				"edges",
+				"nodes"
+			]
+		},
+		"AdditionalParams": {
+			"Type": "String",
+			"Description": "Allows you to specify additional parameters to neptune-export, e.g. '--max-content-length 131072'. See https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export for documentation of neptune-export params.",
+			"Default": ""
+		},
+		"BatchSize": {
+			"Type": "Number",
+			"Default": 100,
+			"MinValue": 1,
+			"MaxValue": 10000,
+			"Description": "Number of records to retrieve from Kinesis Stream in a batch. (A single property graph Kinesis Stream record may contain multiple Neptune Streams records)."
+		},
+		"ElasticSearchClientSecurityGroup": {
+			"Description": "A VPC security group that AWS lambda can use to access the ElasticSearch cluster in your VPC.",
+			"Type": "String"
+		},
+		"VPC": {
+			"Description": "ID of the VPC containing your Neptune and ElasticSearch clusters.",
+			"Type": "AWS::EC2::VPC::Id"
+		},
+		"ElasticSearchEndpoint": {
+			"Type": "String",
+			"AllowedPattern": "^(?!https://)(.+)$",
+			"ConstraintDescription": "Value cannot be blank. Must be a valid cluster endpoint without 'https://' prefix.",
+			"Description": "ElasticSearch VPC endpoint (without 'https://' prefix). E.g. vpc-neptunestream.us-east-1.es.amazonaws.com"
+		},
+		"NumberOfShards": {
+			"Type": "Number",
+			"Default": 5,
+			"Description": "Number of shards for ElasticSearch index. Default value is 5."
+		},
+		"NumberOfReplica": {
+			"Type": "Number",
+			"Default": 1,
+			"Description": "Number of replicas for ElasticSearch index. Default value is 1."
+		},
+		"GeoLocationFields": {
+			"Type": "String",
+			"Description": "Comma-delimited list of property keys to be mapped to Geo Point type in ElasticSearch. For example: location,area. Currently, for a field to be mapped to Geo Point type, value should be in the format 'latitude,longitude', e.g. '41.33,-11.69'"
+		}
+	},
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [
+				{
+					"Label": {
+						"default": "Network Configuration"
+					},
+					"Parameters": [
+						"KeyPairName",
+						"VPC",
+						"Subnet1"
+					]
+				},
+				{
+					"Label": {
+						"default": "Neptune Configuration"
+					},
+					"Parameters": [
+						"NeptuneEndpoint",
+						"NeptunePort",
+						"NeptuneEngine",
+						"ExportScope",
+						"NeptuneClientSecurityGroup",
+						"AdditionalParams"
+					]
+				},
+				{
+					"Label": {
+						"default": "ElasticSearch Configuration"
+					},
+					"Parameters": [
+						"ElasticSearchEndpoint",
+						"NumberOfShards",
+						"NumberOfReplica",
+						"GeoLocationFields",
+						"ElasticSearchClientSecurityGroup"
+					]
+				},
+				{
+					"Label": {
+						"default": "Advanced"
+					},
+					"Parameters": [
+						"Concurrency",
+						"KinesisShardCount",
+						"BatchSize"
+					]
+				}
+			]
+		}
+	},
+	"Mappings": {
+		"ConcurrencyMap": {
+			"1": {
+				"Value": "4"
+			},
+			"2": {
+				"Value": "8"
+			},
+			"3": {
+				"Value": "12"
+			},
+			"4": {
+				"Value": "16"
+			},
+			"5": {
+				"Value": "20"
+			},
+			"6": {
+				"Value": "24"
+			},
+			"7": {
+				"Value": "28"
+			},
+			"8": {
+				"Value": "32"
+			}
+		}
+	},
+	"Resources": {
+		"KinesisStream": {
+			"Type": "AWS::Kinesis::Stream",
+			"Properties": {
+				"Name": {
+					"Fn::Sub": [
+						"neptune-export-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				},
+				"ShardCount": {
+					"Ref": "KinesisShardCount"
+				}
+			}
+		},
+		"LambdaSelfReferencingSecurityGroup": {
+			"Properties": {
+				"GroupDescription": "Self-referencing security group for Lambda",
+				"VpcId": {
+					"Ref": "VPC"
+				}
+			},
+			"Type": "AWS::EC2::SecurityGroup"
+		},
+		"LambdaSelfReferencingSecurityGroupIngress": {
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"DependsOn": "LambdaSelfReferencingSecurityGroup",
+			"Properties": {
+				"GroupId": {
+					"Fn::GetAtt": [
+						"LambdaSelfReferencingSecurityGroup",
+						"GroupId"
+					]
+				},
+				"SourceSecurityGroupId": {
+					"Fn::GetAtt": [
+						"LambdaSelfReferencingSecurityGroup",
+						"GroupId"
+					]
+				},
+				"IpProtocol": "-1"
+			}
+		},
+		"LambdaExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"lambda.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"Policies": [
+					{
+						"PolicyName": "lambda-execution-role",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:PutLogEvents",
+										"ec2:CreateNetworkInterface",
+										"ec2:DescribeNetworkInterfaces",
+										"ec2:DeleteNetworkInterface",
+										"es:ESHttpDelete",
+										"es:ESHttpGet",
+										"es:ESHttpHead",
+										"es:ESHttpPost",
+										"es:ESHttpPut",
+										"kinesis:DescribeStream",
+										"kinesis:DescribeStreamSummary",
+										"kinesis:GetRecords",
+										"kinesis:GetShardIterator",
+										"kinesis:ListShards",
+										"kinesis:ListStreams",
+										"kinesis:SubscribeToShard",
+										"batch:SubmitJob"
+									],
+									"Resource": "*"
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"NeptuneStreamsLayer": {
+			"Type": "AWS::Lambda::LayerVersion",
+			"Properties": {
+				"CompatibleRuntimes": [
+					"python3.6"
+				],
+				"Content": {
+					"S3Bucket": {
+						"Fn::Sub": "aws-neptune-customer-samples-${AWS::Region}"
+					},
+					"S3Key": {
+						"Fn::Join": [
+							"/",
+							[
+								"neptune-stream",
+								"lambda",
+								"python36",
+								"neptune-streams-layer.zip"
+							]
+						]
+					}
+				},
+				"Description": "Neptune Streams polling framework",
+				"LayerName": {
+					"Fn::Sub": [
+						"neptune-streams-layer-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"NeptuneToElasticSearchLayer": {
+			"Type": "AWS::Lambda::LayerVersion",
+			"Properties": {
+				"CompatibleRuntimes": [
+					"python3.6"
+				],
+				"Content": {
+					"S3Bucket": {
+						"Fn::Sub": "aws-neptune-customer-samples-${AWS::Region}"
+					},
+					"S3Key": {
+						"Fn::Join": [
+							"/",
+							[
+								"neptune-stream",
+								"lambda",
+								"python36",
+								"neptune-es-layer.zip"
+							]
+						]
+					}
+				},
+				"Description": "Neptune Streams polling framework",
+				"LayerName": {
+					"Fn::Sub": [
+						"neptune-to-es-layer-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"NeptuneExportLambda": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": {
+					"Fn::Sub": [
+						"export-neptune-to-kinesis-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				},
+				"Handler": "export_neptune_to_kinesis.lambda_handler",
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaExecutionRole",
+						"Arn"
+					]
+				},
+				"Code": {
+					"S3Bucket": {
+						"Fn::Join": [
+							"",
+							[
+								"aws-neptune-customer-samples-",
+								{
+									"Ref": "AWS::Region"
+								}
+							]
+						]
+					},
+					"S3Key": "neptune-sagemaker/lambda/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.zip"
+				},
+				"Environment": {
+					"Variables": {
+						"NEPTUNE_ENDPOINT": {
+							"Ref": "NeptuneEndpoint"
+						},
+						"NEPTUNE_PORT": {
+							"Ref": "NeptunePort"
+						},
+						"NEPTUNE_ENGINE": {
+							"Ref": "NeptuneEngine"
+						},
+						"NEPTUNE_EXPORT_JAR_URI": "https://aws-neptune-customer-samples-eu-west-1.s3-eu-west-1.amazonaws.com/neptune-sagemaker/bin/neptune-export/neptune-export.jar",
+						"STREAM_NAME": {
+							"Ref": "KinesisStream"
+						},
+						"EXPORT_SCOPE": {
+							"Ref": "ExportScope"
+						},
+						"CONCURRENCY": {
+							"Ref": "Concurrency"
+						},
+            "ADDITIONAL_PARAMS": {
+              "Ref": "AdditionalParams"
             },
-            "NEPTUNE_PORT": {
-              "Ref": "NeptunePort"
-            },
-            "NEPTUNE_ENGINE": {
-              "Ref": "NeptuneEngine"
-            },
-            "NEPTUNE_EXPORT_JAR_URI": "https://aws-neptune-customer-samples-eu-west-1.s3-eu-west-1.amazonaws.com/neptune-sagemaker/bin/neptune-export/neptune-export.jar",
-            "STREAM_NAME": {
-              "Ref": "KinesisStream"
-            },
-            "EXPORT_SCOPE": {
-              "Ref": "ExportScope"
-            },
-            "CONCURRENCY": {
-              "Ref": "Concurrency"
-            },
-            "JOB_SUFFIX": {
-              "Fn::Sub": [
-                "${id}",
-                {
-                  "id": {
-                    "Fn::Select": [
-                      0,
-                      {
-                        "Fn::Split": [
-                          "-",
-                          {
-                            "Fn::Select": [
-                              2,
-                              {
-                                "Fn::Split": [
-                                  "/",
-                                  {
-                                    "Ref": "AWS::StackId"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        },
-        "MemorySize": 128,
-        "Runtime": "python3.6",
-        "Timeout": "30",
-        "ReservedConcurrentExecutions": 1
-      }
-    },
-    "KinesisToElasticSearchLambda": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "FunctionName": {
-          "Fn::Sub": [
-            "kinesis-to-elasticsearch-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "Handler": "kinesis_to_elasticsearch.lambda_bulk_handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "LambdaExecutionRole",
-            "Arn"
-          ]
-        },
-        "Code": {
-          "S3Bucket": {
-            "Fn::Join": [
-              "",
-              [
-                "aws-neptune-customer-samples-",
-                {
-                  "Ref": "AWS::Region"
-                }
-              ]
-            ]
-          },
-          "S3Key": "neptune-sagemaker/lambda/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.zip"
-        },
-        "Layers": [
-          {
-            "Ref": "NeptuneStreamsLayer"
-          },
-          {
-            "Ref": "NeptuneToElasticSearchLayer"
-          }
-        ],
-        "Environment": {
-          "Variables": {
-            "AdditionalParams": {
-              "Fn::Join": [
-                "",
-                [
-                  "{",
-                  "\"ElasticSearchEndpoint\": \"",
-                  {
-                    "Ref": "ElasticSearchEndpoint"
-                  },
-                  "\",",
-                  "\"NumberOfShards\": \"",
-                  {
-                    "Ref": "NumberOfShards"
-                  },
-                  "\",",
-                  "\"NumberOfReplica\": \"",
-                  {
-                    "Ref": "NumberOfReplica"
-                  },
-                  "\",",
-                  "\"GeoLocationFields\": \"",
-                  {
-                    "Ref": "GeoLocationFields"
-                  },
-                  "\"",
-                  "}"
-                ]
-              ]
-            },
-            "NEPTUNE_ENGINE": {
-              "Ref": "NeptuneEngine"
-            },
-            "STREAM_NAME": {
-              "Ref": "KinesisStream"
-            }
-          }
-        },
-        "MemorySize": 512,
-        "Runtime": "python3.6",
-        "Timeout": "900",
-        "ReservedConcurrentExecutions": {
-          "Ref": "KinesisShardCount"
-        },
-        "VpcConfig": {
-          "SecurityGroupIds": [
-            {
-              "Ref": "LambdaSelfReferencingSecurityGroup"
-            },
-            {
-              "Ref": "ElasticSearchClientSecurityGroup"
-            }
-          ],
-          "SubnetIds": [
-            {
-              "Ref": "Subnet1"
-            }
-          ]
-        }
-      }
-    },
-    "EventSourceMapping": {
-      "Type": "AWS::Lambda::EventSourceMapping",
-      "Properties": {
-        "EventSourceArn": {
-          "Fn::GetAtt": [
-            "KinesisStream",
-            "Arn"
-          ]
-        },
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "KinesisToElasticSearchLambda",
-            "Arn"
-          ]
-        },
-        "BatchSize": {
-          "Ref": "BatchSize"
-        },
-        "StartingPosition": "LATEST"
-      }
-    },
-    "BatchExecutionRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "batch.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/",
-        "ManagedPolicyArns": [
-          "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"
-        ]
-      }
-    },
-    "BatchJobRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "ecs-tasks.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/",
-        "Policies": [
-          {
-            "PolicyName": "batch-job-role",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "cloudwatch:*"
-                  ],
-                  "Resource": "*"
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "kinesis:*"
-                  ],
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "KinesisStream",
-                      "Arn"
-                    ]
-                  }
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "neptune-db:*"
-                  ],
-                  "Resource": [
-                    {
-                      "Fn::Sub": "arn:aws:neptune-db:${AWS::Region}:${AWS::AccountId}:*/*"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    "ECSRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "ec2.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Path": "/",
-        "ManagedPolicyArns": [
-          "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-        ]
-      }
-    },
-    "ECSRoleInstanceProfile": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Path": "/",
-        "Roles": [
-          {
-            "Ref": "ECSRole"
-          }
-        ]
-      },
-      "DependsOn": [
-        "ECSRole"
-      ]
-    },
-    "BatchSelfReferencingSecurityGroup": {
-      "Properties": {
-        "GroupDescription": "Self-referencing security group for Batch",
-        "VpcId": {
-          "Ref": "VPC"
-        }
-      },
-      "Type": "AWS::EC2::SecurityGroup"
-    },
-    "BatchSelfReferencingSecurityGroupIngress": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "DependsOn": "BatchSelfReferencingSecurityGroup",
-      "Properties": {
-        "GroupId": {
-          "Fn::GetAtt": [
-            "BatchSelfReferencingSecurityGroup",
-            "GroupId"
-          ]
-        },
-        "SourceSecurityGroupId": {
-          "Fn::GetAtt": [
-            "BatchSelfReferencingSecurityGroup",
-            "GroupId"
-          ]
-        },
-        "IpProtocol": "-1"
-      }
-    },
-    "BatchAllowAllSecurityGroupIngress": {
-      "Type": "AWS::EC2::SecurityGroupIngress",
-      "DependsOn": "BatchSelfReferencingSecurityGroup",
-      "Properties": {
-        "GroupId": {
-          "Fn::GetAtt": [
-            "BatchSelfReferencingSecurityGroup",
-            "GroupId"
-          ]
-        },
-        "CidrIp": "0.0.0.0/0",
-        "IpProtocol": "-1"
-      }
-    },
-    "LaunchTemplate": {
-      "Type": "AWS::EC2::LaunchTemplate",
-      "Properties": {
-        "LaunchTemplateName": "increase-container-volume",
-        "LaunchTemplateData": {
-          "UserData": {
-            "Fn::Base64": {
-              "Fn::Join": [
-                "",
-                [
-                  "MIME-Version: 1.0\n",
-                  "Content-Type: multipart/mixed; boundary=\"==MYBOUNDARY==\"\n",
-                  "\n",
-                  "--==MYBOUNDARY==\n",
-                  "Content-Type: text/cloud-config; charset=\"us-ascii\"\n",
-                  "\n",
-                  "runcmd:\n",
-                  "- file_system_id_01=/dev/nvme2n1\n",
-                  "- my_directory=/mnt/neptune\n",
-                  "\n",
-                  "- mkdir -p ${my_directory}\n",
-                  "- echo \"${file_system_id_01} ${my_directory} auto defaults 0 0\" >> /etc/fstab\n",
-                  "- mkfs -t ext4 ${file_system_id_01}\n",
-                  "- mount ${file_system_id_01} ${my_directory}\n",
-                  "\n",
-                  "--==MYBOUNDARY==--\n"
-                ]
-              ]
-            }
-          },
-          "BlockDeviceMappings": [
-            {
-              "DeviceName": "/dev/sdb",
-              "Ebs": {
-                "DeleteOnTermination": true,
-                "VolumeType": "io1",
-                "Iops": "50000",
-                "VolumeSize": "1000"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "ComputeEnvironment": {
-      "Type": "AWS::Batch::ComputeEnvironment",
-      "DependsOn": [
-        "BatchExecutionRole",
-        "BatchSelfReferencingSecurityGroup",
-        "ECSRole"
-      ],
-      "Properties": {
-        "Type": "MANAGED",
-        "ServiceRole": {
-          "Fn::GetAtt": [
-            "BatchExecutionRole",
-            "Arn"
-          ]
-        },
-        "ComputeEnvironmentName": {
-          "Fn::Sub": [
-            "export-neptune-to-kinesis-compute-environment-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "ComputeResources": {
-          "Ec2KeyPair": {
-            "Ref": "KeyPairName"
-          },
-          "LaunchTemplate": {
-            "LaunchTemplateId": {
-              "Ref": "LaunchTemplate"
-            }
-          },
-          "MaxvCpus": 128,
-          "SecurityGroupIds": [
-            {
-              "Ref": "BatchSelfReferencingSecurityGroup"
-            },
-            {
-              "Ref": "NeptuneClientSecurityGroup"
-            }
-          ],
-          "Type": "EC2",
-          "Subnets": [
-            {
-              "Ref": "Subnet1"
-            }
-          ],
-          "MinvCpus": 0,
-          "InstanceRole": {
-            "Fn::GetAtt": [
-              "ECSRoleInstanceProfile",
-              "Arn"
-            ]
-          },
-          "InstanceTypes": [
-            "m5d.2xlarge"
-          ]
-        },
-        "State": "ENABLED"
-      }
-    },
-    "JobQueue": {
-      "Type": "AWS::Batch::JobQueue",
-      "DependsOn": "ComputeEnvironment",
-      "Properties": {
-        "ComputeEnvironmentOrder": [
-          {
-            "Order": 1,
-            "ComputeEnvironment": {
-              "Ref": "ComputeEnvironment"
-            }
-          }
-        ],
-        "State": "ENABLED",
-        "Priority": 1,
-        "JobQueueName": {
-          "Fn::Sub": [
-            "export-neptune-to-kinesis-queue-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    },
-    "JobDefinition": {
-      "Type": "AWS::Batch::JobDefinition",
-      "DependsOn": "BatchJobRole",
-      "Properties": {
-        "Type": "container",
-        "JobDefinitionName": {
-          "Fn::Sub": [
-            "export-neptune-to-kinesis-job-${id}",
-            {
-              "id": {
-                "Fn::Select": [
-                  0,
-                  {
-                    "Fn::Split": [
-                      "-",
-                      {
-                        "Fn::Select": [
-                          2,
-                          {
-                            "Fn::Split": [
-                              "/",
-                              {
-                                "Ref": "AWS::StackId"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "ContainerProperties": {
-          "Memory": 16000,
-          "Ulimits": [
-            {
-              "HardLimit": 10000,
-              "Name": "nofile",
-              "SoftLimit": 10000
-            }
-          ],
-          "JobRoleArn": {
-            "Fn::GetAtt": [
-              "BatchJobRole",
-              "Arn"
-            ]
-          },
-          "Vcpus": 8,
-          "Image": "openjdk:8",
-          "Environment": [
+						"JOB_SUFFIX": {
+							"Fn::Sub": [
+								"${id}",
+								{
+									"id": {
+										"Fn::Select": [
+											0,
+											{
+												"Fn::Split": [
+													"-",
+													{
+														"Fn::Select": [
+															2,
+															{
+																"Fn::Split": [
+																	"/",
+																	{
+																		"Ref": "AWS::StackId"
+																	}
+																]
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				},
+				"MemorySize": 128,
+				"Runtime": "python3.8",
+				"Timeout": "30",
+				"ReservedConcurrentExecutions": 1
+			}
+		},
+		"KinesisToElasticSearchLambda": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": {
+					"Fn::Sub": [
+						"kinesis-to-elasticsearch-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				},
+				"Handler": "kinesis_to_elasticsearch.lambda_bulk_handler",
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaExecutionRole",
+						"Arn"
+					]
+				},
+				"Code": {
+					"S3Bucket": {
+						"Fn::Join": [
+							"",
+							[
+								"aws-neptune-customer-samples-",
+								{
+									"Ref": "AWS::Region"
+								}
+							]
+						]
+					},
+					"S3Key": "neptune-sagemaker/lambda/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.zip"
+				},
+				"Layers": [
+					{
+						"Ref": "NeptuneStreamsLayer"
+					},
+					{
+						"Ref": "NeptuneToElasticSearchLayer"
+					}
+				],
+				"Environment": {
+					"Variables": {
+						"AdditionalParams": {
+							"Fn::Join": [
+								"",
+								[
+									"{",
+									"\"ElasticSearchEndpoint\": \"",
+									{
+										"Ref": "ElasticSearchEndpoint"
+									},
+									"\",",
+									"\"NumberOfShards\": \"",
+									{
+										"Ref": "NumberOfShards"
+									},
+									"\",",
+									"\"NumberOfReplica\": \"",
+									{
+										"Ref": "NumberOfReplica"
+									},
+									"\",",
+									"\"GeoLocationFields\": \"",
+									{
+										"Ref": "GeoLocationFields"
+									},
+									"\"",
+									"}"
+								]
+							]
+						},
+						"NEPTUNE_ENGINE": {
+							"Ref": "NeptuneEngine"
+						},
+						"STREAM_NAME": {
+							"Ref": "KinesisStream"
+						}
+					}
+				},
+				"MemorySize": 512,
+				"Runtime": "python3.8",
+				"Timeout": "900",
+				"ReservedConcurrentExecutions": {
+					"Ref": "KinesisShardCount"
+				},
+				"VpcConfig": {
+					"SecurityGroupIds": [
+						{
+							"Ref": "LambdaSelfReferencingSecurityGroup"
+						},
+						{
+							"Ref": "ElasticSearchClientSecurityGroup"
+						}
+					],
+					"SubnetIds": [
+						{
+							"Ref": "Subnet1"
+						}
+					]
+				}
+			}
+		},
+		"EventSourceMapping": {
+			"Type": "AWS::Lambda::EventSourceMapping",
+			"Properties": {
+				"EventSourceArn": {
+					"Fn::GetAtt": [
+						"KinesisStream",
+						"Arn"
+					]
+				},
+				"FunctionName": {
+					"Fn::GetAtt": [
+						"KinesisToElasticSearchLambda",
+						"Arn"
+					]
+				},
+				"BatchSize": {
+					"Ref": "BatchSize"
+				},
+				"StartingPosition": "LATEST"
+			}
+		},
+		"BatchExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"batch.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"
+				]
+			}
+		},
+		"BatchJobRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"ecs-tasks.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"Policies": [
+					{
+						"PolicyName": "batch-job-role",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"cloudwatch:*"
+									],
+									"Resource": "*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"kinesis:*"
+									],
+									"Resource": {
+										"Fn::GetAtt": [
+											"KinesisStream",
+											"Arn"
+										]
+									}
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"neptune-db:*"
+									],
+									"Resource": [
+										{
+											"Fn::Sub": "arn:aws:neptune-db:${AWS::Region}:${AWS::AccountId}:*/*"
+										}
+									]
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"ECSRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"ec2.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+				]
+			}
+		},
+		"ECSRoleInstanceProfile": {
+			"Type": "AWS::IAM::InstanceProfile",
+			"Properties": {
+				"Path": "/",
+				"Roles": [
+					{
+						"Ref": "ECSRole"
+					}
+				]
+			},
+			"DependsOn": [
+				"ECSRole"
+			]
+		},
+		"BatchSelfReferencingSecurityGroup": {
+			"Properties": {
+				"GroupDescription": "Self-referencing security group for Batch",
+				"VpcId": {
+					"Ref": "VPC"
+				}
+			},
+			"Type": "AWS::EC2::SecurityGroup"
+		},
+		"BatchSelfReferencingSecurityGroupIngress": {
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"DependsOn": "BatchSelfReferencingSecurityGroup",
+			"Properties": {
+				"GroupId": {
+					"Fn::GetAtt": [
+						"BatchSelfReferencingSecurityGroup",
+						"GroupId"
+					]
+				},
+				"SourceSecurityGroupId": {
+					"Fn::GetAtt": [
+						"BatchSelfReferencingSecurityGroup",
+						"GroupId"
+					]
+				},
+				"IpProtocol": "-1"
+			}
+		},
+		"BatchAllowAllSecurityGroupIngress": {
+			"Type": "AWS::EC2::SecurityGroupIngress",
+			"DependsOn": "BatchSelfReferencingSecurityGroup",
+			"Properties": {
+				"GroupId": {
+					"Fn::GetAtt": [
+						"BatchSelfReferencingSecurityGroup",
+						"GroupId"
+					]
+				},
+				"CidrIp": "0.0.0.0/0",
+				"IpProtocol": "-1"
+			}
+		},
+		"LaunchTemplate": {
+			"Type": "AWS::EC2::LaunchTemplate",
+			"Properties": {
+				"LaunchTemplateName": "increase-container-volume",
+				"LaunchTemplateData": {
+					"UserData": {
+						"Fn::Base64": {
+							"Fn::Join": [
+								"",
+								[
+									"MIME-Version: 1.0\n",
+									"Content-Type: multipart/mixed; boundary=\"==MYBOUNDARY==\"\n",
+									"\n",
+									"--==MYBOUNDARY==\n",
+									"Content-Type: text/cloud-config; charset=\"us-ascii\"\n",
+									"\n",
+									"runcmd:\n",
+									"- file_system_id_01=/dev/nvme2n1\n",
+									"- my_directory=/mnt/neptune\n",
+									"\n",
+									"- mkdir -p ${my_directory}\n",
+									"- echo \"${file_system_id_01} ${my_directory} auto defaults 0 0\" >> /etc/fstab\n",
+									"- mkfs -t ext4 ${file_system_id_01}\n",
+									"- mount ${file_system_id_01} ${my_directory}\n",
+									"\n",
+									"--==MYBOUNDARY==--\n"
+								]
+							]
+						}
+					},
+					"BlockDeviceMappings": [
+						{
+							"DeviceName": "/dev/sdb",
+							"Ebs": {
+								"DeleteOnTermination": true,
+								"VolumeType": "io1",
+								"Iops": "50000",
+								"VolumeSize": "1000"
+							}
+						}
+					]
+				}
+			}
+		},
+		"ComputeEnvironment": {
+			"Type": "AWS::Batch::ComputeEnvironment",
+			"DependsOn": [
+				"BatchExecutionRole",
+				"BatchSelfReferencingSecurityGroup",
+				"ECSRole"
+			],
+			"Properties": {
+				"Type": "MANAGED",
+				"ServiceRole": {
+					"Fn::GetAtt": [
+						"BatchExecutionRole",
+						"Arn"
+					]
+				},
+				"ComputeEnvironmentName": {
+					"Fn::Sub": [
+						"export-neptune-to-kinesis-compute-environment-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				},
+				"ComputeResources": {
+					"Ec2KeyPair": {
+						"Ref": "KeyPairName"
+					},
+					"LaunchTemplate": {
+						"LaunchTemplateId": {
+							"Ref": "LaunchTemplate"
+						}
+					},
+					"MaxvCpus": 128,
+					"SecurityGroupIds": [
+						{
+							"Ref": "BatchSelfReferencingSecurityGroup"
+						},
+						{
+							"Ref": "NeptuneClientSecurityGroup"
+						}
+					],
+					"Type": "EC2",
+					"Subnets": [
+						{
+							"Ref": "Subnet1"
+						}
+					],
+					"MinvCpus": 0,
+					"InstanceRole": {
+						"Fn::GetAtt": [
+							"ECSRoleInstanceProfile",
+							"Arn"
+						]
+					},
+					"InstanceTypes": [
+						"m5d.2xlarge"
+					]
+				},
+				"State": "ENABLED"
+			}
+		},
+		"JobQueue": {
+			"Type": "AWS::Batch::JobQueue",
+			"DependsOn": "ComputeEnvironment",
+			"Properties": {
+				"ComputeEnvironmentOrder": [
+					{
+						"Order": 1,
+						"ComputeEnvironment": {
+							"Ref": "ComputeEnvironment"
+						}
+					}
+				],
+				"State": "ENABLED",
+				"Priority": 1,
+				"JobQueueName": {
+					"Fn::Sub": [
+						"export-neptune-to-kinesis-queue-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"JobDefinition": {
+			"Type": "AWS::Batch::JobDefinition",
+			"DependsOn": "BatchJobRole",
+			"Properties": {
+				"Type": "container",
+				"JobDefinitionName": {
+					"Fn::Sub": [
+						"export-neptune-to-kinesis-job-${id}",
+						{
+							"id": {
+								"Fn::Select": [
+									0,
+									{
+										"Fn::Split": [
+											"-",
+											{
+												"Fn::Select": [
+													2,
+													{
+														"Fn::Split": [
+															"/",
+															{
+																"Ref": "AWS::StackId"
+															}
+														]
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				},
+				"ContainerProperties": {
+					"Memory": 16000,
+					"Ulimits": [
+						{
+							"HardLimit": 10000,
+							"Name": "nofile",
+							"SoftLimit": 10000
+						}
+					],
+					"JobRoleArn": {
+						"Fn::GetAtt": [
+							"BatchJobRole",
+							"Arn"
+						]
+					},
+					"Vcpus": 8,
+					"Image": "openjdk:8",
+					"Environment": [
 
-          ],
-          "Volumes": [
-            {
-              "Host": {
-                "SourcePath": "/mnt/neptune"
-              },
-              "Name": "neptune"
-            }
-          ],
-          "MountPoints": [
-            {
-              "ContainerPath": "/neptune",
-              "ReadOnly": false,
-              "SourceVolume": "neptune"
-            }
-          ]
-        }
-      }
-    }
-  },
-  "Outputs": {
-    "StartExportCommand": {
-      "Description": "CLI command to start export from Neptune to ElasticSearch",
-      "Value": {
-        "Fn::Join": [
-          "",
-          [
-            "aws lambda invoke --function-name ",
-            {
-              "Fn::GetAtt": [
-                "NeptuneExportLambda",
-                "Arn"
-              ]
-            },
-            " --region ",
-            {
-              "Ref": "AWS::Region"
-            },
-            " /dev/stdout"
-          ]
-        ]
-      }
-    },
-    "KinesisToElasticSearchLambda": {
-      "Description": "KinesisToElasticSearch Lambda",
-      "Value": {
-        "Ref": "KinesisToElasticSearchLambda"
-      }
-    },
-    "NeptuneExportLambda": {
-      "Description": "NeptuneExport Lambda",
-      "Value": {
-        "Ref": "NeptuneExportLambda"
-      }
-    },
-    "KinesisStream": {
-      "Description": "Kinesis Stream",
-      "Value": {
-        "Ref": "KinesisStream"
-      }
-    }
-  }
+					],
+					"Volumes": [
+						{
+							"Host": {
+								"SourcePath": "/mnt/neptune"
+							},
+							"Name": "neptune"
+						}
+					],
+					"MountPoints": [
+						{
+							"ContainerPath": "/neptune",
+							"ReadOnly": false,
+							"SourceVolume": "neptune"
+						}
+					]
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"StartExportCommand": {
+			"Description": "CLI command to start export from Neptune to ElasticSearch",
+			"Value": {
+				"Fn::Join": [
+					"",
+					[
+						"aws lambda invoke --function-name ",
+						{
+							"Fn::GetAtt": [
+								"NeptuneExportLambda",
+								"Arn"
+							]
+						},
+						" --region ",
+						{
+							"Ref": "AWS::Region"
+						},
+						" /dev/stdout"
+					]
+				]
+			}
+		},
+		"KinesisToElasticSearchLambda": {
+			"Description": "KinesisToElasticSearch Lambda",
+			"Value": {
+				"Ref": "KinesisToElasticSearchLambda"
+			}
+		},
+		"NeptuneExportLambda": {
+			"Description": "NeptuneExport Lambda",
+			"Value": {
+				"Ref": "NeptuneExportLambda"
+			}
+		},
+		"KinesisStream": {
+			"Description": "Kinesis Stream",
+			"Value": {
+				"Ref": "KinesisStream"
+			}
+		}
+	}
 }
