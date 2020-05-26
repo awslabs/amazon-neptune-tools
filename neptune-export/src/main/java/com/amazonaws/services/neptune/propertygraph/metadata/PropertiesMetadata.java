@@ -59,6 +59,7 @@ public class PropertiesMetadata {
     public Map<Object, PropertyTypeInfo> propertyMetadataFor(String label) {
 
         if (!metadata.containsKey(label)) {
+            System.err.println("METADATA DOES NOT CONTAIN LABEL " + label);
             metadata.put(label, new LinkedHashMap<>());
         }
 

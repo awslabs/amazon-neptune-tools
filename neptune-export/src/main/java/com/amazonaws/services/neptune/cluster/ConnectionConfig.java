@@ -10,7 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.auth;
+package com.amazonaws.services.neptune.cluster;
+
+import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 
 import java.util.Collection;
 import java.util.Collections;

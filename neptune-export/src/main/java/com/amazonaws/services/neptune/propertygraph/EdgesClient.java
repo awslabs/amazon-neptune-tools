@@ -98,7 +98,12 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public long count(LabelsFilter labelsFilter) {
+    public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
+
+        if (rangeConfig.approxEdgeCount() > 0){
+            return rangeConfig.approxEdgeCount();
+        }
+
         GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
         logger.info(GremlinQueryDebugger.queryAsString(t));
 

@@ -12,10 +12,13 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.auth.ConnectionConfig;
+import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.propertygraph.io.SerializationConfig;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
@@ -23,9 +26,10 @@ public class NeptuneGremlinClient implements AutoCloseable {
 
     public static final int DEFAULT_BATCH_SIZE = 64;
 
-    public static NeptuneGremlinClient create(ConnectionConfig connectionConfig,
-                                              ConcurrencyConfig concurrencyConfig,
-                                              SerializationConfig serializationConfig) {
+    public static NeptuneGremlinClient create(ClusterStrategy clusterStrategy, SerializationConfig serializationConfig) {
+        ConnectionConfig connectionConfig = clusterStrategy.connectionConfig();
+        ConcurrencyConfig concurrencyConfig = clusterStrategy.concurrencyConfig();
+
         Cluster.Builder builder = Cluster.build()
                 .port(connectionConfig.port())
                 .enableSsl(connectionConfig.useSsl())
@@ -49,7 +53,9 @@ public class NeptuneGremlinClient implements AutoCloseable {
             builder = builder.addContactPoint(endpoint);
         }
 
-        return new NeptuneGremlinClient(concurrencyConfig.applyTo(builder).create());
+        int numberOfEndpoints = connectionConfig.endpoints().size();
+
+        return new NeptuneGremlinClient(concurrencyConfig.applyTo(builder, numberOfEndpoints).create());
     }
 
     private final Cluster cluster;

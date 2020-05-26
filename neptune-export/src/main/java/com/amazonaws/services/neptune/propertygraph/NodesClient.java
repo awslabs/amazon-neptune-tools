@@ -94,7 +94,11 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public long count(LabelsFilter labelsFilter) {
+    public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
+        if (rangeConfig.approxNodeCount() > 0){
+            return rangeConfig.approxNodeCount();
+        }
+
         GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
 
         logger.info(GremlinQueryDebugger.queryAsString(t));

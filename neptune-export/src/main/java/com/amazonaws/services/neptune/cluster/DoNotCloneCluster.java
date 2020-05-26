@@ -12,15 +12,18 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.services.neptune.auth.ConnectionConfig;
-
 public class DoNotCloneCluster implements CloneClusterStrategy {
     @Override
-    public Cluster cloneCluster(ConnectionConfig connectionConfig) throws Exception {
-        return new Cluster() {
+    public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
+        return new ClusterStrategy() {
             @Override
             public ConnectionConfig connectionConfig() {
                 return connectionConfig;
+            }
+
+            @Override
+            public ConcurrencyConfig concurrencyConfig() {
+                return concurrencyConfig;
             }
 
             @Override

@@ -18,6 +18,7 @@ import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataC
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -68,12 +69,16 @@ public class Directories {
         writer.writeMessage(fileType + " files : " + directory.toAbsolutePath().toString());
     }
 
-    public void writeRootDirectoryPathAsReturnValue(CommandWriter writer){
-        writer.writeReturnValue(directory.toAbsolutePath().toString());
+    public Path writeRootDirectoryPathAsReturnValue(CommandWriter writer){
+        Path path = directory.toAbsolutePath();
+        writer.writeReturnValue(path.toString());
+        return path;
     }
 
-    public void writeConfigFilePathAsReturnValue(CommandWriter writer){
-        writer.writeReturnValue(configFilePath().toAbsolutePath().toString());
+    public Path writeConfigFilePathAsReturnValue(CommandWriter writer){
+        Path path = configFilePath().toAbsolutePath();
+        writer.writeReturnValue(path.toString());
+        return path;
     }
 
     public void writeResultsDirectoryPathAsMessage(String fileType, CommandWriter writer){
@@ -105,13 +110,13 @@ public class Directories {
 
     public JsonResource<PropertiesMetadataCollection> configFileResource() {
         return new JsonResource<>("Config file",
-                configFilePath().toFile(),
+                configFilePath().toUri(),
                 PropertiesMetadataCollection.class);
     }
 
     public JsonResource<NamedQueriesCollection> queriesResource() {
         return new JsonResource<>("Queries file",
-                queriesFilePath().toFile(),
+                queriesFilePath().toUri(),
                 NamedQueriesCollection.class);
     }
 

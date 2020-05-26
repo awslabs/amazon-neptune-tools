@@ -21,13 +21,13 @@ import java.util.stream.Collectors;
 
 public class NeptuneClusterMetadata {
 
-    static NeptuneClusterMetadata createFromEndpoint(String endpoint) {
+    public static NeptuneClusterMetadata createFromEndpoint(String endpoint) {
         int index = endpoint.indexOf(".");
         String clusterId = endpoint.substring(0, index);
-        return create(clusterId);
+        return createFromClusterId(clusterId);
     }
 
-    private static NeptuneClusterMetadata create(String clusterId) {
+    public static NeptuneClusterMetadata createFromClusterId(String clusterId) {
         AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
 
         DescribeDBClustersResult describeDBClustersResult = neptune
@@ -74,7 +74,8 @@ public class NeptuneClusterMetadata {
                         c.getDBInstanceIdentifier(),
                         new NeptuneInstanceMetadata(
                                 c.getDBInstanceClass(),
-                                c.getDBParameterGroups().get(0).getDBParameterGroupName())
+                                c.getDBParameterGroups().get(0).getDBParameterGroupName(),
+                        c.getEndpoint())
                 ));
 
         neptune.shutdown();
@@ -159,13 +160,19 @@ public class NeptuneClusterMetadata {
         return instanceMetadata.get(key);
     }
 
+    public List<String> endpoints(){
+        return instanceMetadata.values().stream().map(i -> i.endpoint().getAddress()).collect(Collectors.toList());
+    }
+
     public static class NeptuneInstanceMetadata {
         private final String instanceType;
         private final String dbParameterGroupName;
+        private final Endpoint endpoint;
 
-        public NeptuneInstanceMetadata(String instanceType, String dbParameterGroupName) {
+        public NeptuneInstanceMetadata(String instanceType, String dbParameterGroupName, Endpoint endpoint) {
             this.instanceType = instanceType;
             this.dbParameterGroupName = dbParameterGroupName;
+            this.endpoint = endpoint;
         }
 
         public String instanceType() {
@@ -175,6 +182,8 @@ public class NeptuneClusterMetadata {
         public String dbParameterGroupName() {
             return dbParameterGroupName;
         }
+
+        public Endpoint endpoint(){ return endpoint; }
     }
 
 }

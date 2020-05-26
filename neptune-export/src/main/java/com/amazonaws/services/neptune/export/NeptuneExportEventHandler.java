@@ -10,10 +10,20 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.cluster;
+package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.auth.ConnectionConfig;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 
-public interface Cluster extends AutoCloseable {
-    ConnectionConfig connectionConfig();
+import java.nio.file.Path;
+
+public interface NeptuneExportEventHandler {
+
+    NeptuneExportEventHandler NULL_EVENT_HANDLER = new NeptuneExportEventHandler() {
+        @Override
+        public void onExportComplete(Path outputPath, ExportStats stats) {
+            // Do nothing
+        }
+    };
+
+    void onExportComplete(Path outputPath, ExportStats stats);
 }

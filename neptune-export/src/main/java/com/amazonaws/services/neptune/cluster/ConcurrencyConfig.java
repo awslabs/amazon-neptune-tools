@@ -10,19 +10,15 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph;
+package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 
 import static java.lang.Math.max;
 
 public class ConcurrencyConfig {
     private final int concurrency;
-
-//    public ConcurrencyConfig(int concurrency) {
-//
-//        this(concurrency, -1, 0, Long.MAX_VALUE);
-//    }
 
     public ConcurrencyConfig(int concurrency) {
 
@@ -38,17 +34,19 @@ public class ConcurrencyConfig {
         return concurrency;
     }
 
-    boolean isUnboundedParallelExecution(RangeConfig rangeConfig){
+    public boolean isUnboundedParallelExecution(RangeConfig rangeConfig){
         return concurrency > 1 && rangeConfig.rangeSize() == -1;
     }
 
-    Cluster.Builder applyTo(Cluster.Builder clusterBuilder){
+    public Cluster.Builder applyTo(Cluster.Builder clusterBuilder, int numberOfEndpoints){
         if (concurrency == 1){
             return clusterBuilder;
         }
 
-        int minPoolSize = max(concurrency, 2);
-        int maxPoolSize =  max(concurrency, 8);
+        int calculatedPoolSize = (concurrency/numberOfEndpoints) + 1;
+
+        int minPoolSize = max(calculatedPoolSize, 2);
+        int maxPoolSize =  max(calculatedPoolSize, 8);
         int minSimultaneousUsage = 1;
         int maxSimultaneousUsage = 1;
         int minInProcess = 1;

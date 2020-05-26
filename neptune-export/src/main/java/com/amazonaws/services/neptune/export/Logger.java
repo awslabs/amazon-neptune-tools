@@ -10,8 +10,8 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.service;
+package com.amazonaws.services.neptune.export;
 
 public interface Logger {
-    public void log(String s);
+    void log(String s);
 }

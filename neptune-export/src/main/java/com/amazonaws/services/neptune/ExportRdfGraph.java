@@ -15,9 +15,11 @@ package com.amazonaws.services.neptune;
 import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
-import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
 import com.amazonaws.services.neptune.util.Timer;
@@ -25,6 +27,7 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.help.Examples;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output "},
@@ -48,15 +51,18 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     public void run() {
 
         try (Timer timer = new Timer("export-rdf");
-             Cluster cluster = cloneStrategy.cloneCluster(connection.config());
-             NeptuneSparqlClient client = NeptuneSparqlClient.create(cluster.connectionConfig())) {
+             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1))) {
 
             Directories directories = target.createDirectories(DirectoryStructure.Rdf);
 
-            ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
-            job.execute();
+            try( NeptuneSparqlClient client = NeptuneSparqlClient.create(clusterStrategy.connectionConfig())) {
 
-            directories.writeRootDirectoryPathAsReturnValue(target);
+                ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
+                job.execute();
+            }
+
+            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+            onExportComplete(outputPath, new ExportStats());
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");

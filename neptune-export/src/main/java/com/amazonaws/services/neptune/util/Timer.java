@@ -19,7 +19,7 @@ public class Timer implements AutoCloseable {
     private final String description;
     private final boolean padWithNewlines;
 
-    public Timer(String description){
+    public Timer(String description) {
         this(description, true);
     }
 
@@ -29,12 +29,12 @@ public class Timer implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
-        if (padWithNewlines){
+    public void close() {
+        if (padWithNewlines) {
             System.err.println();
         }
         System.err.println(String.format("Completed %s in %s seconds", description, (System.currentTimeMillis() - start) / 1000));
-        if (padWithNewlines){
+        if (padWithNewlines) {
             System.err.println();
         }
     }
