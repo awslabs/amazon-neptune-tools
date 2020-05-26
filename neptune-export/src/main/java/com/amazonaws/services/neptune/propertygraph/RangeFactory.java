@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,39 +28,70 @@ public class RangeFactory {
                                       LabelsFilter labelsFilter,
                                       RangeConfig rangeConfig,
                                       ConcurrencyConfig concurrencyConfig) {
-        long elementCount = graphClient.count(labelsFilter);
+
+        long estimatedNumberOfItemsInGraph = graphClient.approxCount(labelsFilter, rangeConfig);
 
         if (concurrencyConfig.isUnboundedParallelExecution(rangeConfig)) {
             logger.info("Calculating " + graphClient.description() + " ranges");
-            long limit = min(elementCount, rangeConfig.limit());
-            long rangeSize = (limit / concurrencyConfig.concurrency()) + 1;
-            logger.info("Limit: " + limit + ", Size: " + rangeSize);
-            return new RangeFactory(rangeSize, limit, rangeConfig.skip(), elementCount);
+
+            long rangeSize = (estimatedNumberOfItemsInGraph / concurrencyConfig.concurrency()) + 1;
+
+            logger.info("Estimated number of items to export: {}, Range size: {}",
+                    estimatedNumberOfItemsInGraph,
+                    rangeSize);
+
+            return new RangeFactory(
+                    rangeSize,
+                    rangeConfig.numberOfItemsToExport(),
+                    rangeConfig.numberOfItemsToSkip(),
+                    estimatedNumberOfItemsInGraph);
         } else {
-            return new RangeFactory(rangeConfig.rangeSize(), rangeConfig.limit(), rangeConfig.skip(), elementCount);
+            return new RangeFactory(
+                    rangeConfig.rangeSize(),
+                    rangeConfig.numberOfItemsToExport(),
+                    rangeConfig.numberOfItemsToSkip(),
+                    estimatedNumberOfItemsInGraph);
         }
     }
 
     private final long rangeSize;
-    private final long rangeLimit;
+    private final long numberOfItemsToExport;
+    private final long rangeUpperBound;
     private final AtomicLong currentEnd;
 
-    private RangeFactory(long rangeSize, long limit, long skip, long max) {
+    private RangeFactory(long rangeSize,
+                         long numberOfItemsToExport,
+                         long numberOfItemsToSkip,
+                         long estimatedNumberOfItemsInGraph) {
         this.rangeSize = rangeSize;
-        this.rangeLimit = min((limit + skip), max) ;
-        this.currentEnd =  new AtomicLong(skip);
+        this.numberOfItemsToExport = numberOfItemsToExport;
+        this.rangeUpperBound = numberOfItemsToExport == Long.MAX_VALUE ?
+                estimatedNumberOfItemsInGraph :
+                numberOfItemsToExport + numberOfItemsToSkip;
+        this.currentEnd = new AtomicLong(numberOfItemsToSkip);
     }
 
     public Range nextRange() {
-        long proposedEnd = currentEnd.accumulateAndGet(rangeSize, (left, right) -> left+right);
 
-        long start = min(proposedEnd - rangeSize, rangeLimit);
-        long actualEnd = min(proposedEnd, rangeLimit);
+        if (isExhausted()){
+            return new Range(-1, -1);
+        }
+
+        long proposedEnd = currentEnd.accumulateAndGet(rangeSize, (left, right) -> left + right);
+
+        long start = min(proposedEnd - rangeSize, rangeUpperBound);
+        long actualEnd =  min(proposedEnd, rangeUpperBound);
+
+        if ((proposedEnd >= rangeUpperBound) && (numberOfItemsToExport == Long.MAX_VALUE)){
+            actualEnd = -1;
+        }
 
         return new Range(start, actualEnd);
+
     }
 
     public boolean isExhausted() {
-        return currentEnd.get() >= rangeLimit;
+        long end = currentEnd.get();
+        return end == -1 || end >= rangeUpperBound;
     }
 }

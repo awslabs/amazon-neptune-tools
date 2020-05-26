@@ -30,7 +30,15 @@ public class PropertyGraphRangeModule {
     @Once
     private long skip = 0;
 
+    @Option(name = {"--approx-node-count"}, description = "Approximate number of nodes in graph")
+    @Once
+    private long approxNodeCount = -1;
+
+    @Option(name = {"--approx-edge-count"}, description = "Approximate number of edges in graph")
+    @Once
+    private long approxEdgeCount = -1;
+
     public RangeConfig config(){
-        return new RangeConfig(rangeSize, skip, limit);
+        return new RangeConfig(rangeSize, skip, limit, approxNodeCount, approxEdgeCount);
     }
 }

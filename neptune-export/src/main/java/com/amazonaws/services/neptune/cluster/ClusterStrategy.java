@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
-public interface CloneClusterStrategy {
-
-    ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception;
+public interface ClusterStrategy extends AutoCloseable {
+    ConnectionConfig connectionConfig();
+    ConcurrencyConfig concurrencyConfig();
 }

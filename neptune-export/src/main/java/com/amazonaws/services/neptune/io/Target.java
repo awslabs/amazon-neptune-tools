@@ -24,7 +24,6 @@ public enum Target implements CommandWriter {
     files {
         @Override
         public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
-            System.out.println("CREATING NEW FILES PRINTER");
             return new PrintOutputWriter(new FileWriter(pathSupplier.get().toFile()));
         }
 
@@ -50,7 +49,6 @@ public enum Target implements CommandWriter {
 
             Path filePath = pathSupplier.get();
 
-            System.out.println("CREATING NEW STREAM PRINTER");
             return new FileToStreamOutputWriter(
                     new KinesisStreamPrintOutputWriter(new FileWriter(filePath.toFile())),
                     filePath,

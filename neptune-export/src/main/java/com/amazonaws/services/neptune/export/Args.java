@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.service;
+package com.amazonaws.services.neptune.export;
 
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 
@@ -58,6 +58,15 @@ public class Args {
     public void addOption(String option, String value) {
         args.add(option);
         args.add(value);
+    }
+
+    public boolean contains(String name){
+        for (String arg : args) {
+            if (arg.equals(name)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public String[] values() {

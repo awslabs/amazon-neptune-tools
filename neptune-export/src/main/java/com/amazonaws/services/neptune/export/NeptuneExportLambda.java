@@ -10,12 +10,10 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune;
+package com.amazonaws.services.neptune.export;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.amazonaws.services.neptune.service.Logger;
-import com.amazonaws.services.neptune.service.NeptuneExportService;
 import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,6 +25,18 @@ import java.io.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class NeptuneExportLambda implements RequestStreamHandler {
+
+    private static final String TEMP_PATH = "/tmp/neptune";
+
+    private final String localOutputPath;
+
+    public NeptuneExportLambda(){
+        this(TEMP_PATH);
+    }
+
+    public NeptuneExportLambda(String localOutputPath) {
+        this.localOutputPath = localOutputPath;
+    }
 
     @Override
     public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
@@ -63,6 +73,10 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                                 "{}")).
                         deepCopy();
 
+        int maxConcurrency = json.has("jobSize") ?
+                JobSize.parse(json.path("jobSize").textValue()).maxConcurrency() :
+                -1;
+
         logger.log("cmd                   : " + cmd);
         logger.log("outputS3Path          : " + outputS3Path);
         logger.log("configFileS3Path      : " + configFileS3Path);
@@ -73,11 +87,13 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         NeptuneExportService neptuneExportService = new NeptuneExportService(
                 logger,
                 cmd,
+                localOutputPath,
                 outputS3Path,
                 configFileS3Path,
                 queriesFileS3Path,
                 completionFileS3Path,
-                completionFilePayload);
+                completionFilePayload,
+                maxConcurrency);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 

@@ -13,9 +13,10 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
-import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -28,12 +29,11 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
 import com.github.rvesse.airline.annotations.restrictions.Once;
-import com.github.rvesse.airline.annotations.restrictions.Path;
-import com.github.rvesse.airline.annotations.restrictions.PathKind;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,10 +68,9 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)
     private List<NamedQueries> queries = new ArrayList<>();
 
-    @Option(name = {"-f", "--queries-file"}, description = "Path to JSON queries file")
-    @Path(mustExist = true, kind = PathKind.FILE)
+    @Option(name = {"-f", "--queries-file"}, description = "Path to JSON queries file (file path, or 'https' or 's3' URI)")
     @Once
-    private File queriesFile;
+    private URI queriesFile;
 
     @Option(name = {"--two-pass-analysis"}, description = "Perform two-pass analysis of query results (optional, default 'false')")
     @Once
@@ -85,9 +84,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     public void run() {
 
         try (Timer timer = new Timer("export-pg-from-queries");
-             Cluster cluster = cloneStrategy.cloneCluster(connection.config());
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster.connectionConfig(), concurrency.config(), serialization.config());
-             NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
+             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
             Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
             JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?
@@ -99,19 +96,26 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
 
             directories.createResultsSubdirectories(namedQueries.names());
 
-            QueryJob queryJob = new QueryJob(
-                    namedQueries.flatten(),
-                    queryClient,
-                    concurrency.config(),
-                    targetConfig,
-                    twoPassAnalysis);
-            queryJob.execute();
+            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                 NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
+
+
+                QueryJob queryJob = new QueryJob(
+                        namedQueries.flatten(),
+                        queryClient,
+                        clusterStrategy.concurrencyConfig(),
+                        targetConfig,
+                        twoPassAnalysis);
+                queryJob.execute();
+
+            }
 
             directories.writeResultsDirectoryPathAsMessage(target.description(), target);
 
             queriesResource.writeResourcePathAsMessage(target);
 
-            directories.writeRootDirectoryPathAsReturnValue(target);
+            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+            onExportComplete(outputPath, new ExportStats());
 
         } catch (Exception e) {
             System.err.println("An error occurred while exporting from Neptune:");
@@ -121,7 +125,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     }
 
     private NamedQueriesCollection getNamedQueriesCollection(List<NamedQueries> queries,
-                                                             File queriesFile,
+                                                             URI queriesFile,
                                                              JsonResource<NamedQueriesCollection> queriesResource) throws IOException {
         if (queriesFile == null) {
             NamedQueriesCollection namedQueries = new NamedQueriesCollection(queries);

@@ -25,7 +25,7 @@ public interface GraphClient<T> {
 
     void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter, PropertiesMetadata propertiesMetadata);
 
-    long count(LabelsFilter labelsFilter);
+    long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig);
 
     Collection<String> labels();
 

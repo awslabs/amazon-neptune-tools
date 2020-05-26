@@ -59,24 +59,28 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         try {
             while (status.allowContinue()) {
                 Range range = rangeFactory.nextRange();
-                if (range.isEmpty()){
+                if (range.isEmpty()) {
                     status.halt();
-                }
-                else
-                {
+                } else {
                     CountingHandler handler = new CountingHandler(this);
 
-                    labelsFilter.getPropertiesForLabels(propertiesMetadata);
+                    //labelsFilter.getPropertiesForLabels(propertiesMetadata);
 
                     graphClient.queryForValues(handler, range, labelsFilter, propertiesMetadata);
-                    if (range.difference() > handler.counter() || rangeFactory.isExhausted()) {
+
+                    if (range.sizeExceeds(handler.numberProcessed()) || rangeFactory.isExhausted()) {
                         status.halt();
                     }
                 }
             }
-            close();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            try {
+                close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -133,7 +137,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
             counter++;
         }
 
-        long counter() {
+        long numberProcessed() {
             return counter;
         }
 
