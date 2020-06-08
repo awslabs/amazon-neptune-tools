@@ -70,7 +70,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
             ExportStats stats = new ExportStats();
             Directories directories = target.createDirectories(DirectoryStructure.Config);
             JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
@@ -86,8 +86,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
             onExportComplete(outputPath, stats);
 
         } catch (Exception e) {
-            System.err.println("An error occurred while creating export config:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }

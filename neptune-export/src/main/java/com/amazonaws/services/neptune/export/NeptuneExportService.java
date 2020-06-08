@@ -74,11 +74,18 @@ public class NeptuneExportService {
                 args.removeOptions("--queries");
             }
 
-            args.removeOptions("-d", "--dir");
-            args.addOption("-d", new File(localOutputPath, "output").getAbsolutePath());
+            if (args.contains("create-pg-config") ||
+                    args.contains("export-pg") ||
+                    args.contains("export-pg-from-config") ||
+                    args.contains("export-pg-from-queries") ||
+                    args.contains("export-rdf")) {
 
-            if (maxConcurrency > 0 && !args.contains("--clone-cluster-max-concurrency")){
-                args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
+                args.removeOptions("-d", "--dir");
+                args.addOption("-d", new File(localOutputPath, "output").getAbsolutePath());
+
+                if (maxConcurrency > 0 && !args.contains("--clone-cluster-max-concurrency")) {
+                    args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
+                }
             }
 
         } catch (Exception e) {
@@ -151,7 +158,7 @@ public class NeptuneExportService {
         return file.getAbsoluteFile();
     }
 
-    private static class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHandler{
+    private static class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHandler {
 
         private final Logger logger;
         private final TransferManager transferManager;
@@ -188,7 +195,7 @@ public class NeptuneExportService {
             result.set(outputS3ObjectInfo);
         }
 
-        public S3ObjectInfo result(){
+        public S3ObjectInfo result() {
             return result.get();
         }
 
@@ -221,7 +228,7 @@ public class NeptuneExportService {
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(completionFile), UTF_8))) {
                 ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
                 writer.write(objectWriter.writeValueAsString(completionFilePayload));
-            } catch (IOException e){
+            } catch (IOException e) {
                 throw new RuntimeException("Error while writing completion file payload", e);
             }
 

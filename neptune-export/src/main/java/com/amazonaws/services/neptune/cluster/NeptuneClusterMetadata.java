@@ -21,10 +21,11 @@ import java.util.stream.Collectors;
 
 public class NeptuneClusterMetadata {
 
-    public static NeptuneClusterMetadata createFromEndpoint(String endpoint) {
+    public static final String NEPTUNE_EXPORT_APPLICATION_TAG = "neptune-export";
+
+    public static String clusterIdFromEndpoint(String endpoint) {
         int index = endpoint.indexOf(".");
-        String clusterId = endpoint.substring(0, index);
-        return createFromClusterId(clusterId);
+        return endpoint.substring(0, index);
     }
 
     public static NeptuneClusterMetadata createFromClusterId(String clusterId) {
@@ -38,6 +39,13 @@ public class NeptuneClusterMetadata {
         }
 
         DBCluster dbCluster = describeDBClustersResult.getDBClusters().get(0);
+
+        List<Tag> tags = neptune.listTagsForResource(
+                new ListTagsForResourceRequest()
+                        .withResourceName(dbCluster.getDBClusterArn())).getTagList();
+
+        Map<String, String> clusterTags = new HashMap<>();
+        tags.forEach(t -> clusterTags.put(t.getKey(), t.getValue()));
 
         boolean isIAMDatabaseAuthenticationEnabled = dbCluster.isIAMDatabaseAuthenticationEnabled();
         Integer port = dbCluster.getPort();
@@ -75,7 +83,7 @@ public class NeptuneClusterMetadata {
                         new NeptuneInstanceMetadata(
                                 c.getDBInstanceClass(),
                                 c.getDBParameterGroups().get(0).getDBParameterGroupName(),
-                        c.getEndpoint())
+                                c.getEndpoint())
                 ));
 
         neptune.shutdown();
@@ -88,7 +96,8 @@ public class NeptuneClusterMetadata {
                 vpcSecurityGroupIds,
                 primary,
                 replicas,
-                instanceTypes);
+                instanceTypes,
+                clusterTags);
     }
 
     private final String clusterId;
@@ -101,7 +110,7 @@ public class NeptuneClusterMetadata {
     private final String primary;
     private final Collection<String> replicas;
     private final Map<String, NeptuneInstanceMetadata> instanceMetadata;
-
+    private final Map<String, String> clusterTags;
 
     private NeptuneClusterMetadata(String clusterId,
                                    int port,
@@ -111,7 +120,8 @@ public class NeptuneClusterMetadata {
                                    List<String> vpcSecurityGroupIds,
                                    String primary,
                                    Collection<String> replicas,
-                                   Map<String, NeptuneInstanceMetadata> instanceMetadata) {
+                                   Map<String, NeptuneInstanceMetadata> instanceMetadata,
+                                   Map<String, String> clusterTags) {
         this.clusterId = clusterId;
         this.port = port;
         this.dbClusterParameterGroupName = dbClusterParameterGroupName;
@@ -122,6 +132,7 @@ public class NeptuneClusterMetadata {
         this.primary = primary;
         this.replicas = replicas;
         this.instanceMetadata = instanceMetadata;
+        this.clusterTags = clusterTags;
     }
 
     public String clusterId() {
@@ -160,8 +171,13 @@ public class NeptuneClusterMetadata {
         return instanceMetadata.get(key);
     }
 
-    public List<String> endpoints(){
+    public List<String> endpoints() {
         return instanceMetadata.values().stream().map(i -> i.endpoint().getAddress()).collect(Collectors.toList());
+    }
+
+    public boolean isTaggedWithNeptuneExport(){
+        return clusterTags.containsKey("application") &&
+                clusterTags.get("application").equalsIgnoreCase(NEPTUNE_EXPORT_APPLICATION_TAG);
     }
 
     public static class NeptuneInstanceMetadata {
@@ -183,7 +199,9 @@ public class NeptuneClusterMetadata {
             return dbParameterGroupName;
         }
 
-        public Endpoint endpoint(){ return endpoint; }
+        public Endpoint endpoint() {
+            return endpoint;
+        }
     }
 
 }

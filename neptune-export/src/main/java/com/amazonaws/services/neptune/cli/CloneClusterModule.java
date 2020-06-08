@@ -22,6 +22,8 @@ import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 
+import java.util.UUID;
+
 public class CloneClusterModule {
 
     @Option(name = {"--clone-cluster"}, description = "Clone Neptune cluster")

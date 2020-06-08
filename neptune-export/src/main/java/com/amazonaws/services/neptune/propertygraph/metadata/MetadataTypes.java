@@ -33,8 +33,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
-            return new NodesClient(g, tokensOnly, stats);
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures) {
+            return new NodesClient(g, tokensOnly, stats, labModeFeatures);
         }
 
         @Override
@@ -50,8 +50,8 @@ public class MetadataTypes {
         }
 
         @Override
-        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats) {
-            return new EdgesClient(g, tokensOnly, stats);
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures) {
+            return new EdgesClient(g, tokensOnly, stats, labModeFeatures);
         }
 
         @Override

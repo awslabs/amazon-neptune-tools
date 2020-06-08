@@ -29,6 +29,8 @@ import com.github.rvesse.airline.help.Help;
                 ExportRdfGraph.class,
                 RunNeptuneExportSvc.class,
                 GetClusterInfo.class,
+                AddClone.class,
+                RemoveClone.class,
                 Help.class},
         parserConfiguration = @Parser(aliases = {
                 @Alias(name = "create-config",

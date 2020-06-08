@@ -12,12 +12,16 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.LabModeModule;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
+import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.Collection;
 
 public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHandler {
 
@@ -25,6 +29,9 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
     @Once
     @AllowedValues(allowedValues = {"trace", "debug", "info", "warn", "error"})
     protected String logLevel = "error";
+
+    @Inject
+    private LabModeModule labModeModule = new LabModeModule();
 
     private NeptuneExportEventHandler eventHandler = NeptuneExportEventHandler.NULL_EVENT_HANDLER;
 
@@ -38,5 +45,21 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
 
     public void onExportComplete(Path outputPath, ExportStats stats){
         eventHandler.onExportComplete(outputPath, stats);
+    }
+
+    void handleException(Throwable e){
+        if (e.getCause() != null && RemoteConnectionException.class.isAssignableFrom(e.getCause().getClass())){
+            System.err.println("An error occurred while connecting to Neptune. " +
+                    "Ensure you have specified the --use-ssl flag if the database requires SSL in transit. " +
+                    "Ensure you have specified the --use-iam-auth flag if the database uses IAM database authentication.");
+            e.printStackTrace();
+        } else {
+            System.err.println("An error occurred while exporting from Neptune:");
+            e.printStackTrace();
+        }
+    }
+
+    Collection<String> labModeFeatures(){
+        return labModeModule.labFeatures();
     }
 }

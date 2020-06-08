@@ -16,7 +16,8 @@ import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
@@ -91,7 +92,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
             ExportStats stats = new ExportStats();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
@@ -123,8 +124,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             onExportComplete(outputPath, stats);
 
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }

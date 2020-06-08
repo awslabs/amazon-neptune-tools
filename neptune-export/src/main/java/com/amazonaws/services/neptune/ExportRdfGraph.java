@@ -65,8 +65,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
             onExportComplete(outputPath, new ExportStats());
 
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }
