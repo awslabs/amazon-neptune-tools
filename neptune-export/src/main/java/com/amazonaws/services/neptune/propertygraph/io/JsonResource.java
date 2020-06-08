@@ -72,7 +72,9 @@ public class JsonResource<T extends Jsonizable> {
             Object o = method.invoke(null, json);
             //noinspection unchecked
             return (T) o;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException e){
+            throw new RuntimeException("Jsonizable object must have a static fromJson(JsonNode) method");
+        } catch  ( IllegalAccessException | InvocationTargetException e){
             throw new RuntimeException(e);
         }
     }

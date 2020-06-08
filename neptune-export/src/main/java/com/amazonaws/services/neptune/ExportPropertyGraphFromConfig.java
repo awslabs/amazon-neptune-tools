@@ -94,7 +94,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
             ExportStats stats = new ExportStats();
             stats.prepare(metadataCollection);
 
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
             try( NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
@@ -120,8 +120,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
             onExportComplete(outputPath, stats);
 
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }

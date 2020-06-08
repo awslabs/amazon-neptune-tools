@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 public class NamedQueriesCollection implements Jsonizable {
 
-    public static NamedQueriesCollection fromJson(ArrayNode json) {
+    public static NamedQueriesCollection fromJson(JsonNode json) {
         List<NamedQueries> collection = new ArrayList<>();
 
         for (JsonNode jsonNode : json) {

@@ -22,6 +22,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.UUID;
 
 public class Directories {
 
@@ -33,14 +34,17 @@ public class Directories {
             throw new IllegalArgumentException("You must supply a directory");
         }
 
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+
         String directoryName = tag.isEmpty() ?
-                String.valueOf(System.currentTimeMillis()) :
-                String.format("%s-%s", tag, System.currentTimeMillis());
+                uuid :
+                String.format("%s-%s", tag, uuid);
         Path rootDirectory = root.toPath();
 
         Path directory = rootDirectory.resolve(directoryName);
         Path nodesDirectory = directory.resolve("nodes");
-        Path edgesDirectory = directory.resolve("edges");
+        Path edgesDirectory = directory.
+                resolve("edges");
         Path statementsDirectory = directory.resolve("statements");
         Path resultsDirectory = directory.resolve("results");
 

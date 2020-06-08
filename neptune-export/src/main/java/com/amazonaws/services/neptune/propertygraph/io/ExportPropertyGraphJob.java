@@ -67,7 +67,8 @@ public class ExportPropertyGraphJob {
                             targetConfig,
                             rangeFactory,
                             status,
-                            index);
+                            index
+                    );
                     taskExecutor.execute(exportTask);
                 }
 

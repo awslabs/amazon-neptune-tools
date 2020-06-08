@@ -39,6 +39,7 @@ public class RunNeptuneExportSvc implements Runnable {
 
     @Override
     public void run() {
+
         InputStream input = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
 
         try {

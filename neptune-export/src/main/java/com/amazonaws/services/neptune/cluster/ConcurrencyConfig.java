@@ -45,19 +45,26 @@ public class ConcurrencyConfig {
 
         int calculatedPoolSize = (concurrency/numberOfEndpoints) + 1;
 
+//        int minPoolSize = max(calculatedPoolSize, 2);
+//        int maxPoolSize =  max(calculatedPoolSize, 8);
+//        int minSimultaneousUsage = 1;
+//        int maxSimultaneousUsage = 1;
+//        int minInProcess = 1;
+//        int maxInProcess = 1;
+//
+//        return clusterBuilder.
+//                minConnectionPoolSize(minPoolSize).
+//                maxConnectionPoolSize(maxPoolSize).
+//                minSimultaneousUsagePerConnection(minSimultaneousUsage).
+//                maxSimultaneousUsagePerConnection(maxSimultaneousUsage).
+//                minInProcessPerConnection(minInProcess).
+//                maxInProcessPerConnection(maxInProcess);
+
         int minPoolSize = max(calculatedPoolSize, 2);
         int maxPoolSize =  max(calculatedPoolSize, 8);
-        int minSimultaneousUsage = 1;
-        int maxSimultaneousUsage = 1;
-        int minInProcess = 1;
-        int maxInProcess = 1;
 
         return clusterBuilder.
                 minConnectionPoolSize(minPoolSize).
-                maxConnectionPoolSize(maxPoolSize).
-                minSimultaneousUsagePerConnection(minSimultaneousUsage).
-                maxSimultaneousUsagePerConnection(maxSimultaneousUsage).
-                minInProcessPerConnection(minInProcess).
-                maxInProcessPerConnection(maxInProcess);
+                maxConnectionPoolSize(maxPoolSize);
     }
 }

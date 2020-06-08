@@ -28,15 +28,18 @@ public class ExportSpecification<T> {
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;
     private final ExportStats stats;
+    private final Collection<String> labModeFeatures;
 
     public ExportSpecification(GraphElementType<T> graphElementType,
                                LabelsFilter labelsFilter,
                                boolean tokensOnly,
-                               ExportStats stats) {
+                               ExportStats stats,
+                               Collection<String> labModeFeatures) {
         this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
+        this.labModeFeatures = labModeFeatures;
     }
 
     public void scan(PropertiesMetadataCollection metadataCollection, GraphTraversalSource g) {
@@ -44,7 +47,7 @@ public class ExportSpecification<T> {
             return;
         }
 
-        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats);
+        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
 
         graphClient.queryForMetadata(
                 new Handler(graphElementType, metadataCollection),
@@ -57,7 +60,7 @@ public class ExportSpecification<T> {
             return;
         }
 
-        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats);
+        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
         Collection<String> labels = labelsFilter.resolveLabels(graphClient);
 
         for (String label : labels) {
@@ -76,7 +79,7 @@ public class ExportSpecification<T> {
                                            RangeConfig rangeConfig,
                                            ConcurrencyConfig concurrencyConfig) {
         return RangeFactory.create(
-                graphElementType.graphClient(g, tokensOnly, stats),
+                graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
                 labelsFilter,
                 rangeConfig,
                 concurrencyConfig);
@@ -91,7 +94,7 @@ public class ExportSpecification<T> {
         return new ExportPropertyGraphTask<>(
                 metadataCollection.propertyMetadataFor(graphElementType),
                 labelsFilter,
-                graphElementType.graphClient(g, tokensOnly, stats),
+                graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
                 graphElementType.writerFactory(),
                 targetConfig,
                 rangeFactory,
