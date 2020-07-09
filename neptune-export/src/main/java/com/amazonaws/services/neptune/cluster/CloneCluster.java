@@ -19,11 +19,13 @@ public class CloneCluster implements CloneClusterStrategy {
     private final String cloneClusterInstanceType;
     private final int replicaCount;
     private final int maxConcurrency;
+    private final String engineVersion;
 
-    public CloneCluster(String cloneClusterInstanceType, int replicaCount, int maxConcurrency) {
+    public CloneCluster(String cloneClusterInstanceType, int replicaCount, int maxConcurrency, String engineVersion) {
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
         this.maxConcurrency = maxConcurrency;
+        this.engineVersion = engineVersion;
     }
 
     @Override
@@ -36,7 +38,7 @@ public class CloneCluster implements CloneClusterStrategy {
         String clusterId = NeptuneClusterMetadata.clusterIdFromEndpoint(connectionConfig.endpoints().iterator().next());
         String targetClusterId = String.format("neptune-export-cluster-%s", UUID.randomUUID().toString().substring(0, 5));
 
-        AddCloneTask addCloneTask = new AddCloneTask(clusterId, targetClusterId, cloneClusterInstanceType, replicaCount);
+        AddCloneTask addCloneTask = new AddCloneTask(clusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion);
         NeptuneClusterMetadata targetClusterMetadata = addCloneTask.execute();
 
         InstanceType instanceType =  InstanceType.parse(

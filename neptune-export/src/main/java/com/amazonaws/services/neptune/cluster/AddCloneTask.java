@@ -30,12 +30,18 @@ public class AddCloneTask {
     private final String targetClusterId;
     private final String cloneClusterInstanceType;
     private final int replicaCount;
+    private final String engineVersion;
 
-    public AddCloneTask(String sourceClusterId, String targetClusterId, String cloneClusterInstanceType, int replicaCount) {
+    public AddCloneTask(String sourceClusterId,
+                        String targetClusterId,
+                        String cloneClusterInstanceType,
+                        int replicaCount,
+                        String engineVersion) {
         this.sourceClusterId = sourceClusterId;
         this.targetClusterId = targetClusterId;
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
+        this.engineVersion = engineVersion;
     }
 
     public NeptuneClusterMetadata execute() {
@@ -234,7 +240,7 @@ public class AddCloneTask {
 
         System.err.println("Creating target " + name + " instance...");
 
-        DBInstance targetDbInstance = neptune.createDBInstance(new CreateDBInstanceRequest()
+        CreateDBInstanceRequest request = new CreateDBInstanceRequest()
                 .withDBInstanceClass(instanceType.value())
                 .withDBInstanceIdentifier(String.format("neptune-export-%s-%s", name, UUID.randomUUID().toString().substring(0, 5)))
                 .withDBClusterIdentifier(targetDbCluster.getDBClusterIdentifier())
@@ -245,7 +251,13 @@ public class AddCloneTask {
                                 .withValue(sourceClusterMetadata.clusterId()),
                         new Tag()
                                 .withKey("application")
-                                .withValue(NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG)));
+                                .withValue(NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG));
+
+        if (StringUtils.isNotEmpty(engineVersion)){
+            request = request.withEngineVersion(engineVersion);
+        }
+
+        DBInstance targetDbInstance = neptune.createDBInstance(request);
 
         String instanceStatus = targetDbInstance.getDBInstanceStatus();
 
