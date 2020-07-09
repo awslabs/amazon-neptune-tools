@@ -79,6 +79,66 @@ public enum InstanceType {
             return 96;
         }
     },
+    db_r5_16xlarge {
+        @Override
+        int concurrency() {
+            return 128;
+        }
+    },
+    db_r5_24xlarge {
+        @Override
+        int concurrency() {
+            return 192;
+        }
+    },
+    db_m5_large {
+        @Override
+        int concurrency() {
+            return 4;
+        }
+    },
+    db_m5_xlarge {
+        @Override
+        int concurrency() {
+            return 8;
+        }
+    },
+    db_m5_2xlarge {
+        @Override
+        int concurrency() {
+            return 16;
+        }
+    },
+    db_m5_3xlarge {
+        @Override
+        int concurrency() {
+            return 32;
+        }
+    },
+    db_m5_8xlarge {
+        @Override
+        int concurrency() {
+            return 64;
+        }
+    },
+    db_m5_12xlarge {
+        @Override
+        int concurrency() {
+            return 96;
+        }
+    },
+    db_m5_16xlarge {
+        @Override
+        int concurrency() {
+            return 128;
+        }
+    },
+    db_m5_24xlarge {
+        @Override
+        int concurrency() {
+            return 192;
+        }
+    },
     db_t3_medium{
         @Override
         int concurrency() {
