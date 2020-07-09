@@ -58,11 +58,11 @@
         "nodes"
       ]
     },
-	"AdditionalParams": {
-        "Type": "String",
-        "Description": "Allows you to specify additional parameters to neptune-export, e.g. '--max-content-length 131072'. See https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export for documentation of neptune-export params.",
-        "Default": ""
-	},
+    "AdditionalParams": {
+      "Type": "String",
+      "Description": "Allows you to specify additional parameters to neptune-export, e.g. '--max-content-length 131072'. See https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export for documentation of neptune-export params.",
+      "Default": ""
+    },
     "BatchSize": {
       "Type": "Number",
       "Default": 100,
@@ -122,7 +122,7 @@
             "NeptuneEngine",
             "ExportScope",
             "NeptuneClientSecurityGroup",
-			"AdditionalParams"
+            "AdditionalParams"
           ]
         },
         {
@@ -523,7 +523,7 @@
           }
         },
         "MemorySize": 128,
-        "Runtime": "python3.6",
+        "Runtime": "python3.8",
         "Timeout": "30",
         "ReservedConcurrentExecutions": 1
       }
@@ -630,7 +630,7 @@
           }
         },
         "MemorySize": 512,
-        "Runtime": "python3.6",
+        "Runtime": "python3.8",
         "Timeout": "900",
         "ReservedConcurrentExecutions": {
           "Ref": "KinesisShardCount"

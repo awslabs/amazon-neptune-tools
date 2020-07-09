@@ -31,6 +31,10 @@ A [command-line utility](neo4j-to-neptune/readme.md) for migrating data to Neptu
 * Create label and node and edge ID columns in DynamicFrames, named in accordance with the Neptune CSV bulk load format for property graphs
 * Write from DynamicFrames directly to Neptune
 
+### Neptune CSV to RDF
+
+If you're interested in converting Neptune's CSV format to RDF, see [amazon-neptune-csv-to-rdf-converter](https://github.com/aws/amazon-neptune-csv-to-rdf-converter).
+
 ## License
 
 This library is licensed under the Apache 2.0 License. 
