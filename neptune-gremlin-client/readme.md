@@ -49,13 +49,6 @@ The `ClusterEndpointsRefreshAgent` allows you to schedule endpoint updates to a 
 The following shows how to refresh a client with a cluster's available replica endpoints every 60 seconds:
 
 ```
-<<<<<<< HEAD
-ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(clusterId);
-
-GremlinCluster cluster = GremlinClusterBuilder.build()
-    .enableSsl(true)
-    .addContactPoints(refreshAgent.getAddresses(ClusterTopologyRefreshAgent.EndpointsType.ReadReplicas))
-=======
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
     clusterId,
     ClusterTopologyRefreshAgent.EndpointsType.ReadReplicas);
@@ -63,7 +56,6 @@ ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
     .addContactPoints(refreshAgent.getAddresses())
->>>>>>> upstream/master
     .port(8182)
     .create();
 
@@ -71,10 +63,6 @@ GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
     client::refreshEndpoints,
-<<<<<<< HEAD
-    ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas,
-=======
->>>>>>> upstream/master
     60,
     TimeUnit.SECONDS);
 ```
