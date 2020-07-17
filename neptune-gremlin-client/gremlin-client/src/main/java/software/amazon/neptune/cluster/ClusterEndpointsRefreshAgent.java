@@ -77,18 +77,19 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
     }
 
     private final String clusterId;
+    private final EndpointsSelector selector;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-    public ClusterEndpointsRefreshAgent(String clusterId) {
+    public ClusterEndpointsRefreshAgent(String clusterId, EndpointsSelector selector) {
         this.clusterId = clusterId;
+        this.selector = selector;
     }
 
     public void startPollingNeptuneAPI(OnNewAddresses onNewAddresses,
-                                       EndpointsSelector endpointsSelector,
                                        long delay,
                                        TimeUnit timeUnit) {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            Collection<String> addresses = getAddresses(endpointsSelector);
+            Collection<String> addresses = getAddresses();
             logger.info("New addresses: {}", addresses);
             onNewAddresses.apply(addresses);
         }, delay, delay, timeUnit);
@@ -103,7 +104,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
         stop();
     }
 
-    public Collection<String> getAddresses(EndpointsSelector endpointsSelector) {
+    public Collection<String> getAddresses() {
         AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
 
         DescribeDBClustersResult describeDBClustersResult = neptune
@@ -150,11 +151,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
 
         neptune.shutdown();
 
-<<<<<<< HEAD:neptune-gremlin-client/gremlin-client/src/main/java/software/amazon/neptune/cluster/ClusterEndpointsRefreshAgent.java
         return selector.getEndpoints(primary, replicas, instances);
-=======
-        return endpointsSelector.getEndpoints(primary, replicas, instances);
->>>>>>> parent of b4ecc44... Merge conflict":neptune-gremlin-client/gremlin-client/src/main/java/com/amazonaws/services/neptune/cluster/ClusterEndpointsRefreshAgent.java
     }
 
     private Map<String, String> getTags(String dbInstanceArn, AmazonNeptune neptune) {
