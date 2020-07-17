@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>neptune-gremlin-client</artifactId>
-        <groupId>com.amazonaws</groupId>
+        <groupId>software.amazon.neptune</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -25,7 +25,7 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.amazonaws</groupId>
+            <groupId>software.amazon.neptune</groupId>
             <artifactId>gremlin-client</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
@@ -110,7 +110,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.amazonaws.services.neptune.ApplicationRunner</mainClass>
+                                    <mainClass>software.amazon.neptune.ApplicationRunner</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>
