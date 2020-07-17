@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.cluster;
+package software.amazon.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
@@ -150,7 +150,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
                 ));
 
         neptune.shutdown();
-        
+
         return selector.getEndpoints(primary, replicas, instances);
     }
 

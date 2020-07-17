@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune;
+package software.amazon.neptune;
 
 import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.help.Help;
