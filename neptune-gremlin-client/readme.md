@@ -49,11 +49,13 @@ The `ClusterEndpointsRefreshAgent` allows you to schedule endpoint updates to a 
 The following shows how to refresh a client with a cluster's available replica endpoints every 60 seconds:
 
 ```
-ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(clusterId);
+ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
+    clusterId,
+    ClusterTopologyRefreshAgent.EndpointsType.ReadReplicas);
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-    .addContactPoints(refreshAgent.getAddresses(ClusterTopologyRefreshAgent.EndpointsType.ReadReplicas))
+    .addContactPoints(refreshAgent.getAddresses())
     .port(8182)
     .create();
 
@@ -61,23 +63,39 @@ GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
     client::refreshEndpoints,
-    ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas,
     60,
     TimeUnit.SECONDS);
 ```
 
 ### EndpointsSelector
 
-The `ClusterEndpointsRefreshAgent.start()` method accepts an `EndpointsSelector` that allows you to add custom endpoint selection logic. The following example shows how to select endpoints for all **Available** instances with a **workload** tag whose value is **analytics**:
+The `ClusterEndpointsRefreshAgent` constructor accepts an `EndpointsSelector` that allows you to add custom endpoint selection logic. The following example shows how to select endpoints for all **Available** instances with a **workload** tag whose value is **analytics**:
 
 ```
-EndpointsSelector selector = (primaryId, replicaIds, instances) -> {
-        return instances.values().stream()
-                .filter(i -> i.hasTag("workload", "analytics"))
-                .filter(NeptuneInstanceProperties::isAvailable)
-                .map(NeptuneInstanceProperties::getEndpoint)
-                .collect(Collectors.toList());
-    };
+EndpointsSelector selector = (primaryId, replicaIds, instances) → {
+    return instances.values().stream()
+        .filter(i -> i.hasTag("workload", "analytics"))
+        .filter(NeptuneInstanceProperties::isAvailable)
+        .map(NeptuneInstanceProperties::getEndpoint)
+        .collect(Collectors.toList());
+};
+
+ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
+    clusterId,
+    selector);
+
+GremlinCluster cluster = GremlinClusterBuilder.build()
+    .enableSsl(true)
+    .addContactPoints(refreshAgent.getAddresses())
+    .port(8182)
+    .create();
+
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    client::refreshEndpoints,
+    60,
+    TimeUnit.SECONDS);
 ```
 
 The `ClusterEndpointsRefreshAgent.EndpointsType` enum provides implementations of `EndpointsSelector` for selecting all available instances (primary and read replicas), the current primary (if it is available), or all available read replicas.
