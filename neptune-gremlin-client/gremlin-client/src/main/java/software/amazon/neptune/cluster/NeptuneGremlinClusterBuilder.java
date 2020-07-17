@@ -15,7 +15,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package com.amazonaws.services.neptune.cluster;
+package software.amazon.neptune.cluster;
 
 import io.netty.handler.ssl.SslContext;
 import org.apache.tinkerpop.gremlin.driver.*;

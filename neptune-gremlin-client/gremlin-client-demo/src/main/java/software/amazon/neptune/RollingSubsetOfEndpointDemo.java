@@ -10,9 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune;
+package software.amazon.neptune;
 
-import com.amazonaws.services.neptune.cluster.NeptuneGremlinClusterBuilder;
+import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
