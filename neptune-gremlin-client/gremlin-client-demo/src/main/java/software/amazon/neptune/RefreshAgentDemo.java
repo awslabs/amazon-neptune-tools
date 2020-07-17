@@ -72,17 +72,12 @@ public class RefreshAgentDemo implements Runnable {
 
         try {
 
-
-            ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
-                    clusterId,
-                    ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas);
+            ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(clusterId);
 
             GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
                     .enableSsl(enableSsl)
                     .enableIamAuth(enableIam)
-                    .addContactPoints(refreshAgent.getAddresses())
-                    .minConnectionPoolSize(3)
-                    .maxConnectionPoolSize(3)
+                    .addContactPoints(refreshAgent.getAddresses(ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas))
                     .port(neptunePort)
                     .create();
 
@@ -90,6 +85,7 @@ public class RefreshAgentDemo implements Runnable {
 
             refreshAgent.startPollingNeptuneAPI(
                     client::refreshEndpoints,
+                    ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas,
                     intervalSeconds,
                     TimeUnit.SECONDS);
 
