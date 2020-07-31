@@ -140,19 +140,19 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-repository-sparql</artifactId>
-            <version>[2.4.0,)</version>
+            <version>3.3.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-turtle</artifactId>
-            <version>2.4.3</version>
+            <version>3.3.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-nquads</artifactId>
-            <version>2.4.3</version>
+            <version>3.3.0</version>
         </dependency>
 
         <dependency>
