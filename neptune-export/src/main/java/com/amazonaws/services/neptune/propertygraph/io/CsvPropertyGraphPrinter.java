@@ -30,8 +30,6 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
-    private final AtomicLong partitionKeyGenerator = new AtomicLong(0);
-    private String partitionKey = "0";
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    Map<Object, PropertyTypeInfo> metadata,
@@ -99,7 +97,9 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printEdge(String id, String label, String from, String to) {
         commaPrinter.printComma();
+        writer.print("\"");
         writer.print(id);
+        writer.print("\"");
         commaPrinter.printComma();
         writer.print(label);
         commaPrinter.printComma();
@@ -111,14 +111,15 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printNode(String id, List<String> labels) {
         commaPrinter.printComma();
+        writer.print("\"");
         writer.print(id);
+        writer.print("\"");
         commaPrinter.printComma();
         writer.print(String.join(";", labels));
     }
 
     @Override
     public void printStartRow() {
-        partitionKey = String.valueOf(partitionKeyGenerator.incrementAndGet());
         writer.startCommit();
         commaPrinter.init();
     }

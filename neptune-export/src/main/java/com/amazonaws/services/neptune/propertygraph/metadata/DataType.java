@@ -157,7 +157,7 @@ public enum DataType {
         }
     };
 
-    public static DataType dataTypeFor(Class cls) {
+    public static DataType dataTypeFor(Class<?> cls) {
         String name = cls.getSimpleName();
         try {
             return DataType.valueOf(name);
