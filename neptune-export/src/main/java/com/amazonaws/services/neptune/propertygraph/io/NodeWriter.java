@@ -30,8 +30,10 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
     @Override
     public void handle(Map<String, Object> map, boolean allowTokens) throws IOException {
 
+        @SuppressWarnings("unchecked")
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
         String id = (String) map.get("id");
+        @SuppressWarnings("unchecked")
         List<String> labels = (List<String>) map.get("label");
 
         propertyGraphPrinter.printStartRow();

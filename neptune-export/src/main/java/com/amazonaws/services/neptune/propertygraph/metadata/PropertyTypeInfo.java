@@ -31,7 +31,7 @@ public class PropertyTypeInfo {
     }
 
     public void accept(Object value) {
-        Class cls = Object.class;
+        Class<?> cls = Object.class;
 
         if (isList(value)) {
             List<?> values = (List<?>) value;
