@@ -16,6 +16,7 @@ import com.amazonaws.services.lambda.runtime.ClientContext;
 import com.amazonaws.services.lambda.runtime.CognitoIdentity;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
+import com.amazonaws.services.neptune.export.NeptuneExportLambda;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
@@ -26,18 +27,23 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Command(name = "nesvc", description = "neptune-export service", hidden = true)
-public class NeptuneExportSvc implements Runnable {
+public class RunNeptuneExportSvc implements Runnable {
 
     @Option(name = {"--json"}, description = "JSON")
     @Once
     private String json;
 
+    @Option(name = {"--root-path"}, description = "Root directory path", hidden = true)
+    @Once
+    private String rootPath = "/neptune/tmp";
+
     @Override
     public void run() {
+
         InputStream input = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
 
         try {
-            new NeptuneExportLambda().handleRequest(input, System.out, new Context() {
+            new NeptuneExportLambda(rootPath).handleRequest(input, System.out, new Context() {
                 @Override
                 public String getAwsRequestId() {
                     throw new NotImplementedException();

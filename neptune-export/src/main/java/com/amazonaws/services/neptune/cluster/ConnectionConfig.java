@@ -10,7 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.auth;
+package com.amazonaws.services.neptune.cluster;
+
+import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +25,7 @@ public class ConnectionConfig {
     private final String albEndpoint;
     private final int lbPort;
     private final boolean useIamAuth;
-    private final boolean useSsl;
+    private boolean useSsl;
 
     public ConnectionConfig(Collection<String> neptuneEndpoints,
                             int neptunePort,
@@ -79,5 +81,17 @@ public class ConnectionConfig {
 
     public boolean isDirectConnection() {
         return nlbEndpoint == null && albEndpoint == null;
+    }
+
+    public String nlbEndpoint() {
+        return nlbEndpoint;
+    }
+
+    public String albEndpoint() {
+        return albEndpoint;
+    }
+
+    public int lbPort() {
+        return lbPort;
     }
 }

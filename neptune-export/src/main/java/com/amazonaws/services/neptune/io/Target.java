@@ -15,33 +15,39 @@ package com.amazonaws.services.neptune.io;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
-public enum Target {
+public enum Target implements CommandWriter {
+
     files {
         @Override
-        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
-            return new PrintOutputWriter(new FileWriter(filePath.toFile()));
+        public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
+            return new PrintOutputWriter(new FileWriter(pathSupplier.get().toFile()));
         }
 
         @Override
-        public void writeCommandResult(Object result) {
-            System.out.println(result);
+        public void writeReturnValue(String value) {
+            System.out.println(value);
         }
     },
     stdout {
         @Override
-        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) {
-            return new PrintOutputWriter(System.out);
+        public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
+            return new StdOutPrintOutputWriter();
         }
 
         @Override
-        public void writeCommandResult(Object result) {
-            System.err.println(result);
+        public void writeReturnValue(String value) {
+            System.err.println(value);
         }
     },
     stream {
         @Override
-        public OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException {
+        public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
+
+            Path filePath = pathSupplier.get();
 
             return new FileToStreamOutputWriter(
                     new KinesisStreamPrintOutputWriter(new FileWriter(filePath.toFile())),
@@ -50,13 +56,19 @@ public enum Target {
         }
 
         @Override
-        public void writeCommandResult(Object result) {
-            System.out.println(result);
+        public void writeReturnValue(String value) {
+            System.out.println(value);
         }
     };
 
-    public abstract OutputWriter createOutputWriter(Path filePath, KinesisConfig kinesisConfig) throws IOException;
+    @Override
+    public void writeMessage(String value) {
+        System.err.println(value);
+    }
 
-    public abstract void writeCommandResult(Object result);
+    public abstract OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException;
+
+    @Override
+    public abstract void writeReturnValue(String value);
 
 }

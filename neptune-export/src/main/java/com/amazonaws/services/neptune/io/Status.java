@@ -20,7 +20,8 @@ public class Status {
     private final AtomicBoolean allowContinue = new AtomicBoolean(true);
 
     public void update(){
-        if (counter.incrementAndGet() % 10000 == 0){
+        int counterValue = counter.incrementAndGet();
+        if (counterValue % 10000 == 0){
             System.err.print(".");
         }
     }

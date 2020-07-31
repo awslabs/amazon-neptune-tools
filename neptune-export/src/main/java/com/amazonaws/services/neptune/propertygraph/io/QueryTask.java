@@ -17,7 +17,10 @@ import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.util.Timer;
+import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
+import org.omg.CORBA.INTERNAL;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -61,6 +64,7 @@ public class QueryTask implements Runnable {
 
                     NamedQuery namedQuery = queries.poll();
                     if (!(namedQuery == null)) {
+
                         PropertiesMetadata propertiesMetadata = new PropertiesMetadata();
 
                         ResultSet results = queryClient.submit(namedQuery.query());
@@ -77,19 +81,22 @@ public class QueryTask implements Runnable {
                             results = queryClient.submit(namedQuery.query());
                         }
 
-                        ResultsHandler resultsHandler = new ResultsHandler(
-                                namedQuery.name(), labelWriters, writerFactory, propertiesMetadata);
-                        StatusHandler handler = new StatusHandler(resultsHandler, status);
+                        try (Timer timer = new Timer(String.format("query [%s]", namedQuery.query()))) {
 
-                        results.stream().
-                                map(r -> castToMap(r.getObject())).
-                                forEach(r -> {
-                                    try {
-                                        handler.handle(r, true);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                });
+                            ResultsHandler resultsHandler = new ResultsHandler(
+                                    namedQuery.name(), labelWriters, writerFactory, propertiesMetadata);
+                            StatusHandler handler = new StatusHandler(resultsHandler, status);
+
+                            results.stream().
+                                    map(r -> castToMap(r.getObject())).
+                                    forEach(r -> {
+                                        try {
+                                            handler.handle(r, true);
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    });
+                        }
 
                     } else {
                         status.halt();
@@ -105,9 +112,8 @@ public class QueryTask implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-
-                for (GraphElementHandler<Map<?, ?>> writer : labelWriters.values()) {
-                    writer.close();
+                for (GraphElementHandler<Map<?, ?>> labelWriter : labelWriters.values()) {
+                    labelWriter.close();
                 }
             } catch (Exception e) {
                 System.err.printf("%nWARNING: Error closing writer: %s%n", e.getMessage());

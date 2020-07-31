@@ -13,24 +13,27 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
+import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.CreateMetadataFromConfigFile;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.*;
+import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.github.rvesse.airline.annotations.restrictions.Required;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
-import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collection;
 
 @Examples(examples = {
@@ -44,10 +47,10 @@ import java.util.Collection;
 public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
-    private CommonConnectionModule connection = new CommonConnectionModule();
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
-    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
+    private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
@@ -64,11 +67,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
-    @Option(name = {"-c", "--config-file"}, description = "Path to JSON config file")
+    @Option(name = {"-c", "--config-file"}, description = "Path to JSON config file (file path, or 'https' or 's3' URI)")
     @Required
-    @Path(mustExist = true, kind = PathKind.FILE)
     @Once
-    private File configFile;
+    private URI configFile;
 
     @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
     @Once
@@ -78,39 +80,47 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     public void run() {
 
         try (Timer timer = new Timer("export-pg-from-config");
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
-             GraphTraversalSource g = client.newTraversalSource()) {
+             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            Directories directories = fileSystem.createDirectories(DirectoryStructure.PropertyGraph);
+            Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+            JsonResource<PropertiesMetadataCollection> configFileResource = new JsonResource<>(
+                    "Config file",
+                    configFile,
+                    PropertiesMetadataCollection.class);
 
-            PropertiesMetadataCollection metadataCollection = new CreateMetadataFromConfigFile(configFile).execute();
+            PropertiesMetadataCollection metadataCollection = configFileResource.get();
 
             ExportStats stats = new ExportStats();
             stats.prepare(metadataCollection);
 
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                    exportSpecifications,
-                    metadataCollection,
-                    g,
-                    range.config(),
-                    concurrency.config(),
-                    targetConfig);
-            exportJob.execute();
+            try( NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                 GraphTraversalSource g = client.newTraversalSource()) {
 
-            System.err.println();
-            System.err.println(target.description() + " files : " + directories.directory());
-            System.err.println("Config file : " + configFile.getAbsolutePath());
+                ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                        exportSpecifications,
+                        metadataCollection,
+                        g,
+                        range.config(),
+                        clusterStrategy.concurrencyConfig(),
+                        targetConfig);
+                exportJob.execute();
+
+            }
+
+            directories.writeRootDirectoryPathAsMessage(target.description(), target);
+            configFileResource.writeResourcePathAsMessage(target);
+
             System.err.println();
             System.err.println(stats.toString());
 
-            target.writeCommandResult(directories.directory());
+            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+            onExportComplete(outputPath, stats);
 
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }

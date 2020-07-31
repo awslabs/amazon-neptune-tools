@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
@@ -29,7 +30,6 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
-    private String partitionKey = UUID.randomUUID().toString();
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    Map<Object, PropertyTypeInfo> metadata,
@@ -97,7 +97,9 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printEdge(String id, String label, String from, String to) {
         commaPrinter.printComma();
+        writer.print("\"");
         writer.print(id);
+        writer.print("\"");
         commaPrinter.printComma();
         writer.print(label);
         commaPrinter.printComma();
@@ -109,14 +111,15 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printNode(String id, List<String> labels) {
         commaPrinter.printComma();
+        writer.print("\"");
         writer.print(id);
+        writer.print("\"");
         commaPrinter.printComma();
         writer.print(String.join(";", labels));
     }
 
     @Override
     public void printStartRow() {
-        partitionKey = UUID.randomUUID().toString();
         writer.startCommit();
         commaPrinter.init();
     }

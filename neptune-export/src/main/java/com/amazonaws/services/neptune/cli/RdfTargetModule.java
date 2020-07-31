@@ -12,18 +12,29 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.KinesisConfig;
-import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.github.rvesse.airline.annotations.restrictions.PathKind;
+import com.github.rvesse.airline.annotations.restrictions.Required;
 
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
 
-public class RdfTargetModule {
+public class RdfTargetModule implements CommandWriter {
+
+    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
+    @Required
+    @com.github.rvesse.airline.annotations.restrictions.Path(mustExist = false, kind = PathKind.DIRECTORY)
+    @Once
+    private File directory;
+
+    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
+    @Once
+    private String tag = "";
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
     @Once
@@ -43,11 +54,21 @@ public class RdfTargetModule {
     @Once
     private String region;
 
+    public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
+        return Directories.createFor(directoryStructure, directory, tag );
+    }
+
     public RdfTargetConfig config(Directories directories) {
         return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
     }
 
-    public void writeCommandResult(Path path){
-        output.writeCommandResult(path);
+    @Override
+    public void writeReturnValue(String value){
+        output.writeReturnValue(value);
+    }
+
+    @Override
+    public void writeMessage(String value) {
+        output.writeMessage(value);
     }
 }

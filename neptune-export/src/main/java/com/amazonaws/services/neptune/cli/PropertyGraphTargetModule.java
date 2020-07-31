@@ -12,19 +12,29 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.Target;
-import com.amazonaws.services.neptune.propertygraph.ConcurrencyConfig;
+import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
-import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.github.rvesse.airline.annotations.restrictions.PathKind;
+import com.github.rvesse.airline.annotations.restrictions.Required;
 
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
 
-public class PropertyGraphTargetModule implements RequiresMetadata {
+public class PropertyGraphTargetModule implements RequiresMetadata, CommandWriter {
+
+    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
+    @Required
+    @com.github.rvesse.airline.annotations.restrictions.Path(mustExist = false, kind = PathKind.DIRECTORY)
+    @Once
+    private File directory;
+
+    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
+    @Once
+    private String tag = "";
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
     @Once
@@ -44,6 +54,10 @@ public class PropertyGraphTargetModule implements RequiresMetadata {
     @Once
     private String region;
 
+    public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
+        return Directories.createFor(directoryStructure, directory, tag );
+    }
+
     public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
         return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output);
@@ -53,8 +67,14 @@ public class PropertyGraphTargetModule implements RequiresMetadata {
         return format.description();
     }
 
-    public void writeCommandResult(Path path){
-        output.writeCommandResult(path);
+    @Override
+    public void writeReturnValue(String value){
+        output.writeReturnValue(value);
+    }
+
+    @Override
+    public void writeMessage(String value) {
+        output.writeMessage(value);
     }
 
     @Override

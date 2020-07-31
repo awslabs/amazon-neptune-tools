@@ -16,6 +16,7 @@ import com.amazonaws.services.kinesis.producer.Attempt;
 import com.amazonaws.services.kinesis.producer.KinesisProducer;
 import com.amazonaws.services.kinesis.producer.UserRecordFailedException;
 import com.amazonaws.services.kinesis.producer.UserRecordResult;
+import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,11 +29,13 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Stream {
 
     private final KinesisProducer kinesisProducer;
     private final String streamName;
+    private final AtomicLong partitionKey = new AtomicLong();
 
     private static final Logger logger = LoggerFactory.getLogger(Stream.class);
 
@@ -50,7 +53,7 @@ public class Stream {
                 }
                 ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
 
-                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, UUID.randomUUID().toString(), data);
+                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKey.getAndIncrement()), data);
                 Futures.addCallback(future, CALLBACK);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

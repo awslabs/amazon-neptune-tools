@@ -31,7 +31,7 @@ public class Range {
 
     public GraphTraversal<? extends Element, ?> applyRange(GraphTraversal<? extends Element, ?> traversal) {
 
-        if (end == -1) {
+        if (isAll()) {
             return traversal;
         } else {
             return traversal.range(start, end);
@@ -39,15 +39,32 @@ public class Range {
     }
 
     public long difference() {
-        return abs(end) - start;
+        return end - start;
     }
 
     public boolean isEmpty() {
-        return difference() <= 0;
+        return start == -1 && end == -1;
+    }
+
+    public boolean isAll(){
+        return start == 0 && end == -1;
     }
 
     @Override
     public String toString() {
         return "range(" + start + ", " + end + ")";
+    }
+
+    public boolean sizeExceeds(long value) {
+
+        if (isEmpty()){
+            return false;
+        }
+
+        if (isAll()){
+            return true;
+        }
+
+        return value < (end - start);
     }
 }

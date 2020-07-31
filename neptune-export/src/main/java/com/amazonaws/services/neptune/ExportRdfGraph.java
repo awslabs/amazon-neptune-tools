@@ -12,11 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
-import com.amazonaws.services.neptune.cli.CommonFileSystemModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
+import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
 import com.amazonaws.services.neptune.util.Timer;
@@ -24,6 +27,7 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.help.Examples;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output "},
@@ -35,10 +39,10 @@ import javax.inject.Inject;
 public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
-    private CommonConnectionModule connection = new CommonConnectionModule();
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
-    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
+    private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
     private RdfTargetModule target = new RdfTargetModule();
@@ -47,19 +51,21 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     public void run() {
 
         try (Timer timer = new Timer("export-rdf");
-             NeptuneSparqlClient client = NeptuneSparqlClient.create(connection.config())) {
+             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1))) {
 
-            Directories directories = fileSystem.createDirectories(DirectoryStructure.Rdf);
+            Directories directories = target.createDirectories(DirectoryStructure.Rdf);
 
-            ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
-            job.execute();
+            try( NeptuneSparqlClient client = NeptuneSparqlClient.create(clusterStrategy.connectionConfig())) {
 
-            System.err.println();
-            target.writeCommandResult(directories.directory());
+                ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
+                job.execute();
+            }
+
+            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+            onExportComplete(outputPath, new ExportStats());
 
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }

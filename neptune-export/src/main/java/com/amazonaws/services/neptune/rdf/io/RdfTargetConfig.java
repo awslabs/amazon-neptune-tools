@@ -21,6 +21,7 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public class RdfTargetConfig {
 
@@ -37,16 +38,16 @@ public class RdfTargetConfig {
     }
 
     public OutputWriter createOutputWriter() throws IOException {
-        Path filePath = directories.createFilePath(
-                directories.statementsDirectory(),
-                "statements",
-                0,
-                format);
-
-        return output.createOutputWriter(filePath, kinesisConfig);
+        return output.createOutputWriter(
+                () -> directories.createStatementsFilePath("statements", 0, format),
+                kinesisConfig);
     }
 
-    public RDFWriter createRDFWriter(OutputWriter outputWriter){
+    public RDFWriter createRDFWriter(OutputWriter outputWriter) {
         return format.createWriter(outputWriter, new Prefixes());
+    }
+
+    public RdfExportFormat format() {
+        return format;
     }
 }

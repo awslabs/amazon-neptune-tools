@@ -17,14 +17,25 @@ public class Timer implements AutoCloseable {
     private final long start = System.currentTimeMillis();
 
     private final String description;
+    private final boolean padWithNewlines;
 
     public Timer(String description) {
+        this(description, true);
+    }
+
+    public Timer(String description, boolean padWithNewlines) {
         this.description = description;
+        this.padWithNewlines = padWithNewlines;
     }
 
     @Override
-    public void close() throws Exception {
-        System.err.println();
+    public void close() {
+        if (padWithNewlines) {
+            System.err.println();
+        }
         System.err.println(String.format("Completed %s in %s seconds", description, (System.currentTimeMillis() - start) / 1000));
+        if (padWithNewlines) {
+            System.err.println();
+        }
     }
 }

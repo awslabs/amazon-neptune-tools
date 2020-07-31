@@ -10,8 +10,20 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.service;
+package com.amazonaws.services.neptune.export;
 
-public interface Logger {
-    public void log(String s);
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
+
+import java.nio.file.Path;
+
+public interface NeptuneExportEventHandler {
+
+    NeptuneExportEventHandler NULL_EVENT_HANDLER = new NeptuneExportEventHandler() {
+        @Override
+        public void onExportComplete(Path outputPath, ExportStats stats) {
+            // Do nothing
+        }
+    };
+
+    void onExportComplete(Path outputPath, ExportStats stats);
 }

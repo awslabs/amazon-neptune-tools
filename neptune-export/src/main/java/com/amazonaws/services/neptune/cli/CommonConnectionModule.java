@@ -12,25 +12,32 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.auth.ConnectionConfig;
+import com.amazonaws.services.neptune.cluster.ConnectionConfig;
+import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class CommonConnectionModule {
 
     @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint(s) – supply multiple instance endpoints if you want to load balance requests across a cluster", title = "endpoint")
-    @Required
-    private List<String> endpoints = new ArrayList<>();
+    private Collection<String> endpoints = new HashSet<>();
+
+    @Option(name = {"--cluster-id"}, description = "ID of an Amazon Neptune cluster. If you specify a cluster ID, neptune-export will use all of the instance endpoints in the cluster in addition to any endpoints you have specified using the -e and --endpoint options.")
+    @Once
+    private String clusterId;
 
     @Option(name = {"-p", "--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
     @Once
     private int port = 8182;
 
-    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune (remember to set SERVICE_REGION environment variable, and, if using a load balancer, set the --host-header option as well)")
+    @Option(name = {"--use-iam-auth"}, description = "Use IAM database authentication to authenticate to Neptune (remember to set SERVICE_REGION environment variable)")
     @Once
     private boolean useIamAuth = false;
 
@@ -54,6 +61,16 @@ public class CommonConnectionModule {
     private int loadBalancerPort = 80;
 
     public ConnectionConfig config() {
+
+        if (StringUtils.isNotEmpty(clusterId)){
+            NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId);
+            endpoints.addAll(clusterMetadata.endpoints());
+        }
+
+        if (endpoints.isEmpty()){
+            throw new IllegalStateException("You must supply a cluster ID or one or more endpoints");
+        }
+
         return new ConnectionConfig(
                 endpoints,
                 port,

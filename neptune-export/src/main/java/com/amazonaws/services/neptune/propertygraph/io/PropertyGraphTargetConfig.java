@@ -21,6 +21,7 @@ import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class PropertyGraphTargetConfig {
 
@@ -51,23 +52,28 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
-        Path directory = directories.resultsDirectory().resolve(name);
-        java.nio.file.Path filePath = directories.createFilePath(directory, name, index, format);
-        OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
+
+        OutputWriter outputWriter = output.createOutputWriter(
+                () -> directories.createQueryResultsFilePath(name, index, format),
+                kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
     public PropertyGraphPrinter createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
-        java.nio.file.Path filePath = directories.createFilePath(directories.edgesDirectory(), name, index, format);
-        OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
+
+        OutputWriter outputWriter = output.createOutputWriter(
+                () -> directories.createEdgesFilePath(name, index, format),
+                kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }
 
     public PropertyGraphPrinter createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
-        java.nio.file.Path filePath = directories.createFilePath(directories.nodesDirectory(), name, index, format);
-        OutputWriter outputWriter = output.createOutputWriter(filePath, kinesisConfig);
+
+        OutputWriter outputWriter = output.createOutputWriter(
+                () -> directories.createNodesFilePath(name, index, format),
+                kinesisConfig);
 
         return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
     }

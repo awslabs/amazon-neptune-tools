@@ -13,8 +13,10 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
+import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.metadata.*;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
@@ -23,6 +25,7 @@ import com.github.rvesse.airline.annotations.help.Examples;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.util.Collection;
 
 @Examples(examples = {
@@ -38,10 +41,13 @@ import java.util.Collection;
 public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+
+    @Inject
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
-    private CommonFileSystemModule fileSystem = new CommonFileSystemModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
@@ -59,26 +65,28 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     public void run() {
 
         try (Timer timer = new Timer("create-pg-config");
-             NeptuneGremlinClient client = NeptuneGremlinClient.create(connection.config(), concurrency.config(), serialization.config());
-             GraphTraversalSource g = client.newTraversalSource()) {
-
-            Directories directories = fileSystem.createDirectories(DirectoryStructure.Config);
-            java.nio.file.Path configFilePath = directories.configFilePath();
+             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
             ExportStats stats = new ExportStats();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats);
+            Directories directories = target.createDirectories(DirectoryStructure.Config);
+            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
+            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
-            PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
+            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                 GraphTraversalSource g = client.newTraversalSource()) {
 
-            new SaveMetadataConfig(metadataCollection, configFilePath).execute();
+                MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
+                PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
 
-            System.err.println("Config file : " + configFilePath);
-            System.out.println(configFilePath);
+                configFileResource.save(metadataCollection);
+                configFileResource.writeResourcePathAsMessage(target);
+            }
+
+            Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
+            onExportComplete(outputPath, stats);
 
         } catch (Exception e) {
-            System.err.println("An error occurred while creating export config:");
-            e.printStackTrace();
+            handleException(e);
         }
     }
 }

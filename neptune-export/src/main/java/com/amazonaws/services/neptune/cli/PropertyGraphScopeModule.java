@@ -44,7 +44,7 @@ public class PropertyGraphScopeModule {
     @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
     private TokensOnly tokensOnly = TokensOnly.off;
 
-    public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats){
-        return scope.exportSpecifications(nodeLabels, edgeLabels, tokensOnly, stats);
+    public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats, Collection<String> labModeFeatures){
+        return scope.exportSpecifications(nodeLabels, edgeLabels, tokensOnly, stats, labModeFeatures);
     }
 }

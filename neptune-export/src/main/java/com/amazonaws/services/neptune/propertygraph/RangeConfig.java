@@ -15,25 +15,40 @@ package com.amazonaws.services.neptune.propertygraph;
 public class RangeConfig {
 
     private final long rangeSize;
-    private final long skip;
-    private final long limit;
+    private final long numberOfItemsToSkip;
+    private final long numberOfItemsToExport;
+    private final long approxNodeCount;
+    private final long approxEdgeCount;
 
-
-    public RangeConfig(long rangeSize, long skip, long limit) {
+    public RangeConfig(long rangeSize,
+                       long numberOfItemsToSkip,
+                       long numberOfItemsToExport,
+                       long approxNodeCount,
+                       long approxEdgeCount) {
         this.rangeSize = rangeSize;
-        this.skip = skip;
-        this.limit = limit;
+        this.numberOfItemsToSkip = numberOfItemsToSkip;
+        this.numberOfItemsToExport = numberOfItemsToExport;
+        this.approxNodeCount = approxNodeCount;
+        this.approxEdgeCount = approxEdgeCount;
     }
 
     public long rangeSize() {
         return rangeSize;
     }
 
-    public long skip() {
-        return skip;
+    public long numberOfItemsToSkip() {
+        return numberOfItemsToSkip;
     }
 
-    public long limit() {
-        return limit;
+    public long numberOfItemsToExport() {
+        return numberOfItemsToExport;
+    }
+
+    public long approxNodeCount() {
+        return approxNodeCount;
+    }
+
+    public long approxEdgeCount() {
+        return approxEdgeCount;
     }
 }

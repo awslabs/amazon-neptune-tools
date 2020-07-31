@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.propertygraph.io.Jsonizable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -22,9 +23,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class NamedQueriesCollection {
+public class NamedQueriesCollection implements Jsonizable {
 
-    public static NamedQueriesCollection fromJson(ArrayNode json) {
+    public static NamedQueriesCollection fromJson(JsonNode json) {
         List<NamedQueries> collection = new ArrayList<>();
 
         for (JsonNode jsonNode : json) {
@@ -51,7 +52,8 @@ public class NamedQueriesCollection {
         return namedQueries.stream().map(NamedQueries::name).collect(Collectors.toList());
     }
 
-    public ArrayNode toJson() {
+    @Override
+    public JsonNode toJson() {
         ArrayNode json = JsonNodeFactory.instance.arrayNode();
 
         for (NamedQueries queries : namedQueries) {

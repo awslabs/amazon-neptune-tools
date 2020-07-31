@@ -25,18 +25,21 @@ public enum Scope {
         public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
                                                                        List<String> edgeLabels,
                                                                        TokensOnly tokensOnly,
-                                                                       ExportStats stats) {
+                                                                       ExportStats stats,
+                                                                       Collection<String> labModeFeatures) {
             return Arrays.asList(
                     new ExportSpecification<>(
                             MetadataTypes.Nodes,
                             Scope.labelsFilter(nodeLabels),
                             tokensOnly.nodeTokensOnly(),
-                            stats),
+                            stats,
+                            labModeFeatures),
                     new ExportSpecification<>(
                             MetadataTypes.Edges,
                             Scope.labelsFilter(edgeLabels),
                             tokensOnly.edgeTokensOnly(),
-                            stats)
+                            stats,
+                            labModeFeatures)
             );
         }
     },
@@ -45,13 +48,15 @@ public enum Scope {
         public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
                                                                        List<String> edgeLabels,
                                                                        TokensOnly tokensOnly,
-                                                                       ExportStats stats) {
+                                                                       ExportStats stats,
+                                                                       Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
                             MetadataTypes.Nodes,
                             Scope.labelsFilter(nodeLabels),
                             tokensOnly.nodeTokensOnly(),
-                            stats)
+                            stats,
+                            labModeFeatures)
             );
         }
     },
@@ -60,13 +65,15 @@ public enum Scope {
         public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
                                                                        List<String> edgeLabels,
                                                                        TokensOnly tokensOnly,
-                                                                       ExportStats stats) {
+                                                                       ExportStats stats,
+                                                                       Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
                             MetadataTypes.Edges,
                             Scope.labelsFilter(edgeLabels),
                             tokensOnly.edgeTokensOnly(),
-                            stats)
+                            stats,
+                            labModeFeatures)
             );
         }
     };
@@ -87,6 +94,7 @@ public enum Scope {
             List<String> nodeLabels,
             List<String> edgeLabels,
             TokensOnly tokensOnly,
-            ExportStats stats);
+            ExportStats stats,
+            Collection<String> labModeFeatures);
 
 }

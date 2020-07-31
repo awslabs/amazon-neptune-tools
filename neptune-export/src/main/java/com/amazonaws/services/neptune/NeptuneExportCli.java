@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.export.NeptuneExportRunner;
 import com.github.rvesse.airline.annotations.Alias;
 import com.github.rvesse.airline.annotations.Cli;
 import com.github.rvesse.airline.annotations.Parser;
@@ -26,7 +27,10 @@ import com.github.rvesse.airline.help.Help;
                 ExportPropertyGraphFromConfig.class,
                 ExportPropertyGraphFromGremlinQueries.class,
                 ExportRdfGraph.class,
-                NeptuneExportSvc.class,
+                RunNeptuneExportSvc.class,
+                GetClusterInfo.class,
+                AddClone.class,
+                RemoveClone.class,
                 Help.class},
         parserConfiguration = @Parser(aliases = {
                 @Alias(name = "create-config",
@@ -41,26 +45,6 @@ import com.github.rvesse.airline.help.Help;
 public class NeptuneExportCli {
 
     public static void main(String[] args) {
-
-        com.github.rvesse.airline.Cli<Runnable> cli = new com.github.rvesse.airline.Cli<>(NeptuneExportCli.class);
-
-        try {
-            Runnable cmd = cli.parse(args);
-
-            if (NeptuneExportBaseCommand.class.isAssignableFrom(cmd.getClass())) {
-                ((NeptuneExportBaseCommand) cmd).applyLogLevel();
-            }
-
-            cmd.run();
-        } catch (Exception e) {
-
-            System.err.println(e.getMessage());
-            System.err.println();
-
-            Runnable cmd = cli.parse("help", args[0]);
-            cmd.run();
-
-            System.exit(-1);
-        }
+        new NeptuneExportRunner(args).run();
     }
 }

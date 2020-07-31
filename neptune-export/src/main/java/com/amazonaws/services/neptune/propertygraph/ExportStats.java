@@ -14,6 +14,9 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -75,6 +78,31 @@ public class ExportStats {
         return sb.toString();
     }
 
+    public void addTo(ObjectNode exportNode) {
+        ObjectNode statsNode = JsonNodeFactory.instance.objectNode();
+        exportNode.set("stats", statsNode);
+        statsNode.put("nodes", nodeStats.values().stream().map(LabelStats::count).reduce(0L, Long::sum));
+        statsNode.put("edges", edgeStats.values().stream().map(LabelStats::count).reduce(0L, Long::sum));
+        ObjectNode detailsNode = JsonNodeFactory.instance.objectNode();
+        statsNode.set("details", detailsNode);
+        ArrayNode nodesArrayNode = JsonNodeFactory.instance.arrayNode();
+        detailsNode.set("nodes", nodesArrayNode);
+        for (LabelStats entry : nodeStats.values()) {
+            ObjectNode nodeNode = JsonNodeFactory.instance.objectNode();
+            nodesArrayNode.add(nodeNode);
+            nodeNode.put("label", entry.label());
+            nodeNode.put("count", entry.count());
+        }
+        ArrayNode edgesArrayNode = JsonNodeFactory.instance.arrayNode();
+        detailsNode.set("edges", edgesArrayNode);
+        for (LabelStats entry : edgeStats.values()) {
+            ObjectNode edgeNode = JsonNodeFactory.instance.objectNode();
+            edgesArrayNode.add(edgeNode);
+            edgeNode.put("label", entry.label());
+            edgeNode.put("count", entry.count());
+        }
+    }
+
 
     private static class LabelStats {
         private final String label;
@@ -90,6 +118,10 @@ public class ExportStats {
 
         public long count() {
             return count.get();
+        }
+
+        public String label(){
+            return label;
         }
 
         @Override
