@@ -103,9 +103,13 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         commaPrinter.printComma();
         writer.print(label);
         commaPrinter.printComma();
+        writer.print("\"");
         writer.print(from);
+        writer.print("\"");
         commaPrinter.printComma();
+        writer.print("\"");
         writer.print(to);
+        writer.print("\"");
     }
 
     @Override
