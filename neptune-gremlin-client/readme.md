@@ -44,7 +44,7 @@ Because the cluster topology can change at any moment as a result of both planne
 
 ## ClusterEndpointsRefreshAgent
 
-The `ClusterEndpointsRefreshAgent` allows you to schedule endpoint updates to a client based on a Neptune cluster ID.  The identity under which you're running the agent must be authorized to perform `rds:DescribeDBClusters` for your Neptune cluster.
+The `ClusterEndpointsRefreshAgent` allows you to schedule endpoint updates to a client based on a Neptune cluster ID.  The identity under which you're running the agent must be authorized to perform `rds:DescribeDBClusters`,  `rds:DescribeDBInstances` and `rds:ListTagsForResource` for your Neptune cluster.
 
 The following shows how to refresh a client with a cluster's available replica endpoints every 60 seconds:
 
@@ -143,7 +143,7 @@ You can view the distribution of queries across the cluster using the Gremlin Re
  
 This demo uses a `ClusterTopologyRefreshAgent` to query the Neptune APIs for the current cluster topology every 15 seconds. The `GremlinClient` adapts accordingly.
  
-The command for this demo requires a `--cluster-id` parameter. The identity under which you're running the demo must be authorized to perform `rds:DescribeDBClusters` for your Neptune cluster.
+The command for this demo requires a `--cluster-id` parameter. The identity under which you're running the demo must be authorized to perform `rds:DescribeDBClusters`,  `rds:DescribeDBInstances` and `rds:ListTagsForResource` for your Neptune cluster.
  
 ```
 java -jar gremlin-client-demo.jar refresh-agent-demo \
