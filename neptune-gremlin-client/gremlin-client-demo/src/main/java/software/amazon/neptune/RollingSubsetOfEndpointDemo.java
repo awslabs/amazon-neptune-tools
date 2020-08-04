@@ -58,7 +58,7 @@ public class RollingSubsetOfEndpointDemo implements Runnable {
     @Once
     private int queryCount = 1000000;
 
-    @Option(name = {"--log-level"}, description = "Debug level")
+    @Option(name = {"--log-level"}, description = "Log level")
     @Once
     private String logLevel = "info";
 
