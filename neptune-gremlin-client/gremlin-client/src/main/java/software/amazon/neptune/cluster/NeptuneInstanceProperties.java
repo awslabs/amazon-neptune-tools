@@ -78,7 +78,18 @@ public class NeptuneInstanceProperties {
     }
 
     public boolean isAvailable(){
-        return getStatus().equals("Available");
+        return getStatus().equalsIgnoreCase("Available");
     }
 
+    @Override
+    public String toString() {
+        return "NeptuneInstanceProperties{" +
+                "instanceId='" + instanceId + '\'' +
+                ", endpoint='" + endpoint + '\'' +
+                ", status='" + status + '\'' +
+                ", availabilityZone='" + availabilityZone + '\'' +
+                ", instanceType='" + instanceType + '\'' +
+                ", tags=" + tags +
+                '}';
+    }
 }

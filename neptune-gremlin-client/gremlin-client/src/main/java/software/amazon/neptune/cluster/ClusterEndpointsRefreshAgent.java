@@ -40,7 +40,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
                                                    Collection<String> replicaIds,
                                                    Map<String, NeptuneInstanceProperties> instances) {
                 return instances.values().stream()
-                        .filter(i -> i.getStatus().equals("Available"))
+                        .filter(NeptuneInstanceProperties::isAvailable)
                         .map(NeptuneInstanceProperties::getEndpoint)
                         .collect(Collectors.toList());
             }
@@ -52,7 +52,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
                                                    Map<String, NeptuneInstanceProperties> instances) {
                 return instances.values().stream()
                         .filter(i -> primaryId.equals(i.getInstanceId()))
-                        .filter(i -> i.getStatus().equals("Available"))
+                        .filter(NeptuneInstanceProperties::isAvailable)
                         .map(NeptuneInstanceProperties::getEndpoint)
                         .collect(Collectors.toList());
             }
@@ -69,7 +69,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
 
                 return instances.values().stream()
                         .filter(i -> replicaIds.contains(i.getInstanceId()))
-                        .filter(i -> i.getStatus().equals("Available"))
+                        .filter(NeptuneInstanceProperties::isAvailable)
                         .map(NeptuneInstanceProperties::getEndpoint)
                         .collect(Collectors.toList());
             }
