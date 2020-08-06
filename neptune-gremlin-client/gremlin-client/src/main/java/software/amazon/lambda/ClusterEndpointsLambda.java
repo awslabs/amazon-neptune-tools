@@ -46,6 +46,8 @@ public class ClusterEndpointsLambda implements RequestStreamHandler {
                 EndpointsType.Primary,
                 EndpointsType.ReadReplicas);
 
+        addresses.set(refreshAgent.getAddresses());
+
         refreshAgent.startPollingNeptuneAPI(
                 addresses::set,
                 pollingIntervalSeconds,
@@ -68,13 +70,15 @@ public class ClusterEndpointsLambda implements RequestStreamHandler {
             }
         }
 
+        logger.log("EndpointsType: " + endpointsType);
+
         Map<EndpointsSelector, Collection<String>> addressesMap = addresses.get();
-        String results = String.join(",", addressesMap.get(endpointsType));
 
         for (Map.Entry<EndpointsSelector, Collection<String>> entry : addressesMap.entrySet()) {
             logger.log(entry.getKey() + ": " + entry.getValue());
         }
-        logger.log("EndpointsType: " + endpointsType);
+
+        String results = String.join(",", addressesMap.get(endpointsType));
         logger.log("Results: " + results);
 
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(output, UTF_8))) {

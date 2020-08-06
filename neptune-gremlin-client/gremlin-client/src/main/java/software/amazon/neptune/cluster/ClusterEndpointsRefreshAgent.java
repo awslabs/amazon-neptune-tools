@@ -51,7 +51,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
             Map<EndpointsSelector, Collection<String>> addresses = getAddresses();
             logger.info("New addresses: {}", addresses);
             onNewAddresses.apply(addresses);
-        }, delay, delay, timeUnit);
+        }, 0, delay, timeUnit);
     }
 
     public void stop() {
