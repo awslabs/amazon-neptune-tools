@@ -97,29 +97,21 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printEdge(String id, String label, String from, String to) {
         commaPrinter.printComma();
-        writer.print("\"");
-        writer.print(id);
-        writer.print("\"");
+        writer.print(DataType.String.format(id));
         commaPrinter.printComma();
-        writer.print(label);
+        writer.print(DataType.String.format(label));
         commaPrinter.printComma();
-        writer.print("\"");
-        writer.print(from);
-        writer.print("\"");
+        writer.print(DataType.String.format(from));
         commaPrinter.printComma();
-        writer.print("\"");
-        writer.print(to);
-        writer.print("\"");
+        writer.print(DataType.String.format(to));
     }
 
     @Override
     public void printNode(String id, List<String> labels) {
         commaPrinter.printComma();
-        writer.print("\"");
-        writer.print(id);
-        writer.print("\"");
+        writer.print(DataType.String.format(id));
         commaPrinter.printComma();
-        writer.print(String.join(";", labels));
+        writer.print(DataType.String.formatList(labels));
     }
 
     @Override
