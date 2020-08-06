@@ -30,7 +30,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
     private static final Map<String, Map<String, String>> instanceTags = new HashMap<>();
 
     public interface OnNewAddresses {
-        void apply(Collection<String> addresses);
+        void apply(Map<EndpointsSelector, Collection<String>> addresses);
     }
 
     public enum EndpointsType implements EndpointsSelector {
@@ -77,19 +77,19 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
     }
 
     private final String clusterId;
-    private final EndpointsSelector selector;
+    private final Collection<EndpointsSelector> selectors;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-    public ClusterEndpointsRefreshAgent(String clusterId, EndpointsSelector selector) {
+    public ClusterEndpointsRefreshAgent(String clusterId, EndpointsSelector... selectors) {
         this.clusterId = clusterId;
-        this.selector = selector;
+        this.selectors = Arrays.asList(selectors);
     }
 
     public void startPollingNeptuneAPI(OnNewAddresses onNewAddresses,
                                        long delay,
                                        TimeUnit timeUnit) {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            Collection<String> addresses = getAddresses();
+            Map<EndpointsSelector, Collection<String>> addresses = getAddresses();
             logger.info("New addresses: {}", addresses);
             onNewAddresses.apply(addresses);
         }, delay, delay, timeUnit);
@@ -104,7 +104,7 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
         stop();
     }
 
-    public Collection<String> getAddresses() {
+    public Map<EndpointsSelector, Collection<String>> getAddresses() {
         AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
 
         DescribeDBClustersResult describeDBClustersResult = neptune
@@ -151,7 +151,13 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
 
         neptune.shutdown();
 
-        return selector.getEndpoints(primary, replicas, instances);
+        Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
+
+        for (EndpointsSelector selector : selectors) {
+            results.put(selector, selector.getEndpoints(primary, replicas, instances));
+        }
+
+        return results;
     }
 
     private Map<String, String> getTags(String dbInstanceArn, AmazonNeptune neptune) {
