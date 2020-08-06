@@ -14,6 +14,7 @@ package software.amazon.neptune;
 
 import software.amazon.neptune.cluster.ClusterEndpointsRefreshAgent;
 import software.amazon.neptune.cluster.EndpointsSelector;
+import software.amazon.neptune.cluster.EndpointsType;
 import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -29,7 +30,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +74,7 @@ public class RefreshAgentDemo implements Runnable {
 
         try {
 
-            EndpointsSelector endpointsSelector = ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas;
+            EndpointsSelector endpointsSelector = EndpointsType.ReadReplicas;
 
             ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
                     clusterId,
