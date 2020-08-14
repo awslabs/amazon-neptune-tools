@@ -30,12 +30,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class ClusterEndpointsLambda implements RequestStreamHandler {
+public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
 
     private final ClusterEndpointsRefreshAgent refreshAgent;
     private final AtomicReference<Map<EndpointsSelector, Collection<String>>> addresses = new AtomicReference<>(new HashMap<>());
 
-    public ClusterEndpointsLambda() {
+    public NeptuneEndpointsInfoLambda() {
 
         String clusterId = EnvironmentVariableUtils.getMandatoryEnv("clusterId");
         int pollingIntervalSeconds = Integer.parseInt(
