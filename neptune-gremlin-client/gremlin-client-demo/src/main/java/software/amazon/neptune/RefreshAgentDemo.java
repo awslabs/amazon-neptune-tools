@@ -13,6 +13,8 @@ permissions and limitations under the License.
 package software.amazon.neptune;
 
 import software.amazon.neptune.cluster.ClusterEndpointsRefreshAgent;
+import software.amazon.neptune.cluster.EndpointsSelector;
+import software.amazon.neptune.cluster.EndpointsType;
 import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -72,14 +74,16 @@ public class RefreshAgentDemo implements Runnable {
 
         try {
 
+            EndpointsSelector endpointsSelector = EndpointsType.ReadReplicas;
+
             ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
                     clusterId,
-                    ClusterEndpointsRefreshAgent.EndpointsType.ReadReplicas);
+                    endpointsSelector);
 
             GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
                     .enableSsl(enableSsl)
                     .enableIamAuth(enableIam)
-                    .addContactPoints(refreshAgent.getAddresses())
+                    .addContactPoints(refreshAgent.getAddresses().get(endpointsSelector))
                     .minConnectionPoolSize(3)
                     .maxConnectionPoolSize(3)
                     .port(neptunePort)
@@ -88,7 +92,7 @@ public class RefreshAgentDemo implements Runnable {
             GremlinClient client = cluster.connect();
 
             refreshAgent.startPollingNeptuneAPI(
-                    client::refreshEndpoints,
+                    addresses -> client.refreshEndpoints(addresses.get(endpointsSelector)),
                     intervalSeconds,
                     TimeUnit.SECONDS);
 

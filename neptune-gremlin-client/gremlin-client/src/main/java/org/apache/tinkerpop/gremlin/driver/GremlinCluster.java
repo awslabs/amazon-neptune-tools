@@ -39,7 +39,7 @@ public class GremlinCluster implements AutoCloseable {
                           Function<String, Cluster> clusterBuilder,
                           int refreshOnErrorThreshold,
                           Supplier<Collection<String>> refreshOnErrorEventHandler) {
-        logger.info("Created TopologyAwareCluster, defaultAddresses: {}", defaultAddresses);
+        logger.info("Created GremlinCluster, defaultAddresses: {}", defaultAddresses);
         this.defaultAddresses = defaultAddresses;
         this.clusterBuilder = clusterBuilder;
         this.refreshOnErrorThreshold = refreshOnErrorThreshold;

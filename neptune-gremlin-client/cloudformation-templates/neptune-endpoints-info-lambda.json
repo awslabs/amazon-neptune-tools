@@ -1,0 +1,106 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Lambda function for retrieving Amazon Neptune endpoint info",
+  "Parameters": {
+    "NeptuneClusterId": {
+      "Description": "Amazon Neptune DB cluster identifier.",
+      "Type": "String"
+    },
+    "Concurrency": {
+      "Description": "The number of simultaneous executions to reserve for the function (default 1).",
+      "Type": "Number",
+      "Default": 1
+    },
+    "PollingIntervalSeconds": {
+      "Description": "Interval (in seconds) between polling the Amazon Neptune management API for endpoint info (default 10).",
+      "Type": "Number",
+      "Default": 10
+    },
+    "S3Bucket": {
+      "Description": "An Amazon S3 bucket containing the Lambda .jar file.",
+      "Type": "String"
+    },
+    "S3Key": {
+      "Description": "The Amazon S3 key of the Lambda .jar file (e.g. bin/neptune-gremlin-client.jar).",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
+        ]
+      }
+    },
+    "NeptuneEndpointsInfoLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "neptune-endpoint-info_${NeptuneClusterId}"
+        },
+        "Handler": "software.amazon.lambda.NeptuneEndpointsInfoLambda::handleRequest",
+        "ReservedConcurrentExecutions": {
+          "Ref": "Concurrency"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": {
+            "Ref": "S3Bucket"
+          },
+          "S3Key": {
+            "Ref": "S3Key"
+          }
+        },
+        "Environment": {
+          "Variables": {
+            "clusterId": {
+              "Ref": "NeptuneClusterId"
+            },
+            "pollingIntervalSeconds": {
+              "Ref": "PollingIntervalSeconds"
+            }
+          }
+        },
+        "MemorySize": 512,
+        "Runtime": "java8",
+        "Timeout": "15"
+      }
+    }
+  },
+  "Outputs": {
+    "NeptuneEndpointsInfoLambdaArn": {
+      "Description": "NeptuneEndpointsInfoLambda ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "NeptuneEndpointsInfoLambda",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
