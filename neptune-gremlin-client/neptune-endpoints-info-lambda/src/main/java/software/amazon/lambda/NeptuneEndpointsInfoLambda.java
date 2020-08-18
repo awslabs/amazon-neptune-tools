@@ -44,7 +44,9 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
         refreshAgent = new ClusterEndpointsRefreshAgent(clusterId,
                 EndpointsType.All,
                 EndpointsType.Primary,
-                EndpointsType.ReadReplicas);
+                EndpointsType.ReadReplicas,
+                EndpointsType.ClusterEndpoint,
+                EndpointsType.ReaderEndpoint);
 
         addresses.set(refreshAgent.getAddresses());
 

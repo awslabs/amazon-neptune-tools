@@ -19,7 +19,6 @@ import com.evanlennick.retry4j.CallExecutorBuilder;
 import com.evanlennick.retry4j.Status;
 import com.evanlennick.retry4j.config.RetryConfig;
 import com.evanlennick.retry4j.config.RetryConfigBuilder;
-import com.evanlennick.retry4j.listener.RetryListener;
 import org.apache.tinkerpop.gremlin.driver.GremlinClient;
 import org.apache.tinkerpop.gremlin.driver.GremlinCluster;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
@@ -42,9 +41,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.addV;
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.unfold;
 
-public class NeptuneGremlinClientLambdaExample implements RequestStreamHandler {
+public class NeptuneGremlinClientExampleLambda implements RequestStreamHandler {
 
-    private static final EndpointsType ENDPOINT_TYPE = EndpointsType.Primary;
+    private static final EndpointsType ENDPOINT_TYPE = EndpointsType.ClusterEndpoint;
 
     private final ClusterEndpointsRefreshAgent refreshAgent;
     private final GremlinClient client;
@@ -53,12 +52,12 @@ public class NeptuneGremlinClientLambdaExample implements RequestStreamHandler {
 
     private final Random idGenerator = new Random();
 
-    public NeptuneGremlinClientLambdaExample() {
+    public NeptuneGremlinClientExampleLambda() {
 
         this.refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
                 ENDPOINT_TYPE,
                 System.getenv("AWS_REGION"),
-                System.getenv("neptuneEndpointsInfoLamba"));
+                System.getenv("neptuneEndpointsInfoLambda"));
 
         GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
                 .enableSsl(true)
@@ -80,8 +79,8 @@ public class NeptuneGremlinClientLambdaExample implements RequestStreamHandler {
 
         RetryConfig retryConfig = new RetryConfigBuilder()
                 .retryOnCustomExceptionLogic(retryLogic())
-                .withDelayBetweenTries(1000, ChronoUnit.MILLIS)
-                .withMaxNumberOfTries(5)
+                .withDelayBetweenTries(2000, ChronoUnit.MILLIS)
+                .withMaxNumberOfTries(10)
                 .withExponentialBackoff()
                 .build();
 
@@ -99,7 +98,7 @@ public class NeptuneGremlinClientLambdaExample implements RequestStreamHandler {
 
         try {
 
-            int id = idGenerator.nextInt();
+            String id = String.valueOf(idGenerator.nextInt());
 
             @SuppressWarnings("unchecked")
             Callable<Object> query = () -> g.V(id)
