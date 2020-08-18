@@ -31,21 +31,18 @@ public class PropertyTypeInfo {
     }
 
     public void accept(Object value) {
-        Class<?> cls = Object.class;
 
         if (isList(value)) {
             List<?> values = (List<?>) value;
             if (values.size() > 1) {
                 isMultiValue = true;
             }
-            if (!values.isEmpty()) {
-                cls = values.get(0).getClass();
+            for (Object v : values) {
+                dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(v.getClass()));
             }
         } else {
-            cls = value.getClass();
+            dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
         }
-
-        dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(cls));
     }
 
     private boolean isList(Object value) {
@@ -60,13 +57,13 @@ public class PropertyTypeInfo {
         return isMultiValue;
     }
 
-    public String nameWithDataType(){
+    public String nameWithDataType() {
         return isMultiValue ?
                 String.format("%s%s[]", propertyName(property), dataType.typeDescription()) :
                 String.format("%s%s", propertyName(property), dataType.typeDescription());
     }
 
-    public String nameWithoutDataType(){
+    public String nameWithoutDataType() {
         return propertyName(property);
     }
 
