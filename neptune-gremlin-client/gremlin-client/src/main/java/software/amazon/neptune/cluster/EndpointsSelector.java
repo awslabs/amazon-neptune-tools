@@ -13,10 +13,9 @@ permissions and limitations under the License.
 package software.amazon.neptune.cluster;
 
 import java.util.Collection;
-import java.util.Map;
 
 public interface EndpointsSelector {
-    Collection<String> getEndpoints(String primaryId,
-                                    Collection<String> replicaIds,
-                                    Map<String, NeptuneInstanceProperties> instances);
+    Collection<String> getEndpoints(String clusterEndpoint,
+                                    String readerEndpoint,
+                                    Collection<NeptuneInstanceProperties> instances);
 }

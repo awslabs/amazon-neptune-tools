@@ -79,6 +79,7 @@ public class GremlinClient extends Client implements AutoCloseable {
         for (ClientHolder clientHolder : oldClientHolders) {
             String address = clientHolder.getAddress();
             if (addresses.contains(address)) {
+                logger.info("Retaining client for {}", address);
                 newClientHolders.add(clientHolder);
             } else {
                 addressesToRemove.add(address);

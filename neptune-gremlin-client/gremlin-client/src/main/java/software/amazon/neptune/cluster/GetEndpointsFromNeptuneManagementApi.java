@@ -44,6 +44,9 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
 
         DBCluster dbCluster = describeDBClustersResult.getDBClusters().get(0);
 
+        String clusterEndpoint = dbCluster.getEndpoint();
+        String readerEndpoint = dbCluster.getReaderEndpoint();
+
         List<DBClusterMember> dbClusterMembers = dbCluster.getDBClusterMembers();
         Optional<DBClusterMember> clusterWriter = dbClusterMembers.stream()
                 .filter(DBClusterMember::isClusterWriter)
@@ -64,32 +67,41 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
         DescribeDBInstancesResult describeDBInstancesResult = neptune
                 .describeDBInstances(describeDBInstancesRequest);
 
-        Map<String, NeptuneInstanceProperties> instances = new HashMap<>();
+        Collection<NeptuneInstanceProperties> instances = new ArrayList<>();
         describeDBInstancesResult.getDBInstances()
-                .forEach(c -> instances.put(
-                        c.getDBInstanceIdentifier(),
-                        new NeptuneInstanceProperties(
-                                c.getDBInstanceIdentifier(),
-                                c.getEndpoint().getAddress(),
-                                c.getDBInstanceStatus(),
-                                c.getAvailabilityZone(),
-                                c.getDBInstanceClass(),
-                                getTags(c.getDBInstanceArn(), neptune))
-                ));
+                .forEach(c -> {
+                            String role = "unknown";
+                            if (primary.equals(c.getDBInstanceIdentifier())) {
+                                role = "writer";
+                            }
+                            if (replicas.contains(c.getDBInstanceIdentifier())) {
+                                role = "reader";
+                            }
+                            instances.add(
+                                    new NeptuneInstanceProperties(
+                                            c.getDBInstanceIdentifier(),
+                                            role,
+                                            c.getEndpoint().getAddress(),
+                                            c.getDBInstanceStatus(),
+                                            c.getAvailabilityZone(),
+                                            c.getDBInstanceClass(),
+                                            getTags(c.getDBInstanceArn(), neptune)));
+                        }
+                );
 
         neptune.shutdown();
 
         Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
 
         for (EndpointsSelector selector : selectors) {
-            results.put(selector, selector.getEndpoints(primary, replicas, instances));
+            results.put(selector, selector.getEndpoints(clusterEndpoint, readerEndpoint, instances));
         }
 
         return results;
     }
 
     private Map<String, String> getTags(String dbInstanceArn, AmazonNeptune neptune) {
-        if (instanceTags.containsKey(dbInstanceArn)){
+        if (instanceTags.containsKey(dbInstanceArn)) {
             return instanceTags.get(dbInstanceArn);
         }
 

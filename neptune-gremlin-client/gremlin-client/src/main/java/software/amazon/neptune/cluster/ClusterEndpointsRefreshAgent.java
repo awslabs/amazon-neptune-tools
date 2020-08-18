@@ -48,10 +48,15 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
                                        long delay,
                                        TimeUnit timeUnit) {
         scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            Map<EndpointsSelector, Collection<String>> addresses = getAddresses();
-            logger.info("New addresses: {}", addresses);
-            onNewAddresses.apply(addresses);
-        }, 0, delay, timeUnit);
+            try{
+                Map<EndpointsSelector, Collection<String>> addresses = getAddresses();
+                logger.info("New addresses: {}", addresses);
+                onNewAddresses.apply(addresses);
+            } catch (Exception e){
+                logger.error("Error while getting addresses", e);
+            }
+
+        }, delay, delay, timeUnit);
     }
 
     public void stop() {

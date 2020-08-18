@@ -17,6 +17,7 @@ import java.util.Map;
 public class NeptuneInstanceProperties {
 
     private final String instanceId;
+    private final String role;
     private final String endpoint;
     private final String status;
     private final String availabilityZone;
@@ -25,12 +26,14 @@ public class NeptuneInstanceProperties {
     private final Map<String, String> tags;
 
     public NeptuneInstanceProperties(String instanceId,
+                                     String role,
                                      String endpoint,
                                      String status,
                                      String availabilityZone,
                                      String instanceType,
                                      Map<String, String> tags) {
         this.instanceId = instanceId;
+        this.role = role;
         this.endpoint = endpoint;
         this.status = status;
         this.availabilityZone = availabilityZone;
@@ -40,6 +43,10 @@ public class NeptuneInstanceProperties {
 
     public String getInstanceId() {
         return instanceId;
+    }
+
+    public String getRole() {
+        return role;
     }
 
     public String getEndpoint() {
@@ -79,6 +86,14 @@ public class NeptuneInstanceProperties {
 
     public boolean isAvailable(){
         return getStatus().equalsIgnoreCase("Available");
+    }
+
+    public boolean isPrimary() {
+        return getRole().equalsIgnoreCase("writer");
+    }
+
+    public boolean isReader() {
+        return getRole().equalsIgnoreCase("reader");
     }
 
     @Override
