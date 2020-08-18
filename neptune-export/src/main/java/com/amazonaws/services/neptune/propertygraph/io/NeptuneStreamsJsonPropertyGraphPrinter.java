@@ -60,17 +60,18 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
             String key = String.valueOf(entry.getKey());
             Object value = entry.getValue();
 
-            PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
-            propertyTypeInfo.accept(value);
-
             if (isList(value)) {
 
                 List<?> values = (List<?>) value;
                 for (Object o : values) {
+                    PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
+                    propertyTypeInfo.accept(o);
                     printRecord(id, streamOperation, key, o, propertyTypeInfo.dataType());
                 }
 
             } else {
+                PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
+                propertyTypeInfo.accept(value);
                 printRecord(id, streamOperation, key, value, propertyTypeInfo.dataType());
             }
         }
