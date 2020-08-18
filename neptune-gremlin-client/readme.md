@@ -72,13 +72,13 @@ refreshAgent.startPollingNeptuneAPI(
 The `ClusterEndpointsRefreshAgent` constructor accepts an `EndpointsSelector` that allows you to add custom endpoint selection logic. The following example shows how to select endpoints for all **Available** instances with a **workload** tag whose value is **analytics**:
 
 ```
-EndpointsSelector selector = (primaryId, replicaIds, instances) → {
-    return instances.values().stream()
+EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
+    instances.stream()
+        .filter(NeptuneInstanceProperties::isReader)
         .filter(i -> i.hasTag("workload", "analytics"))
         .filter(NeptuneInstanceProperties::isAvailable)
         .map(NeptuneInstanceProperties::getEndpoint)
         .collect(Collectors.toList());
-};
 
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
     clusterId,
@@ -98,7 +98,15 @@ refreshAgent.startPollingNeptuneAPI(
     TimeUnit.SECONDS);
 ```
 
-The `ClusterEndpointsRefreshAgent.EndpointsType` enum provides implementations of `EndpointsSelector` for selecting all available instances (primary and read replicas), the current primary (if it is available), or all available read replicas.
+The `EndpointsType` enum provides implementations of `EndpointsSelector` for some common use cases:
+
+  * `EndpointsType.All` –  return all available instance (primary and read replicas) endpoints
+  * `EndpointsType.Primary` – returns the primary instance endpoint if it is available, or the cluster endpoint if the primary instance endpoint is not available
+  * `EndpointsType.ReadReplicas` – returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the reader endpoint
+  * `EndpointsType.ClusterEndpoint` – returns the cluster endpoint
+  * `EndpointsType.ReaderEndpoint` – return the reader endpoint
+
+
 
 ## GremlinClusterBuilder and NeptuneGremlinClusterBuilder
 
