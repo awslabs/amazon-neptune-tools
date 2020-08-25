@@ -31,17 +31,20 @@ public class QueryJob {
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
     private final boolean twoPassAnalysis;
+    private final Long timeoutMillis;
 
     public QueryJob(Collection<NamedQuery> queries,
                     NeptuneGremlinClient.QueryClient queryClient,
                     ConcurrencyConfig concurrencyConfig,
                     PropertyGraphTargetConfig targetConfig,
-                    boolean twoPassAnalysis){
+                    boolean twoPassAnalysis,
+                    Long timeoutMillis){
         this.queries = new ConcurrentLinkedQueue<>(queries);
         this.queryClient = queryClient;
         this.concurrencyConfig = concurrencyConfig;
         this.targetConfig = targetConfig;
         this.twoPassAnalysis = twoPassAnalysis;
+        this.timeoutMillis = timeoutMillis;
     }
 
     public void execute() throws Exception {
@@ -58,6 +61,7 @@ public class QueryJob {
                         queryClient,
                         targetConfig,
                         twoPassAnalysis,
+                        timeoutMillis,
                         status,
                         index);
                 taskExecutor.execute(queryTask);
