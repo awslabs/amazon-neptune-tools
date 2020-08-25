@@ -18,7 +18,6 @@ import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.propertygraph.io.SerializationConfig;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
-import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 
@@ -87,8 +86,13 @@ public class NeptuneGremlinClient implements AutoCloseable {
             this.client = client;
         }
 
-        public ResultSet submit(String gremlin) {
-            return client.submit(gremlin);
+        public ResultSet submit(String gremlin, Long timeoutMillis) {
+
+            if (timeoutMillis != null){
+                return client.submit(gremlin, RequestOptions.build().timeout(timeoutMillis).create());
+            } else {
+                return client.submit(gremlin);
+            }
         }
 
         @Override

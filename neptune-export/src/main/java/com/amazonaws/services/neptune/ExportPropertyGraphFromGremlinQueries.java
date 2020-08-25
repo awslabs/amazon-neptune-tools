@@ -80,6 +80,10 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     @Once
     private boolean includeTypeDefinitions = false;
 
+    @Option(name = {"--timeout-millis"}, description = "Query timeout in milliseconds (optional)")
+    @Once
+    private Long timeoutMillis = null;
+
     @Override
     public void run() {
 
@@ -105,7 +109,8 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
                         queryClient,
                         clusterStrategy.concurrencyConfig(),
                         targetConfig,
-                        twoPassAnalysis);
+                        twoPassAnalysis,
+                        timeoutMillis);
                 queryJob.execute();
 
             }
