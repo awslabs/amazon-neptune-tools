@@ -28,8 +28,21 @@ from gremlin_python.process.anonymous_traversal import *
 from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 from gremlin_python.process.traversal import *
+from gremlin_python.driver.tornado.transport import TornadoTransport
 from tornado.httpclient import HTTPError
 from tornado import httpclient 
+
+class TornadoTransportProxy(TornadoTransport):
+
+    def __init__(self):
+        TornadoTransport.__init__(self)
+
+    def connect(self, url, headers=None):
+        lazy_url = httpclient.HTTPRequest(
+                    url.url, 
+                    headers=url.headers)
+        super().connect(lazy_url, headers)
+        
         
 class GremlinUtils:
     
@@ -58,18 +71,38 @@ class GremlinUtils:
         for connection in self.connections:
             connection.close()
             
-    def remote_connection(self, show_endpoint=True):
+    def remote_connection(self, 
+                          show_endpoint=False,
+                          protocol_factory=None,
+                          transport_factory=lambda:TornadoTransportProxy(),
+                          pool_size=None,
+                          max_workers=None,
+                          message_serializer=None,
+                          graphson_reader=None,
+                          graphson_writer=None):
+        
         gremlin_endpoint = self.endpoints.gremlin_endpoint()
         if show_endpoint:
             print('gremlin: {}'.format(gremlin_endpoint))
+        
         retry_count = 0
+         
         while True:
             try:
                 request_parameters = gremlin_endpoint.prepare_request()
                 signed_ws_request = httpclient.HTTPRequest(
                     request_parameters.uri, 
                     headers=request_parameters.headers)
-                connection = DriverRemoteConnection(signed_ws_request, 'g')
+                connection = DriverRemoteConnection(
+                    signed_ws_request, 
+                    'g',
+                    protocol_factory=protocol_factory,
+                    transport_factory=transport_factory,
+                    pool_size=pool_size,
+                    max_workers=max_workers,
+                    message_serializer=message_serializer,
+                    graphson_reader=graphson_reader,
+                    graphson_writer=graphson_writer)
                 self.connections.append(connection)
                 return connection
             except HTTPError as e:
