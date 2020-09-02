@@ -15,6 +15,13 @@
 import sys, os, base64, datetime, hashlib, hmac, boto3, urllib, uuid, threading
 from botocore.credentials import Credentials
 from botocore.credentials import RefreshableCredentials
+from tornado.httputil import HTTPHeaders
+import typing
+from typing import (
+    Tuple,
+    Iterable
+)
+
 
 def synchronized_method(method):
     
@@ -30,6 +37,15 @@ def synchronized_method(method):
 
     return sync_method
 
+class LazyHttpHeaders(HTTPHeaders):
+    
+    def __init__(self, lazy_headers):
+        self.lazy_headers = lazy_headers
+    
+    def get_all(self) -> Iterable[Tuple[str, str]]:
+        return self.lazy_headers().items()
+   
+        
 class RequestParameters:
     
     def __init__(self, uri, querystring, headers):
@@ -95,10 +111,6 @@ class Endpoint:
         return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
         
     def prepare_request(self, method='GET', payload='', querystring={}):
-        credentials =  self._get_credentials()
-        access_key = credentials.access_key
-        secret_key = credentials.secret_key
-        session_token = credentials.token
         
         service = 'neptune-db'
         algorithm = 'AWS4-HMAC-SHA256'
@@ -108,46 +120,55 @@ class Endpoint:
         
         canonical_querystring = self.__normalize_query_string(request_parameters)
         
-        t = datetime.datetime.utcnow()
-        amzdate = t.strftime('%Y%m%dT%H%M%SZ')
-        datestamp = t.strftime('%Y%m%d')      
-        canonical_headers = 'host:{}:{}\nx-amz-date:{}\n'.format(
-            self.neptune_endpoint, 
-            self.neptune_port, 
-            amzdate)
-        signed_headers = 'host;x-amz-date'
-        payload_hash = hashlib.sha256(payload.encode('utf-8')).hexdigest()
-        canonical_request = '{}\n/{}\n{}\n{}\n{}\n{}'.format(
-            method,
-            self.suffix, 
-            canonical_querystring, 
-            canonical_headers, 
-            signed_headers, 
-            payload_hash) 
-        credential_scope = '{}/{}/{}/aws4_request'.format(
-            datestamp, 
-            self.region,
-            service)
-        string_to_sign = '{}\n{}\n{}\n{}'.format(
-            algorithm,
-            amzdate, 
-            credential_scope, 
-            hashlib.sha256(canonical_request.encode('utf-8')).hexdigest())
-        signing_key = self.__get_signature_key(secret_key, datestamp, self.region, service)
-        signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
-        authorization_header = '{} Credential={}/{}, SignedHeaders={}, Signature={}'.format(
-            algorithm, 
-            access_key, 
-            credential_scope, 
-            signed_headers, 
-            signature)
-        headers = {'x-amz-date':amzdate, 'Authorization':authorization_header}
-        if session_token:
-            headers['x-amz-security-token'] = session_token
+        def get_headers():
+            credentials = self._get_credentials()
+            access_key = credentials.access_key
+            secret_key = credentials.secret_key
+            session_token = credentials.token
+        
+            t = datetime.datetime.utcnow()
+            amzdate = t.strftime('%Y%m%dT%H%M%SZ')
+            datestamp = t.strftime('%Y%m%d')      
+            canonical_headers = 'host:{}:{}\nx-amz-date:{}\n'.format(
+                self.neptune_endpoint, 
+                self.neptune_port, 
+                amzdate)
+            signed_headers = 'host;x-amz-date'
+            payload_hash = hashlib.sha256(payload.encode('utf-8')).hexdigest()
+            canonical_request = '{}\n/{}\n{}\n{}\n{}\n{}'.format(
+                method,
+                self.suffix, 
+                canonical_querystring, 
+                canonical_headers, 
+                signed_headers, 
+                payload_hash) 
+            credential_scope = '{}/{}/{}/aws4_request'.format(
+                datestamp, 
+                self.region,
+                service)
+            string_to_sign = '{}\n{}\n{}\n{}'.format(
+                algorithm,
+                amzdate, 
+                credential_scope, 
+                hashlib.sha256(canonical_request.encode('utf-8')).hexdigest())
+            signing_key = self.__get_signature_key(secret_key, datestamp, self.region, service)
+            signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
+            authorization_header = '{} Credential={}/{}, SignedHeaders={}, Signature={}'.format(
+                algorithm, 
+                access_key, 
+                credential_scope, 
+                signed_headers, 
+                signature)
+            headers = {'x-amz-date':amzdate, 'Authorization':authorization_header}
+            if session_token:
+                headers['x-amz-security-token'] = session_token
+            
+            return headers
+        
         return RequestParameters(
             '{}?{}'.format(self.value(), canonical_querystring) if canonical_querystring else self.value(),
             canonical_querystring,
-            headers
+            LazyHttpHeaders(get_headers)
         )
         
     def __normalize_query_string(self, query):

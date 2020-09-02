@@ -32,6 +32,7 @@ public class QueryTask implements Runnable {
     private final NeptuneGremlinClient.QueryClient queryClient;
     private final PropertyGraphTargetConfig targetConfig;
     private final boolean twoPassAnalysis;
+    private final Long timeoutMillis;
     private final Status status;
     private final int index;
 
@@ -39,6 +40,7 @@ public class QueryTask implements Runnable {
                      NeptuneGremlinClient.QueryClient queryClient,
                      PropertyGraphTargetConfig targetConfig,
                      boolean twoPassAnalysis,
+                     Long timeoutMillis,
                      Status status,
                      int index) {
 
@@ -46,6 +48,7 @@ public class QueryTask implements Runnable {
         this.queryClient = queryClient;
         this.targetConfig = targetConfig;
         this.twoPassAnalysis = twoPassAnalysis;
+        this.timeoutMillis = timeoutMillis;
         this.status = status;
         this.index = index;
     }
@@ -67,7 +70,7 @@ public class QueryTask implements Runnable {
 
                         PropertiesMetadata propertiesMetadata = new PropertiesMetadata();
 
-                        ResultSet results = queryClient.submit(namedQuery.query());
+                        ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
 
                         if (twoPassAnalysis) {
                             // First pass
@@ -78,7 +81,7 @@ public class QueryTask implements Runnable {
                                     });
 
                             // Re-run query for second pass
-                            results = queryClient.submit(namedQuery.query());
+                            results = queryClient.submit(namedQuery.query(), timeoutMillis);
                         }
 
                         try (Timer timer = new Timer(String.format("query [%s]", namedQuery.query()))) {

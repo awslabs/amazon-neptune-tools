@@ -5,9 +5,12 @@
     SYNOPSIS
             neptune-export.sh export-pg-from-queries
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
-                    [ {-b | --batch-size} <batchSize> ]
+                    [ {-b | --batch-size} <batchSize> ] [ --clone-cluster ]
+                    [ --clone-cluster-instance-type <cloneClusterInstanceType> ]
+                    [ --clone-cluster-replica-count <replicaCount> ]
+                    [ --cluster-id <clusterId> ]
                     [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <directory> {-e | --endpoint} <endpoint>...
+                    {-d | --dir} <directory> [ {-e | --endpoint} <endpoint>... ]
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
                     [ --include-type-definitions ] [ --lb-port <loadBalancerPort> ]
                     [ --log-level <log level> ]
@@ -16,8 +19,8 @@
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
                     [ {-q | --queries} <queries>... ] [ --region <region> ]
                     [ --serializer <serializer> ] [ --stream-name <streamName> ]
-                    [ {-t | --tag} <tag> ] [ --two-pass-analysis ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-t | --tag} <tag> ] [ --timeout-millis <timeoutMillis> ]
+                    [ --two-pass-analysis ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -35,6 +38,61 @@
             -b <batchSize>, --batch-size <batchSize>
                 Batch size (optional, default 64). Reduce this number if your
                 queries trigger CorruptedFrameExceptions.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --clone-cluster
+                Clone Neptune cluster
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --clone-cluster-instance-type <cloneClusterInstanceType>
+                Instance type for cloned cluster (by default neptune-export will
+                use the same instance type as the source cluster)
+    
+                This options value is restricted to the following set of values:
+                    db.r4.large
+                    db.r4.xlarge
+                    db.r4.2xlarge
+                    db.r4.4xlarge
+                    db.r4.8xlarge
+                    db.r5.large
+                    db.r5.xlarge
+                    db.r5.2xlarge
+                    db.r5.4xlarge
+                    db.r5.8xlarge
+                    db.r5.12xlarge
+                    db.r5.16xlarge
+                    db.r5.24xlarge
+                    db.m5.large
+                    db.m5.xlarge
+                    db.m5.2xlarge
+                    db.m5.3xlarge
+                    db.m5.8xlarge
+                    db.m5.12xlarge
+                    db.m5.16xlarge
+                    db.m5.24xlarge
+                    db.t3.medium
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --clone-cluster-replica-count <replicaCount>
+                Number of read replicas to add to the cloned cluster (default, 0)
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This options value must fall in the following range: 0 <= value <= 15
+    
+    
+            --cluster-id <clusterId>
+                ID of an Amazon Neptune cluster. If you specify a cluster ID,
+                neptune-export will use all of the instance endpoints in the
+                cluster in addition to any endpoints you have specified using the
+                -e and --endpoint options.
     
                 This option may occur a maximum of 1 times
     
@@ -60,14 +118,9 @@
                 want to load balance requests across a cluster
     
             -f <queriesFile>, --queries-file <queriesFile>
-                Path to JSON queries file
+                Path to JSON queries file (file path, or 'https' or 's3' URI)
     
                 This option may occur a maximum of 1 times
-    
-    
-                This options value must be a path to a file. The provided path must
-                exist on the file system. The provided path must be readable and
-                writable.
     
     
             --format <format>
@@ -184,6 +237,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --timeout-millis <timeoutMillis>
+                Query timeout in milliseconds (optional)
+    
+                This option may occur a maximum of 1 times
+    
+    
             --two-pass-analysis
                 Perform two-pass analysis of query results (optional, default
                 'false')
@@ -193,8 +252,7 @@
     
             --use-iam-auth
                 Use IAM database authentication to authenticate to Neptune
-                (remember to set SERVICE_REGION environment variable, and, if using
-                a load balancer, set the --host-header option as well)
+                (remember to set SERVICE_REGION environment variable)
     
                 This option may occur a maximum of 1 times
     
