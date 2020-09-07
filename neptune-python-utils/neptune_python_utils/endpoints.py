@@ -44,6 +44,12 @@ class LazyHttpHeaders(HTTPHeaders):
     
     def get_all(self) -> Iterable[Tuple[str, str]]:
         return self.lazy_headers().items()
+<<<<<<< HEAD
+=======
+        
+    def items(self):
+        return self.lazy_headers().items()
+>>>>>>> timeout
    
         
 class RequestParameters:
@@ -110,7 +116,7 @@ class Endpoint:
     def value(self):
         return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
         
-    def prepare_request(self, method='GET', payload='', querystring={}):
+    def prepare_request(self, method='GET', payload='', querystring={}, headers={}):
         
         service = 'neptune-db'
         algorithm = 'AWS4-HMAC-SHA256'
@@ -159,7 +165,10 @@ class Endpoint:
                 credential_scope, 
                 signed_headers, 
                 signature)
-            headers = {'x-amz-date':amzdate, 'Authorization':authorization_header}
+
+            headers['x-amz-date'] = amzdate
+            headers['Authorization'] = authorization_header
+
             if session_token:
                 headers['x-amz-security-token'] = session_token
             
