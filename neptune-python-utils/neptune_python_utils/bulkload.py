@@ -83,8 +83,7 @@ class BulkLoad:
         
         json_string = json.dumps(data)
         json_bytes = json_string.encode('utf8')
-        request_parameters = loader_endpoint.prepare_request('POST', json_string)
-        request_parameters.headers['Content-Type'] = 'application/json'
+        request_parameters = loader_endpoint.prepare_request('POST', json_string, headers={'Content-Type':'application/json'})
         req = urllib.request.Request(request_parameters.uri, data=json_bytes, headers=request_parameters.headers)
         try:
             response = urllib.request.urlopen(req)
