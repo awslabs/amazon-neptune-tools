@@ -49,16 +49,6 @@ public class AddClone implements Runnable {
             "db.r5.4xlarge",
             "db.r5.8xlarge",
             "db.r5.12xlarge",
-            "db.r5.16xlarge",
-            "db.r5.24xlarge",
-            "db.m5.large",
-            "db.m5.xlarge",
-            "db.m5.2xlarge",
-            "db.m5.3xlarge",
-            "db.m5.8xlarge",
-            "db.m5.12xlarge",
-            "db.m5.16xlarge",
-            "db.m5.24xlarge",
             "db.t3.medium"})
     private String cloneClusterInstanceType;
 
