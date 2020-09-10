@@ -93,4 +93,31 @@ public class S3ObjectInfoTest {
 
         assertEquals("a/b/c/dir", s3ObjectInfo.withNewKeySuffix("dir").key());
     }
+
+    @Test
+    public void canReplacePlaceholderInKey() {
+        String s3Uri = "s3://my-bucket/a/b/_COMPLETION_ID_/manifest.json";
+
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
+
+        assertEquals("a/b/123/manifest.json", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123").key());
+    }
+
+    @Test
+    public void canAppendSuffixIfNoPlaceholder() {
+        String s3Uri = "s3://my-bucket/a/b/";
+
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
+
+        assertEquals("a/b/123", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123").key());
+    }
+
+    @Test
+    public void canAppendAltSuffixIfNoPlaceholder() {
+        String s3Uri = "s3://my-bucket/a/b/";
+
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
+
+        assertEquals("a/b/123.json", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123", "123.json").key());
+    }
 }
