@@ -23,6 +23,7 @@ import com.github.rvesse.airline.annotations.restrictions.Required;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 public class PropertyGraphTargetModule implements RequiresMetadata, CommandWriter {
 
@@ -54,8 +55,12 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
     @Once
     private String region;
 
+    @Option(name = {"--export-id"}, description = "Export ID", hidden = true)
+    @Once
+    private String exportId = UUID.randomUUID().toString().replace("-", "");
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
-        return Directories.createFor(directoryStructure, directory, tag );
+        return Directories.createFor(directoryStructure, directory, exportId, tag );
     }
 
     public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
