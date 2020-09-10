@@ -44,6 +44,19 @@ public class S3ObjectInfo {
         return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  new File(key, suffix).getPath()));
     }
 
+    public S3ObjectInfo replaceOrAppendKey(String placeholder, String ifPresent, String ifAbsent) {
+
+        File file = key.contains(placeholder) ?
+                new File(key.replace(placeholder, ifPresent)) :
+                new File(key, ifAbsent);
+
+        return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  file.getPath()));
+    }
+
+    public S3ObjectInfo replaceOrAppendKey(String placeholder, String ifPresent) {
+        return replaceOrAppendKey(placeholder, ifPresent, ifPresent);
+    }
+
     @Override
     public String toString() {
         return String.format("s3://%s/%s", bucket, key);
