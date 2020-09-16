@@ -43,13 +43,10 @@ class LazyHttpHeaders(HTTPHeaders):
         self.lazy_headers = lazy_headers
     
     def get_all(self) -> Iterable[Tuple[str, str]]:
-        return self.lazy_headers().items()
-<<<<<<< HEAD
-=======
+        return self.items()
         
     def items(self):
         return self.lazy_headers().items()
->>>>>>> timeout
    
         
 class RequestParameters:
