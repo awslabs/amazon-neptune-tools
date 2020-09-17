@@ -20,7 +20,6 @@ import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
-import org.omg.CORBA.INTERNAL;
 
 import java.io.IOException;
 import java.util.HashMap;
