@@ -61,10 +61,10 @@ done
 #Also get the non-shaded gremlin-client jar
 cp "neptune-gremlin-client/gremlin-client/target/gremlin-client-$VERSION_STRING.jar" $ARTIFACT_DIR
 
-#Build the glue-neptune artifact
-pushd glue-neptune >& /dev/null
+#Build the neptune-python-utils artifact
+pushd neptune-python-utils >& /dev/null
 ./build.sh
-cp target/glue_neptune.zip $ARTIFACT_DIR
+cp target/neptune_python_utils.zip $ARTIFACT_DIR
 popd >& /dev/null
 
 cp ./graphml2csv/graphml2csv.py $ARTIFACT_DIR
