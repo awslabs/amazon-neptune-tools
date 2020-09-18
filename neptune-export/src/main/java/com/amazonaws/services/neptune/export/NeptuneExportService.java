@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
@@ -232,9 +233,17 @@ public class NeptuneExportService {
                 throw new RuntimeException("Error while writing completion file payload", e);
             }
 
-            S3ObjectInfo completionFileS3ObjectInfo = new S3ObjectInfo(completionFileS3Path).withNewKeySuffix(completionFile.getName());
+            S3ObjectInfo completionFileS3ObjectInfo =
+                    new S3ObjectInfo(completionFileS3Path).replaceOrAppendKey(
+                            "_COMPLETION_ID_",
+                            FilenameUtils.getBaseName(completionFile.getName()),
+                            completionFile.getName());
 
-            Upload upload = transferManager.upload(completionFileS3ObjectInfo.bucket(), completionFileS3ObjectInfo.key(), completionFile);
+            Upload upload = transferManager.upload(
+                    completionFileS3ObjectInfo.bucket(),
+                    completionFileS3ObjectInfo.key(),
+                    completionFile);
+
             try {
                 upload.waitForUploadResult();
             } catch (InterruptedException e) {

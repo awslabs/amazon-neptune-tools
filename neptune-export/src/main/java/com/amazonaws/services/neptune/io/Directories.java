@@ -18,7 +18,6 @@ import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataC
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -29,16 +28,14 @@ public class Directories {
     private static final String CONFIG_FILE = "config.json";
     private static final String QUERIES_FILE = "queries.json";
 
-    public static Directories createFor(DirectoryStructure directoryStructure, File root, String tag) throws IOException {
+    public static Directories createFor(DirectoryStructure directoryStructure, File root, String exportId, String tag) throws IOException {
         if (root == null) {
             throw new IllegalArgumentException("You must supply a directory");
         }
 
-        String uuid = UUID.randomUUID().toString().replace("-", "");
-
         String directoryName = tag.isEmpty() ?
-                uuid :
-                String.format("%s-%s", tag, uuid);
+                exportId :
+                String.format("%s-%s", tag, exportId);
         Path rootDirectory = root.toPath();
 
         Path directory = rootDirectory.resolve(directoryName);
