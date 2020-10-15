@@ -19,6 +19,7 @@ import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.github.rvesse.airline.annotations.Command;
 
 import java.io.IOException;
 import java.util.Map;

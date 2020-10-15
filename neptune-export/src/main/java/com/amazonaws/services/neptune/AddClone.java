@@ -23,19 +23,19 @@ import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 
 import java.util.UUID;
 
-@Command(name = "add-clone", description = "Clone an Amazon Neptune database cluster")
+@Command(name = "add-clone", description = "Clone an Amazon Neptune database cluster.")
 public class AddClone implements Runnable {
 
-    @Option(name = {"--source-cluster-id"}, description = "Cluster ID of the source Amazon Neptune database cluster")
+    @Option(name = {"--source-cluster-id"}, description = "Cluster ID of the source Amazon Neptune database cluster.")
     @Required
     @Once
     private String sourceClusterId;
 
-    @Option(name = {"--clone-cluster-id"}, description = "Cluster ID of the cloned Amazon Neptune database cluster")
+    @Option(name = {"--clone-cluster-id"}, description = "Cluster ID of the cloned Amazon Neptune database cluster.")
     @Once
     private String targetClusterId = String.format("neptune-export-cluster-%s", UUID.randomUUID().toString().substring(0, 5));
 
-    @Option(name = {"--clone-cluster-instance-type"}, description = "Instance type for cloned cluster (by default neptune-export will use the same instance type as the source cluster)")
+    @Option(name = {"--clone-cluster-instance-type"}, description = "Instance type for cloned cluster (by default neptune-export will use the same instance type as the source cluster).")
     @Once
     @AllowedValues(allowedValues = {
             "db.r4.large",
@@ -52,12 +52,12 @@ public class AddClone implements Runnable {
             "db.t3.medium"})
     private String cloneClusterInstanceType;
 
-    @Option(name = {"--clone-cluster-replica-count"}, description = "Number of read replicas to add to the cloned cluster (default, 0)")
+    @Option(name = {"--clone-cluster-replica-count"}, description = "Number of read replicas to add to the cloned cluster (default, 0).")
     @Once
     @IntegerRange(min = 0, minInclusive = true, max = 15, maxInclusive = true)
     private int replicaCount = 0;
 
-    @Option(name = {"--clone-cluster-engine-version"}, description = "Cloned cluster Neptune engine version (default, latest)", hidden = true)
+    @Option(name = {"--clone-cluster-engine-version"}, description = "Cloned cluster Neptune engine version (default, latest).", hidden = true)
     @Once
     private String engineVersion;
 

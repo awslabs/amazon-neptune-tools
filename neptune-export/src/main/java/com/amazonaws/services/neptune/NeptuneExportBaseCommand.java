@@ -25,7 +25,7 @@ import java.util.Collection;
 
 public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHandler {
 
-    @Option(name = {"--log-level"}, description = "Log level (optional, default 'error')", title = "log level")
+    @Option(name = {"--log-level"}, description = "Log level (optional, default 'error').", title = "log level")
     @Once
     @AllowedValues(allowedValues = {"trace", "debug", "info", "warn", "error"})
     protected String logLevel = "error";

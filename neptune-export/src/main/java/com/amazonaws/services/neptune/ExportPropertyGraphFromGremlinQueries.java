@@ -45,7 +45,7 @@ import java.util.List;
                 "Parallel export of Person data in 2 shards, sharding on the 'birthday' property, and Post data in 4 shards, sharding on range, using 6 threads",
                 "Parallel export of Person data and Post data as JSON"
         })
-@Command(name = "export-pg-from-queries", description = "Export property graph to CSV or JSON from Gremlin queries")
+@Command(name = "export-pg-from-queries", description = "Export property graph to CSV or JSON from Gremlin queries.")
 public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
@@ -64,23 +64,23 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
 
-    @Option(name = {"-q", "--queries"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\")",
+    @Option(name = {"-q", "--queries"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\").",
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)
     private List<NamedQueries> queries = new ArrayList<>();
 
-    @Option(name = {"-f", "--queries-file"}, description = "Path to JSON queries file (file path, or 'https' or 's3' URI)")
+    @Option(name = {"-f", "--queries-file"}, description = "Path to JSON queries file (file path, or 'https' or 's3' URI).")
     @Once
     private URI queriesFile;
 
-    @Option(name = {"--two-pass-analysis"}, description = "Perform two-pass analysis of query results (optional, default 'false')")
+    @Option(name = {"--two-pass-analysis"}, description = "Perform two-pass analysis of query results (optional, default 'false').")
     @Once
     private boolean twoPassAnalysis = false;
 
-    @Option(name = {"--include-type-definitions"}, description = "Include type definitions from column headers (optional, default 'false')")
+    @Option(name = {"--include-type-definitions"}, description = "Include type definitions from column headers (optional, default 'false').")
     @Once
     private boolean includeTypeDefinitions = false;
 
-    @Option(name = {"--timeout-millis"}, description = "Query timeout in milliseconds (optional)")
+    @Option(name = {"--timeout-millis"}, description = "Query timeout in milliseconds (optional).")
     @Once
     private Long timeoutMillis = null;
 

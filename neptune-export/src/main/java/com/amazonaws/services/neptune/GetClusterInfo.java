@@ -21,11 +21,11 @@ import org.apache.commons.lang.StringUtils;
 @Command(name = "nei", description = "neptune-export cluster info", hidden = true)
 public class GetClusterInfo implements Runnable {
 
-    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint", title = "endpoint")
+    @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint.", title = "endpoint")
     @Once
     private String endpoint;
 
-    @Option(name = {"--cluster-id"}, description = "Neptune cluster ID", title = "clusterId")
+    @Option(name = {"--cluster-id"}, description = "Neptune cluster ID.", title = "clusterId")
     @Once
     private String clusterId;
 

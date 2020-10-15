@@ -26,11 +26,11 @@ import java.util.UUID;
 
 public class CloneClusterModule {
 
-    @Option(name = {"--clone-cluster"}, description = "Clone Neptune cluster")
+    @Option(name = {"--clone-cluster"}, description = "Clone an Amazon Neptune cluster.")
     @Once
     private boolean cloneCluster = false;
 
-    @Option(name = {"--clone-cluster-instance-type"}, description = "Instance type for cloned cluster (by default neptune-export will use the same instance type as the source cluster)")
+    @Option(name = {"--clone-cluster-instance-type"}, description = "Instance type for cloned cluster (by default neptune-export will use the same instance type as the source cluster).")
     @Once
     @AllowedValues(allowedValues = {
             "db.r4.large",
@@ -44,29 +44,19 @@ public class CloneClusterModule {
             "db.r5.4xlarge",
             "db.r5.8xlarge",
             "db.r5.12xlarge",
-            "db.r5.16xlarge",
-            "db.r5.24xlarge",
-            "db.m5.large",
-            "db.m5.xlarge",
-            "db.m5.2xlarge",
-            "db.m5.3xlarge",
-            "db.m5.8xlarge",
-            "db.m5.12xlarge",
-            "db.m5.16xlarge",
-            "db.m5.24xlarge",
             "db.t3.medium"})
     private String cloneClusterInstanceType;
 
-    @Option(name = {"--clone-cluster-replica-count"}, description = "Number of read replicas to add to the cloned cluster (default, 0)")
+    @Option(name = {"--clone-cluster-replica-count"}, description = "Number of read replicas to add to the cloned cluster (default, 0).")
     @Once
     @IntegerRange(min = 0, minInclusive = true, max = 15, maxInclusive = true)
     private int replicaCount = 0;
 
-    @Option(name = {"--clone-cluster-max-concurrency"}, description = "Limits concurrency when exporting from cloned cluster (default, no limit)", hidden = true)
+    @Option(name = {"--clone-cluster-max-concurrency"}, description = "Limits concurrency when exporting from cloned cluster (default, no limit).", hidden = true)
     @Once
     private int maxConcurrency = -1;
 
-    @Option(name = {"--clone-cluster-engine-version"}, description = "Cloned cluster Neptune engine version (default, latest)", hidden = true)
+    @Option(name = {"--clone-cluster-engine-version"}, description = "Cloned cluster Neptune engine version (default, latest).", hidden = true)
     @Once
     private String engineVersion;
 
