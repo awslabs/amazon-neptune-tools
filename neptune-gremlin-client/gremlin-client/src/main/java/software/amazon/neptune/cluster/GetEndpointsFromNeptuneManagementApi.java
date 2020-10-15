@@ -15,16 +15,22 @@ package software.amazon.neptune.cluster;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFetchStrategy {
+
+    private static final Logger logger = LoggerFactory.getLogger(GetEndpointsFromNeptuneManagementApi.class);
 
     private static final Map<String, Map<String, String>> instanceTags = new HashMap<>();
 
     private final String clusterId;
     private final Collection<EndpointsSelector> selectors;
+    private final AtomicReference<Map<EndpointsSelector, Collection<String>>> previousResults = new AtomicReference<>();
 
     public GetEndpointsFromNeptuneManagementApi(String clusterId, Collection<EndpointsSelector> selectors) {
         this.clusterId = clusterId;
@@ -33,71 +39,91 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
 
     @Override
     public Map<EndpointsSelector, Collection<String>> getAddresses() {
-        AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
 
-        DescribeDBClustersResult describeDBClustersResult = neptune
-                .describeDBClusters(new DescribeDBClustersRequest().withDBClusterIdentifier(clusterId));
+        try {
 
-        if (describeDBClustersResult.getDBClusters().isEmpty()) {
-            throw new IllegalStateException(String.format("Unable to find cluster %s", clusterId));
-        }
 
-        DBCluster dbCluster = describeDBClustersResult.getDBClusters().get(0);
+            AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
 
-        String clusterEndpoint = dbCluster.getEndpoint();
-        String readerEndpoint = dbCluster.getReaderEndpoint();
+            DescribeDBClustersResult describeDBClustersResult = neptune
+                    .describeDBClusters(new DescribeDBClustersRequest().withDBClusterIdentifier(clusterId));
 
-        List<DBClusterMember> dbClusterMembers = dbCluster.getDBClusterMembers();
-        Optional<DBClusterMember> clusterWriter = dbClusterMembers.stream()
-                .filter(DBClusterMember::isClusterWriter)
-                .findFirst();
+            if (describeDBClustersResult.getDBClusters().isEmpty()) {
+                throw new IllegalStateException(String.format("Unable to find cluster %s", clusterId));
+            }
 
-        String primary = clusterWriter.map(DBClusterMember::getDBInstanceIdentifier).orElse("");
-        List<String> replicas = dbClusterMembers.stream()
-                .filter(dbClusterMember -> !dbClusterMember.isClusterWriter())
-                .map(DBClusterMember::getDBInstanceIdentifier)
-                .collect(Collectors.toList());
+            DBCluster dbCluster = describeDBClustersResult.getDBClusters().get(0);
 
-        DescribeDBInstancesRequest describeDBInstancesRequest = new DescribeDBInstancesRequest()
-                .withFilters(Collections.singletonList(
-                        new Filter()
-                                .withName("db-cluster-id")
-                                .withValues(dbCluster.getDBClusterIdentifier())));
+            String clusterEndpoint = dbCluster.getEndpoint();
+            String readerEndpoint = dbCluster.getReaderEndpoint();
 
-        DescribeDBInstancesResult describeDBInstancesResult = neptune
-                .describeDBInstances(describeDBInstancesRequest);
+            List<DBClusterMember> dbClusterMembers = dbCluster.getDBClusterMembers();
+            Optional<DBClusterMember> clusterWriter = dbClusterMembers.stream()
+                    .filter(DBClusterMember::isClusterWriter)
+                    .findFirst();
 
-        Collection<NeptuneInstanceProperties> instances = new ArrayList<>();
-        describeDBInstancesResult.getDBInstances()
-                .forEach(c -> {
-                            String role = "unknown";
-                            if (primary.equals(c.getDBInstanceIdentifier())) {
-                                role = "writer";
+            String primary = clusterWriter.map(DBClusterMember::getDBInstanceIdentifier).orElse("");
+            List<String> replicas = dbClusterMembers.stream()
+                    .filter(dbClusterMember -> !dbClusterMember.isClusterWriter())
+                    .map(DBClusterMember::getDBInstanceIdentifier)
+                    .collect(Collectors.toList());
+
+            DescribeDBInstancesRequest describeDBInstancesRequest = new DescribeDBInstancesRequest()
+                    .withFilters(Collections.singletonList(
+                            new Filter()
+                                    .withName("db-cluster-id")
+                                    .withValues(dbCluster.getDBClusterIdentifier())));
+
+            DescribeDBInstancesResult describeDBInstancesResult = neptune
+                    .describeDBInstances(describeDBInstancesRequest);
+
+            Collection<NeptuneInstanceProperties> instances = new ArrayList<>();
+            describeDBInstancesResult.getDBInstances()
+                    .forEach(c -> {
+                                String role = "unknown";
+                                if (primary.equals(c.getDBInstanceIdentifier())) {
+                                    role = "writer";
+                                }
+                                if (replicas.contains(c.getDBInstanceIdentifier())) {
+                                    role = "reader";
+                                }
+                                instances.add(
+                                        new NeptuneInstanceProperties(
+                                                c.getDBInstanceIdentifier(),
+                                                role,
+                                                c.getEndpoint().getAddress(),
+                                                c.getDBInstanceStatus(),
+                                                c.getAvailabilityZone(),
+                                                c.getDBInstanceClass(),
+                                                getTags(c.getDBInstanceArn(), neptune)));
                             }
-                            if (replicas.contains(c.getDBInstanceIdentifier())) {
-                                role = "reader";
-                            }
-                            instances.add(
-                                    new NeptuneInstanceProperties(
-                                            c.getDBInstanceIdentifier(),
-                                            role,
-                                            c.getEndpoint().getAddress(),
-                                            c.getDBInstanceStatus(),
-                                            c.getAvailabilityZone(),
-                                            c.getDBInstanceClass(),
-                                            getTags(c.getDBInstanceArn(), neptune)));
-                        }
-                );
+                    );
 
-        neptune.shutdown();
+            neptune.shutdown();
 
-        Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
+            Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
 
-        for (EndpointsSelector selector : selectors) {
-            results.put(selector, selector.getEndpoints(clusterEndpoint, readerEndpoint, instances));
+            for (EndpointsSelector selector : selectors) {
+                results.put(selector, selector.getEndpoints(clusterEndpoint, readerEndpoint, instances));
+            }
+
+            previousResults.set(results);
+
+            return results;
+
+        } catch (AmazonNeptuneException e) {
+            if (e.getErrorCode().equals("Throttling")) {
+                Map<EndpointsSelector, Collection<String>> results = previousResults.get();
+                if (results != null) {
+                    logger.warn("Calls to the Neptune Management API are being throttled. Reduce the refresh rate and stagger refresh agent requests, or use a NeptuneEndpointsInfoLambda proxy.");
+                    return results;
+                } else {
+                    throw e;
+                }
+            } else {
+                throw e;
+            }
         }
-
-        return results;
     }
 
     private Map<String, String> getTags(String dbInstanceArn, AmazonNeptune neptune) {
