@@ -49,7 +49,7 @@ import java.util.Collection;
         "Parallel export using 2 threads",
         "Parallel export using 2 threads, with each thread processing batches of 1000 nodes or edges"
 })
-@Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON")
+@Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON.")
 public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
@@ -76,7 +76,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
+    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false').")
     @Once
     private boolean excludeTypeDefinitions = false;
 

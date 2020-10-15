@@ -18,10 +18,10 @@ import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.Required;
 
-@Command(name = "remove-clone", description = "Remove a cloned Amazon Neptune database cluster")
+@Command(name = "remove-clone", description = "Remove a cloned Amazon Neptune database cluster.")
 public class RemoveClone implements Runnable {
 
-    @Option(name = {"--clone-cluster-id"}, description = "Cluster ID of the cloned Amazon Neptune database cluster")
+    @Option(name = {"--clone-cluster-id"}, description = "Cluster ID of the cloned Amazon Neptune database cluster.")
     @Required
     @Once
     private String cloneClusterId;

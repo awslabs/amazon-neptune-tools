@@ -20,7 +20,7 @@ public class PropertyGraphConcurrencyModule {
 
     private final boolean allowConcurrentOperations;
 
-    @Option(name = {"-cn", "--concurrency"}, description = "Concurrency (optional)")
+    @Option(name = {"-cn", "--concurrency"}, description = "Concurrency – the number of parallel queries used to run the export (optional, default 1).")
     @Once
     private int concurrency = 1;
 

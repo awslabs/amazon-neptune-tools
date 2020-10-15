@@ -20,12 +20,12 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 
 public class PropertyGraphSerializationModule {
 
-    @Option(name = {"--serializer"}, description = "Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0' (optional, default 'GRAPHBINARY_V1D0')")
+    @Option(name = {"--serializer"}, description = "Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0' (optional, default 'GRAPHBINARY_V1D0').")
     @AllowedValues(allowedValues = {"GRAPHBINARY_V1D0", "GRYO_V3D0"})
     @Once
     private String serializer = "GRAPHBINARY_V1D0";
 
-    @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 65536)")
+    @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 65536).")
     @Once
     private int maxContentLength = 65536;
 

@@ -25,11 +25,11 @@ public class PropertyGraphMetadataSamplingModule {
 
     private final RequiresMetadata requiresMetadata;
 
-    @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata")
+    @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating property metadata.")
     @Once
     private boolean sample = false;
 
-    @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000")
+    @Option(name = {"--sample-size"}, description = "Property metadata sample size (optional, default 1000).")
     @Once
     private long sampleSize = 1000;
 
