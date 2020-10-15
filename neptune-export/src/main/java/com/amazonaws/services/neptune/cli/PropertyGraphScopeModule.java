@@ -26,20 +26,20 @@ import java.util.List;
 
 public class PropertyGraphScopeModule {
 
-    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be included in config (optional, default all labels)",
+    @Option(name = {"-nl", "--node-label"}, description = "Labels of nodes to be included in config (optional, default all labels).",
             arity = 1)
     private List<String> nodeLabels = new ArrayList<>();
 
-    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be included in config (optional, default all labels)",
+    @Option(name = {"-el", "--edge-label"}, description = "Labels of edges to be included in config (optional, default all labels).",
             arity = 1)
     private List<String> edgeLabels = new ArrayList<>();
 
-    @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all')")
+    @Option(name = {"-s", "--scope"}, description = "Scope (optional, default 'all').")
     @Once
     @AllowedValues(allowedValues = {"all", "nodes", "edges"})
     private Scope scope = Scope.all;
 
-    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off')")
+    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off').")
     @Once
     @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
     private TokensOnly tokensOnly = TokensOnly.off;

@@ -19,7 +19,7 @@ import java.util.HashSet;
 
 public class LabModeModule {
 
-    @Option(name = {"--lab-feature"}, description = "Name of a lab feature to enable", hidden = true)
+    @Option(name = {"--lab-feature"}, description = "Name of a lab feature to enable.", hidden = true)
     private Collection<String> labFeatures = new HashSet<>();
 
     public Collection<String> labFeatures() {

@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.cli;
 import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
+import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
@@ -27,31 +28,31 @@ import java.util.UUID;
 
 public class PropertyGraphTargetModule implements RequiresMetadata, CommandWriter {
 
-    @Option(name = {"-d", "--dir"}, description = "Root directory for output")
+    @Option(name = {"-d", "--dir"}, description = "Root directory for output.")
     @Required
     @com.github.rvesse.airline.annotations.restrictions.Path(mustExist = false, kind = PathKind.DIRECTORY)
     @Once
     private File directory;
 
-    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional)")
+    @Option(name = {"-t", "--tag"}, description = "Directory prefix (optional).")
     @Once
     private String tag = "";
 
-    @Option(name = {"--format"}, description = "Output format (optional, default 'csv')")
+    @Option(name = {"--format"}, description = "Output format (optional, default 'csv').")
     @Once
     @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
     private PropertyGraphExportFormat format = PropertyGraphExportFormat.csv;
 
-    @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file')")
+    @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file').")
     @Once
     @AllowedValues(allowedValues = {"files", "stdout", "stream"})
     private Target output = Target.files;
 
-    @Option(name = {"--stream-name"}, description = "Name of an Amazon Kinesis Data Stream")
+    @Option(name = {"--stream-name"}, description = "Name of an Amazon Kinesis Data Stream.")
     @Once
     private String streamName;
 
-    @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located")
+    @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
     @Once
     private String region;
 

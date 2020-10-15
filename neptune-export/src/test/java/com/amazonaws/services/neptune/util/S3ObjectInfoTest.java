@@ -12,20 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.util;
 
-import com.amazonaws.services.neptune.cluster.InstanceType;
-import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
-import com.amazonaws.services.neptune.propertygraph.NamedQuery;
-import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 

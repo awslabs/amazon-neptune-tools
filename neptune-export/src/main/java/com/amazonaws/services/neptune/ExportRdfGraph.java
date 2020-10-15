@@ -35,7 +35,7 @@ import java.nio.file.Path;
         descriptions = {
                 "Export all data to the /home/ec2-user/output directory"
         })
-@Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle")
+@Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle.")
 public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject

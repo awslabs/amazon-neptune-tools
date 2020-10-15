@@ -18,23 +18,23 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 
 public class PropertyGraphRangeModule {
 
-    @Option(name = {"-r", "--range", "--range-size"}, description = "Number of items to fetch per request (optional)")
+    @Option(name = {"-r", "--range", "--range-size"}, description = "Number of items to fetch per request (optional).")
     @Once
     private long rangeSize = -1;
 
-    @Option(name = {"--limit"}, description = "Maximum number of items to export (optional)")
+    @Option(name = {"--limit"}, description = "Maximum number of items to export (optional).")
     @Once
     private long limit = Long.MAX_VALUE;
 
-    @Option(name = {"--skip"}, description = "Number of items to skip (optional)")
+    @Option(name = {"--skip"}, description = "Number of items to skip (optional).")
     @Once
     private long skip = 0;
 
-    @Option(name = {"--approx-node-count"}, description = "Approximate number of nodes in graph")
+    @Option(name = {"--approx-node-count"}, description = "Approximate number of nodes in the graph.")
     @Once
     private long approxNodeCount = -1;
 
-    @Option(name = {"--approx-edge-count"}, description = "Approximate number of edges in graph")
+    @Option(name = {"--approx-edge-count"}, description = "Approximate number of edges in the graph.")
     @Once
     private long approxEdgeCount = -1;
 

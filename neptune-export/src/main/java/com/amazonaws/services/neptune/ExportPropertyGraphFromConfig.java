@@ -43,7 +43,7 @@ import java.util.Collection;
         "Export data using the metadata config in /home/ec2-user/config.json",
         "Export data as JSON using the metadata config in /home/ec2-user/config.json"
 })
-@Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing config file")
+@Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing config file.")
 public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject

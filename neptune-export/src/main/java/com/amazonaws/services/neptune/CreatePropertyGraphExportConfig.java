@@ -37,7 +37,7 @@ import java.util.Collection;
         "Create metadata config file for all node and edge labels, sampling 100 nodes and edges for each label",
         "Create config file containing metadata for User nodes and FOLLOWS edges"
 })
-@Command(name = "create-pg-config", description = "Create a property graph export metadata config file")
+@Command(name = "create-pg-config", description = "Create a property graph export metadata config file.")
 public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
