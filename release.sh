@@ -23,8 +23,8 @@ if [ ! -f "$VERSION_FILE" ] ; then
 	exit 1
 fi
 
-if [ "$GIT_BRANCH" != "mainline" ] ; then
-	echo "WARNING: Starting a release from a non-mainline branch."
+if [ "$GIT_BRANCH" != "master" ] ; then
+	echo "WARNING: Starting a release from a non-master branch."
 fi
 
 let NEW_VERSION=`cat $VERSION_FILE`+1
@@ -86,13 +86,13 @@ ${GIT_CMD} push "${repo}" refs/heads/${RELEASE_BRANCH}
 echo "Pushing the release tags to $repo."
 ${GIT_CMD} push "${repo}" refs/tags/${RELEASE_BRANCH}
 
-#Update the VERSION on mainline
+#Update the VERSION on master
 
-${GIT_CMD} checkout mainline
+${GIT_CMD} checkout master
 echo $NEW_VERSION > $VERSION_FILE
-${GIT_CMD} pull $repo mainline
+${GIT_CMD} pull $repo master
 ${GIT_CMD} commit -am "Incremented release version to `cat $VERSION_FILE`"
-${GIT_CMD} push $repo mainline
+${GIT_CMD} push $repo master
 
 #Return to the initial branch
 ${GIT_CMD} checkout ${GIT_BRANCH}

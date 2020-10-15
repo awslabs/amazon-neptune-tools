@@ -47,9 +47,6 @@ class LazyHttpHeaders(HTTPHeaders):
         
     def items(self):
         return self.lazy_headers().items()
-        
-    def items(self):
-        return self.lazy_headers().items()
    
         
 class RequestParameters:
