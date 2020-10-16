@@ -100,8 +100,6 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                 PropertyMetadataForGraph metadataCollection =
                         sampling.createMetadataCommand(exportSpecifications, g).execute();
 
-                stats.prepare(metadataCollection);
-
                 configFileResource.save(metadataCollection);
 
                 ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(

@@ -90,9 +90,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                     PropertyMetadataForGraph.class);
 
             PropertyMetadataForGraph metadataCollection = configFileResource.get();
-
             ExportStats stats = new ExportStats();
-            stats.prepare(metadataCollection);
 
             Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 

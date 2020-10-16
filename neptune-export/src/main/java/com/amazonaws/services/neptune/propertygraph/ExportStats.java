@@ -12,8 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -43,15 +41,6 @@ public class ExportStats {
 
     public void incrementEdgeStats(String label) {
         edgeStats.computeIfAbsent(label, LabelStats::new).increment();
-    }
-
-    public void prepare(PropertyMetadataForGraph metadataCollection) {
-        for (String label : metadataCollection.propertyMetadataFor(MetadataTypes.Nodes).labels()) {
-            nodeStats.put(label, new LabelStats(label));
-        }
-        for (String label : metadataCollection.propertyMetadataFor(MetadataTypes.Edges).labels()) {
-            edgeStats.put(label, new LabelStats(label));
-        }
     }
 
     @Override
@@ -120,7 +109,7 @@ public class ExportStats {
             return count.get();
         }
 
-        public String label(){
+        public String label() {
             return label;
         }
 
