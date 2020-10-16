@@ -26,7 +26,6 @@ import java.util.Map;
 
 public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler<T> {
 
-    private final String taskId;
     private final PropertyMetadataForLabels propertyMetadataForLabels;
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
@@ -37,8 +36,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final int index;
     private final Map<String, LabelWriter<T>> labelWriters = new HashMap<>();
 
-    public ExportPropertyGraphTask(String taskId,
-                                   PropertyMetadataForLabels propertyMetadataForLabels,
+    public ExportPropertyGraphTask(PropertyMetadataForLabels propertyMetadataForLabels,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
@@ -46,7 +44,6 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                                    RangeFactory rangeFactory,
                                    Status status,
                                    int index) {
-        this.taskId = taskId;
         this.propertyMetadataForLabels = propertyMetadataForLabels;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
@@ -107,11 +104,6 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
         try {
 
             Map<Object, PropertyTypeInfo> propertyMetadata = propertyMetadataForLabels.getMetadataFor(label);
-
-            if (propertyMetadata == null) {
-                System.err.printf("%nWARNING: Unable to find property metadata for '%s' %s label%n", label, graphClient.description());
-                propertyMetadata = new HashMap<>();
-            }
 
             PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
             propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.values());

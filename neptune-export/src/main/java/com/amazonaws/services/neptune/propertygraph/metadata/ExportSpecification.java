@@ -95,7 +95,6 @@ public class ExportSpecification<T> {
         String taskId = UUID.randomUUID().toString();
 
         return new ExportPropertyGraphTask<>(
-                taskId,
                 metadataCollection.propertyMetadataFor(graphElementType),
                 labelsFilter,
                 graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
