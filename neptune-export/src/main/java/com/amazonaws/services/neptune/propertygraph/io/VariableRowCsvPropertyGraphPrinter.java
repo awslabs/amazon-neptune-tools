@@ -38,6 +38,11 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
     }
 
     @Override
+    public String outputId() {
+        return csvPropertyGraphPrinter.outputId();
+    }
+
+    @Override
     public void printHeaderMandatoryColumns(String... columns) {
         // Do nothing
     }

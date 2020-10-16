@@ -64,6 +64,9 @@ public class Stream {
         }
     }
 
+    public String name() {
+        return streamName;
+    }
 
     public void flushRecords() {
         kinesisProducer.flushSync();

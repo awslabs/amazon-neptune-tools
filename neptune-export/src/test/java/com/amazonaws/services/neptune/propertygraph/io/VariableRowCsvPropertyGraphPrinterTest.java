@@ -35,7 +35,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
         LinkedHashMap<Object, PropertyTypeInfo> metadata = new LinkedHashMap<>();
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
-                new PrintOutputWriter(stringWriter),
+                new PrintOutputWriter("test", stringWriter),
                 metadata);
 
         print(printer,
@@ -50,7 +50,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
                 "\"fname2\",\"lname2\"\n" +
                 "\"fname3\",,30\n" +
                 ",\"lname4\",40\n" +
-                "\"fname5\",\"lname5\",50";
+                "\"fname5\",\"lname5\",50\n";
 
         assertEquals(expectedOutput, stringWriter.toString());
 
@@ -63,7 +63,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
         LinkedHashMap<Object, PropertyTypeInfo> metadata = new LinkedHashMap<>();
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
-                new PrintOutputWriter(stringWriter),
+                new PrintOutputWriter("test", stringWriter),
                 metadata);
 
         print(printer,

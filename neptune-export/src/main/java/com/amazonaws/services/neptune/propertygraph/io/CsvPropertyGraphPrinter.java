@@ -51,6 +51,11 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
+    public String outputId() {
+        return writer.outputId();
+    }
+
+    @Override
     public void printHeaderMandatoryColumns(String... columns) {
         if (includeHeaders) {
             for (String column : columns) {

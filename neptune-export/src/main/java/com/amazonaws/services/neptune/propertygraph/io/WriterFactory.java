@@ -21,6 +21,6 @@ public interface WriterFactory<T> {
 
     PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException;
 
-    GraphElementHandler<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
+    LabelWriter<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
 
 }

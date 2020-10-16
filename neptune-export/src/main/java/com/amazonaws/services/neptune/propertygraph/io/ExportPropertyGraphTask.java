@@ -34,7 +34,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final RangeFactory rangeFactory;
     private final Status status;
     private final int index;
-    private final Map<String, GraphElementHandler<T>> labelWriters = new HashMap<>();
+    private final Map<String, LabelWriter<T>> labelWriters = new HashMap<>();
 
     public ExportPropertyGraphTask(PropertiesMetadata propertiesMetadata,
                                    LabelsFilter labelsFilter,

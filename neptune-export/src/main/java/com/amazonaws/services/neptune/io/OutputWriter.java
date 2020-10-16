@@ -16,6 +16,8 @@ import java.io.Writer;
 
 public interface OutputWriter extends AutoCloseable {
 
+    String outputId();
+
     void startCommit();
 
     void endCommit();

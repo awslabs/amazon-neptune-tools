@@ -38,6 +38,11 @@ public class FileToStreamOutputWriter implements OutputWriter {
     }
 
     @Override
+    public String outputId() {
+        return stream.name();
+    }
+
+    @Override
     public void startCommit() {
         innerOutputWriter.startCommit();
     }

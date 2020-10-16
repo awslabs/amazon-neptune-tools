@@ -35,6 +35,11 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
+    public String outputId() {
+        return writer.outputId();
+    }
+
+    @Override
     public void printHeaderMandatoryColumns(String... columns) {
         // Do nothing
     }

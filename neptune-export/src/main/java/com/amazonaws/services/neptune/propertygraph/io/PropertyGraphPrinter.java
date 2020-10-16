@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface PropertyGraphPrinter extends AutoCloseable {
+
+    String outputId();
+
     void printHeaderMandatoryColumns(String... columns);
 
     void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns);

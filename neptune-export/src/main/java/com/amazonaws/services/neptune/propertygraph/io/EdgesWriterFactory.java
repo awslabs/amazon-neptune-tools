@@ -28,7 +28,7 @@ public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
     }
 
     @Override
-    public GraphElementHandler<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
+    public LabelWriter<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
         return new EdgeWriter(propertyGraphPrinter);
     }
 }

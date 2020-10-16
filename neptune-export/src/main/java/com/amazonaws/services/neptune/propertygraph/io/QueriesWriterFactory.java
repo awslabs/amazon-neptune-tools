@@ -25,7 +25,7 @@ public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
     }
 
     @Override
-    public GraphElementHandler<Map<?, ?>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
+    public LabelWriter<Map<?, ?>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
         return new QueryWriter(propertyGraphPrinter);
     }
 }

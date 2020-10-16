@@ -27,7 +27,7 @@ public class JsonPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter(stringWriter), new HashMap<>(), true)) {
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("test", stringWriter), new HashMap<>(), true)) {
             propertyGraphPrinter.printStartRow();
             propertyGraphPrinter.printEdge("edge-id", "edge-label", "from-id", "to-id");
             propertyGraphPrinter.printEndRow();

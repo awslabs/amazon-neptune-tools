@@ -39,6 +39,11 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
+    public String outputId() {
+        return writer.outputId();
+    }
+
+    @Override
     public void printHeaderMandatoryColumns(String... columns) {
         // Do nothing
     }
