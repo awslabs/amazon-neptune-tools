@@ -18,6 +18,7 @@ import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import com.amazonaws.services.neptune.util.Timer;
 import com.google.common.util.concurrent.Futures;
@@ -89,9 +90,11 @@ public class ExportPropertyGraphJob {
                 }
 
                 // TODO: consolidate into single view of metadata
+                Collection<PropertyMetadataForLabels> allMetadata = new ArrayList<>();
                 for (Future<PropertyMetadataForLabels> future : futures) {
-                    PropertyMetadataForLabels propertyMetadataForLabels = future.get();
+                    allMetadata.add(future.get());
                 }
+
             }
         }
     }

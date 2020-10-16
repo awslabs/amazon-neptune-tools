@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tinkerpop.gremlin.structure.T;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class PropertyMetadataForLabels {
         for (JsonNode node : arrayNode) {
             String label = node.path("label").asText();
 
-            metadata.put(label, new PropertyMetadataForLabel());
+            metadata.put(label, new PropertyMetadataForLabel(label));
             ArrayNode propertiesArray = (ArrayNode) node.path("properties");
 
             for (JsonNode propertyNode : propertiesArray) {
@@ -58,7 +59,7 @@ public class PropertyMetadataForLabels {
     public PropertyMetadataForLabel getMetadataFor(String label) {
 
         if (!metadataByLabel.containsKey(label)) {
-            metadataByLabel.put(label, new PropertyMetadataForLabel());
+            metadataByLabel.put(label, new PropertyMetadataForLabel(label));
         }
 
         return metadataByLabel.get(label);
@@ -78,7 +79,7 @@ public class PropertyMetadataForLabels {
     public void update(String label, Map<?, ?> properties, boolean allowStructuralElements) {
 
         if (!metadataByLabel.containsKey(label)) {
-            metadataByLabel.put(label, new PropertyMetadataForLabel());
+            metadataByLabel.put(label, new PropertyMetadataForLabel(label));
         }
 
         PropertyMetadataForLabel propertyMetadataForLabel = metadataByLabel.get(label);
@@ -98,6 +99,10 @@ public class PropertyMetadataForLabels {
 
     public Iterable<String> labels() {
         return metadataByLabel.keySet();
+    }
+
+    public Iterable<PropertyMetadataForLabel> propertyMetadataCollection() {
+        return metadataByLabel.values();
     }
 
     private boolean isToken(Object key) {

@@ -32,7 +32,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel();
+        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel("my-label");
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -60,7 +60,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     public void updatesDataTypesForColumsnWithEachNewRow() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel();
+        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel("my-label");
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),

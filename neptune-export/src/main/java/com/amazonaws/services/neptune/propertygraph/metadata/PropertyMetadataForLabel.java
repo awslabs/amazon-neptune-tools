@@ -17,8 +17,13 @@ import java.util.*;
 
 public class PropertyMetadataForLabel {
 
+    private final String label;
     private final Map<Object, PropertyTypeInfo> propertyMetadata = new LinkedHashMap<>();
     private final Set<String> outputIds = new HashSet<>();
+
+    public PropertyMetadataForLabel(String label) {
+        this.label = label;
+    }
 
     public void addOutputId(String outputId) {
         this.outputIds.add(outputId);
@@ -42,5 +47,13 @@ public class PropertyMetadataForLabel {
 
     public int propertyCount() {
         return propertyMetadata.size();
+    }
+
+    public String label() {
+        return label;
+    }
+
+    public Iterable<String> outputIds() {
+        return outputIds;
     }
 }

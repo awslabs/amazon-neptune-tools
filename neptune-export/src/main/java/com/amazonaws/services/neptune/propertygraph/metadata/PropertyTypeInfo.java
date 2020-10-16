@@ -86,4 +86,13 @@ public class PropertyTypeInfo {
         }
         return String.valueOf(key);
     }
+
+    @Override
+    public String toString() {
+        return "PropertyTypeInfo{" +
+                "property=" + property +
+                ", dataType=" + dataType +
+                ", isMultiValue=" + isMultiValue +
+                '}';
+    }
 }
