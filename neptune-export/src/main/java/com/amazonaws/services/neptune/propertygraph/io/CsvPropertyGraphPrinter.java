@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
@@ -30,16 +28,26 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
+    private final boolean updatePropertyTypeInfo;
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    Map<Object, PropertyTypeInfo> metadata,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions) {
+        this(writer, metadata, includeHeaders, includeTypeDefinitions, false);
+    }
+
+    public CsvPropertyGraphPrinter(OutputWriter writer,
+                                   Map<Object, PropertyTypeInfo> metadata,
+                                   boolean includeHeaders,
+                                   boolean includeTypeDefinitions,
+                                   boolean updatePropertyTypeInfo) {
         this.writer = writer;
         this.metadata = metadata;
         this.commaPrinter = new CommaPrinter(writer);
         this.includeHeaders = includeHeaders;
         this.includeTypeDefinitions = includeTypeDefinitions;
+        this.updatePropertyTypeInfo = updatePropertyTypeInfo;
     }
 
     @Override
@@ -72,21 +80,27 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
 
             Object property = entry.getKey();
-            DataType dataType = entry.getValue().dataType();
+            PropertyTypeInfo propertyTypeInfo = entry.getValue();
 
             if (properties.containsKey(property)) {
-                commaPrinter.printComma();
-
                 Object value = properties.get(property);
-                String formattedValue = isList(value) ?
-                        formatList(value, dataType) :
-                        dataType.format(value);
-                writer.print(formattedValue);
-
+                if (updatePropertyTypeInfo) {
+                    propertyTypeInfo.accept(value);
+                }
+                printProperty(propertyTypeInfo.dataType(), value);
             } else {
                 commaPrinter.printComma();
             }
         }
+    }
+
+    public void printProperty(DataType dataType, Object value) {
+        commaPrinter.printComma();
+
+        String formattedValue = isList(value) ?
+                formatList(value, dataType) :
+                dataType.format(value);
+        writer.print(formattedValue);
     }
 
     @Override
@@ -140,24 +154,4 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         writer.close();
     }
 
-    private static class CommaPrinter {
-        private final OutputWriter outputWriter;
-        private boolean printComma = false;
-
-        private CommaPrinter(OutputWriter outputWriter) {
-            this.outputWriter = outputWriter;
-        }
-
-        void printComma() {
-            if (printComma) {
-                outputWriter.print(",");
-            } else {
-                printComma = true;
-            }
-        }
-
-        void init() {
-            printComma = false;
-        }
-    }
 }
