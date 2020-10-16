@@ -1,8 +1,7 @@
 #!/bin/bash -ex
 
 pushd .
-sudo su 
-pip install virtualenv
+sudo pip install virtualenv
 rm -rf target
 rm -rf temp
 mkdir target
