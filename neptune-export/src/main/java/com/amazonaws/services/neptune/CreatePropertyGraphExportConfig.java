@@ -76,9 +76,9 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
                  GraphTraversalSource g = client.newTraversalSource()) {
 
                 MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
-                PropertyMetadataForGraph metadataCollection = metadataCommand.execute();
+                PropertyMetadataForGraph propertyMetadataForGraph = metadataCommand.execute();
 
-                configFileResource.save(metadataCollection);
+                configFileResource.save(propertyMetadataForGraph);
                 configFileResource.writeResourcePathAsMessage(target);
             }
 

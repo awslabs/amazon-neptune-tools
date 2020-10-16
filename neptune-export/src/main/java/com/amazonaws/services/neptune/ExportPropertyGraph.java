@@ -97,14 +97,14 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
-                PropertyMetadataForGraph metadataCollection =
+                PropertyMetadataForGraph propertyMetadataForGraph =
                         sampling.createMetadataCommand(exportSpecifications, g).execute();
 
-                configFileResource.save(metadataCollection);
+                configFileResource.save(propertyMetadataForGraph);
 
                 ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                         exportSpecifications,
-                        metadataCollection,
+                        propertyMetadataForGraph,
                         g,
                         range.config(),
                         clusterStrategy.concurrencyConfig(),

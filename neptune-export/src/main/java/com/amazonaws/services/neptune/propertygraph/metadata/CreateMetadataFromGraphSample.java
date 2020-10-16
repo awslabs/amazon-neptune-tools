@@ -34,14 +34,14 @@ public class CreateMetadataFromGraphSample implements MetadataCommand {
     @Override
     public PropertyMetadataForGraph execute() throws Exception {
 
-        PropertyMetadataForGraph metadataCollection = new PropertyMetadataForGraph();
+        PropertyMetadataForGraph propertyMetadataForGraph = new PropertyMetadataForGraph();
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
             try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from sampling graph")) {
                 System.err.println("Creating " + exportSpecification.description() + " metadata");
-                exportSpecification.sample(metadataCollection, g, sampleSize);
+                exportSpecification.sample(propertyMetadataForGraph, g, sampleSize);
             }
         }
-        return metadataCollection;
+        return propertyMetadataForGraph;
     }
 
 }

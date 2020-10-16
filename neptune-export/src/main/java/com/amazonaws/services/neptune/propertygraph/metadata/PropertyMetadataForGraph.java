@@ -37,35 +37,35 @@ public class PropertyMetadataForGraph implements Jsonizable {
         return new PropertyMetadataForGraph(metadataCollection);
     }
 
-    private final Map<GraphElementType<?>, PropertyMetadataForLabels> metadataCollection;
+    private final Map<GraphElementType<?>, PropertyMetadataForLabels> propertyMetadataForLabelsByElement;
 
     public PropertyMetadataForGraph() {
         this(new HashMap<>());
     }
 
     public PropertyMetadataForGraph(Map<GraphElementType<?>, PropertyMetadataForLabels> metadataCollection) {
-        this.metadataCollection = metadataCollection;
+        this.propertyMetadataForLabelsByElement = metadataCollection;
     }
 
     public void update(GraphElementType<?> graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
-        if (!metadataCollection.containsKey(graphElementType)) {
-            metadataCollection.put(graphElementType, new PropertyMetadataForLabels());
+        if (!propertyMetadataForLabelsByElement.containsKey(graphElementType)) {
+            propertyMetadataForLabelsByElement.put(graphElementType, new PropertyMetadataForLabels());
         }
-        metadataCollection.get(graphElementType).update(properties, allowStructuralElements);
+        propertyMetadataForLabelsByElement.get(graphElementType).update(properties, allowStructuralElements);
     }
 
     public PropertyMetadataForLabels propertyMetadataFor(GraphElementType<?> type) {
-        if (!metadataCollection.containsKey(type)) {
-            metadataCollection.put(type, new PropertyMetadataForLabels());
+        if (!propertyMetadataForLabelsByElement.containsKey(type)) {
+            propertyMetadataForLabelsByElement.put(type, new PropertyMetadataForLabels());
         }
-        return metadataCollection.get(type);
+        return propertyMetadataForLabelsByElement.get(type);
     }
 
     @Override
     public JsonNode toJson() {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
-        for (Map.Entry<GraphElementType<?>, PropertyMetadataForLabels> entry : metadataCollection.entrySet()) {
+        for (Map.Entry<GraphElementType<?>, PropertyMetadataForLabels> entry : propertyMetadataForLabelsByElement.entrySet()) {
             String key = entry.getKey().name();
             ArrayNode arrayNode = entry.getValue().toJson();
             json.set(key, arrayNode);

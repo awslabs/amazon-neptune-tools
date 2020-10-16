@@ -29,13 +29,13 @@ public class CreateMetadataFromGraphScan implements MetadataCommand {
 
     @Override
     public PropertyMetadataForGraph execute() throws Exception {
-        PropertyMetadataForGraph metadataCollection = new PropertyMetadataForGraph();
+        PropertyMetadataForGraph propertyMetadataForGraph = new PropertyMetadataForGraph();
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
             try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from graph scan")) {
                 System.err.println("Creating " + exportSpecification.description() + " metadata");
-                exportSpecification.scan(metadataCollection, g);
+                exportSpecification.scan(propertyMetadataForGraph, g);
             }
         }
-        return metadataCollection;
+        return propertyMetadataForGraph;
     }
 }

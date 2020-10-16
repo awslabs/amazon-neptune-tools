@@ -22,7 +22,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.UUID;
 
 public class ExportSpecification<T> {
     private final GraphElementType<T> graphElementType;
@@ -43,7 +42,7 @@ public class ExportSpecification<T> {
         this.labModeFeatures = labModeFeatures;
     }
 
-    public void scan(PropertyMetadataForGraph metadataCollection, GraphTraversalSource g) {
+    public void scan(PropertyMetadataForGraph propertyMetadataForGraph, GraphTraversalSource g) {
         if (tokensOnly) {
             return;
         }
@@ -51,12 +50,12 @@ public class ExportSpecification<T> {
         GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
 
         graphClient.queryForMetadata(
-                new Handler(graphElementType, metadataCollection),
+                new Handler(graphElementType, propertyMetadataForGraph),
                 Range.ALL,
                 labelsFilter);
     }
 
-    public void sample(PropertyMetadataForGraph metadataCollection, GraphTraversalSource g, long sampleSize) {
+    public void sample(PropertyMetadataForGraph propertyMetadataForGraph, GraphTraversalSource g, long sampleSize) {
         if (tokensOnly) {
             return;
         }
@@ -66,7 +65,7 @@ public class ExportSpecification<T> {
 
         for (String label : labels) {
             graphClient.queryForMetadata(
-                    new Handler(graphElementType, metadataCollection),
+                    new Handler(graphElementType, propertyMetadataForGraph),
                     new Range(0, sampleSize),
                     SpecifiedLabels.forLabels(label));
         }
@@ -86,16 +85,14 @@ public class ExportSpecification<T> {
                 concurrencyConfig);
     }
 
-    public ExportPropertyGraphTask<T> createExportTask(PropertyMetadataForGraph metadataCollection,
+    public ExportPropertyGraphTask<T> createExportTask(PropertyMetadataForGraph propertyMetadataForGraph,
                                                        GraphTraversalSource g,
                                                        PropertyGraphTargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
                                                        int index) {
-        String taskId = UUID.randomUUID().toString();
-
         return new ExportPropertyGraphTask<>(
-                metadataCollection.propertyMetadataFor(graphElementType),
+                propertyMetadataForGraph.propertyMetadataFor(graphElementType),
                 labelsFilter,
                 graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
                 graphElementType.writerFactory(),
@@ -109,18 +106,18 @@ public class ExportSpecification<T> {
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
 
         private final GraphElementType<?> graphElementType;
-        private final PropertyMetadataForGraph metadataCollection;
+        private final PropertyMetadataForGraph propertyMetadataForGraph;
         private final Status status = new Status();
 
-        private Handler(GraphElementType<?> graphElementType, PropertyMetadataForGraph metadataCollection) {
+        private Handler(GraphElementType<?> graphElementType, PropertyMetadataForGraph propertyMetadataForGraph) {
             this.graphElementType = graphElementType;
-            this.metadataCollection = metadataCollection;
+            this.propertyMetadataForGraph = propertyMetadataForGraph;
         }
 
         @Override
         public void handle(Map<?, Object> properties, boolean allowTokens) {
             status.update();
-            metadataCollection.update(graphElementType, properties, allowTokens);
+            propertyMetadataForGraph.update(graphElementType, properties, allowTokens);
         }
 
         @Override
