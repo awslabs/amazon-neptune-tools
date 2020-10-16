@@ -19,7 +19,6 @@ import com.amazonaws.services.neptune.propertygraph.Range;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -109,7 +108,11 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
             PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
             propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.properties());
 
-            labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
+            LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
+
+            labelWriters.put(label, labelWriter);
+
+            propertyMetadata.addOutputId(labelWriter.outputId());
 
         } catch (IOException e) {
             throw new RuntimeException(e);

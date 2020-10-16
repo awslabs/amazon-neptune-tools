@@ -12,8 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -39,7 +37,7 @@ public class QueryWriter implements LabelWriter<Map<?, ?>> {
     }
 
     @Override
-    public String id() {
-        throw new NotImplementedException();
+    public String outputId() {
+        return propertyGraphPrinter.outputId();
     }
 }

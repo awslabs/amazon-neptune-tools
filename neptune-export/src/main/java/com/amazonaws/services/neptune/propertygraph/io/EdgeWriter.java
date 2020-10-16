@@ -43,7 +43,7 @@ public class EdgeWriter implements LabelWriter<Map<String, Object>> {
     }
 
     @Override
-    public String id() {
+    public String outputId() {
         return propertyGraphPrinter.outputId();
     }
 }
