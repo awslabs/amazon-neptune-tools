@@ -18,12 +18,16 @@ import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import com.amazonaws.services.neptune.util.Timer;
+import com.google.common.util.concurrent.Futures;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class ExportPropertyGraphJob {
@@ -50,7 +54,10 @@ public class ExportPropertyGraphJob {
 
     public void execute() throws Exception {
 
+
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
+
+            Collection<Future<PropertyMetadataForLabels>> futures = new ArrayList<>();
 
             try (Timer timer = new Timer("exporting " + exportSpecification.description())) {
                 System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
@@ -69,7 +76,7 @@ public class ExportPropertyGraphJob {
                             status,
                             index
                     );
-                    taskExecutor.execute(exportTask);
+                    futures.add(taskExecutor.submit(exportTask));
                 }
 
                 taskExecutor.shutdown();
@@ -79,6 +86,11 @@ public class ExportPropertyGraphJob {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(e);
+                }
+
+                // TODO: consolidate into single view of metadata
+                for (Future<PropertyMetadataForLabels> future : futures) {
+                    PropertyMetadataForLabels propertyMetadataForLabels = future.get();
                 }
             }
         }

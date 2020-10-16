@@ -54,11 +54,11 @@ public class PropertyMetadataForGraph implements Jsonizable {
         propertyMetadataForLabelsByElement.get(graphElementType).update(properties, allowStructuralElements);
     }
 
-    public PropertyMetadataForLabels propertyMetadataFor(GraphElementType<?> type) {
+    public PropertyMetadataForLabels copyOfPropertyMetadataFor(GraphElementType<?> type) {
         if (!propertyMetadataForLabelsByElement.containsKey(type)) {
             propertyMetadataForLabelsByElement.put(type, new PropertyMetadataForLabels());
         }
-        return propertyMetadataForLabelsByElement.get(type);
+        return propertyMetadataForLabelsByElement.get(type).createCopy();
     }
 
     @Override

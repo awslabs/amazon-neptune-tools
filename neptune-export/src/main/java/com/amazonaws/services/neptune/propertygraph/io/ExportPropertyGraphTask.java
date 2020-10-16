@@ -17,16 +17,18 @@ import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 import com.amazonaws.services.neptune.propertygraph.Range;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
+import com.amazonaws.services.neptune.propertygraph.metadata.GraphElementType;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
-public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler<T> {
+public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForLabels> {
 
-    private final PropertyMetadataForLabels propertyMetadataForLabels;
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
     private final WriterFactory<T> writerFactory;
@@ -35,8 +37,11 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final Status status;
     private final int index;
     private final Map<String, LabelWriter<T>> labelWriters = new HashMap<>();
+    private final PropertyMetadataForGraph propertyMetadataForGraph;
+    private final GraphElementType<T> graphElementType;
 
-    public ExportPropertyGraphTask(PropertyMetadataForLabels propertyMetadataForLabels,
+    public ExportPropertyGraphTask(PropertyMetadataForGraph propertyMetadataForGraph,
+                                   GraphElementType<T> graphElementType,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
@@ -44,7 +49,8 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                                    RangeFactory rangeFactory,
                                    Status status,
                                    int index) {
-        this.propertyMetadataForLabels = propertyMetadataForLabels;
+        this.propertyMetadataForGraph = propertyMetadataForGraph;
+        this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
         this.writerFactory = writerFactory;
@@ -55,17 +61,24 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     }
 
     @Override
-    public void run() {
+    public PropertyMetadataForLabels call() {
+
+        PropertyMetadataForLabels propertyMetadataForLabels =
+                propertyMetadataForGraph.copyOfPropertyMetadataFor(graphElementType);
+
+        CountingHandler handler = new CountingHandler(
+                new TaskHandler(
+                        propertyMetadataForLabels, targetConfig, writerFactory, labelWriters, graphClient, status,
+                        index
+                ));
+
         try {
             while (status.allowContinue()) {
                 Range range = rangeFactory.nextRange();
                 if (range.isEmpty()) {
                     status.halt();
                 } else {
-                    CountingHandler handler = new CountingHandler(this);
-
                     graphClient.queryForValues(handler, range, labelsFilter, propertyMetadataForLabels);
-
                     if (range.sizeExceeds(handler.numberProcessed()) || rangeFactory.isExhausted()) {
                         status.halt();
                     }
@@ -75,47 +88,77 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
             e.printStackTrace();
         } finally {
             try {
-                close();
+                handler.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        return propertyMetadataForLabels;
     }
 
-    @Override
-    public void handle(T input, boolean allowTokens) throws IOException {
-        status.update();
-        String label = graphClient.getLabelsAsStringToken(input);
-        if (!labelWriters.containsKey(label)) {
-            createWriterFor(label);
+    private class TaskHandler implements GraphElementHandler<T>{
+
+        private final PropertyMetadataForLabels propertyMetadataForLabels;
+        private final Status status;
+        private final GraphClient<T> graphClient;
+        private final Map<String, LabelWriter<T>> labelWriters;
+        private final WriterFactory<T> writerFactory;
+        private final int index;
+        private final PropertyGraphTargetConfig targetConfig;
+
+        private TaskHandler(PropertyMetadataForLabels propertyMetadataForLabels,
+                            PropertyGraphTargetConfig targetConfig,
+                            WriterFactory<T> writerFactory,
+                            Map<String, LabelWriter<T>> labelWriters,
+                            GraphClient<T> graphClient,
+                            Status status,
+                            int index) {
+
+            this.status = status;
+            this.graphClient = graphClient;
+            this.labelWriters = labelWriters;
+            this.propertyMetadataForLabels = propertyMetadataForLabels;
+            this.writerFactory = writerFactory;
+            this.index = index;
+            this.targetConfig = targetConfig;
         }
-        graphClient.updateStats(label);
-        labelWriters.get(label).handle(input, allowTokens);
-    }
 
-    @Override
-    public void close() throws Exception {
-        for (GraphElementHandler<T> labelWriter : labelWriters.values()) {
-            labelWriter.close();
+        @Override
+        public void handle(T input, boolean allowTokens) throws IOException {
+            status.update();
+            String label = graphClient.getLabelsAsStringToken(input);
+            if (!labelWriters.containsKey(label)) {
+                createWriterFor(label);
+            }
+            graphClient.updateStats(label);
+            labelWriters.get(label).handle(input, allowTokens);
         }
-    }
 
-    private void createWriterFor(String label) {
-        try {
+        @Override
+        public void close() throws Exception {
+            for (LabelWriter<T> labelWriter : labelWriters.values()) {
+                labelWriter.close();
+            }
+        }
 
-            PropertyMetadataForLabel propertyMetadata = propertyMetadataForLabels.getMetadataFor(label);
+        private void createWriterFor(String label) {
+            try {
 
-            PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
-            propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.properties());
+                PropertyMetadataForLabel propertyMetadata = propertyMetadataForLabels.getMetadataFor(label);
 
-            LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
+                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.properties());
 
-            labelWriters.put(label, labelWriter);
+                LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
-            propertyMetadata.addOutputId(labelWriter.outputId());
+                labelWriters.put(label, labelWriter);
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+                propertyMetadata.addOutputId(labelWriter.outputId());
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -19,9 +19,10 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.Map;
 
+import static com.amazonaws.services.neptune.util.MapUtils.entry;
+import static com.amazonaws.services.neptune.util.MapUtils.map;
 import static org.junit.Assert.assertEquals;
 
 public class VariableRowCsvPropertyGraphPrinterTest {
@@ -38,11 +39,11 @@ public class VariableRowCsvPropertyGraphPrinterTest {
                 metadata);
 
         print(printer,
-                row(entry("fname", "fname1")),
-                row(entry("fname", "fname2"), entry("lname", "lname2")),
-                row(entry("fname", "fname3"), entry("age", 30)),
-                row(entry("lname", "lname4"), entry("age", 40)),
-                row(entry("fname", "fname5"), entry("lname", "lname5"), entry("age", 50))
+                map(entry("fname", "fname1")),
+                map(entry("fname", "fname2"), entry("lname", "lname2")),
+                map(entry("fname", "fname3"), entry("age", 30)),
+                map(entry("lname", "lname4"), entry("age", 40)),
+                map(entry("fname", "fname5"), entry("lname", "lname5"), entry("age", 50))
         );
 
         String expectedOutput = "\"fname1\"\n" +
@@ -66,9 +67,9 @@ public class VariableRowCsvPropertyGraphPrinterTest {
                 metadata);
 
         print(printer,
-                row(entry("age", 10)),
-                row(entry("age", "ten"), entry("height", 5)),
-                row(entry("age", 11), entry("height", 5.2))
+                map(entry("age", 10)),
+                map(entry("age", "ten"), entry("height", 5)),
+                map(entry("age", 11), entry("height", 5.2))
         );
 
         assertEquals(2, metadata.propertyCount());
@@ -84,35 +85,5 @@ public class VariableRowCsvPropertyGraphPrinterTest {
         }
     }
 
-    private Map<?, ?> row(Entry... entries) {
-        HashMap<Object, Object> map = new HashMap<>();
-        for (Entry entry : entries) {
-            map.put(entry.key(), entry.value());
-        }
-        return map;
-    }
-
-    public Entry entry(String key, Object value) {
-        return new Entry(key, value);
-    }
-
-    public static class Entry {
-
-        private final String key;
-        private final Object value;
-
-        private Entry(String key, Object value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        public String key() {
-            return key;
-        }
-
-        public Object value() {
-            return value;
-        }
-    }
 
 }

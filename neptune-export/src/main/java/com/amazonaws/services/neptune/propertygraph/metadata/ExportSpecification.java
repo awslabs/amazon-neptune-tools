@@ -92,7 +92,8 @@ public class ExportSpecification<T> {
                                                        Status status,
                                                        int index) {
         return new ExportPropertyGraphTask<>(
-                propertyMetadataForGraph.propertyMetadataFor(graphElementType),
+                propertyMetadataForGraph,
+                graphElementType,
                 labelsFilter,
                 graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
                 graphElementType.writerFactory(),

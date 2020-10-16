@@ -135,4 +135,8 @@ public class PropertyMetadataForLabels {
 
         return arrayNode;
     }
+
+    public PropertyMetadataForLabels createCopy() {
+        return fromJson(toJson());
+    }
 }
