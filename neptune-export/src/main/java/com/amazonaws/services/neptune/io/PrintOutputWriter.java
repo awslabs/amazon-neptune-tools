@@ -54,9 +54,7 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
 
     @Override
     public void endCommit() {
-//        if (checkError()){
-//            throw new RuntimeException("An error occurred while writing to a file");
-//        }
+        // Do nothing
     }
 
     @Override
@@ -73,13 +71,4 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     public void endOp() {
         // Do nothing
     }
-
-//    @Override
-//    public void close() {
-//        boolean isError = checkError();
-//        super.close();
-//        if (isError){
-//          throw new RuntimeException("An error occurred while writing to a file");
-//        }
-//    }
 }
