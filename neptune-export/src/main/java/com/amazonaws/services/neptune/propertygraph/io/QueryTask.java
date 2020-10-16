@@ -17,7 +17,6 @@ import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 
@@ -56,7 +55,7 @@ public class QueryTask implements Runnable {
     public void run() {
 
         QueriesWriterFactory writerFactory = new QueriesWriterFactory();
-        Map<String, GraphElementHandler<Map<?, ?>>> labelWriters = new HashMap<>();
+        Map<String, LabelWriter<Map<?, ?>>> labelWriters = new HashMap<>();
 
         try {
 
@@ -114,7 +113,7 @@ public class QueryTask implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-                for (GraphElementHandler<Map<?, ?>> labelWriter : labelWriters.values()) {
+                for (LabelWriter<Map<?, ?>> labelWriter : labelWriters.values()) {
                     labelWriter.close();
                 }
             } catch (Exception e) {
@@ -135,12 +134,12 @@ public class QueryTask implements Runnable {
     private class ResultsHandler implements GraphElementHandler<Map<?, ?>> {
 
         private final String name;
-        private final Map<String, GraphElementHandler<Map<?, ?>>> labelWriters;
+        private final Map<String, LabelWriter<Map<?, ?>>> labelWriters;
         private final QueriesWriterFactory writerFactory;
         private final PropertyMetadataForLabels propertyMetadataForLabels;
 
         private ResultsHandler(String name,
-                               Map<String, GraphElementHandler<Map<?, ?>>> labelWriters,
+                               Map<String, LabelWriter<Map<?, ?>>> labelWriters,
                                QueriesWriterFactory writerFactory,
                                PropertyMetadataForLabels propertyMetadataForLabels) {
             this.name = name;
@@ -185,7 +184,7 @@ public class QueryTask implements Runnable {
         }
     }
 
-    private class StatusHandler implements GraphElementHandler<Map<?, ?>> {
+    private static class StatusHandler implements GraphElementHandler<Map<?, ?>> {
 
         private final GraphElementHandler<Map<?, ?>> parent;
         private final Status status;
