@@ -32,9 +32,9 @@ public class CreateMetadataFromGraphSample implements MetadataCommand {
     }
 
     @Override
-    public PropertiesMetadataCollection execute() throws Exception {
+    public PropertyMetadataForGraph execute() throws Exception {
 
-        PropertiesMetadataCollection metadataCollection = new PropertiesMetadataCollection();
+        PropertyMetadataForGraph metadataCollection = new PropertyMetadataForGraph();
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
             try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from sampling graph")) {
                 System.err.println("Creating " + exportSpecification.description() + " metadata");

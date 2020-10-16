@@ -32,7 +32,7 @@ public class MetadataSamplingSpecification {
     public MetadataCommand createMetadataCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                  GraphTraversalSource g) {
         if (!requiresMetadata){
-            return PropertiesMetadataCollection::new;
+            return PropertyMetadataForGraph::new;
         }
 
         if (sample) {

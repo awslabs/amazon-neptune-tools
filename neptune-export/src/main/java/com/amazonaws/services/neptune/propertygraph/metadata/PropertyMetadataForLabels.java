@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PropertiesMetadata {
+public class PropertyMetadataForLabels {
 
-    public static PropertiesMetadata fromJson(ArrayNode arrayNode) {
+    public static PropertyMetadataForLabels fromJson(ArrayNode arrayNode) {
         Map<String, Map<Object, PropertyTypeInfo>> metadata = new HashMap<>();
 
         for (JsonNode node : arrayNode) {
@@ -43,30 +43,30 @@ public class PropertiesMetadata {
                 metadata.get(label).put(key, new PropertyTypeInfo(key, dataType, isMultiValue));
             }
         }
-        return new PropertiesMetadata(metadata);
+        return new PropertyMetadataForLabels(metadata);
     }
 
-    private final Map<String, Map<Object, PropertyTypeInfo>> metadata;
+    private final Map<String, Map<Object, PropertyTypeInfo>> metadataByLabel;
 
-    public PropertiesMetadata() {
+    public PropertyMetadataForLabels() {
         this(new HashMap<>());
     }
 
-    public PropertiesMetadata(Map<String, Map<Object, PropertyTypeInfo>> metadata) {
-        this.metadata = metadata;
+    private PropertyMetadataForLabels(Map<String, Map<Object, PropertyTypeInfo>> metadataByLabel) {
+        this.metadataByLabel = metadataByLabel;
     }
 
-    public Map<Object, PropertyTypeInfo> propertyMetadataFor(String label) {
+    public Map<Object, PropertyTypeInfo> getMetadataFor(String label) {
 
-        if (!metadata.containsKey(label)) {
-            metadata.put(label, new LinkedHashMap<>());
+        if (!metadataByLabel.containsKey(label)) {
+            metadataByLabel.put(label, new LinkedHashMap<>());
         }
 
-        return metadata.get(label);
+        return metadataByLabel.get(label);
     }
 
     public boolean hasMetadataFor(String label){
-        return metadata.containsKey(label);
+        return metadataByLabel.containsKey(label);
     }
 
     public void update(Map<?, ?> properties, boolean allowStructuralElements) {
@@ -78,11 +78,11 @@ public class PropertiesMetadata {
 
     public void update(String label, Map<?, ?> properties, boolean allowStructuralElements) {
 
-        if (!metadata.containsKey(label)) {
-            metadata.put(label, new LinkedHashMap<>());
+        if (!metadataByLabel.containsKey(label)) {
+            metadataByLabel.put(label, new LinkedHashMap<>());
         }
 
-        Map<Object, PropertyTypeInfo> propertyInfo = metadata.get(label);
+        Map<Object, PropertyTypeInfo> propertyInfo = metadataByLabel.get(label);
 
         for (Map.Entry<?, ?> entry : properties.entrySet()) {
 
@@ -98,7 +98,7 @@ public class PropertiesMetadata {
     }
 
     public Iterable<String> labels(){
-        return metadata.keySet();
+        return metadataByLabel.keySet();
     }
 
     private boolean isToken(Object key) {
@@ -109,7 +109,7 @@ public class PropertiesMetadata {
 
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
-        for (Map.Entry<String, Map<Object, PropertyTypeInfo>> entry : metadata.entrySet()) {
+        for (Map.Entry<String, Map<Object, PropertyTypeInfo>> entry : metadataByLabel.entrySet()) {
 
             String label = entry.getKey();
 

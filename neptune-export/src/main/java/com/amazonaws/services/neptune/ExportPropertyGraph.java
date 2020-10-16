@@ -22,7 +22,7 @@ import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -87,7 +87,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
              ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
             Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
-            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
+            JsonResource<PropertyMetadataForGraph> configFileResource = directories.configFileResource();
 
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
@@ -97,7 +97,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
-                PropertiesMetadataCollection metadataCollection =
+                PropertyMetadataForGraph metadataCollection =
                         sampling.createMetadataCommand(exportSpecifications, g).execute();
 
                 stats.prepare(metadataCollection);

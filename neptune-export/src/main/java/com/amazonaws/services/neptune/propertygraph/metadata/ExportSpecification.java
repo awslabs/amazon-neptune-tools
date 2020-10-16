@@ -22,6 +22,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 
 public class ExportSpecification<T> {
     private final GraphElementType<T> graphElementType;
@@ -42,7 +43,7 @@ public class ExportSpecification<T> {
         this.labModeFeatures = labModeFeatures;
     }
 
-    public void scan(PropertiesMetadataCollection metadataCollection, GraphTraversalSource g) {
+    public void scan(PropertyMetadataForGraph metadataCollection, GraphTraversalSource g) {
         if (tokensOnly) {
             return;
         }
@@ -55,7 +56,7 @@ public class ExportSpecification<T> {
                 labelsFilter);
     }
 
-    public void sample(PropertiesMetadataCollection metadataCollection, GraphTraversalSource g, long sampleSize) {
+    public void sample(PropertyMetadataForGraph metadataCollection, GraphTraversalSource g, long sampleSize) {
         if (tokensOnly) {
             return;
         }
@@ -85,13 +86,16 @@ public class ExportSpecification<T> {
                 concurrencyConfig);
     }
 
-    public ExportPropertyGraphTask<T> createExportTask(PropertiesMetadataCollection metadataCollection,
+    public ExportPropertyGraphTask<T> createExportTask(PropertyMetadataForGraph metadataCollection,
                                                        GraphTraversalSource g,
                                                        PropertyGraphTargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
                                                        int index) {
+        String taskId = UUID.randomUUID().toString();
+
         return new ExportPropertyGraphTask<>(
+                taskId,
                 metadataCollection.propertyMetadataFor(graphElementType),
                 labelsFilter,
                 graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
@@ -106,10 +110,10 @@ public class ExportSpecification<T> {
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
 
         private final GraphElementType<?> graphElementType;
-        private final PropertiesMetadataCollection metadataCollection;
+        private final PropertyMetadataForGraph metadataCollection;
         private final Status status = new Status();
 
-        private Handler(GraphElementType<?> graphElementType, PropertiesMetadataCollection metadataCollection) {
+        private Handler(GraphElementType<?> graphElementType, PropertyMetadataForGraph metadataCollection) {
             this.graphElementType = graphElementType;
             this.metadataCollection = metadataCollection;
         }

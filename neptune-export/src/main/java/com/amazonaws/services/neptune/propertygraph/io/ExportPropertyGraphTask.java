@@ -17,7 +17,7 @@ import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 import com.amazonaws.services.neptune.propertygraph.Range;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
@@ -26,7 +26,8 @@ import java.util.Map;
 
 public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler<T> {
 
-    private final PropertiesMetadata propertiesMetadata;
+    private final String taskId;
+    private final PropertyMetadataForLabels propertyMetadataForLabels;
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
     private final WriterFactory<T> writerFactory;
@@ -36,7 +37,8 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private final int index;
     private final Map<String, LabelWriter<T>> labelWriters = new HashMap<>();
 
-    public ExportPropertyGraphTask(PropertiesMetadata propertiesMetadata,
+    public ExportPropertyGraphTask(String taskId,
+                                   PropertyMetadataForLabels propertyMetadataForLabels,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
@@ -44,7 +46,8 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                                    RangeFactory rangeFactory,
                                    Status status,
                                    int index) {
-        this.propertiesMetadata = propertiesMetadata;
+        this.taskId = taskId;
+        this.propertyMetadataForLabels = propertyMetadataForLabels;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
         this.writerFactory = writerFactory;
@@ -64,7 +67,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
                 } else {
                     CountingHandler handler = new CountingHandler(this);
 
-                    graphClient.queryForValues(handler, range, labelsFilter, propertiesMetadata);
+                    graphClient.queryForValues(handler, range, labelsFilter, propertyMetadataForLabels);
 
                     if (range.sizeExceeds(handler.numberProcessed()) || rangeFactory.isExhausted()) {
                         status.halt();
@@ -103,7 +106,7 @@ public class ExportPropertyGraphTask<T> implements Runnable, GraphElementHandler
     private void createWriterFor(String label) {
         try {
 
-            Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(label);
+            Map<Object, PropertyTypeInfo> propertyMetadata = propertyMetadataForLabels.getMetadataFor(label);
 
             if (propertyMetadata == null) {
                 System.err.printf("%nWARNING: Unable to find property metadata for '%s' %s label%n", label, graphClient.description());

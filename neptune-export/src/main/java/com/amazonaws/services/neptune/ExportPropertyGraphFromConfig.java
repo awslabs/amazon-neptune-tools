@@ -22,7 +22,7 @@ import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -84,12 +84,12 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
             Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
-            JsonResource<PropertiesMetadataCollection> configFileResource = new JsonResource<>(
+            JsonResource<PropertyMetadataForGraph> configFileResource = new JsonResource<>(
                     "Config file",
                     configFile,
-                    PropertiesMetadataCollection.class);
+                    PropertyMetadataForGraph.class);
 
-            PropertiesMetadataCollection metadataCollection = configFileResource.get();
+            PropertyMetadataForGraph metadataCollection = configFileResource.get();
 
             ExportStats stats = new ExportStats();
             stats.prepare(metadataCollection);

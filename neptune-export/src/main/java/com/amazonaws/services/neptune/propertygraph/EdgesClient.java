@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -73,14 +73,14 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
                                Range range,
                                LabelsFilter labelsFilter,
-                               PropertiesMetadata propertiesMetadata) {
+                               PropertyMetadataForLabels propertyMetadataForLabels) {
 
         GraphTraversal<Edge, Edge> t1 = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).E():
                 g.E();
 
         GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1));
-        GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, propertiesMetadata);
+        GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, propertyMetadataForLabels);
 
         GraphTraversal<? extends Element, Map<String, Object>> traversal = t3.
                         project("id", "label", "properties", "from", "to").
@@ -88,7 +88,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                         by(T.label).
                         by(tokensOnly ?
                                 select("x"):
-                                valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
+                                valueMap(labelsFilter.getPropertiesForLabels(propertyMetadataForLabels))
                         ).
                         by(outV().id()).
                         by(inV().id());
@@ -106,13 +106,13 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
 
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
-                                                                      PropertiesMetadata propertiesMetadata) {
+                                                                      PropertyMetadataForLabels propertyMetadataForLabels) {
         if (!labModeFeatures.contains("filterByPropertyKeys")) {
             return traversal;
         }
 
         return traversal.where(
-                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(propertiesMetadata))));
+                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(propertyMetadataForLabels))));
     }
 
     @Override

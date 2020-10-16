@@ -69,14 +69,14 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
 
             ExportStats stats = new ExportStats();
             Directories directories = target.createDirectories(DirectoryStructure.Config);
-            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
+            JsonResource<PropertyMetadataForGraph> configFileResource = directories.configFileResource();
             Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
                 MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
-                PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
+                PropertyMetadataForGraph metadataCollection = metadataCommand.execute();
 
                 configFileResource.save(metadataCollection);
                 configFileResource.writeResourcePathAsMessage(target);

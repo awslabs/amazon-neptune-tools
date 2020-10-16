@@ -15,10 +15,9 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.amazonaws.services.neptune.util.Timer;
-import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 
 import java.io.IOException;
@@ -67,7 +66,7 @@ public class QueryTask implements Runnable {
                     NamedQuery namedQuery = queries.poll();
                     if (!(namedQuery == null)) {
 
-                        PropertiesMetadata propertiesMetadata = new PropertiesMetadata();
+                        PropertyMetadataForLabels propertyMetadataForLabels = new PropertyMetadataForLabels();
 
                         ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
 
@@ -76,7 +75,7 @@ public class QueryTask implements Runnable {
                             results.stream().
                                     map(r -> castToMap(r.getObject())).
                                     forEach(r -> {
-                                        propertiesMetadata.update(namedQuery.name(), r, true);
+                                        propertyMetadataForLabels.update(namedQuery.name(), r, true);
                                     });
 
                             // Re-run query for second pass
@@ -86,7 +85,7 @@ public class QueryTask implements Runnable {
                         try (Timer timer = new Timer(String.format("query [%s]", namedQuery.query()))) {
 
                             ResultsHandler resultsHandler = new ResultsHandler(
-                                    namedQuery.name(), labelWriters, writerFactory, propertiesMetadata);
+                                    namedQuery.name(), labelWriters, writerFactory, propertyMetadataForLabels);
                             StatusHandler handler = new StatusHandler(resultsHandler, status);
 
                             results.stream().
@@ -137,27 +136,27 @@ public class QueryTask implements Runnable {
         private final String name;
         private final Map<String, GraphElementHandler<Map<?, ?>>> labelWriters;
         private final QueriesWriterFactory writerFactory;
-        private final PropertiesMetadata propertiesMetadata;
+        private final PropertyMetadataForLabels propertyMetadataForLabels;
 
         private ResultsHandler(String name,
                                Map<String, GraphElementHandler<Map<?, ?>>> labelWriters,
                                QueriesWriterFactory writerFactory,
-                               PropertiesMetadata propertiesMetadata) {
+                               PropertyMetadataForLabels propertyMetadataForLabels) {
             this.name = name;
             this.labelWriters = labelWriters;
             this.writerFactory = writerFactory;
 
-            this.propertiesMetadata = propertiesMetadata;
+            this.propertyMetadataForLabels = propertyMetadataForLabels;
         }
 
         private void createWriter(Map<?, ?> properties, boolean allowStructuralElements) {
             try {
 
-                if (!propertiesMetadata.hasMetadataFor(name)) {
-                    propertiesMetadata.update(name, properties, allowStructuralElements);
+                if (!propertyMetadataForLabels.hasMetadataFor(name)) {
+                    propertyMetadataForLabels.update(name, properties, allowStructuralElements);
                 }
 
-                Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
+                Map<Object, PropertyTypeInfo> propertyMetadata = propertyMetadataForLabels.getMetadataFor(name);
                 PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
 
                 propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.values());

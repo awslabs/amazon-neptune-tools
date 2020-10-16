@@ -13,5 +13,5 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
 public interface MetadataCommand {
-    PropertiesMetadataCollection execute() throws Exception;
+    PropertyMetadataForGraph execute() throws Exception;
 }

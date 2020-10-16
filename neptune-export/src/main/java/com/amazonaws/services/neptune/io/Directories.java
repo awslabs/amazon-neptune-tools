@@ -14,14 +14,13 @@ package com.amazonaws.services.neptune.io;
 
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.UUID;
 
 public class Directories {
 
@@ -109,10 +108,10 @@ public class Directories {
         }
     }
 
-    public JsonResource<PropertiesMetadataCollection> configFileResource() {
+    public JsonResource<PropertyMetadataForGraph> configFileResource() {
         return new JsonResource<>("Config file",
                 configFilePath().toUri(),
-                PropertiesMetadataCollection.class);
+                PropertyMetadataForGraph.class);
     }
 
     public JsonResource<NamedQueriesCollection> queriesResource() {

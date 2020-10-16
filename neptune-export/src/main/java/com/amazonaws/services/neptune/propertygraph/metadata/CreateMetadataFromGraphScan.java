@@ -28,8 +28,8 @@ public class CreateMetadataFromGraphScan implements MetadataCommand {
     }
 
     @Override
-    public PropertiesMetadataCollection execute() throws Exception {
-        PropertiesMetadataCollection metadataCollection = new PropertiesMetadataCollection();
+    public PropertyMetadataForGraph execute() throws Exception {
+        PropertyMetadataForGraph metadataCollection = new PropertyMetadataForGraph();
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
             try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from graph scan")) {
                 System.err.println("Creating " + exportSpecification.description() + " metadata");

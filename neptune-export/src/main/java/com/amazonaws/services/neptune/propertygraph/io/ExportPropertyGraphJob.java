@@ -17,7 +17,7 @@ import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
@@ -28,20 +28,20 @@ import java.util.concurrent.TimeUnit;
 
 public class ExportPropertyGraphJob {
     private final Collection<ExportSpecification<?>> exportSpecifications;
-    private final PropertiesMetadataCollection propertiesMetadataCollection;
+    private final PropertyMetadataForGraph propertyMetadataForGraph;
     private final GraphTraversalSource g;
     private final RangeConfig rangeConfig;
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
 
     public ExportPropertyGraphJob(Collection<ExportSpecification<?>> exportSpecifications,
-                                  PropertiesMetadataCollection propertiesMetadataCollection,
+                                  PropertyMetadataForGraph propertyMetadataForGraph,
                                   GraphTraversalSource g,
                                   RangeConfig rangeConfig,
                                   ConcurrencyConfig concurrencyConfig,
                                   PropertyGraphTargetConfig targetConfig) {
         this.exportSpecifications = exportSpecifications;
-        this.propertiesMetadataCollection = propertiesMetadataCollection;
+        this.propertyMetadataForGraph = propertyMetadataForGraph;
         this.g = g;
         this.rangeConfig = rangeConfig;
         this.concurrencyConfig = concurrencyConfig;
@@ -62,7 +62,7 @@ public class ExportPropertyGraphJob {
 
                 for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
                     ExportPropertyGraphTask<?> exportTask = exportSpecification.createExportTask(
-                            propertiesMetadataCollection,
+                            propertyMetadataForGraph,
                             g,
                             targetConfig,
                             rangeFactory,
