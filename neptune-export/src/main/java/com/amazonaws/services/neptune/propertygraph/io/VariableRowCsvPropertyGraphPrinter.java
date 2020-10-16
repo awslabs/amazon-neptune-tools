@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
@@ -24,14 +25,14 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
     private final CsvPropertyGraphPrinter csvPropertyGraphPrinter;
     private final OutputWriter writer;
-    private final Map<Object, PropertyTypeInfo> metadata;
+    private final PropertyMetadataForLabel propertyMetadataForLabel;
 
-    public VariableRowCsvPropertyGraphPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata) {
+    public VariableRowCsvPropertyGraphPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel) {
         this.writer = writer;
-        this.metadata = metadata;
+        this.propertyMetadataForLabel = propertyMetadataForLabel;
         this.csvPropertyGraphPrinter = new CsvPropertyGraphPrinter(
                 writer,
-                metadata,
+                propertyMetadataForLabel,
                 false,
                 false,
                 true);
@@ -63,14 +64,14 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
             Object key = property.getKey();
 
-            if (!metadata.containsKey(key)) {
+            if (!propertyMetadataForLabel.containsProperty(key)) {
 
                 Object value = property.getValue();
 
                 PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
                 propertyTypeInfo.accept(value);
 
-                metadata.put(key, propertyTypeInfo);
+                propertyMetadataForLabel.put(key, propertyTypeInfo);
 
                 csvPropertyGraphPrinter.printProperty(propertyTypeInfo.dataType(), value);
             }

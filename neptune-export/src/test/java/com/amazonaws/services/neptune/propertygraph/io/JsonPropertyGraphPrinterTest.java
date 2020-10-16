@@ -13,10 +13,10 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.PrintOutputWriter;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import org.junit.Test;
 
 import java.io.StringWriter;
-import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 
@@ -27,7 +27,7 @@ public class JsonPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("test", stringWriter), new HashMap<>(), true)) {
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("test", stringWriter), new PropertyMetadataForLabel(), true)) {
             propertyGraphPrinter.printStartRow();
             propertyGraphPrinter.printEdge("edge-id", "edge-label", "from-id", "to-id");
             propertyGraphPrinter.printEndRow();

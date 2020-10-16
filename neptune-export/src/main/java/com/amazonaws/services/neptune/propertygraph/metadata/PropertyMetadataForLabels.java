@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -19,18 +19,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PropertyMetadataForLabels {
 
     public static PropertyMetadataForLabels fromJson(ArrayNode arrayNode) {
-        Map<String, Map<Object, PropertyTypeInfo>> metadata = new HashMap<>();
+        Map<String, PropertyMetadataForLabel> metadata = new HashMap<>();
 
         for (JsonNode node : arrayNode) {
             String label = node.path("label").asText();
 
-            metadata.put(label, new HashMap<>());
+            metadata.put(label, new PropertyMetadataForLabel());
             ArrayNode propertiesArray = (ArrayNode) node.path("properties");
 
             for (JsonNode propertyNode : propertiesArray) {
@@ -46,26 +45,26 @@ public class PropertyMetadataForLabels {
         return new PropertyMetadataForLabels(metadata);
     }
 
-    private final Map<String, Map<Object, PropertyTypeInfo>> metadataByLabel;
+    private final Map<String, PropertyMetadataForLabel> metadataByLabel;
 
     public PropertyMetadataForLabels() {
         this(new HashMap<>());
     }
 
-    private PropertyMetadataForLabels(Map<String, Map<Object, PropertyTypeInfo>> metadataByLabel) {
+    private PropertyMetadataForLabels(Map<String, PropertyMetadataForLabel> metadataByLabel) {
         this.metadataByLabel = metadataByLabel;
     }
 
-    public Map<Object, PropertyTypeInfo> getMetadataFor(String label) {
+    public PropertyMetadataForLabel getMetadataFor(String label) {
 
         if (!metadataByLabel.containsKey(label)) {
-            metadataByLabel.put(label, new LinkedHashMap<>());
+            metadataByLabel.put(label, new PropertyMetadataForLabel());
         }
 
         return metadataByLabel.get(label);
     }
 
-    public boolean hasMetadataFor(String label){
+    public boolean hasMetadataFor(String label) {
         return metadataByLabel.containsKey(label);
     }
 
@@ -79,25 +78,25 @@ public class PropertyMetadataForLabels {
     public void update(String label, Map<?, ?> properties, boolean allowStructuralElements) {
 
         if (!metadataByLabel.containsKey(label)) {
-            metadataByLabel.put(label, new LinkedHashMap<>());
+            metadataByLabel.put(label, new PropertyMetadataForLabel());
         }
 
-        Map<Object, PropertyTypeInfo> propertyInfo = metadataByLabel.get(label);
+        PropertyMetadataForLabel propertyMetadataForLabel = metadataByLabel.get(label);
 
         for (Map.Entry<?, ?> entry : properties.entrySet()) {
 
             Object property = entry.getKey();
 
-            if (allowStructuralElements || !(isToken(property))){
-                if (!propertyInfo.containsKey(property)) {
-                    propertyInfo.put(property, new PropertyTypeInfo(property));
+            if (allowStructuralElements || !(isToken(property))) {
+                if (!propertyMetadataForLabel.containsProperty(property)) {
+                    propertyMetadataForLabel.put(property, new PropertyTypeInfo(property));
                 }
-                propertyInfo.get(property).accept(entry.getValue());
+                propertyMetadataForLabel.getPropertyTypeInfo(property).accept(entry.getValue());
             }
         }
     }
 
-    public Iterable<String> labels(){
+    public Iterable<String> labels() {
         return metadataByLabel.keySet();
     }
 
@@ -109,7 +108,7 @@ public class PropertyMetadataForLabels {
 
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
-        for (Map.Entry<String, Map<Object, PropertyTypeInfo>> entry : metadataByLabel.entrySet()) {
+        for (Map.Entry<String, PropertyMetadataForLabel> entry : metadataByLabel.entrySet()) {
 
             String label = entry.getKey();
 
@@ -118,14 +117,14 @@ public class PropertyMetadataForLabels {
 
             ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
 
-            Map<Object, PropertyTypeInfo> properties = entry.getValue();
-            for (Map.Entry<Object, PropertyTypeInfo> property : properties.entrySet()) {
-                PropertyTypeInfo typeInfo = property.getValue();
+            PropertyMetadataForLabel propertyMetadataForLabel = entry.getValue();
+
+            for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
 
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
-                propertyNode.put("property", property.getKey().toString());
-                propertyNode.put("dataType", typeInfo.dataType().name());
-                propertyNode.put("isMultiValue", typeInfo.isMultiValue());
+                propertyNode.put("property", propertyTypeInfo.property().toString());
+                propertyNode.put("dataType", propertyTypeInfo.dataType().name());
+                propertyNode.put("isMultiValue", propertyTypeInfo.isMultiValue());
                 propertiesNode.add(propertyNode);
             }
 

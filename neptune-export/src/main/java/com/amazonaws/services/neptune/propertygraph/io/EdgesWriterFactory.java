@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 
 import java.io.IOException;
 import java.util.Map;
@@ -20,8 +20,8 @@ import java.util.Map;
 public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
 
     @Override
-    public PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException {
-        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, index, metadata);
+    public PropertyGraphPrinter createPrinter(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel, PropertyGraphTargetConfig targetConfig) throws IOException {
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, index, propertyMetadataForLabel);
         propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
 
         return propertyGraphPrinter;

@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -52,8 +53,8 @@ public class SpecifiedLabels implements LabelsFilter {
         Set<String> properties = new HashSet<>();
 
         for (String label : labels) {
-            Map<Object, PropertyTypeInfo> metadata = propertyMetadataForLabels.getMetadataFor(label);
-            for (PropertyTypeInfo propertyTypeInfo : metadata.values()) {
+            PropertyMetadataForLabel metadata = propertyMetadataForLabels.getMetadataFor(label);
+            for (PropertyTypeInfo propertyTypeInfo : metadata.properties()) {
                 properties.add(propertyTypeInfo.nameWithoutDataType());
             }
         }

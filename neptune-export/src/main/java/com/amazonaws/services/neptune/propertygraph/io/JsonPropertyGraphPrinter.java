@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.fasterxml.jackson.core.JsonGenerator;
 
@@ -26,12 +27,12 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
-    private final Map<Object, PropertyTypeInfo> metadata;
+    private final PropertyMetadataForLabel propertyMetadataForLabel;
 
-    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
         this.writer = writer;
         this.generator = generator;
-        this.metadata = metadata;
+        this.propertyMetadataForLabel = propertyMetadataForLabel;
     }
 
     @Override
@@ -51,10 +52,9 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
+        for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
 
-            Object key = entry.getKey();
-            PropertyTypeInfo propertyTypeInfo = entry.getValue();
+            Object key = propertyTypeInfo.property();
 
             DataType dataType = propertyTypeInfo.dataType();
             String formattedKey = propertyTypeInfo.nameWithoutDataType();

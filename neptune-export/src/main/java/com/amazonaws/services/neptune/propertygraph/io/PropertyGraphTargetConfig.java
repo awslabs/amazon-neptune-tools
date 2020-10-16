@@ -14,14 +14,11 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.KinesisConfig;
-import com.amazonaws.services.neptune.io.Target;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.function.Supplier;
 
 public class PropertyGraphTargetConfig {
 
@@ -51,30 +48,30 @@ public class PropertyGraphTargetConfig {
         return output.name();
     }
 
-    public PropertyGraphPrinter createPrinterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public PropertyGraphPrinter createPrinterForQueries(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
 
         OutputWriter outputWriter = output.createOutputWriter(
                 () -> directories.createQueryResultsFilePath(name, index, format),
                 kinesisConfig);
 
-        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, propertyMetadataForLabel, includeTypeDefinitions);
     }
 
-    public PropertyGraphPrinter createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public PropertyGraphPrinter createPrinterForEdges(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
 
         OutputWriter outputWriter = output.createOutputWriter(
                 () -> directories.createEdgesFilePath(name, index, format),
                 kinesisConfig);
 
-        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, propertyMetadataForLabel, includeTypeDefinitions);
     }
 
-    public PropertyGraphPrinter createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public PropertyGraphPrinter createPrinterForNodes(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
 
         OutputWriter outputWriter = output.createOutputWriter(
                 () -> directories.createNodesFilePath(name, index, format),
                 kinesisConfig);
 
-        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, propertyMetadataForLabel, includeTypeDefinitions);
     }
 }

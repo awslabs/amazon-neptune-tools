@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 
 import java.io.IOException;
@@ -24,26 +25,26 @@ import java.util.Map;
 public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
-    private final Map<Object, PropertyTypeInfo> metadata;
+    private final PropertyMetadataForLabel propertyMetadataForLabel;
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
     private final boolean updatePropertyTypeInfo;
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
-                                   Map<Object, PropertyTypeInfo> metadata,
+                                   PropertyMetadataForLabel propertyMetadataForLabel,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions) {
-        this(writer, metadata, includeHeaders, includeTypeDefinitions, false);
+        this(writer, propertyMetadataForLabel, includeHeaders, includeTypeDefinitions, false);
     }
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
-                                   Map<Object, PropertyTypeInfo> metadata,
+                                   PropertyMetadataForLabel propertyMetadataForLabel,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions,
                                    boolean updatePropertyTypeInfo) {
         this.writer = writer;
-        this.metadata = metadata;
+        this.propertyMetadataForLabel = propertyMetadataForLabel;
         this.commaPrinter = new CommaPrinter(writer);
         this.includeHeaders = includeHeaders;
         this.includeTypeDefinitions = includeTypeDefinitions;
@@ -82,10 +83,9 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) {
-        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
+        for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
 
-            Object property = entry.getKey();
-            PropertyTypeInfo propertyTypeInfo = entry.getValue();
+            Object property = propertyTypeInfo.property();
 
             if (properties.containsKey(property)) {
                 Object value = properties.get(property);

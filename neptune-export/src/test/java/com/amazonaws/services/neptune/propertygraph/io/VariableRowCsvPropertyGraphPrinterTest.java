@@ -14,13 +14,12 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.PrintOutputWriter;
 import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -32,7 +31,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        LinkedHashMap<Object, PropertyTypeInfo> metadata = new LinkedHashMap<>();
+        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel();
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -60,7 +59,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     public void updatesDataTypesForColumsnWithEachNewRow() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LinkedHashMap<Object, PropertyTypeInfo> metadata = new LinkedHashMap<>();
+        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel();
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -72,9 +71,9 @@ public class VariableRowCsvPropertyGraphPrinterTest {
                 row(entry("age", 11), entry("height", 5.2))
         );
 
-        assertEquals(2, metadata.size());
-        assertEquals(DataType.String, metadata.get("age").dataType());
-        assertEquals(DataType.Double, metadata.get("height").dataType());
+        assertEquals(2, metadata.propertyCount());
+        assertEquals(DataType.String, metadata.getPropertyTypeInfo("age").dataType());
+        assertEquals(DataType.Double, metadata.getPropertyTypeInfo("height").dataType());
     }
 
     private void print(PropertyGraphPrinter printer, Map<?, ?>... rows) throws IOException {

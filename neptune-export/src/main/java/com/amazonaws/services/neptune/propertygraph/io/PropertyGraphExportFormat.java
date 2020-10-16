@@ -15,14 +15,12 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.cli.RequiresMetadata;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-import com.github.rvesse.airline.annotations.Command;
 
 import java.io.IOException;
-import java.util.Map;
 
 public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata {
     json {
@@ -37,11 +35,11 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
-            return new JsonPropertyGraphPrinter(writer, generator, metadata);
+            return new JsonPropertyGraphPrinter(writer, generator, propertyMetadataForLabel);
         }
 
         @Override
@@ -61,8 +59,8 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, metadata, true, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) {
+            return new CsvPropertyGraphPrinter(writer, propertyMetadataForLabel, true, includeTypeDefinitions);
         }
 
         @Override
@@ -82,8 +80,8 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, metadata, false, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) {
+            return new CsvPropertyGraphPrinter(writer, propertyMetadataForLabel, false, includeTypeDefinitions);
         }
 
         @Override
@@ -103,7 +101,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(""));
             generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
@@ -116,7 +114,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
     };
 
-    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
+    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) throws IOException;
 
     public abstract String description();
 }

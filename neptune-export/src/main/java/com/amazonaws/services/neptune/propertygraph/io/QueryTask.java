@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
+import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
 import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
 import com.amazonaws.services.neptune.util.Timer;
@@ -156,10 +157,10 @@ public class QueryTask implements Runnable {
                     propertyMetadataForLabels.update(name, properties, allowStructuralElements);
                 }
 
-                Map<Object, PropertyTypeInfo> propertyMetadata = propertyMetadataForLabels.getMetadataFor(name);
+                PropertyMetadataForLabel propertyMetadata = propertyMetadataForLabels.getMetadataFor(name);
                 PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
 
-                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.values());
+                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.properties());
 
                 labelWriters.put(name, writerFactory.createLabelWriter(propertyGraphPrinter));
 

@@ -30,6 +30,10 @@ public class PropertyTypeInfo {
         this.isMultiValue = isMultiValue;
     }
 
+    public Object property() {
+        return property;
+    }
+
     public void accept(Object value) {
 
         if (isList(value)) {
