@@ -38,11 +38,6 @@ public class GraphElementTypes {
         public WriterFactory<Map<String, Object>> writerFactory() {
             return new NodesWriterFactory();
         }
-
-        @Override
-        public int propertyCount(int length) {
-            return length - 2;
-        }
     };
 
     public static final GraphElementType<Map<String, Object>> Edges = new GraphElementType<Map<String, Object>>() {
@@ -59,11 +54,6 @@ public class GraphElementTypes {
         @Override
         public WriterFactory<Map<String, Object>> writerFactory() {
             return new EdgesWriterFactory();
-        }
-
-        @Override
-        public int propertyCount(int length) {
-            return length - 4;
         }
     };
 

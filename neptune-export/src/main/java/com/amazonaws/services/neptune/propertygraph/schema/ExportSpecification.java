@@ -104,6 +104,10 @@ public class ExportSpecification<T extends Map<?, ?>> {
         );
     }
 
+    public void updateGraphSchema(GraphSchema graphSchema, MasterLabelSchemas masterLabelSchemas) {
+        masterLabelSchemas.updateGraphSchema(graphSchema, graphElementType);
+    }
+
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {
 
         private final GraphElementType<?> graphElementType;

@@ -69,6 +69,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                 new TaskHandler(
                         graphElementSchemas,
                         fileSpecificLabelSchemas,
+                        graphElementType,
                         targetConfig,
                         writerFactory,
                         labelWriters,
@@ -106,6 +107,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
 
         private final GraphElementSchemas graphElementSchemas;
         private final FileSpecificLabelSchemas fileSpecificLabelSchemas;
+        private final GraphElementType<T> graphElementType;
         private final PropertyGraphTargetConfig targetConfig;
         private final WriterFactory<T> writerFactory;
         private final Map<String, LabelWriter<T>> labelWriters;
@@ -113,9 +115,9 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         private final Status status;
         private final int index;
 
-
         private TaskHandler(GraphElementSchemas graphElementSchemas,
                             FileSpecificLabelSchemas fileSpecificLabelSchemas,
+                            GraphElementType<T> graphElementType,
                             PropertyGraphTargetConfig targetConfig,
                             WriterFactory<T> writerFactory,
                             Map<String, LabelWriter<T>> labelWriters,
@@ -124,6 +126,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                             int index) {
             this.graphElementSchemas = graphElementSchemas;
             this.fileSpecificLabelSchemas = fileSpecificLabelSchemas;
+            this.graphElementType = graphElementType;
             this.targetConfig = targetConfig;
             this.writerFactory = writerFactory;
             this.labelWriters = labelWriters;
@@ -152,7 +155,6 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
 
         private void createWriterFor(String label) {
             try {
-
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
                 PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);

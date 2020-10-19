@@ -23,6 +23,4 @@ public interface GraphElementType<T> {
     String name();
     GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures);
     WriterFactory<T> writerFactory();
-
-    int propertyCount(int length);
 }

@@ -89,6 +89,27 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
             return "CSV (no headers)";
         }
     },
+    csvNoSchema {
+        @Override
+        public boolean requiresSchema() {
+            return false;
+        }
+
+        @Override
+        public String suffix() {
+            return "csv";
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) {
+            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
+        }
+
+        @Override
+        public String description() {
+            return "CSV";
+        }
+    },
     neptuneStreamsJson{
         @Override
         public boolean requiresSchema() {

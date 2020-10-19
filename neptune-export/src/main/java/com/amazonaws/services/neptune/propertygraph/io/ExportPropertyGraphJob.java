@@ -51,7 +51,6 @@ public class ExportPropertyGraphJob {
 
     public void execute() throws Exception {
 
-
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
 
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
@@ -99,6 +98,8 @@ public class ExportPropertyGraphJob {
 
                 MasterLabelSchemas masterLabelSchemas =
                         MasterLabelSchemas.fromCollection(allFileSpecificLabelSchemas);
+
+                exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
 
             }
         }

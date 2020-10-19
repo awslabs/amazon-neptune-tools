@@ -39,7 +39,7 @@ public class PropertyGraphTargetModule implements RequiresSchema, CommandWriter 
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv').")
     @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
+    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson", "csvNoSchema"})
     private PropertyGraphExportFormat format = PropertyGraphExportFormat.csv;
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file').")

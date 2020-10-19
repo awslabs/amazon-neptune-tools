@@ -43,8 +43,12 @@ public class GraphSchema implements Jsonizable {
         this(new HashMap<>());
     }
 
-    public GraphSchema(Map<GraphElementType<?>, GraphElementSchemas> metadataCollection) {
-        this.graphElementsSchemas = metadataCollection;
+    public GraphSchema(Map<GraphElementType<?>, GraphElementSchemas> graphElementsSchemas) {
+        this.graphElementsSchemas = graphElementsSchemas;
+    }
+
+    public void replace(GraphElementType<?> graphElementType, GraphElementSchemas schemas){
+        graphElementsSchemas.put(graphElementType, schemas);
     }
 
     public void update(GraphElementType<?> graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
