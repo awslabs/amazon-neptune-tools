@@ -40,12 +40,12 @@ public class PropertyGraphTargetConfig {
         this.kinesisConfig = kinesisConfig;
     }
 
-    public String formatDescription() {
-        return format.description();
+    public Target output(){
+        return output;
     }
 
-    public String outputDescription() {
-        return output.name();
+    public PropertyGraphExportFormat format(){
+        return format;
     }
 
     public PropertyGraphPrinter createPrinterForQueries(String name, int index, LabelSchema labelSchema) throws IOException {

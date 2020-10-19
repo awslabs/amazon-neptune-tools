@@ -123,7 +123,7 @@ public class GraphElementSchemas {
 
             LabelSchema labelSchema = entry.getValue();
 
-            for (PropertySchema propertySchema : labelSchema.properties()) {
+            for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
                 propertyNode.put("property", propertySchema.property().toString());

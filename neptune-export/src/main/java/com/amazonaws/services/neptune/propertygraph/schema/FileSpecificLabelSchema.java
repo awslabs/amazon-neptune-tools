@@ -12,19 +12,25 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
+
 public class FileSpecificLabelSchema {
 
     private final String outputId;
+    private final PropertyGraphExportFormat format;
     private final LabelSchema labelSchema;
 
-    public FileSpecificLabelSchema(String outputId, LabelSchema labelSchema) {
+    public FileSpecificLabelSchema(String outputId, PropertyGraphExportFormat format, LabelSchema labelSchema) {
         this.outputId = outputId;
+        this.format = format;
         this.labelSchema = labelSchema;
     }
 
     public String outputId() {
         return outputId;
     }
+
+
 
     public LabelSchema labelSchema() {
         return labelSchema;

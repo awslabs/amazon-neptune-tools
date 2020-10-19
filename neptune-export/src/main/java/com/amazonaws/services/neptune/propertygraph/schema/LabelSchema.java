@@ -13,24 +13,22 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class LabelSchema {
 
     private final String label;
     private final Map<Object, PropertySchema> propertySchemas = new LinkedHashMap<>();
-    private final Set<String> outputIds = new HashSet<>();
 
     public LabelSchema(String label) {
         this.label = label;
     }
 
-    public void addOutputId(String outputId) {
-        this.outputIds.add(outputId);
-    }
-
     public void put(Object property, PropertySchema propertySchema) {
-        if (!property.equals(propertySchema.property())){
+        if (!property.equals(propertySchema.property())) {
             throw new IllegalStateException(String.format("Property name mismatch: %s, %s", property, propertySchema.property()));
         }
         propertySchemas.put(property, propertySchema);
@@ -44,7 +42,7 @@ public class LabelSchema {
         return propertySchemas.get(property);
     }
 
-    public Collection<PropertySchema> properties() {
+    public Collection<PropertySchema> propertySchemas() {
         return propertySchemas.values();
     }
 
@@ -56,11 +54,7 @@ public class LabelSchema {
         return label;
     }
 
-    public Collection<String> outputIds() {
-        return outputIds;
-    }
-
-    public LabelSchema createCopy(){
+    public LabelSchema createCopy() {
 
         LabelSchema result = new LabelSchema(label);
 
@@ -73,7 +67,7 @@ public class LabelSchema {
 
         LabelSchema result = createCopy();
 
-        other.properties().forEach(p -> {
+        other.propertySchemas().forEach(p -> {
             Object property = p.property();
             if (result.containsProperty(property)) {
                 PropertySchema oldValue = result.getPropertySchema(property);
@@ -85,5 +79,29 @@ public class LabelSchema {
         });
 
         return result;
+    }
+
+    public boolean isSameAs(LabelSchema other){
+
+        if (!label().equals(other.label())){
+            return false;
+        }
+
+        if (propertySchemas().size() != other.propertySchemas().size()){
+            return false;
+        }
+
+        Iterator<PropertySchema> thisIterator = propertySchemas().iterator();
+        Iterator<PropertySchema> otherIterator = other.propertySchemas().iterator();
+
+        while (thisIterator.hasNext()){
+            PropertySchema thisPropertySchema = thisIterator.next();
+            PropertySchema otherPropertySchema = otherIterator.next();
+            if (!thisPropertySchema.equals(otherPropertySchema)){
+                return false;
+            }
+        }
+
+        return true;
     }
 }

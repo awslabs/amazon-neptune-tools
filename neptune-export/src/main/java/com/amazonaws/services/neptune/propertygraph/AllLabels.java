@@ -47,7 +47,7 @@ public class AllLabels implements LabelsFilter {
 
         for (String label : labels) {
             LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
-            for (PropertySchema propertySchema : labelSchema.properties()) {
+            for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
                 properties.add(propertySchema.nameWithoutDataType());
             }
         }

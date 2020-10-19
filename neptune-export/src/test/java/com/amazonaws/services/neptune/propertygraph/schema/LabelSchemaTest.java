@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 public class LabelSchemaTest {
 
     @Test
-    public void shouldUpdateDataTypesOfExistingProperties(){
+    public void unioningShouldUpdateDataTypesOfExistingProperties(){
         LabelSchema labelSchema1 = new LabelSchema("my-label");
 
         labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
@@ -43,7 +43,7 @@ public class LabelSchemaTest {
     }
 
     @Test
-    public void shouldAddNewPropertiesProperties(){
+    public void unioningShouldAddNewProperties(){
         LabelSchema labelSchema1 = new LabelSchema("my-label");
 
         labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
@@ -57,11 +57,90 @@ public class LabelSchemaTest {
 
         LabelSchema result = labelSchema1.union(labelSchema2);
 
-        assertEquals(5, result.properties().size());
+        assertEquals(5, result.propertySchemas().size());
 
         assertEquals(result.getPropertySchema("p4"),
                 new PropertySchema("p4", DataType.String, false));
         assertEquals(result.getPropertySchema("p5"),
                 new PropertySchema("p5", DataType.Integer, true));
+    }
+
+    @Test
+    public void schemasWithSameLabelAndPropertySchemasAreSame(){
+        LabelSchema labelSchema1 = new LabelSchema("my-label");
+
+        labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema1.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        LabelSchema labelSchema2 = new LabelSchema("my-label");
+
+        labelSchema2.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema2.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        assertTrue(labelSchema1.isSameAs(labelSchema2));
+    }
+
+    @Test
+    public void schemasWithDifferentLabelsAreNotSame(){
+        LabelSchema labelSchema1 = new LabelSchema("this-label");
+
+        labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema1.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        LabelSchema labelSchema2 = new LabelSchema("that-label");
+
+        labelSchema2.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema2.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        assertFalse(labelSchema1.isSameAs(labelSchema2));
+    }
+
+    @Test
+    public void schemasWithDifferentPropertiesAreNotSame(){
+        LabelSchema labelSchema1 = new LabelSchema("my-label");
+
+        labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
+
+        LabelSchema labelSchema2 = new LabelSchema("my-label");
+
+        labelSchema2.put("p1", new PropertySchema("p1", DataType.Double, true));
+
+        assertFalse(labelSchema1.isSameAs(labelSchema2));
+    }
+
+    @Test
+    public void schemasWithDifferentNumberOfPropertiesAreNotSame(){
+        LabelSchema labelSchema1 = new LabelSchema("my-label");
+
+        labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema1.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        LabelSchema labelSchema2 = new LabelSchema("my-label");
+
+        labelSchema2.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema2.put("p2", new PropertySchema("p2", DataType.Integer, false));
+        labelSchema2.put("p3", new PropertySchema("p3", DataType.Integer, false));
+
+        LabelSchema labelSchema3 = new LabelSchema("my-label");
+
+        labelSchema3.put("p1", new PropertySchema("p1", DataType.Integer, false));
+
+        assertFalse(labelSchema1.isSameAs(labelSchema2));
+        assertFalse(labelSchema1.isSameAs(labelSchema3));
+    }
+
+    @Test
+    public void schemasWithPropertySchemasInDifferentOrderAreNotSame(){
+        LabelSchema labelSchema1 = new LabelSchema("my-label");
+
+        labelSchema1.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema1.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        LabelSchema labelSchema2 = new LabelSchema("my-label");
+
+        labelSchema2.put("p2", new PropertySchema("p2", DataType.Integer, false));
+        labelSchema2.put("p1", new PropertySchema("p1", DataType.Integer, false));
+
+        assertFalse(labelSchema1.isSameAs(labelSchema2));
     }
 }

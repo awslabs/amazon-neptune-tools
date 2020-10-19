@@ -14,16 +14,24 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 
 import java.util.Collection;
 
-public class ConsolidatedLabelSchema {
+public class MasterLabelSchema {
 
     private final LabelSchema labelSchema;
-    private final Collection<FileSpecificLabelSchema> fileSpecificLabelSchemaCollection;
+    private final Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas;
 
-    public ConsolidatedLabelSchema(
+    public MasterLabelSchema(
             LabelSchema labelSchema,
-            Collection<FileSpecificLabelSchema> fileSpecificLabelSchemaCollection) {
+            Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas) {
         this.labelSchema = labelSchema;
-        this.fileSpecificLabelSchemaCollection = fileSpecificLabelSchemaCollection;
+        this.fileSpecificLabelSchemas = fileSpecificLabelSchemas;
+    }
+
+    public LabelSchema labelSchema(){
+        return labelSchema;
+    }
+
+    public Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas(){
+        return fileSpecificLabelSchemas;
     }
 
 }

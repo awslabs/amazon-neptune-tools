@@ -17,17 +17,14 @@ import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 import com.amazonaws.services.neptune.propertygraph.Range;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
-import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
-import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.*;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class ExportPropertyGraphTask<T> implements Callable<GraphElementSchemas> {
+public class ExportPropertyGraphTask<T> implements Callable<FileSpecificLabelSchemas> {
 
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
@@ -61,14 +58,22 @@ public class ExportPropertyGraphTask<T> implements Callable<GraphElementSchemas>
     }
 
     @Override
-    public GraphElementSchemas call() {
+    public FileSpecificLabelSchemas call() {
 
         GraphElementSchemas graphElementSchemas =
                 graphSchema.copyOfGraphElementSchemasFor(graphElementType);
 
+        FileSpecificLabelSchemas fileSpecificLabelSchemas = new FileSpecificLabelSchemas();
+
         CountingHandler handler = new CountingHandler(
                 new TaskHandler(
-                        graphElementSchemas, targetConfig, writerFactory, labelWriters, graphClient, status,
+                        graphElementSchemas,
+                        fileSpecificLabelSchemas,
+                        targetConfig,
+                        writerFactory,
+                        labelWriters,
+                        graphClient,
+                        status,
                         index
                 ));
 
@@ -94,34 +99,37 @@ public class ExportPropertyGraphTask<T> implements Callable<GraphElementSchemas>
             }
         }
 
-        return graphElementSchemas;
+        return fileSpecificLabelSchemas;
     }
 
     private class TaskHandler implements GraphElementHandler<T>{
 
         private final GraphElementSchemas graphElementSchemas;
-        private final Status status;
-        private final GraphClient<T> graphClient;
-        private final Map<String, LabelWriter<T>> labelWriters;
-        private final WriterFactory<T> writerFactory;
-        private final int index;
+        private final FileSpecificLabelSchemas fileSpecificLabelSchemas;
         private final PropertyGraphTargetConfig targetConfig;
+        private final WriterFactory<T> writerFactory;
+        private final Map<String, LabelWriter<T>> labelWriters;
+        private final GraphClient<T> graphClient;
+        private final Status status;
+        private final int index;
+
 
         private TaskHandler(GraphElementSchemas graphElementSchemas,
+                            FileSpecificLabelSchemas fileSpecificLabelSchemas,
                             PropertyGraphTargetConfig targetConfig,
                             WriterFactory<T> writerFactory,
                             Map<String, LabelWriter<T>> labelWriters,
                             GraphClient<T> graphClient,
                             Status status,
                             int index) {
-
-            this.status = status;
-            this.graphClient = graphClient;
-            this.labelWriters = labelWriters;
             this.graphElementSchemas = graphElementSchemas;
-            this.writerFactory = writerFactory;
-            this.index = index;
+            this.fileSpecificLabelSchemas = fileSpecificLabelSchemas;
             this.targetConfig = targetConfig;
+            this.writerFactory = writerFactory;
+            this.labelWriters = labelWriters;
+            this.graphClient = graphClient;
+            this.status = status;
+            this.index = index;
         }
 
         @Override
@@ -148,13 +156,13 @@ public class ExportPropertyGraphTask<T> implements Callable<GraphElementSchemas>
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
                 PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
-                propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.properties());
+                propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
 
                 LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
                 labelWriters.put(label, labelWriter);
 
-                labelSchema.addOutputId(labelWriter.outputId());
+                fileSpecificLabelSchemas.add(labelWriter.outputId(), targetConfig.format(), labelSchema);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -54,10 +54,10 @@ public class ExportPropertyGraphJob {
 
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
 
-            Collection<Future<GraphElementSchemas>> futures = new ArrayList<>();
+            Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
 
             try (Timer timer = new Timer("exporting " + exportSpecification.description())) {
-                System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
+                System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
                 RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
                 Status status = new Status();
@@ -85,15 +85,20 @@ public class ExportPropertyGraphJob {
                     throw new RuntimeException(e);
                 }
 
-                // TODO: consolidate into single view of schemas
-                Collection<GraphElementSchemas> allSchemasFromTasks = new ArrayList<>();
+                Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas = new ArrayList<>();
 
-                for (Future<GraphElementSchemas> future : futures) {
-                    allSchemasFromTasks.add(future.get());
+                for (Future<FileSpecificLabelSchemas> future : futures) {
+                    if (future.isCancelled()){
+                       throw new IllegalStateException("Unable to complete job because at least one task was cancelled");
+                    }
+                    if (!future.isDone()){
+                        throw new IllegalStateException("Unable to complete job because at least one task has not completed");
+                    }
+                    allFileSpecificLabelSchemas.add(future.get());
                 }
 
-                ConsolidatedLabelSchemas consolidatedMetadata =
-                        ConsolidatedLabelSchemas.fromCollection(allSchemasFromTasks);
+                MasterLabelSchemas masterLabelSchemas =
+                        MasterLabelSchemas.fromCollection(allFileSpecificLabelSchemas);
 
             }
         }

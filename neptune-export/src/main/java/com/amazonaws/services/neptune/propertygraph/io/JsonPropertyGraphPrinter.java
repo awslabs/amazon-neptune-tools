@@ -52,7 +52,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        for (PropertySchema propertySchema : labelSchema.properties()) {
+        for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
             Object key = propertySchema.property();
 
