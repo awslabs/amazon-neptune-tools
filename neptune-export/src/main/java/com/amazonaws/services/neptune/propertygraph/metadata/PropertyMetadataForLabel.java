@@ -60,16 +60,30 @@ public class PropertyMetadataForLabel {
         return outputIds;
     }
 
-    public void union(PropertyMetadataForLabel propertyMetadataForLabel) {
-        for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
-            Object property = propertyTypeInfo.property();
-            if (propertyMetadata.containsKey(property)) {
-                PropertyTypeInfo oldValue = propertyMetadata.get(property);
-                PropertyTypeInfo newValue = oldValue.createRevision(propertyTypeInfo);
-                propertyMetadata.put(property, newValue);
+    public PropertyMetadataForLabel createCopy(){
+
+        PropertyMetadataForLabel result = new PropertyMetadataForLabel(label);
+
+        propertyMetadata.values().forEach(p -> result.put(p.property(), p.createCopy()));
+
+        return result;
+    }
+
+    public PropertyMetadataForLabel union(PropertyMetadataForLabel other) {
+
+        PropertyMetadataForLabel result = createCopy();
+
+        other.properties().forEach(p -> {
+            Object property = p.property();
+            if (result.containsProperty(property)) {
+                PropertyTypeInfo oldValue = result.getPropertyTypeInfo(property);
+                PropertyTypeInfo newValue = oldValue.createRevision(p);
+                result.put(property, newValue);
             } else {
-                propertyMetadata.put(property, propertyTypeInfo.createCopy());
+                result.put(property, p.createCopy());
             }
-        }
+        });
+
+        return result;
     }
 }

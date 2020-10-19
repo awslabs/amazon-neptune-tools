@@ -39,7 +39,7 @@ public class ConsolidatedPropertyMetadataForLabels {
                 Collection<String> outputIds = metadataForLabel.outputIds();
 
                 if (!outputIds.isEmpty()) {
-                    consolidatedMetadataForLabel.union(metadataForLabel);
+                    consolidatedMetadataForLabel = consolidatedMetadataForLabel.union(metadataForLabel);
                     for (String outputId : outputIds) {
                         metadataForAllFiles.add(new FileSpecificPropertyMetadata(outputId, metadataForLabel));
                     }
