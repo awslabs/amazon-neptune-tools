@@ -50,7 +50,7 @@ public class ExportSpecification<T> {
         GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
 
         graphClient.queryForSchema(
-                new Handler(graphElementType, graphSchema),
+                new CreateSchemaHandler(graphElementType, graphSchema),
                 Range.ALL,
                 labelsFilter);
     }
@@ -65,7 +65,7 @@ public class ExportSpecification<T> {
 
         for (String label : labels) {
             graphClient.queryForSchema(
-                    new Handler(graphElementType, graphSchema),
+                    new CreateSchemaHandler(graphElementType, graphSchema),
                     new Range(0, sampleSize),
                     SpecifiedLabels.forLabels(label));
         }
@@ -104,13 +104,13 @@ public class ExportSpecification<T> {
         );
     }
 
-    private static class Handler implements GraphElementHandler<Map<?, Object>> {
+    private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {
 
         private final GraphElementType<?> graphElementType;
         private final GraphSchema graphSchema;
         private final Status status = new Status();
 
-        private Handler(GraphElementType<?> graphElementType, GraphSchema graphSchema) {
+        private CreateSchemaHandler(GraphElementType<?> graphElementType, GraphSchema graphSchema) {
             this.graphElementType = graphElementType;
             this.graphSchema = graphSchema;
         }

@@ -18,15 +18,26 @@ import java.util.Objects;
 public class PropertySchema {
 
     private final Object property;
+    private final boolean isNullable;
     private DataType dataType = DataType.None;
     private boolean isMultiValue = false;
 
     public PropertySchema(Object property) {
-        this.property = property;
+        this(property, false);
     }
 
     public PropertySchema(String property, DataType dataType, boolean isMultiValue) {
+        this(property, false, dataType, isMultiValue);
+    }
+
+    public PropertySchema(Object property, boolean isNullable) {
         this.property = property;
+        this.isNullable = isNullable;
+    }
+
+    public PropertySchema(String property, boolean isNullable, DataType dataType, boolean isMultiValue) {
+        this.property = property;
+        this.isNullable = isNullable;
         this.dataType = dataType;
         this.isMultiValue = isMultiValue;
     }
@@ -62,6 +73,10 @@ public class PropertySchema {
         return isMultiValue;
     }
 
+    public boolean isNullable() {
+        return isNullable;
+    }
+
     public String nameWithDataType() {
         return isMultiValue ?
                 String.format("%s%s[]", propertyName(property), dataType.typeDescription()) :
@@ -90,8 +105,9 @@ public class PropertySchema {
 
     @Override
     public String toString() {
-        return "PropertyTypeInfo{" +
+        return "PropertySchema{" +
                 "property=" + property +
+                ", isNullable=" + isNullable +
                 ", dataType=" + dataType +
                 ", isMultiValue=" + isMultiValue +
                 '}';
@@ -107,10 +123,11 @@ public class PropertySchema {
             return this;
         }
 
+        boolean newIsNullable = propertySchema.isNullable() || isNullable;
         boolean newIsMultiValue = propertySchema.isMultiValue() || isMultiValue;
         DataType newDataType = DataType.getBroadestType(dataType, propertySchema.dataType());
 
-        return new PropertySchema(property.toString(), newDataType, newIsMultiValue);
+        return new PropertySchema(property.toString(), newIsNullable, newDataType, newIsMultiValue);
     }
 
     @Override
@@ -118,13 +135,14 @@ public class PropertySchema {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PropertySchema that = (PropertySchema) o;
-        return isMultiValue == that.isMultiValue &&
+        return isNullable == that.isNullable &&
+                isMultiValue == that.isMultiValue &&
                 property.equals(that.property) &&
                 dataType == that.dataType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(property, dataType, isMultiValue);
+        return Objects.hash(property, isNullable, dataType, isMultiValue);
     }
 }

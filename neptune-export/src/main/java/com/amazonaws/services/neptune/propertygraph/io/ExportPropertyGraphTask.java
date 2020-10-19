@@ -156,12 +156,9 @@ public class ExportPropertyGraphTask<T> implements Callable<FileSpecificLabelSch
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
                 PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
-                propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
-
                 LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
                 labelWriters.put(label, labelWriter);
-
                 fileSpecificLabelSchemas.add(labelWriter.outputId(), targetConfig.format(), labelSchema);
 
             } catch (IOException e) {

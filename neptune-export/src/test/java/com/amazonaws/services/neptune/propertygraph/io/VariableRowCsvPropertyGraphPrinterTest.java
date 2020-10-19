@@ -23,7 +23,7 @@ import java.util.Map;
 
 import static com.amazonaws.services.neptune.util.MapUtils.entry;
 import static com.amazonaws.services.neptune.util.MapUtils.map;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class VariableRowCsvPropertyGraphPrinterTest {
 
@@ -75,6 +75,28 @@ public class VariableRowCsvPropertyGraphPrinterTest {
         assertEquals(2, labelSchema.propertyCount());
         assertEquals(DataType.String, labelSchema.getPropertySchema("age").dataType());
         assertEquals(DataType.Double, labelSchema.getPropertySchema("height").dataType());
+    }
+
+    @Test
+    public void columnsThatDoNotAppearInFirstRowAreNullable() throws IOException {
+        StringWriter stringWriter = new StringWriter();
+
+        LabelSchema labelSchema = new LabelSchema("my-label");
+
+        VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
+                new PrintOutputWriter("test", stringWriter),
+                labelSchema);
+
+        print(printer,
+                map(entry("p-1", 10), entry("p-2", 20)),
+                map(entry("p-1", 30), entry("p-2", 40), entry("p-3", 50)),
+                map(entry("p-1", 60), entry("p-2", 70), entry("p-4", 80))
+        );
+
+        assertFalse(labelSchema.getPropertySchema("p-1").isNullable());
+        assertFalse(labelSchema.getPropertySchema("p-2").isNullable());
+        assertTrue(labelSchema.getPropertySchema("p-3").isNullable());
+        assertTrue(labelSchema.getPropertySchema("p-4").isNullable());
     }
 
     private void print(PropertyGraphPrinter printer, Map<?, ?>... rows) throws IOException {

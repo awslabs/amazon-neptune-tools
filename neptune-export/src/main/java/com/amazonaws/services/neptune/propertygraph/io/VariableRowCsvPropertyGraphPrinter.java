@@ -26,6 +26,7 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
     private final CsvPropertyGraphPrinter csvPropertyGraphPrinter;
     private final OutputWriter writer;
     private final LabelSchema labelSchema;
+    private boolean isNullable = false;
 
     public VariableRowCsvPropertyGraphPrinter(OutputWriter writer, LabelSchema labelSchema) {
         this.writer = writer;
@@ -68,7 +69,7 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
                 Object value = property.getValue();
 
-                PropertySchema propertySchema = new PropertySchema(key);
+                PropertySchema propertySchema = new PropertySchema(key, isNullable);
                 propertySchema.accept(value);
 
                 labelSchema.put(key, propertySchema);
@@ -76,6 +77,8 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
                 csvPropertyGraphPrinter.printProperty(propertySchema.dataType(), value);
             }
         }
+
+        isNullable = true;
     }
 
     @Override

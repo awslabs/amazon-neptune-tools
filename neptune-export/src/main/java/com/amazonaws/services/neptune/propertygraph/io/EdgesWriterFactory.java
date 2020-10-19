@@ -22,7 +22,9 @@ public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
     @Override
     public PropertyGraphPrinter createPrinter(String name, int index, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
         PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, index, labelSchema);
+
         propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
+        propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
 
         return propertyGraphPrinter;
     }

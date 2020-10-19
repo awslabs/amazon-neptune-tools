@@ -143,4 +143,19 @@ public class LabelSchemaTest {
 
         assertFalse(labelSchema1.isSameAs(labelSchema2));
     }
+
+    @Test
+    public void schemasWithPropertiesWithDifferentNullbaleCharacteristicsAreNotSame(){
+        LabelSchema labelSchema1 = new LabelSchema("my-label");
+
+        labelSchema1.put("p1", new PropertySchema("p1", true, DataType.Integer, false));
+        labelSchema1.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        LabelSchema labelSchema2 = new LabelSchema("my-label");
+
+        labelSchema2.put("p1", new PropertySchema("p1", DataType.Integer, false));
+        labelSchema2.put("p2", new PropertySchema("p2", DataType.Integer, false));
+
+        assertFalse(labelSchema1.isSameAs(labelSchema2));
+    }
 }

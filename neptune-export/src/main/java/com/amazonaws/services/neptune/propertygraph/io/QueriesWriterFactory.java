@@ -21,7 +21,9 @@ public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
 
     @Override
     public PropertyGraphPrinter createPrinter(String name, int index, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
-        return targetConfig.createPrinterForQueries(name, index, labelSchema);
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForQueries(name, index, labelSchema);
+        propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
+        return propertyGraphPrinter;
     }
 
     @Override

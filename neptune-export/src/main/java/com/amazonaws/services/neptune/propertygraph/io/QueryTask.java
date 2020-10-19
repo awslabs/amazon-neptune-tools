@@ -159,8 +159,6 @@ public class QueryTask implements Runnable {
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
                 PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
 
-                propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
-
                 labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
 
             } catch (IOException e) {

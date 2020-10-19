@@ -30,7 +30,9 @@ public class FileSpecificLabelSchema {
         return outputId;
     }
 
-
+    public PropertyGraphExportFormat getFormat() {
+        return format;
+    }
 
     public LabelSchema labelSchema() {
         return labelSchema;

@@ -81,6 +81,15 @@ public class LabelSchema {
         return result;
     }
 
+    public boolean containsNullableProperties(){
+        for (PropertySchema propertySchema : propertySchemas.values()) {
+            if (propertySchema.isNullable()){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isSameAs(LabelSchema other){
 
         if (!label().equals(other.label())){
