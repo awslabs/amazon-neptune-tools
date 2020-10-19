@@ -101,7 +101,7 @@ public class PropertyMetadataForLabels {
         return metadataByLabel.keySet();
     }
 
-    public Iterable<PropertyMetadataForLabel> propertyMetadataCollection() {
+    public Iterable<PropertyMetadataForLabel> allMetadata() {
         return metadataByLabel.values();
     }
 

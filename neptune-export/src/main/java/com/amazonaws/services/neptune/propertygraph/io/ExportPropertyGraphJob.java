@@ -16,10 +16,7 @@ import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
+import com.amazonaws.services.neptune.propertygraph.metadata.*;
 import com.amazonaws.services.neptune.util.Timer;
 import com.google.common.util.concurrent.Futures;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -90,10 +87,14 @@ public class ExportPropertyGraphJob {
                 }
 
                 // TODO: consolidate into single view of metadata
-                Collection<PropertyMetadataForLabels> allMetadata = new ArrayList<>();
+                Collection<PropertyMetadataForLabels> allMetadataFromTasks = new ArrayList<>();
+
                 for (Future<PropertyMetadataForLabels> future : futures) {
-                    allMetadata.add(future.get());
+                    allMetadataFromTasks.add(future.get());
                 }
+
+                ConsolidatedPropertyMetadataForLabels consolidatedMetadata =
+                        ConsolidatedPropertyMetadataForLabels.fromCollection(allMetadataFromTasks);
 
             }
         }

@@ -30,6 +30,9 @@ public class PropertyMetadataForLabel {
     }
 
     public void put(Object property, PropertyTypeInfo propertyTypeInfo) {
+        if (!property.equals(propertyTypeInfo.property())){
+            throw new IllegalStateException(String.format("Property name mismatch: %s, %s", property, propertyTypeInfo.property()));
+        }
         propertyMetadata.put(property, propertyTypeInfo);
     }
 
@@ -53,7 +56,20 @@ public class PropertyMetadataForLabel {
         return label;
     }
 
-    public Iterable<String> outputIds() {
+    public Collection<String> outputIds() {
         return outputIds;
+    }
+
+    public void union(PropertyMetadataForLabel propertyMetadataForLabel) {
+        for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
+            Object property = propertyTypeInfo.property();
+            if (propertyMetadata.containsKey(property)) {
+                PropertyTypeInfo oldValue = propertyMetadata.get(property);
+                PropertyTypeInfo newValue = oldValue.createRevision(propertyTypeInfo);
+                propertyMetadata.put(property, newValue);
+            } else {
+                propertyMetadata.put(property, propertyTypeInfo.createCopy());
+            }
+        }
     }
 }

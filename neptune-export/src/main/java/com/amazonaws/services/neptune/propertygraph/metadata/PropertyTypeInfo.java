@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.metadata;
 
 import java.util.List;
+import java.util.Objects;
 
 public class PropertyTypeInfo {
 
@@ -94,5 +95,36 @@ public class PropertyTypeInfo {
                 ", dataType=" + dataType +
                 ", isMultiValue=" + isMultiValue +
                 '}';
+    }
+
+    public PropertyTypeInfo createCopy() {
+        return new PropertyTypeInfo(property.toString(), dataType, isMultiValue);
+    }
+
+    public PropertyTypeInfo createRevision(PropertyTypeInfo propertyTypeInfo) {
+
+        if (propertyTypeInfo.isMultiValue() == isMultiValue && propertyTypeInfo.dataType() == dataType) {
+            return this;
+        }
+
+        boolean newIsMultiValue = propertyTypeInfo.isMultiValue() || isMultiValue;
+        DataType newDataType = DataType.getBroadestType(dataType, propertyTypeInfo.dataType());
+
+        return new PropertyTypeInfo(property.toString(), newDataType, newIsMultiValue);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PropertyTypeInfo that = (PropertyTypeInfo) o;
+        return isMultiValue == that.isMultiValue &&
+                property.equals(that.property) &&
+                dataType == that.dataType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(property, dataType, isMultiValue);
     }
 }
