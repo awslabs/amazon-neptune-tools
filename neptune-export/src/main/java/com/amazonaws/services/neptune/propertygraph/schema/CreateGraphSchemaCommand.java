@@ -10,8 +10,8 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
-public interface MetadataCommand {
-    PropertyMetadataForGraph execute() throws Exception;
+public interface CreateGraphSchemaCommand {
+    GraphSchema execute() throws Exception;
 }

@@ -13,9 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -25,26 +25,26 @@ import java.util.Map;
 public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
-    private final PropertyMetadataForLabel propertyMetadataForLabel;
+    private final LabelSchema labelSchema;
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
     private final boolean updatePropertyTypeInfo;
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
-                                   PropertyMetadataForLabel propertyMetadataForLabel,
+                                   LabelSchema labelSchema,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions) {
-        this(writer, propertyMetadataForLabel, includeHeaders, includeTypeDefinitions, false);
+        this(writer, labelSchema, includeHeaders, includeTypeDefinitions, false);
     }
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
-                                   PropertyMetadataForLabel propertyMetadataForLabel,
+                                   LabelSchema labelSchema,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions,
                                    boolean updatePropertyTypeInfo) {
         this.writer = writer;
-        this.propertyMetadataForLabel = propertyMetadataForLabel;
+        this.labelSchema = labelSchema;
         this.commaPrinter = new CommaPrinter(writer);
         this.includeHeaders = includeHeaders;
         this.includeTypeDefinitions = includeTypeDefinitions;
@@ -67,9 +67,9 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         if (includeHeaders) {
-            for (PropertyTypeInfo property : remainingColumns) {
+            for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
                 if (includeTypeDefinitions) {
                     writer.print(property.nameWithDataType());
@@ -83,16 +83,16 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) {
-        for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
+        for (PropertySchema propertySchema : labelSchema.properties()) {
 
-            Object property = propertyTypeInfo.property();
+            Object property = propertySchema.property();
 
             if (properties.containsKey(property)) {
                 Object value = properties.get(property);
                 if (updatePropertyTypeInfo) {
-                    propertyTypeInfo.accept(value);
+                    propertySchema.accept(value);
                 }
-                printProperty(propertyTypeInfo.dataType(), value);
+                printProperty(propertySchema.dataType(), value);
             } else {
                 commaPrinter.printComma();
             }

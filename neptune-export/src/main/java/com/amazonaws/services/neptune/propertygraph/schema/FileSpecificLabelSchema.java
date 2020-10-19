@@ -10,23 +10,23 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
-public class FileSpecificPropertyMetadata {
+public class FileSpecificLabelSchema {
 
     private final String outputId;
-    private final PropertyMetadataForLabel propertyMetadataForLabel;
+    private final LabelSchema labelSchema;
 
-    public FileSpecificPropertyMetadata(String outputId, PropertyMetadataForLabel propertyMetadataForLabel) {
+    public FileSpecificLabelSchema(String outputId, LabelSchema labelSchema) {
         this.outputId = outputId;
-        this.propertyMetadataForLabel = propertyMetadataForLabel;
+        this.labelSchema = labelSchema;
     }
 
     public String outputId() {
         return outputId;
     }
 
-    public PropertyMetadataForLabel propertyMetadataForLabel() {
-        return propertyMetadataForLabel;
+    public LabelSchema labelSchema() {
+        return labelSchema;
     }
 }

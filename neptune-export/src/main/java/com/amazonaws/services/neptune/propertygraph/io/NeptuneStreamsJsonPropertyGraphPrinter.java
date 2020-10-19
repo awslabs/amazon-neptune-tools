@@ -13,8 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         // Do nothing
     }
 
@@ -69,15 +69,15 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
                 List<?> values = (List<?>) value;
                 for (Object o : values) {
-                    PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
-                    propertyTypeInfo.accept(o);
-                    printRecord(id, streamOperation, key, o, propertyTypeInfo.dataType());
+                    PropertySchema propertySchema = new PropertySchema(key);
+                    propertySchema.accept(o);
+                    printRecord(id, streamOperation, key, o, propertySchema.dataType());
                 }
 
             } else {
-                PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
-                propertyTypeInfo.accept(value);
-                printRecord(id, streamOperation, key, value, propertyTypeInfo.dataType());
+                PropertySchema propertySchema = new PropertySchema(key);
+                propertySchema.accept(value);
+                printRecord(id, streamOperation, key, value, propertySchema.dataType());
             }
         }
     }

@@ -10,18 +10,8 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.cli;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-public class DataTypeTest {
-
-    @Test
-    public void emptyStringDateValueShouldReturnEmptyString(){
-        String result = DataType.Date.format("");
-        assertEquals("", result);
-    }
-
+public interface RequiresSchema {
+    boolean requiresSchema();
 }

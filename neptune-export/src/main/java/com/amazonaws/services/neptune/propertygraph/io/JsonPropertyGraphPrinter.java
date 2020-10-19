@@ -13,9 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
@@ -27,12 +27,12 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
-    private final PropertyMetadataForLabel propertyMetadataForLabel;
+    private final LabelSchema labelSchema;
 
-    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema) throws IOException {
         this.writer = writer;
         this.generator = generator;
-        this.propertyMetadataForLabel = propertyMetadataForLabel;
+        this.labelSchema = labelSchema;
     }
 
     @Override
@@ -46,18 +46,18 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         // Do nothing
     }
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
+        for (PropertySchema propertySchema : labelSchema.properties()) {
 
-            Object key = propertyTypeInfo.property();
+            Object key = propertySchema.property();
 
-            DataType dataType = propertyTypeInfo.dataType();
-            String formattedKey = propertyTypeInfo.nameWithoutDataType();
+            DataType dataType = propertySchema.dataType();
+            String formattedKey = propertySchema.nameWithoutDataType();
 
             if (properties.containsKey(key)) {
 

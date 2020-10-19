@@ -14,7 +14,7 @@ package com.amazonaws.services.neptune.io;
 
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,10 +108,10 @@ public class Directories {
         }
     }
 
-    public JsonResource<PropertyMetadataForGraph> configFileResource() {
+    public JsonResource<GraphSchema> configFileResource() {
         return new JsonResource<>("Config file",
                 configFilePath().toUri(),
-                PropertyMetadataForGraph.class);
+                GraphSchema.class);
     }
 
     public JsonResource<NamedQueriesCollection> queriesResource() {

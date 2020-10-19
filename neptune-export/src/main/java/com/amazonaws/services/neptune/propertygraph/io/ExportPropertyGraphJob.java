@@ -16,9 +16,8 @@ import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.metadata.*;
+import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.Timer;
-import com.google.common.util.concurrent.Futures;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.ArrayList;
@@ -30,20 +29,20 @@ import java.util.concurrent.TimeUnit;
 
 public class ExportPropertyGraphJob {
     private final Collection<ExportSpecification<?>> exportSpecifications;
-    private final PropertyMetadataForGraph propertyMetadataForGraph;
+    private final GraphSchema graphSchema;
     private final GraphTraversalSource g;
     private final RangeConfig rangeConfig;
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
 
     public ExportPropertyGraphJob(Collection<ExportSpecification<?>> exportSpecifications,
-                                  PropertyMetadataForGraph propertyMetadataForGraph,
+                                  GraphSchema graphSchema,
                                   GraphTraversalSource g,
                                   RangeConfig rangeConfig,
                                   ConcurrencyConfig concurrencyConfig,
                                   PropertyGraphTargetConfig targetConfig) {
         this.exportSpecifications = exportSpecifications;
-        this.propertyMetadataForGraph = propertyMetadataForGraph;
+        this.graphSchema = graphSchema;
         this.g = g;
         this.rangeConfig = rangeConfig;
         this.concurrencyConfig = concurrencyConfig;
@@ -55,7 +54,7 @@ public class ExportPropertyGraphJob {
 
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
 
-            Collection<Future<PropertyMetadataForLabels>> futures = new ArrayList<>();
+            Collection<Future<GraphElementSchemas>> futures = new ArrayList<>();
 
             try (Timer timer = new Timer("exporting " + exportSpecification.description())) {
                 System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.formatDescription() + " to " + targetConfig.outputDescription());
@@ -67,7 +66,7 @@ public class ExportPropertyGraphJob {
 
                 for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
                     ExportPropertyGraphTask<?> exportTask = exportSpecification.createExportTask(
-                            propertyMetadataForGraph,
+                            graphSchema,
                             g,
                             targetConfig,
                             rangeFactory,
@@ -86,15 +85,15 @@ public class ExportPropertyGraphJob {
                     throw new RuntimeException(e);
                 }
 
-                // TODO: consolidate into single view of metadata
-                Collection<PropertyMetadataForLabels> allMetadataFromTasks = new ArrayList<>();
+                // TODO: consolidate into single view of schemas
+                Collection<GraphElementSchemas> allSchemasFromTasks = new ArrayList<>();
 
-                for (Future<PropertyMetadataForLabels> future : futures) {
-                    allMetadataFromTasks.add(future.get());
+                for (Future<GraphElementSchemas> future : futures) {
+                    allSchemasFromTasks.add(future.get());
                 }
 
-                ConsolidatedPropertyMetadataForLabels consolidatedMetadata =
-                        ConsolidatedPropertyMetadataForLabels.fromCollection(allMetadataFromTasks);
+                ConsolidatedLabelSchemas consolidatedMetadata =
+                        ConsolidatedLabelSchemas.fromCollection(allSchemasFromTasks);
 
             }
         }

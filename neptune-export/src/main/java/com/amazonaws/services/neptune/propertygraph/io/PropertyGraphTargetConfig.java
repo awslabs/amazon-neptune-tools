@@ -16,7 +16,7 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.io.Target;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
 
@@ -48,30 +48,30 @@ public class PropertyGraphTargetConfig {
         return output.name();
     }
 
-    public PropertyGraphPrinter createPrinterForQueries(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
+    public PropertyGraphPrinter createPrinterForQueries(String name, int index, LabelSchema labelSchema) throws IOException {
 
         OutputWriter outputWriter = output.createOutputWriter(
                 () -> directories.createQueryResultsFilePath(name, index, format),
                 kinesisConfig);
 
-        return format.createPrinter(outputWriter, propertyMetadataForLabel, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
     }
 
-    public PropertyGraphPrinter createPrinterForEdges(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
+    public PropertyGraphPrinter createPrinterForEdges(String name, int index, LabelSchema labelSchema) throws IOException {
 
         OutputWriter outputWriter = output.createOutputWriter(
                 () -> directories.createEdgesFilePath(name, index, format),
                 kinesisConfig);
 
-        return format.createPrinter(outputWriter, propertyMetadataForLabel, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
     }
 
-    public PropertyGraphPrinter createPrinterForNodes(String name, int index, PropertyMetadataForLabel propertyMetadataForLabel) throws IOException {
+    public PropertyGraphPrinter createPrinterForNodes(String name, int index, LabelSchema labelSchema) throws IOException {
 
         OutputWriter outputWriter = output.createOutputWriter(
                 () -> directories.createNodesFilePath(name, index, format),
                 kinesisConfig);
 
-        return format.createPrinter(outputWriter, propertyMetadataForLabel, includeTypeDefinitions);
+        return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
     }
 }

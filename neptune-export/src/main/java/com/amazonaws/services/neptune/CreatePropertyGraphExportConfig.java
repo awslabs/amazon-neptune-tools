@@ -17,7 +17,7 @@ import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.neptune.propertygraph.metadata.*;
+import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
@@ -33,11 +33,11 @@ import java.util.Collection;
         "bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --sample --sample-size 100",
         "bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS"
 }, descriptions = {
-        "Create metadata config file for all node and edge labels and save it to /home/ec2-user/output",
-        "Create metadata config file for all node and edge labels, sampling 100 nodes and edges for each label",
-        "Create config file containing metadata for User nodes and FOLLOWS edges"
+        "Create schema config file for all node and edge labels and save it to /home/ec2-user/output",
+        "Create schema config file for all node and edge labels, sampling 100 nodes and edges for each label",
+        "Create config file containing schema for User nodes and FOLLOWS edges"
 })
-@Command(name = "create-pg-config", description = "Create a property graph export metadata config file.")
+@Command(name = "create-pg-config", description = "Create a property graph schema config file.")
 public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
@@ -59,7 +59,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(() -> true);
+    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule(() -> true);
 
     @Override
     public void run() {
@@ -69,16 +69,16 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
 
             ExportStats stats = new ExportStats();
             Directories directories = target.createDirectories(DirectoryStructure.Config);
-            JsonResource<PropertyMetadataForGraph> configFileResource = directories.configFileResource();
+            JsonResource<GraphSchema> configFileResource = directories.configFileResource();
             Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
-                MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
-                PropertyMetadataForGraph propertyMetadataForGraph = metadataCommand.execute();
+                CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
+                GraphSchema graphSchema = createGraphSchemaCommand.execute();
 
-                configFileResource.save(propertyMetadataForGraph);
+                configFileResource.save(graphSchema);
                 configFileResource.writeResourcePathAsMessage(target);
             }
 

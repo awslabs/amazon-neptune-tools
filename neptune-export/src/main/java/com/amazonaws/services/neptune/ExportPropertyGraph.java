@@ -21,8 +21,8 @@ import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -71,7 +71,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(target);
+    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule(target);
 
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
@@ -87,7 +87,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
              ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
             Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
-            JsonResource<PropertyMetadataForGraph> configFileResource = directories.configFileResource();
+            JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
@@ -97,14 +97,14 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
-                PropertyMetadataForGraph propertyMetadataForGraph =
-                        sampling.createMetadataCommand(exportSpecifications, g).execute();
+                GraphSchema graphSchema =
+                        sampling.createSchemaCommand(exportSpecifications, g).execute();
 
-                configFileResource.save(propertyMetadataForGraph);
+                configFileResource.save(graphSchema);
 
                 ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                         exportSpecifications,
-                        propertyMetadataForGraph,
+                        graphSchema,
                         g,
                         range.config(),
                         clusterStrategy.concurrencyConfig(),

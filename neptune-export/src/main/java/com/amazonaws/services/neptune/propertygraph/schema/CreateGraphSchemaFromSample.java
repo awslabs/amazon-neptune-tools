@@ -10,32 +10,38 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
 
-public class CreateMetadataFromGraphScan implements MetadataCommand {
+public class CreateGraphSchemaFromSample implements CreateGraphSchemaCommand {
+
     private final Collection<ExportSpecification<?>> exportSpecifications;
     private final GraphTraversalSource g;
+    private final long sampleSize;
 
-    public CreateMetadataFromGraphScan(Collection<ExportSpecification<?>> exportSpecifications,
-                                       GraphTraversalSource g) {
+    public CreateGraphSchemaFromSample(Collection<ExportSpecification<?>> exportSpecifications,
+                                       GraphTraversalSource g,
+                                       long sampleSize) {
         this.exportSpecifications = exportSpecifications;
+        this.sampleSize = sampleSize;
         this.g = g;
     }
 
     @Override
-    public PropertyMetadataForGraph execute() throws Exception {
-        PropertyMetadataForGraph propertyMetadataForGraph = new PropertyMetadataForGraph();
+    public GraphSchema execute() throws Exception {
+
+        GraphSchema graphSchema = new GraphSchema();
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
-            try (Timer timer = new Timer("creating " + exportSpecification.description() + " metadata from graph scan")) {
-                System.err.println("Creating " + exportSpecification.description() + " metadata");
-                exportSpecification.scan(propertyMetadataForGraph, g);
+            try (Timer timer = new Timer("creating " + exportSpecification.description() + " schema from sampling graph")) {
+                System.err.println("Creating " + exportSpecification.description() + " schema");
+                exportSpecification.sample(graphSchema, g, sampleSize);
             }
         }
-        return propertyMetadataForGraph;
+        return graphSchema;
     }
+
 }

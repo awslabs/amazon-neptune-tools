@@ -11,17 +11,17 @@ permissions and limitations under the License.
 */
 
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
 import java.util.*;
 
-public class PropertyMetadataForLabel {
+public class LabelSchema {
 
     private final String label;
-    private final Map<Object, PropertyTypeInfo> propertyMetadata = new LinkedHashMap<>();
+    private final Map<Object, PropertySchema> propertySchemas = new LinkedHashMap<>();
     private final Set<String> outputIds = new HashSet<>();
 
-    public PropertyMetadataForLabel(String label) {
+    public LabelSchema(String label) {
         this.label = label;
     }
 
@@ -29,27 +29,27 @@ public class PropertyMetadataForLabel {
         this.outputIds.add(outputId);
     }
 
-    public void put(Object property, PropertyTypeInfo propertyTypeInfo) {
-        if (!property.equals(propertyTypeInfo.property())){
-            throw new IllegalStateException(String.format("Property name mismatch: %s, %s", property, propertyTypeInfo.property()));
+    public void put(Object property, PropertySchema propertySchema) {
+        if (!property.equals(propertySchema.property())){
+            throw new IllegalStateException(String.format("Property name mismatch: %s, %s", property, propertySchema.property()));
         }
-        propertyMetadata.put(property, propertyTypeInfo);
+        propertySchemas.put(property, propertySchema);
     }
 
     public boolean containsProperty(Object property) {
-        return propertyMetadata.containsKey(property);
+        return propertySchemas.containsKey(property);
     }
 
-    public PropertyTypeInfo getPropertyTypeInfo(Object property) {
-        return propertyMetadata.get(property);
+    public PropertySchema getPropertySchema(Object property) {
+        return propertySchemas.get(property);
     }
 
-    public Collection<PropertyTypeInfo> properties() {
-        return propertyMetadata.values();
+    public Collection<PropertySchema> properties() {
+        return propertySchemas.values();
     }
 
     public int propertyCount() {
-        return propertyMetadata.size();
+        return propertySchemas.size();
     }
 
     public String label() {
@@ -60,24 +60,24 @@ public class PropertyMetadataForLabel {
         return outputIds;
     }
 
-    public PropertyMetadataForLabel createCopy(){
+    public LabelSchema createCopy(){
 
-        PropertyMetadataForLabel result = new PropertyMetadataForLabel(label);
+        LabelSchema result = new LabelSchema(label);
 
-        propertyMetadata.values().forEach(p -> result.put(p.property(), p.createCopy()));
+        propertySchemas.values().forEach(p -> result.put(p.property(), p.createCopy()));
 
         return result;
     }
 
-    public PropertyMetadataForLabel union(PropertyMetadataForLabel other) {
+    public LabelSchema union(LabelSchema other) {
 
-        PropertyMetadataForLabel result = createCopy();
+        LabelSchema result = createCopy();
 
         other.properties().forEach(p -> {
             Object property = p.property();
             if (result.containsProperty(property)) {
-                PropertyTypeInfo oldValue = result.getPropertyTypeInfo(property);
-                PropertyTypeInfo newValue = oldValue.createRevision(p);
+                PropertySchema oldValue = result.getPropertySchema(property);
+                PropertySchema newValue = oldValue.createRevision(p);
                 result.put(property, newValue);
             } else {
                 result.put(property, p.createCopy());

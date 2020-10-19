@@ -13,8 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.PrintOutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -32,11 +32,11 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel("my-label");
+        LabelSchema labelSchema = new LabelSchema("my-label");
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                metadata);
+                labelSchema);
 
         print(printer,
                 map(entry("fname", "fname1")),
@@ -57,14 +57,14 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     }
 
     @Test
-    public void updatesDataTypesForColumsnWithEachNewRow() throws IOException {
+    public void updatesDataTypesForColumnsWithEachNewRow() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        PropertyMetadataForLabel metadata = new PropertyMetadataForLabel("my-label");
+        LabelSchema labelSchema = new LabelSchema("my-label");
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                metadata);
+                labelSchema);
 
         print(printer,
                 map(entry("age", 10)),
@@ -72,9 +72,9 @@ public class VariableRowCsvPropertyGraphPrinterTest {
                 map(entry("age", 11), entry("height", 5.2))
         );
 
-        assertEquals(2, metadata.propertyCount());
-        assertEquals(DataType.String, metadata.getPropertyTypeInfo("age").dataType());
-        assertEquals(DataType.Double, metadata.getPropertyTypeInfo("height").dataType());
+        assertEquals(2, labelSchema.propertyCount());
+        assertEquals(DataType.String, labelSchema.getPropertySchema("age").dataType());
+        assertEquals(DataType.Double, labelSchema.getPropertySchema("height").dataType());
     }
 
     private void print(PropertyGraphPrinter printer, Map<?, ?>... rows) throws IOException {

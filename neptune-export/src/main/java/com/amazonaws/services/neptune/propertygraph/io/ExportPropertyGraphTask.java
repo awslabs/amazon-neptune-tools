@@ -17,17 +17,17 @@ import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 import com.amazonaws.services.neptune.propertygraph.Range;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
-import com.amazonaws.services.neptune.propertygraph.metadata.GraphElementType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForLabels> {
+public class ExportPropertyGraphTask<T> implements Callable<GraphElementSchemas> {
 
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
@@ -37,10 +37,10 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
     private final Status status;
     private final int index;
     private final Map<String, LabelWriter<T>> labelWriters = new HashMap<>();
-    private final PropertyMetadataForGraph propertyMetadataForGraph;
+    private final GraphSchema graphSchema;
     private final GraphElementType<T> graphElementType;
 
-    public ExportPropertyGraphTask(PropertyMetadataForGraph propertyMetadataForGraph,
+    public ExportPropertyGraphTask(GraphSchema graphSchema,
                                    GraphElementType<T> graphElementType,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
@@ -49,7 +49,7 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
                                    RangeFactory rangeFactory,
                                    Status status,
                                    int index) {
-        this.propertyMetadataForGraph = propertyMetadataForGraph;
+        this.graphSchema = graphSchema;
         this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
@@ -61,14 +61,14 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
     }
 
     @Override
-    public PropertyMetadataForLabels call() {
+    public GraphElementSchemas call() {
 
-        PropertyMetadataForLabels propertyMetadataForLabels =
-                propertyMetadataForGraph.copyOfPropertyMetadataFor(graphElementType);
+        GraphElementSchemas graphElementSchemas =
+                graphSchema.copyOfGraphElementSchemasFor(graphElementType);
 
         CountingHandler handler = new CountingHandler(
                 new TaskHandler(
-                        propertyMetadataForLabels, targetConfig, writerFactory, labelWriters, graphClient, status,
+                        graphElementSchemas, targetConfig, writerFactory, labelWriters, graphClient, status,
                         index
                 ));
 
@@ -78,7 +78,7 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
                 if (range.isEmpty()) {
                     status.halt();
                 } else {
-                    graphClient.queryForValues(handler, range, labelsFilter, propertyMetadataForLabels);
+                    graphClient.queryForValues(handler, range, labelsFilter, graphElementSchemas);
                     if (range.sizeExceeds(handler.numberProcessed()) || rangeFactory.isExhausted()) {
                         status.halt();
                     }
@@ -94,12 +94,12 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
             }
         }
 
-        return propertyMetadataForLabels;
+        return graphElementSchemas;
     }
 
     private class TaskHandler implements GraphElementHandler<T>{
 
-        private final PropertyMetadataForLabels propertyMetadataForLabels;
+        private final GraphElementSchemas graphElementSchemas;
         private final Status status;
         private final GraphClient<T> graphClient;
         private final Map<String, LabelWriter<T>> labelWriters;
@@ -107,7 +107,7 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
         private final int index;
         private final PropertyGraphTargetConfig targetConfig;
 
-        private TaskHandler(PropertyMetadataForLabels propertyMetadataForLabels,
+        private TaskHandler(GraphElementSchemas graphElementSchemas,
                             PropertyGraphTargetConfig targetConfig,
                             WriterFactory<T> writerFactory,
                             Map<String, LabelWriter<T>> labelWriters,
@@ -118,7 +118,7 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
             this.status = status;
             this.graphClient = graphClient;
             this.labelWriters = labelWriters;
-            this.propertyMetadataForLabels = propertyMetadataForLabels;
+            this.graphElementSchemas = graphElementSchemas;
             this.writerFactory = writerFactory;
             this.index = index;
             this.targetConfig = targetConfig;
@@ -145,16 +145,16 @@ public class ExportPropertyGraphTask<T> implements Callable<PropertyMetadataForL
         private void createWriterFor(String label) {
             try {
 
-                PropertyMetadataForLabel propertyMetadata = propertyMetadataForLabels.getMetadataFor(label);
+                LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, propertyMetadata, targetConfig);
-                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.properties());
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
+                propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.properties());
 
                 LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
                 labelWriters.put(label, labelWriter);
 
-                propertyMetadata.addOutputId(labelWriter.outputId());
+                labelSchema.addOutputId(labelWriter.outputId());
 
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -12,20 +12,20 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.cli.RequiresMetadata;
+import com.amazonaws.services.neptune.cli.RequiresSchema;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 
 import java.io.IOException;
 
-public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata {
+public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
     json {
         @Override
-        public boolean requiresMetadata() {
+        public boolean requiresSchema() {
             return true;
         }
 
@@ -35,11 +35,11 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
             generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
-            return new JsonPropertyGraphPrinter(writer, generator, propertyMetadataForLabel);
+            return new JsonPropertyGraphPrinter(writer, generator, labelSchema);
         }
 
         @Override
@@ -49,7 +49,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
     },
     csv {
         @Override
-        public boolean requiresMetadata() {
+        public boolean requiresSchema() {
             return true;
         }
 
@@ -59,8 +59,8 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, propertyMetadataForLabel, true, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) {
+            return new CsvPropertyGraphPrinter(writer, labelSchema, true, includeTypeDefinitions);
         }
 
         @Override
@@ -70,7 +70,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
     },
     csvNoHeaders {
         @Override
-        public boolean requiresMetadata() {
+        public boolean requiresSchema() {
             return true;
         }
 
@@ -80,8 +80,8 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, propertyMetadataForLabel, false, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) {
+            return new CsvPropertyGraphPrinter(writer, labelSchema, false, includeTypeDefinitions);
         }
 
         @Override
@@ -91,7 +91,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
     },
     neptuneStreamsJson{
         @Override
-        public boolean requiresMetadata() {
+        public boolean requiresSchema() {
             return false;
         }
 
@@ -101,7 +101,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
             JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
             generator.setPrettyPrinter(new MinimalPrettyPrinter(""));
             generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
@@ -114,7 +114,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata
         }
     };
 
-    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel, boolean includeTypeDefinitions) throws IOException;
+    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException;
 
     public abstract String description();
 }

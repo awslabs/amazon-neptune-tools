@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.propertygraph.EdgesClient;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -25,7 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-public class MetadataTypes {
+public class GraphElementTypes {
     public static final GraphElementType<Map<String, Object>> Nodes = new GraphElementType<Map<String, Object>>() {
         @Override
         public String name() {

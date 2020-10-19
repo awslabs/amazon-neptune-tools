@@ -12,33 +12,33 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.*;
+import com.amazonaws.services.neptune.propertygraph.schema.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
 
-public class MetadataSamplingSpecification {
+public class SchemaSamplingSpecification {
 
     private final boolean sample;
     private final long sampleSize;
-    private final boolean requiresMetadata;
+    private final boolean requiresSchema;
 
-    public MetadataSamplingSpecification(boolean sample, long sampleSize, boolean requiresMetadata) {
+    public SchemaSamplingSpecification(boolean sample, long sampleSize, boolean requiresSchema) {
         this.sample = sample;
         this.sampleSize = sampleSize;
-        this.requiresMetadata = requiresMetadata;
+        this.requiresSchema = requiresSchema;
     }
 
-    public MetadataCommand createMetadataCommand(Collection<ExportSpecification<?>> exportSpecifications,
-                                                 GraphTraversalSource g) {
-        if (!requiresMetadata){
-            return PropertyMetadataForGraph::new;
+    public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification<?>> exportSpecifications,
+                                                        GraphTraversalSource g) {
+        if (!requiresSchema){
+            return GraphSchema::new;
         }
 
         if (sample) {
-            return new CreateMetadataFromGraphSample(exportSpecifications, g, sampleSize);
+            return new CreateGraphSchemaFromSample(exportSpecifications, g, sampleSize);
         } else {
-            return new CreateMetadataFromGraphScan(exportSpecifications, g);
+            return new CreateGraphSchemaFromScan(exportSpecifications, g);
         }
     }
 }

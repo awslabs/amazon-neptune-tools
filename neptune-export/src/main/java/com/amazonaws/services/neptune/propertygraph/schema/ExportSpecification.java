@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Status;
@@ -42,20 +42,20 @@ public class ExportSpecification<T> {
         this.labModeFeatures = labModeFeatures;
     }
 
-    public void scan(PropertyMetadataForGraph propertyMetadataForGraph, GraphTraversalSource g) {
+    public void scan(GraphSchema graphSchema, GraphTraversalSource g) {
         if (tokensOnly) {
             return;
         }
 
         GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
 
-        graphClient.queryForMetadata(
-                new Handler(graphElementType, propertyMetadataForGraph),
+        graphClient.queryForSchema(
+                new Handler(graphElementType, graphSchema),
                 Range.ALL,
                 labelsFilter);
     }
 
-    public void sample(PropertyMetadataForGraph propertyMetadataForGraph, GraphTraversalSource g, long sampleSize) {
+    public void sample(GraphSchema graphSchema, GraphTraversalSource g, long sampleSize) {
         if (tokensOnly) {
             return;
         }
@@ -64,8 +64,8 @@ public class ExportSpecification<T> {
         Collection<String> labels = labelsFilter.resolveLabels(graphClient);
 
         for (String label : labels) {
-            graphClient.queryForMetadata(
-                    new Handler(graphElementType, propertyMetadataForGraph),
+            graphClient.queryForSchema(
+                    new Handler(graphElementType, graphSchema),
                     new Range(0, sampleSize),
                     SpecifiedLabels.forLabels(label));
         }
@@ -85,14 +85,14 @@ public class ExportSpecification<T> {
                 concurrencyConfig);
     }
 
-    public ExportPropertyGraphTask<T> createExportTask(PropertyMetadataForGraph propertyMetadataForGraph,
+    public ExportPropertyGraphTask<T> createExportTask(GraphSchema graphSchema,
                                                        GraphTraversalSource g,
                                                        PropertyGraphTargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
                                                        int index) {
         return new ExportPropertyGraphTask<>(
-                propertyMetadataForGraph,
+                graphSchema,
                 graphElementType,
                 labelsFilter,
                 graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
@@ -107,18 +107,18 @@ public class ExportSpecification<T> {
     private static class Handler implements GraphElementHandler<Map<?, Object>> {
 
         private final GraphElementType<?> graphElementType;
-        private final PropertyMetadataForGraph propertyMetadataForGraph;
+        private final GraphSchema graphSchema;
         private final Status status = new Status();
 
-        private Handler(GraphElementType<?> graphElementType, PropertyMetadataForGraph propertyMetadataForGraph) {
+        private Handler(GraphElementType<?> graphElementType, GraphSchema graphSchema) {
             this.graphElementType = graphElementType;
-            this.propertyMetadataForGraph = propertyMetadataForGraph;
+            this.graphSchema = graphSchema;
         }
 
         @Override
         public void handle(Map<?, Object> properties, boolean allowTokens) {
             status.update();
-            propertyMetadataForGraph.update(graphElementType, properties, allowTokens);
+            graphSchema.update(graphElementType, properties, allowTokens);
         }
 
         @Override

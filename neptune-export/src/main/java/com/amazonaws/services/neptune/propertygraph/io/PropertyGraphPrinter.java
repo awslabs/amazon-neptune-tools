@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -25,7 +25,7 @@ public interface PropertyGraphPrinter extends AutoCloseable {
 
     void printHeaderMandatoryColumns(String... columns);
 
-    void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns);
+    void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns);
 
     void printProperties(Map<?, ?> properties) throws IOException;
 

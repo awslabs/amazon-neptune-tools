@@ -13,8 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -25,14 +25,14 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
     private final CsvPropertyGraphPrinter csvPropertyGraphPrinter;
     private final OutputWriter writer;
-    private final PropertyMetadataForLabel propertyMetadataForLabel;
+    private final LabelSchema labelSchema;
 
-    public VariableRowCsvPropertyGraphPrinter(OutputWriter writer, PropertyMetadataForLabel propertyMetadataForLabel) {
+    public VariableRowCsvPropertyGraphPrinter(OutputWriter writer, LabelSchema labelSchema) {
         this.writer = writer;
-        this.propertyMetadataForLabel = propertyMetadataForLabel;
+        this.labelSchema = labelSchema;
         this.csvPropertyGraphPrinter = new CsvPropertyGraphPrinter(
                 writer,
-                propertyMetadataForLabel,
+                labelSchema,
                 false,
                 false,
                 true);
@@ -49,7 +49,7 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         // Do nothing
     }
 
@@ -64,16 +64,16 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
             Object key = property.getKey();
 
-            if (!propertyMetadataForLabel.containsProperty(key)) {
+            if (!labelSchema.containsProperty(key)) {
 
                 Object value = property.getValue();
 
-                PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
-                propertyTypeInfo.accept(value);
+                PropertySchema propertySchema = new PropertySchema(key);
+                propertySchema.accept(value);
 
-                propertyMetadataForLabel.put(key, propertyTypeInfo);
+                labelSchema.put(key, propertySchema);
 
-                csvPropertyGraphPrinter.printProperty(propertyTypeInfo.dataType(), value);
+                csvPropertyGraphPrinter.printProperty(propertySchema.dataType(), value);
             }
         }
     }

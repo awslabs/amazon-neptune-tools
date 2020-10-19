@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune.cli;
 import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
@@ -26,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-public class PropertyGraphTargetModule implements RequiresMetadata, CommandWriter {
+public class PropertyGraphTargetModule implements RequiresSchema, CommandWriter {
 
     @Option(name = {"-d", "--dir"}, description = "Root directory for output.")
     @Required
@@ -56,7 +55,7 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
     @Once
     private String region;
 
-    @Option(name = {"--export-id"}, description = "Export ID", hidden = true)
+    @Option(name = {"--export-id"}, description = "Export id", hidden = true)
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 
@@ -84,7 +83,7 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
     }
 
     @Override
-    public boolean requiresMetadata() {
-        return format.requiresMetadata();
+    public boolean requiresSchema() {
+        return format.requiresSchema();
     }
 }

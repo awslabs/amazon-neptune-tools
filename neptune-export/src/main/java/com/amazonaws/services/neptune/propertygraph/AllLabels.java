@@ -12,15 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class AllLabels implements LabelsFilter {
@@ -40,16 +39,16 @@ public class AllLabels implements LabelsFilter {
     }
 
     @Override
-    public String[] getPropertiesForLabels(PropertyMetadataForLabels propertyMetadataForLabels) {
+    public String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas) {
 
         Set<String> properties = new HashSet<>();
 
-        Iterable<String> labels = propertyMetadataForLabels.labels();
+        Iterable<String> labels = graphElementSchemas.labels();
 
         for (String label : labels) {
-            PropertyMetadataForLabel metadata = propertyMetadataForLabels.getMetadataFor(label);
-            for (PropertyTypeInfo propertyTypeInfo : metadata.properties()) {
-                properties.add(propertyTypeInfo.nameWithoutDataType());
+            LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
+            for (PropertySchema propertySchema : labelSchema.properties()) {
+                properties.add(propertySchema.nameWithoutDataType());
             }
         }
 

@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
@@ -23,5 +23,5 @@ public interface LabelsFilter {
 
     Collection<String> resolveLabels(GraphClient<?> graphClient);
 
-    String[] getPropertiesForLabels(PropertyMetadataForLabels propertyMetadataForLabels);
+    String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas);
 }

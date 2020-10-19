@@ -15,8 +15,8 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabel;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 
@@ -66,7 +66,7 @@ public class QueryTask implements Runnable {
                     NamedQuery namedQuery = queries.poll();
                     if (!(namedQuery == null)) {
 
-                        PropertyMetadataForLabels propertyMetadataForLabels = new PropertyMetadataForLabels();
+                        GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
 
                         ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
 
@@ -75,7 +75,7 @@ public class QueryTask implements Runnable {
                             results.stream().
                                     map(r -> castToMap(r.getObject())).
                                     forEach(r -> {
-                                        propertyMetadataForLabels.update(namedQuery.name(), r, true);
+                                        graphElementSchemas.update(namedQuery.name(), r, true);
                                     });
 
                             // Re-run query for second pass
@@ -85,7 +85,7 @@ public class QueryTask implements Runnable {
                         try (Timer timer = new Timer(String.format("query [%s]", namedQuery.query()))) {
 
                             ResultsHandler resultsHandler = new ResultsHandler(
-                                    namedQuery.name(), labelWriters, writerFactory, propertyMetadataForLabels);
+                                    namedQuery.name(), labelWriters, writerFactory, graphElementSchemas);
                             StatusHandler handler = new StatusHandler(resultsHandler, status);
 
                             results.stream().
@@ -133,35 +133,35 @@ public class QueryTask implements Runnable {
 
     private class ResultsHandler implements GraphElementHandler<Map<?, ?>> {
 
-        private final String name;
+        private final String label;
         private final Map<String, LabelWriter<Map<?, ?>>> labelWriters;
         private final QueriesWriterFactory writerFactory;
-        private final PropertyMetadataForLabels propertyMetadataForLabels;
+        private final GraphElementSchemas graphElementSchemas;
 
-        private ResultsHandler(String name,
+        private ResultsHandler(String label,
                                Map<String, LabelWriter<Map<?, ?>>> labelWriters,
                                QueriesWriterFactory writerFactory,
-                               PropertyMetadataForLabels propertyMetadataForLabels) {
-            this.name = name;
+                               GraphElementSchemas graphElementSchemas) {
+            this.label = label;
             this.labelWriters = labelWriters;
             this.writerFactory = writerFactory;
 
-            this.propertyMetadataForLabels = propertyMetadataForLabels;
+            this.graphElementSchemas = graphElementSchemas;
         }
 
         private void createWriter(Map<?, ?> properties, boolean allowStructuralElements) {
             try {
 
-                if (!propertyMetadataForLabels.hasMetadataFor(name)) {
-                    propertyMetadataForLabels.update(name, properties, allowStructuralElements);
+                if (!graphElementSchemas.hasSchemaFor(label)) {
+                    graphElementSchemas.update(label, properties, allowStructuralElements);
                 }
 
-                PropertyMetadataForLabel propertyMetadata = propertyMetadataForLabels.getMetadataFor(name);
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
+                LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
 
-                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.properties());
+                propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.properties());
 
-                labelWriters.put(name, writerFactory.createLabelWriter(propertyGraphPrinter));
+                labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -171,11 +171,11 @@ public class QueryTask implements Runnable {
         @Override
         public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
-            if (!labelWriters.containsKey(name)) {
+            if (!labelWriters.containsKey(label)) {
                 createWriter(properties, allowTokens);
             }
 
-            labelWriters.get(name).handle(properties, allowTokens);
+            labelWriters.get(label).handle(properties, allowTokens);
         }
 
         @Override

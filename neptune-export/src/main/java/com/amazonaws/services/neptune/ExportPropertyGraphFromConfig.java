@@ -21,8 +21,8 @@ import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForGraph;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -40,10 +40,10 @@ import java.util.Collection;
         "bin/neptune-export.sh export-pg-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output",
         "bin/neptune-export.sh export-pg-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json"
 }, descriptions = {
-        "Export data using the metadata config in /home/ec2-user/config.json",
-        "Export data as JSON using the metadata config in /home/ec2-user/config.json"
+        "Export data using the schema config in /home/ec2-user/config.json",
+        "Export data as JSON using the schema config in /home/ec2-user/config.json"
 })
-@Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing config file.")
+@Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing schema config file.")
 public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
@@ -67,7 +67,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
-    @Option(name = {"-c", "--config-file"}, description = "Path to JSON config file (file path, or 'https' or 's3' URI)")
+    @Option(name = {"-c", "--config-file"}, description = "Path to JSON schema config file (file path, or 'https' or 's3' URI)")
     @Required
     @Once
     private URI configFile;
@@ -84,12 +84,12 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
             Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
             PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
-            JsonResource<PropertyMetadataForGraph> configFileResource = new JsonResource<>(
+            JsonResource<GraphSchema> configFileResource = new JsonResource<>(
                     "Config file",
                     configFile,
-                    PropertyMetadataForGraph.class);
+                    GraphSchema.class);
 
-            PropertyMetadataForGraph metadataCollection = configFileResource.get();
+            GraphSchema graphSchema = configFileResource.get();
             ExportStats stats = new ExportStats();
 
             Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
@@ -99,7 +99,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
                 ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                         exportSpecifications,
-                        metadataCollection,
+                        graphSchema,
                         g,
                         range.config(),
                         clusterStrategy.concurrencyConfig(),

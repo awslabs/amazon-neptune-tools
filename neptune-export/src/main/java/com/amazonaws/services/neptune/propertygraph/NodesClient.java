@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyMetadataForLabels;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -54,7 +54,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
 
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
                 createTraversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
@@ -75,11 +75,11 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
                                Range range,
                                LabelsFilter labelsFilter,
-                               PropertyMetadataForLabels propertyMetadataForLabels) {
+                               GraphElementSchemas graphElementSchemas) {
 
         GraphTraversal<? extends Element, ?> traversal = createTraversal(range, labelsFilter);
 
-        traversal = filterByPropertyKeys(traversal, labelsFilter, propertyMetadataForLabels);
+        traversal = filterByPropertyKeys(traversal, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t = traversal.
                 project("id", "label", "properties").
@@ -87,7 +87,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
                 by(label().fold()).
                 by(tokensOnly ?
                         select("x") :
-                        valueMap(labelsFilter.getPropertiesForLabels(propertyMetadataForLabels))
+                        valueMap(labelsFilter.getPropertiesForLabels(graphElementSchemas))
                 );
 
         logger.info(GremlinQueryDebugger.queryAsString(t));
@@ -103,13 +103,13 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
-                                                                      PropertyMetadataForLabels propertyMetadataForLabels) {
+                                                                      GraphElementSchemas graphElementSchemas) {
         if (!labModeFeatures.contains("filterByPropertyKeys")) {
             return traversal;
         }
 
         return traversal.where(
-                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(propertyMetadataForLabels))));
+                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(graphElementSchemas))));
     }
 
     @Override

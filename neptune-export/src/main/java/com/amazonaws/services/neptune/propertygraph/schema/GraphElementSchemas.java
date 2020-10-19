@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,19 +18,18 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tinkerpop.gremlin.structure.T;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PropertyMetadataForLabels {
+public class GraphElementSchemas {
 
-    public static PropertyMetadataForLabels fromJson(ArrayNode arrayNode) {
-        Map<String, PropertyMetadataForLabel> metadata = new HashMap<>();
+    public static GraphElementSchemas fromJson(ArrayNode arrayNode) {
+        Map<String, LabelSchema> labelSchemas = new HashMap<>();
 
         for (JsonNode node : arrayNode) {
             String label = node.path("label").asText();
 
-            metadata.put(label, new PropertyMetadataForLabel(label));
+            labelSchemas.put(label, new LabelSchema(label));
             ArrayNode propertiesArray = (ArrayNode) node.path("properties");
 
             for (JsonNode propertyNode : propertiesArray) {
@@ -40,33 +39,33 @@ public class PropertyMetadataForLabels {
                 DataType dataType = Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue());
                 boolean isMultiValue = propertyNode.path("isMultiValue").booleanValue();
 
-                metadata.get(label).put(key, new PropertyTypeInfo(key, dataType, isMultiValue));
+                labelSchemas.get(label).put(key, new PropertySchema(key, dataType, isMultiValue));
             }
         }
-        return new PropertyMetadataForLabels(metadata);
+        return new GraphElementSchemas(labelSchemas);
     }
 
-    private final Map<String, PropertyMetadataForLabel> metadataByLabel;
+    private final Map<String, LabelSchema> labelSchemas;
 
-    public PropertyMetadataForLabels() {
+    public GraphElementSchemas() {
         this(new HashMap<>());
     }
 
-    private PropertyMetadataForLabels(Map<String, PropertyMetadataForLabel> metadataByLabel) {
-        this.metadataByLabel = metadataByLabel;
+    private GraphElementSchemas(Map<String, LabelSchema> labelSchemas) {
+        this.labelSchemas = labelSchemas;
     }
 
-    public PropertyMetadataForLabel getMetadataFor(String label) {
+    public LabelSchema getSchemaFor(String label) {
 
-        if (!metadataByLabel.containsKey(label)) {
-            metadataByLabel.put(label, new PropertyMetadataForLabel(label));
+        if (!labelSchemas.containsKey(label)) {
+            labelSchemas.put(label, new LabelSchema(label));
         }
 
-        return metadataByLabel.get(label);
+        return labelSchemas.get(label);
     }
 
-    public boolean hasMetadataFor(String label) {
-        return metadataByLabel.containsKey(label);
+    public boolean hasSchemaFor(String label) {
+        return labelSchemas.containsKey(label);
     }
 
     public void update(Map<?, ?> properties, boolean allowStructuralElements) {
@@ -78,31 +77,31 @@ public class PropertyMetadataForLabels {
 
     public void update(String label, Map<?, ?> properties, boolean allowStructuralElements) {
 
-        if (!metadataByLabel.containsKey(label)) {
-            metadataByLabel.put(label, new PropertyMetadataForLabel(label));
+        if (!labelSchemas.containsKey(label)) {
+            labelSchemas.put(label, new LabelSchema(label));
         }
 
-        PropertyMetadataForLabel propertyMetadataForLabel = metadataByLabel.get(label);
+        LabelSchema labelSchema = labelSchemas.get(label);
 
         for (Map.Entry<?, ?> entry : properties.entrySet()) {
 
             Object property = entry.getKey();
 
             if (allowStructuralElements || !(isToken(property))) {
-                if (!propertyMetadataForLabel.containsProperty(property)) {
-                    propertyMetadataForLabel.put(property, new PropertyTypeInfo(property));
+                if (!labelSchema.containsProperty(property)) {
+                    labelSchema.put(property, new PropertySchema(property));
                 }
-                propertyMetadataForLabel.getPropertyTypeInfo(property).accept(entry.getValue());
+                labelSchema.getPropertySchema(property).accept(entry.getValue());
             }
         }
     }
 
     public Iterable<String> labels() {
-        return metadataByLabel.keySet();
+        return labelSchemas.keySet();
     }
 
-    public Iterable<PropertyMetadataForLabel> allMetadata() {
-        return metadataByLabel.values();
+    public Iterable<LabelSchema> allMetadata() {
+        return labelSchemas.values();
     }
 
     private boolean isToken(Object key) {
@@ -113,7 +112,7 @@ public class PropertyMetadataForLabels {
 
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
-        for (Map.Entry<String, PropertyMetadataForLabel> entry : metadataByLabel.entrySet()) {
+        for (Map.Entry<String, LabelSchema> entry : labelSchemas.entrySet()) {
 
             String label = entry.getKey();
 
@@ -122,14 +121,14 @@ public class PropertyMetadataForLabels {
 
             ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
 
-            PropertyMetadataForLabel propertyMetadataForLabel = entry.getValue();
+            LabelSchema labelSchema = entry.getValue();
 
-            for (PropertyTypeInfo propertyTypeInfo : propertyMetadataForLabel.properties()) {
+            for (PropertySchema propertySchema : labelSchema.properties()) {
 
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
-                propertyNode.put("property", propertyTypeInfo.property().toString());
-                propertyNode.put("dataType", propertyTypeInfo.dataType().name());
-                propertyNode.put("isMultiValue", propertyTypeInfo.isMultiValue());
+                propertyNode.put("property", propertySchema.property().toString());
+                propertyNode.put("dataType", propertySchema.dataType().name());
+                propertyNode.put("isMultiValue", propertySchema.isMultiValue());
                 propertiesNode.add(propertyNode);
             }
 
@@ -141,7 +140,7 @@ public class PropertyMetadataForLabels {
         return arrayNode;
     }
 
-    public PropertyMetadataForLabels createCopy() {
+    public GraphElementSchemas createCopy() {
         return fromJson(toJson());
     }
 }

@@ -12,9 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
-import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementTypes;
+import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,13 +29,13 @@ public enum Scope {
                                                                        Collection<String> labModeFeatures) {
             return Arrays.asList(
                     new ExportSpecification<>(
-                            MetadataTypes.Nodes,
+                            GraphElementTypes.Nodes,
                             Scope.labelsFilter(nodeLabels),
                             tokensOnly.nodeTokensOnly(),
                             stats,
                             labModeFeatures),
                     new ExportSpecification<>(
-                            MetadataTypes.Edges,
+                            GraphElementTypes.Edges,
                             Scope.labelsFilter(edgeLabels),
                             tokensOnly.edgeTokensOnly(),
                             stats,
@@ -52,7 +52,7 @@ public enum Scope {
                                                                        Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
-                            MetadataTypes.Nodes,
+                            GraphElementTypes.Nodes,
                             Scope.labelsFilter(nodeLabels),
                             tokensOnly.nodeTokensOnly(),
                             stats,
@@ -69,7 +69,7 @@ public enum Scope {
                                                                        Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
-                            MetadataTypes.Edges,
+                            GraphElementTypes.Edges,
                             Scope.labelsFilter(edgeLabels),
                             tokensOnly.edgeTokensOnly(),
                             stats,

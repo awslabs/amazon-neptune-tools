@@ -10,22 +10,22 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.propertygraph.metadata;
+package com.amazonaws.services.neptune.propertygraph.schema;
 
 import java.util.List;
 import java.util.Objects;
 
-public class PropertyTypeInfo {
+public class PropertySchema {
 
     private final Object property;
     private DataType dataType = DataType.None;
     private boolean isMultiValue = false;
 
-    public PropertyTypeInfo(Object property) {
+    public PropertySchema(Object property) {
         this.property = property;
     }
 
-    public PropertyTypeInfo(String property, DataType dataType, boolean isMultiValue) {
+    public PropertySchema(String property, DataType dataType, boolean isMultiValue) {
         this.property = property;
         this.dataType = dataType;
         this.isMultiValue = isMultiValue;
@@ -97,27 +97,27 @@ public class PropertyTypeInfo {
                 '}';
     }
 
-    public PropertyTypeInfo createCopy() {
-        return new PropertyTypeInfo(property.toString(), dataType, isMultiValue);
+    public PropertySchema createCopy() {
+        return new PropertySchema(property.toString(), dataType, isMultiValue);
     }
 
-    public PropertyTypeInfo createRevision(PropertyTypeInfo propertyTypeInfo) {
+    public PropertySchema createRevision(PropertySchema propertySchema) {
 
-        if (propertyTypeInfo.isMultiValue() == isMultiValue && propertyTypeInfo.dataType() == dataType) {
+        if (propertySchema.isMultiValue() == isMultiValue && propertySchema.dataType() == dataType) {
             return this;
         }
 
-        boolean newIsMultiValue = propertyTypeInfo.isMultiValue() || isMultiValue;
-        DataType newDataType = DataType.getBroadestType(dataType, propertyTypeInfo.dataType());
+        boolean newIsMultiValue = propertySchema.isMultiValue() || isMultiValue;
+        DataType newDataType = DataType.getBroadestType(dataType, propertySchema.dataType());
 
-        return new PropertyTypeInfo(property.toString(), newDataType, newIsMultiValue);
+        return new PropertySchema(property.toString(), newDataType, newIsMultiValue);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PropertyTypeInfo that = (PropertyTypeInfo) o;
+        PropertySchema that = (PropertySchema) o;
         return isMultiValue == that.isMultiValue &&
                 property.equals(that.property) &&
                 dataType == that.dataType;
