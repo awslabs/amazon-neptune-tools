@@ -23,7 +23,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 import java.util.Collection;
 import java.util.Map;
 
-public class ExportSpecification<T> {
+public class ExportSpecification<T extends Map<?, ?>> {
     private final GraphElementType<T> graphElementType;
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;

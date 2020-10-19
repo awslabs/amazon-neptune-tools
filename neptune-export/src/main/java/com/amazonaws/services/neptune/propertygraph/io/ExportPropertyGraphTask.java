@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class ExportPropertyGraphTask<T> implements Callable<FileSpecificLabelSchemas> {
+public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<FileSpecificLabelSchemas> {
 
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
@@ -102,7 +102,7 @@ public class ExportPropertyGraphTask<T> implements Callable<FileSpecificLabelSch
         return fileSpecificLabelSchemas;
     }
 
-    private class TaskHandler implements GraphElementHandler<T>{
+    private class TaskHandler implements GraphElementHandler<T> {
 
         private final GraphElementSchemas graphElementSchemas;
         private final FileSpecificLabelSchemas fileSpecificLabelSchemas;

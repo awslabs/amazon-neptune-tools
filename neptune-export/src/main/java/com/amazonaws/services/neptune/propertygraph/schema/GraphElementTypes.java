@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import com.amazonaws.services.neptune.propertygraph.EdgesClient;
-import com.amazonaws.services.neptune.propertygraph.ExportStats;
-import com.amazonaws.services.neptune.propertygraph.GraphClient;
-import com.amazonaws.services.neptune.propertygraph.NodesClient;
+import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.EdgesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.NodesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
@@ -41,6 +38,11 @@ public class GraphElementTypes {
         public WriterFactory<Map<String, Object>> writerFactory() {
             return new NodesWriterFactory();
         }
+
+        @Override
+        public int propertyCount(int length) {
+            return length - 2;
+        }
     };
 
     public static final GraphElementType<Map<String, Object>> Edges = new GraphElementType<Map<String, Object>>() {
@@ -57,6 +59,11 @@ public class GraphElementTypes {
         @Override
         public WriterFactory<Map<String, Object>> writerFactory() {
             return new EdgesWriterFactory();
+        }
+
+        @Override
+        public int propertyCount(int length) {
+            return length - 4;
         }
     };
 

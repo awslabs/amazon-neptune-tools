@@ -54,11 +54,11 @@ public class GraphSchema implements Jsonizable {
         graphElementsSchemas.get(graphElementType).update(properties, allowStructuralElements);
     }
 
-    public GraphElementSchemas copyOfGraphElementSchemasFor(GraphElementType<?> type) {
-        if (!graphElementsSchemas.containsKey(type)) {
-            graphElementsSchemas.put(type, new GraphElementSchemas());
+    public GraphElementSchemas copyOfGraphElementSchemasFor(GraphElementType<?> graphElementType) {
+        if (!graphElementsSchemas.containsKey(graphElementType)) {
+            graphElementsSchemas.put(graphElementType, new GraphElementSchemas());
         }
-        return graphElementsSchemas.get(type).createCopy();
+        return graphElementsSchemas.get(graphElementType).createCopy();
     }
 
     @Override

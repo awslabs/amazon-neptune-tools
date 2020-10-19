@@ -20,7 +20,9 @@ public class FileSpecificLabelSchema {
     private final PropertyGraphExportFormat format;
     private final LabelSchema labelSchema;
 
-    public FileSpecificLabelSchema(String outputId, PropertyGraphExportFormat format, LabelSchema labelSchema) {
+    public FileSpecificLabelSchema(String outputId,
+                                   PropertyGraphExportFormat format,
+                                   LabelSchema labelSchema) {
         this.outputId = outputId;
         this.format = format;
         this.labelSchema = labelSchema;

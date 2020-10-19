@@ -20,6 +20,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public class GraphElementSchemas {
 
@@ -98,10 +99,6 @@ public class GraphElementSchemas {
 
     public Iterable<String> labels() {
         return labelSchemas.keySet();
-    }
-
-    public Iterable<LabelSchema> allMetadata() {
-        return labelSchemas.values();
     }
 
     private boolean isToken(Object key) {
