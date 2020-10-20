@@ -71,9 +71,6 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule(target);
-
-    @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
     @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false').")
@@ -97,10 +94,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
-                GraphSchema graphSchema =
-                        sampling.createSchemaCommand(exportSpecifications, g).execute();
-
-                configFileResource.save(graphSchema);
+                GraphSchema graphSchema = new GraphSchema();
 
                 ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                         exportSpecifications,

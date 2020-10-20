@@ -54,10 +54,6 @@ public class MasterLabelSchemas {
         this.masterLabelSchemas = masterLabelSchemas;
     }
 
-    public Collection<MasterLabelSchema> masterSchemas(){
-        return masterLabelSchemas.values();
-    }
-
     public void updateGraphSchema(GraphSchema graphSchema, GraphElementType<?> graphElementType){
         GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
@@ -65,5 +61,4 @@ public class MasterLabelSchemas {
         }
         graphSchema.replace(graphElementType, graphElementSchemas);
     }
-
 }
