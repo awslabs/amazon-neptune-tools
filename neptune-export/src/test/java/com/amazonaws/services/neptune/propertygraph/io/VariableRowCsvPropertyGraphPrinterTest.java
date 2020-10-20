@@ -99,6 +99,28 @@ public class VariableRowCsvPropertyGraphPrinterTest {
         assertTrue(labelSchema.getPropertySchema("p-4").isNullable());
     }
 
+    @Test
+    public void columnsThatAppearInFirstRowButNOtSubsequentRowsAreNullable() throws IOException {
+        StringWriter stringWriter = new StringWriter();
+
+        LabelSchema labelSchema = new LabelSchema("my-label");
+
+        VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
+                new PrintOutputWriter("test", stringWriter),
+                labelSchema);
+
+        print(printer,
+                map(entry("p-1", 10), entry("p-2", 20)),
+                map( entry("p-2", 40), entry("p-3", 50)),
+                map(entry("p-1", 60), entry("p-2", 70), entry("p-4", 80))
+        );
+
+        assertTrue(labelSchema.getPropertySchema("p-1").isNullable());
+        assertFalse(labelSchema.getPropertySchema("p-2").isNullable());
+        assertTrue(labelSchema.getPropertySchema("p-3").isNullable());
+        assertTrue(labelSchema.getPropertySchema("p-4").isNullable());
+    }
+
     private void print(PropertyGraphPrinter printer, Map<?, ?>... rows) throws IOException {
         for (Map<?, ?> row : rows) {
             printer.printStartRow();

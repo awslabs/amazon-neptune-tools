@@ -16,11 +16,11 @@ import java.util.*;
 
 public class MasterLabelSchemas {
 
-    public static MasterLabelSchemas fromCollection(Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas) {
+    public static MasterLabelSchemas fromCollection(Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemasCollection) {
 
         Set<String> labels = new HashSet<>();
 
-        allFileSpecificLabelSchemas.forEach(s -> labels.addAll(s.labels()));
+        fileSpecificLabelSchemasCollection.forEach(s -> labels.addAll(s.labels()));
 
         Map<String, MasterLabelSchema> masterLabelSchemas = new HashMap<>();
 
@@ -29,7 +29,7 @@ public class MasterLabelSchemas {
             LabelSchema masterLabelSchema = new LabelSchema(label);
             Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas = new ArrayList<>();
 
-            for (FileSpecificLabelSchemas fileSpecificLabelSchemasForTask : allFileSpecificLabelSchemas) {
+            for (FileSpecificLabelSchemas fileSpecificLabelSchemasForTask : fileSpecificLabelSchemasCollection) {
                 if (fileSpecificLabelSchemasForTask.hasSchemasForLabel(label)) {
                     for (FileSpecificLabelSchema fileSpecificLabelSchema :
                             fileSpecificLabelSchemasForTask.fileSpecificLabelSchemasFor(label)) {
@@ -42,6 +42,8 @@ public class MasterLabelSchemas {
             masterLabelSchemas.put(
                     label,
                     new MasterLabelSchema(masterLabelSchema, fileSpecificLabelSchemas));
+
+
 
         }
 

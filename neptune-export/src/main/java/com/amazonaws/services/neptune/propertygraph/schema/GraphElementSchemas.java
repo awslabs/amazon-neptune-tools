@@ -91,6 +91,12 @@ public class GraphElementSchemas {
 
         LabelSchema labelSchema = labelSchemas.get(label);
 
+        for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
+            if (!properties.containsKey(propertySchema.property())){
+                propertySchema.makeNullable();
+            }
+        }
+
         for (Map.Entry<?, ?> entry : properties.entrySet()) {
 
             Object property = entry.getKey();

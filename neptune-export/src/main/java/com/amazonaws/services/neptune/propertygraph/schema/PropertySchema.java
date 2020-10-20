@@ -18,21 +18,12 @@ import java.util.Objects;
 public class PropertySchema {
 
     private final Object property;
-    private final boolean isNullable;
+    private boolean isNullable = false;
     private DataType dataType = DataType.None;
     private boolean isMultiValue = false;
 
     public PropertySchema(Object property) {
-        this(property, false);
-    }
-
-    public PropertySchema(String property, DataType dataType, boolean isMultiValue) {
-        this(property, false, dataType, isMultiValue);
-    }
-
-    public PropertySchema(Object property, boolean isNullable) {
         this.property = property;
-        this.isNullable = isNullable;
     }
 
     public PropertySchema(String property, boolean isNullable, DataType dataType, boolean isMultiValue) {
@@ -59,6 +50,10 @@ public class PropertySchema {
         } else {
             dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
         }
+    }
+
+    public void makeNullable(){
+        isNullable = true;
     }
 
     private boolean isList(Object value) {
@@ -114,12 +109,14 @@ public class PropertySchema {
     }
 
     public PropertySchema createCopy() {
-        return new PropertySchema(property.toString(), dataType, isMultiValue);
+        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue);
     }
 
     public PropertySchema createRevision(PropertySchema propertySchema) {
 
-        if (propertySchema.isMultiValue() == isMultiValue && propertySchema.dataType() == dataType) {
+        if (propertySchema.isMultiValue() == isMultiValue &&
+                propertySchema.dataType() == dataType &&
+                propertySchema.isNullable() == isNullable) {
             return this;
         }
 

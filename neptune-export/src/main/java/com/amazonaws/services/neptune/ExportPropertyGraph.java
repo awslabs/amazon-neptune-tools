@@ -20,6 +20,7 @@ import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -71,6 +72,9 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
+    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule(target);
+
+    @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
     @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false').")
@@ -94,7 +98,9 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
             try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                  GraphTraversalSource g = client.newTraversalSource()) {
 
-                GraphSchema graphSchema = new GraphSchema();
+                GraphSchema graphSchema = targetConfig.format() != PropertyGraphExportFormat.csvNoSchema ?
+                        sampling.createSchemaCommand(exportSpecifications, g).execute() :
+                        new GraphSchema();
 
                 ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                         exportSpecifications,

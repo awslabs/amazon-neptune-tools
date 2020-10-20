@@ -60,6 +60,13 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
         // Print known properties
         csvPropertyGraphPrinter.printProperties(properties);
 
+        // Check to see whether known properties are present
+        for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
+            if (!properties.containsKey(propertySchema.property())){
+                propertySchema.makeNullable();
+            }
+        }
+
         // Print unknown properties
         for (Map.Entry<?, ?> property : properties.entrySet()) {
 
@@ -69,8 +76,11 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
                 Object value = property.getValue();
 
-                PropertySchema propertySchema = new PropertySchema(key, isNullable);
+                PropertySchema propertySchema = new PropertySchema(key);
                 propertySchema.accept(value);
+                if (isNullable){
+                    propertySchema.makeNullable();
+                }
 
                 labelSchema.put(key, propertySchema);
 
