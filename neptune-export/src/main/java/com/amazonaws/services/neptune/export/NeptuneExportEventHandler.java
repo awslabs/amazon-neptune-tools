@@ -18,12 +18,9 @@ import java.nio.file.Path;
 
 public interface NeptuneExportEventHandler {
 
-    NeptuneExportEventHandler NULL_EVENT_HANDLER = new NeptuneExportEventHandler() {
-        @Override
-        public void onExportComplete(Path outputPath, ExportStats stats) {
-            // Do nothing
-        }
+    NeptuneExportEventHandler NULL_EVENT_HANDLER = (outputPath, stats) -> {
+        // Do nothing
     };
 
-    void onExportComplete(Path outputPath, ExportStats stats);
+    void onExportComplete(Path outputPath, ExportStats stats) throws Exception;
 }

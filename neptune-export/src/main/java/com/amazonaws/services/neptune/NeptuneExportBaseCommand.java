@@ -43,7 +43,7 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
         this.eventHandler = eventHandler;
     }
 
-    public void onExportComplete(Path outputPath, ExportStats stats){
+    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception{
         eventHandler.onExportComplete(outputPath, stats);
     }
 

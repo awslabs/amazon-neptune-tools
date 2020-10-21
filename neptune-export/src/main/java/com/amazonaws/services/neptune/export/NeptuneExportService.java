@@ -16,6 +16,9 @@ import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.ObjectTagging;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.transfer.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -27,11 +30,15 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class NeptuneExportService {
+
+    private static final List<Tag> TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
 
     private final Logger logger;
     private final String cmd;
@@ -153,8 +160,8 @@ public class NeptuneExportService {
         try {
             download.waitForCompletion();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             logger.log(e.getMessage());
+            Thread.currentThread().interrupt();
         }
 
         return file.getAbsoluteFile();
@@ -185,7 +192,7 @@ public class NeptuneExportService {
         }
 
         @Override
-        public void onExportComplete(Path outputPath, ExportStats stats) {
+        public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
             File outputDirectory = outputPath.toFile();
             S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
 
@@ -209,7 +216,7 @@ public class NeptuneExportService {
         private void uploadCompletionFileToS3(TransferManager transferManager,
                                               File directory,
                                               S3ObjectInfo outputS3ObjectInfo,
-                                              ExportStats stats) {
+                                              ExportStats stats) throws IOException {
 
             if (StringUtils.isEmpty(completionFileS3Path)) {
                 return;
@@ -230,8 +237,6 @@ public class NeptuneExportService {
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(completionFile), UTF_8))) {
                 ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
                 writer.write(objectWriter.writeValueAsString(completionFilePayload));
-            } catch (IOException e) {
-                throw new RuntimeException("Error while writing completion file payload", e);
             }
 
             S3ObjectInfo completionFileS3ObjectInfo =
@@ -247,19 +252,18 @@ public class NeptuneExportService {
                 objectMetadata.setContentLength(completionFile.length());
                 objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
 
-                Upload upload = transferManager.upload(
-                        completionFileS3ObjectInfo.bucket(),
+                PutObjectRequest putObjectRequest = new PutObjectRequest(completionFileS3ObjectInfo.bucket(),
                         completionFileS3ObjectInfo.key(),
                         inputStream,
-                        objectMetadata);
+                        objectMetadata).withTagging(new ObjectTagging(TAGS));
+
+                Upload upload = transferManager.upload(putObjectRequest);
 
                 upload.waitForUploadResult();
 
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 logger.log(e.getMessage());
-            } catch (IOException e) {
-                throw new RuntimeException("Error while uploading completion file payload", e);
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -280,17 +284,25 @@ public class NeptuneExportService {
                     }
                 };
 
+                ObjectTaggingProvider taggingProvider = new ObjectTaggingProvider() {
+                    @Override
+                    public ObjectTagging provideObjectTags(UploadContext uploadContext) {
+                        return new ObjectTagging(TAGS);
+                    }
+                };
+
                 MultipleFileUpload upload = transferManager.uploadDirectory(
                         outputS3ObjectInfo.bucket(),
                         outputS3ObjectInfo.key(),
                         directory,
                         true,
-                        metadataProvider);
+                        metadataProvider,
+                        taggingProvider);
 
                 upload.waitForCompletion();
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 logger.log(e.getMessage());
+                Thread.currentThread().interrupt();
             }
         }
     }
