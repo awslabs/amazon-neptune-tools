@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.export;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.transfer.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -239,18 +240,27 @@ public class NeptuneExportService {
                             FilenameUtils.getBaseName(completionFile.getName()),
                             completionFile.getName());
 
-            Upload upload = transferManager.upload(
-                    completionFileS3ObjectInfo.bucket(),
-                    completionFileS3ObjectInfo.key(),
-                    completionFile);
 
-            try {
+            try (InputStream inputStream = new FileInputStream(completionFile)) {
+
+                ObjectMetadata objectMetadata = new ObjectMetadata();
+                objectMetadata.setContentLength(completionFile.length());
+                objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+
+                Upload upload = transferManager.upload(
+                        completionFileS3ObjectInfo.bucket(),
+                        completionFileS3ObjectInfo.key(),
+                        inputStream,
+                        objectMetadata);
+
                 upload.waitForUploadResult();
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 logger.log(e.getMessage());
+            } catch (IOException e) {
+                throw new RuntimeException("Error while uploading completion file payload", e);
             }
-
         }
 
         private void uploadExportFilesToS3(TransferManager transferManager, File directory, S3ObjectInfo outputS3ObjectInfo) {
@@ -262,11 +272,20 @@ public class NeptuneExportService {
 
             try {
 
+                ObjectMetadataProvider metadataProvider = new ObjectMetadataProvider() {
+                    @Override
+                    public void provideObjectMetadata(File file, ObjectMetadata objectMetadata) {
+                        objectMetadata.setContentLength(file.length());
+                        objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+                    }
+                };
+
                 MultipleFileUpload upload = transferManager.uploadDirectory(
                         outputS3ObjectInfo.bucket(),
                         outputS3ObjectInfo.key(),
                         directory,
-                        true);
+                        true,
+                        metadataProvider);
 
                 upload.waitForCompletion();
             } catch (InterruptedException e) {
