@@ -72,7 +72,15 @@ public class AddCloneTask {
                         new CreateDBClusterParameterGroupRequest()
                                 .withDBClusterParameterGroupName(String.format("%s-db-cluster-params", targetClusterId))
                                 .withDescription(String.format("%s DB Cluster Parameter Group", targetClusterId))
-                                .withDBParameterGroupFamily("neptune1"));
+                                .withDBParameterGroupFamily("neptune1")
+                .withTags(
+                        new Tag()
+                                .withKey("source")
+                                .withValue(sourceClusterMetadata.clusterId()),
+                        new Tag()
+                                .withKey("application")
+                                .withValue(NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG)
+                ));
 
                 neptune.modifyDBClusterParameterGroup(new ModifyDBClusterParameterGroupRequest()
                         .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName())
@@ -112,7 +120,15 @@ public class AddCloneTask {
                         new CreateDBParameterGroupRequest()
                                 .withDBParameterGroupName(String.format("%s-db-params", targetClusterId))
                                 .withDescription(String.format("%s DB Parameter Group", targetClusterId))
-                                .withDBParameterGroupFamily("neptune1"));
+                                .withDBParameterGroupFamily("neptune1")
+                                .withTags(
+                                        new Tag()
+                                                .withKey("source")
+                                                .withValue(sourceClusterMetadata.clusterId()),
+                                        new Tag()
+                                                .withKey("application")
+                                                .withValue(NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG)
+                                ));
 
                 neptune.modifyDBParameterGroup(new ModifyDBParameterGroupRequest()
                         .withDBParameterGroupName(dbParameterGroup.getDBParameterGroupName())
