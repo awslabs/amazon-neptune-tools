@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.export;
 
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -196,10 +197,10 @@ public class NeptuneExportService {
             File outputDirectory = outputPath.toFile();
             S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
 
-            try (Timer timer = new Timer("uploading files to S3")) {
+            Timer.timedActivity("uploading files to S3", (CheckedActivity.Runnable) () -> {
                 uploadExportFilesToS3(transferManager, outputDirectory, outputS3ObjectInfo);
                 uploadCompletionFileToS3(transferManager, outputDirectory, outputS3ObjectInfo, stats);
-            }
+            });
 
             result.set(outputS3ObjectInfo);
         }

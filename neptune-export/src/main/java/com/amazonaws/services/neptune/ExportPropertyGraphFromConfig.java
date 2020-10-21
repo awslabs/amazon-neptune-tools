@@ -23,6 +23,7 @@ import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -79,44 +80,46 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("export-pg-from-config");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
-            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
-            JsonResource<GraphSchema> configFileResource = new JsonResource<>(
-                    "Config file",
-                    configFile,
-                    GraphSchema.class);
+                    Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+                    JsonResource<GraphSchema> configFileResource = new JsonResource<>(
+                            "Config file",
+                            configFile,
+                            GraphSchema.class);
 
-            GraphSchema graphSchema = configFileResource.get();
-            ExportStats stats = new ExportStats();
+                    GraphSchema graphSchema = configFileResource.get();
+                    ExportStats stats = new ExportStats();
 
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            try( NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 GraphTraversalSource g = client.newTraversalSource()) {
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         GraphTraversalSource g = client.newTraversalSource()) {
 
-                ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                        exportSpecifications,
-                        graphSchema,
-                        g,
-                        range.config(),
-                        clusterStrategy.concurrencyConfig(),
-                        targetConfig);
-                exportJob.execute();
+                        ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                                exportSpecifications,
+                                graphSchema,
+                                g,
+                                range.config(),
+                                clusterStrategy.concurrencyConfig(),
+                                targetConfig);
+                        exportJob.execute();
 
-            }
+                    }
 
-            directories.writeRootDirectoryPathAsMessage(target.description(), target);
-            configFileResource.writeResourcePathAsMessage(target);
+                    directories.writeRootDirectoryPathAsMessage(target.description(), target);
+                    configFileResource.writeResourcePathAsMessage(target);
 
-            System.err.println();
-            System.err.println(stats.toString());
+                    System.err.println();
+                    System.err.println(stats.toString());
 
-            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-            onExportComplete(outputPath, stats);
-
+                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(outputPath, stats);
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }

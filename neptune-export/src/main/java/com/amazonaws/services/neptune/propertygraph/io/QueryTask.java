@@ -15,8 +15,9 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 
@@ -64,40 +65,19 @@ public class QueryTask implements Runnable {
                 try {
 
                     NamedQuery namedQuery = queries.poll();
+
                     if (!(namedQuery == null)) {
 
-                        GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
-
-                        ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
+                        final GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
 
                         if (twoPassAnalysis) {
-                            // First pass
-                            results.stream().
-                                    map(r -> castToMap(r.getObject())).
-                                    forEach(r -> {
-                                        graphElementSchemas.update(namedQuery.name(), r, true);
-                                    });
-
-                            // Re-run query for second pass
-                            results = queryClient.submit(namedQuery.query(), timeoutMillis);
+                            Timer.timedActivity(String.format("generating schema for query [%s]", namedQuery.query()),
+                                    (Activity.Runnable) () -> updateSchema(namedQuery, graphElementSchemas));
                         }
 
-                        try (Timer timer = new Timer(String.format("query [%s]", namedQuery.query()))) {
-
-                            ResultsHandler resultsHandler = new ResultsHandler(
-                                    namedQuery.name(), labelWriters, writerFactory, graphElementSchemas);
-                            StatusHandler handler = new StatusHandler(resultsHandler, status);
-
-                            results.stream().
-                                    map(r -> castToMap(r.getObject())).
-                                    forEach(r -> {
-                                        try {
-                                            handler.handle(r, true);
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    });
-                        }
+                        Timer.timedActivity(String.format("executing query [%s]", namedQuery.query()),
+                                (Activity.Runnable) () ->
+                                        executeQuery(namedQuery, writerFactory, labelWriters, graphElementSchemas));
 
                     } else {
                         status.halt();
@@ -107,7 +87,6 @@ public class QueryTask implements Runnable {
                     System.err.printf("%nWARNING: Unexpected result value. %s. Proceeding with next query.%n", e.getMessage());
                 }
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -121,6 +100,38 @@ public class QueryTask implements Runnable {
             }
         }
 
+    }
+
+    private void updateSchema(NamedQuery namedQuery, GraphElementSchemas graphElementSchemas) {
+        ResultSet firstPassResults = queryClient.submit(namedQuery.query(), timeoutMillis);
+
+        firstPassResults.stream().
+                map(r -> castToMap(r.getObject())).
+                forEach(r -> {
+                    graphElementSchemas.update(namedQuery.name(), r, true);
+                });
+    }
+
+    private void executeQuery(NamedQuery namedQuery,
+                              QueriesWriterFactory writerFactory,
+                              Map<String, LabelWriter<Map<?, ?>>> labelWriters,
+                              GraphElementSchemas graphElementSchemas) {
+
+        ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
+
+        ResultsHandler resultsHandler = new ResultsHandler(
+                namedQuery.name(), labelWriters, writerFactory, graphElementSchemas);
+        StatusHandler handler = new StatusHandler(resultsHandler, status);
+
+        results.stream().
+                map(r -> castToMap(r.getObject())).
+                forEach(r -> {
+                    try {
+                        handler.handle(r, true);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     private HashMap<?, ?> castToMap(Object o) {

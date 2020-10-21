@@ -17,6 +17,8 @@ import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
@@ -55,53 +57,55 @@ public class ExportPropertyGraphJob {
 
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
 
-            try (Timer timer = new Timer("exporting " + exportSpecification.description())) {
-                System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
-
-                RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
-                Status status = new Status();
-
-                ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
-
-                for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-                    ExportPropertyGraphTask<?> exportTask = exportSpecification.createExportTask(
-                            graphSchema,
-                            g,
-                            targetConfig,
-                            rangeFactory,
-                            status,
-                            index
-                    );
-                    futures.add(taskExecutor.submit(exportTask));
-                }
-
-                taskExecutor.shutdown();
-
-                try {
-                    taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException(e);
-                }
-
-                Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas = new ArrayList<>();
-
-                for (Future<FileSpecificLabelSchemas> future : futures) {
-                    if (future.isCancelled()){
-                       throw new IllegalStateException("Unable to complete job because at least one task was cancelled");
-                    }
-                    if (!future.isDone()){
-                        throw new IllegalStateException("Unable to complete job because at least one task has not completed");
-                    }
-                    allFileSpecificLabelSchemas.add(future.get());
-                }
-
-                MasterLabelSchemas masterLabelSchemas =
-                        MasterLabelSchemas.fromCollection(allFileSpecificLabelSchemas);
-
-                exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
-
-            }
+            Timer.timedActivity("exporting " + exportSpecification.description(),
+                    (CheckedActivity.Runnable) () -> export(exportSpecification, futures));
         }
+    }
+
+    private void export(ExportSpecification<?> exportSpecification, Collection<Future<FileSpecificLabelSchemas>> futures) throws InterruptedException, java.util.concurrent.ExecutionException {
+        System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
+
+        RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
+        Status status = new Status();
+
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
+
+        for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
+            ExportPropertyGraphTask<?> exportTask = exportSpecification.createExportTask(
+                    graphSchema,
+                    g,
+                    targetConfig,
+                    rangeFactory,
+                    status,
+                    index
+            );
+            futures.add(taskExecutor.submit(exportTask));
+        }
+
+        taskExecutor.shutdown();
+
+        try {
+            taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+
+        Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas = new ArrayList<>();
+
+        for (Future<FileSpecificLabelSchemas> future : futures) {
+            if (future.isCancelled()){
+                throw new IllegalStateException("Unable to complete job because at least one task was cancelled");
+            }
+            if (!future.isDone()){
+                throw new IllegalStateException("Unable to complete job because at least one task has not completed");
+            }
+            allFileSpecificLabelSchemas.add(future.get());
+        }
+
+        MasterLabelSchemas masterLabelSchemas =
+                MasterLabelSchemas.fromCollection(allFileSpecificLabelSchemas);
+
+        exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
     }
 }

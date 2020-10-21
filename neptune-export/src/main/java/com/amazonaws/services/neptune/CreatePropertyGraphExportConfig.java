@@ -18,6 +18,8 @@ import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
@@ -64,27 +66,30 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("create-pg-config");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("creating property graph config", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            ExportStats stats = new ExportStats();
-            Directories directories = target.createDirectories(DirectoryStructure.Config);
-            JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    ExportStats stats = new ExportStats();
+                    Directories directories = target.createDirectories(DirectoryStructure.Config);
+                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 GraphTraversalSource g = client.newTraversalSource()) {
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         GraphTraversalSource g = client.newTraversalSource()) {
 
-                CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
-                GraphSchema graphSchema = createGraphSchemaCommand.execute();
+                        CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
+                        GraphSchema graphSchema = createGraphSchemaCommand.execute();
 
-                configFileResource.save(graphSchema);
-                configFileResource.writeResourcePathAsMessage(target);
-            }
+                        configFileResource.save(graphSchema);
+                        configFileResource.writeResourcePathAsMessage(target);
+                    }
 
-            Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
-            onExportComplete(outputPath, stats);
+                    Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
+                    onExportComplete(outputPath, stats);
 
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }

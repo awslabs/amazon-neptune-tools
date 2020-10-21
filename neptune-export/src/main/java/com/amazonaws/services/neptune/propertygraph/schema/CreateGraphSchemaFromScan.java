@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
@@ -29,13 +30,14 @@ public class CreateGraphSchemaFromScan implements CreateGraphSchemaCommand {
     }
 
     @Override
-    public GraphSchema execute() throws Exception {
+    public GraphSchema execute() {
         GraphSchema graphSchema = new GraphSchema();
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
-            try (Timer timer = new Timer("creating " + exportSpecification.description() + " schema from graph scan")) {
-                System.err.println("Creating " + exportSpecification.description() + " schema");
-                exportSpecification.scan(graphSchema, g);
-            }
+            Timer.timedActivity("creating " + exportSpecification.description() + " schema from graph scan",
+                    (Activity.Runnable) () -> {
+                        System.err.println("Creating " + exportSpecification.description() + " schema");
+                        exportSpecification.scan(graphSchema, g);
+                    });
         }
         return graphSchema;
     }
