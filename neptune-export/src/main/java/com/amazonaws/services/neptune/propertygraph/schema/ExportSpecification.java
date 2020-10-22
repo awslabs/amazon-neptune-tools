@@ -13,15 +13,22 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.io.PrintOutputWriter;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.*;
-import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphTask;
-import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
+import com.amazonaws.services.neptune.propertygraph.io.*;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
+import java.io.*;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ExportSpecification<T extends Map<?, ?>> {
     private final GraphElementType<T> graphElementType;
@@ -106,6 +113,67 @@ public class ExportSpecification<T extends Map<?, ?>> {
 
     public void updateGraphSchema(GraphSchema graphSchema, MasterLabelSchemas masterLabelSchemas) {
         masterLabelSchemas.updateGraphSchema(graphSchema, graphElementType);
+    }
+
+    public void rewrite(MasterLabelSchema masterLabelSchema) throws Exception {
+
+        LabelSchema masterSchema = masterLabelSchema.labelSchema();
+        List<String> masterHeaders = masterSchema.propertySchemas().stream()
+                .map(p -> p.property().toString())
+                .collect(Collectors.toList());
+
+        for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
+
+            File file  = new File(fileSpecificLabelSchema.outputId());
+            File newFile = new File(file.getAbsolutePath() + ".tmp");
+
+            // need to add node or vertex token headers
+            String[] filePropertyHeaders =
+                    fileSpecificLabelSchema.labelSchema().propertySchemas().stream()
+                    .map(p -> p.property().toString())
+                    .collect(Collectors.toList())
+                    .toArray(new String[]{});
+
+            String[] fileHeaders = graphElementType.equals(GraphElementTypes.Nodes) ?
+                    ArrayUtils.addAll(new String[]{"~id", "~label"}, filePropertyHeaders):
+                    ArrayUtils.addAll(new String[]{"~id", "~label", "~from", "~to"}, filePropertyHeaders);
+
+            Reader in = new FileReader(file);
+
+            CsvPropertyGraphPrinter csvPropertyGraphPrinter = new CsvPropertyGraphPrinter(
+                    new PrintOutputWriter(newFile.getAbsolutePath(), new FileWriter(newFile)),
+                    masterSchema,
+                    true,
+                    true);
+
+            if (graphElementType.equals(GraphElementTypes.Nodes)){
+                csvPropertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label");
+            } else {
+                csvPropertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
+            }
+
+            csvPropertyGraphPrinter.printHeaderRemainingColumns(masterLabelSchema.labelSchema().propertySchemas());
+
+            CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
+            Iterable<CSVRecord> records = format.parse(in);
+
+            for (CSVRecord record : records) {
+                csvPropertyGraphPrinter.printStartRow();
+
+                if (graphElementType.equals(GraphElementTypes.Nodes)){
+                    csvPropertyGraphPrinter.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
+                } else {
+                    csvPropertyGraphPrinter.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
+                }
+
+                csvPropertyGraphPrinter.printProperties(record.toMap(), false);
+                csvPropertyGraphPrinter.printEndRow();
+            }
+
+            csvPropertyGraphPrinter.close();
+            file.delete();
+            newFile.renameTo(file);
+        }
     }
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {

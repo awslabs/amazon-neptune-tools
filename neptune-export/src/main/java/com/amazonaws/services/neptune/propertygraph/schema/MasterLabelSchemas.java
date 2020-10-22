@@ -63,4 +63,10 @@ public class MasterLabelSchemas {
         }
         graphSchema.replace(graphElementType, graphElementSchemas);
     }
+
+    public void rewrite(ExportSpecification<?> exportSpecification) throws Exception {
+        for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
+            exportSpecification.rewrite(masterLabelSchema);
+        }
+    }
 }

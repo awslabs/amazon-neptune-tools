@@ -107,5 +107,11 @@ public class ExportPropertyGraphJob {
                 MasterLabelSchemas.fromCollection(allFileSpecificLabelSchemas);
 
         exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
+
+        try {
+            masterLabelSchemas.rewrite(exportSpecification);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

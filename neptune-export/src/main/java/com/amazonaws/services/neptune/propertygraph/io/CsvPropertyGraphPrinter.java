@@ -83,6 +83,10 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) {
+        printProperties(properties, true);
+    }
+
+    public void printProperties(Map<?, ?> properties, boolean applyFormatting) {
         for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
             Object property = propertySchema.property();
@@ -92,7 +96,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
                 if (updatePropertyTypeInfo) {
                     propertySchema.accept(value);
                 }
-                printProperty(propertySchema.dataType(), value);
+                printProperty(propertySchema.dataType(), value, applyFormatting);
             } else {
                 commaPrinter.printComma();
             }
@@ -100,12 +104,24 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     public void printProperty(DataType dataType, Object value) {
+        printProperty(dataType, value, true);
+    }
+
+    private void printProperty(DataType dataType, Object value, boolean applyFormatting) {
         commaPrinter.printComma();
 
-        String formattedValue = isList(value) ?
-                formatList(value, dataType) :
-                dataType.format(value);
-        writer.print(formattedValue);
+        if (applyFormatting){
+            String formattedValue = isList(value) ?
+                    formatList(value, dataType) :
+                    dataType.format(value);
+            writer.print(formattedValue);
+        } else {
+            if (dataType == DataType.String) {
+                writer.print(DataType.String.format(value));
+            } else {
+                writer.print(String.valueOf(value));
+            }
+        }
     }
 
     @Override
