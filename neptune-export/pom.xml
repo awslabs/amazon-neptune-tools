@@ -21,7 +21,7 @@
         <uberjar.name>neptune-export</uberjar.name>
         <aws.sdk.version>1.11.883</aws.sdk.version>
         <gremlin.version>3.4.3</gremlin.version>
-        <sig4.signer.version>1.0.4</sig4.signer.version>
+        <sig4.signer.version>2.0.2</sig4.signer.version>
     </properties>
 
     <dependencies>
