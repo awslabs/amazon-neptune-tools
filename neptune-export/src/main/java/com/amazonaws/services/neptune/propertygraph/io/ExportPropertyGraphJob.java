@@ -62,7 +62,10 @@ public class ExportPropertyGraphJob {
         }
     }
 
-    private void export(ExportSpecification<?> exportSpecification, Collection<Future<FileSpecificLabelSchemas>> futures) throws InterruptedException, java.util.concurrent.ExecutionException {
+    private void export(ExportSpecification<?> exportSpecification,
+                        Collection<Future<FileSpecificLabelSchemas>> futures)
+            throws InterruptedException, java.util.concurrent.ExecutionException {
+
         System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
         RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
@@ -109,7 +112,7 @@ public class ExportPropertyGraphJob {
         exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
 
         try {
-            masterLabelSchemas.rewrite(exportSpecification);
+            masterLabelSchemas.rewrite(exportSpecification, targetConfig);
         } catch (Exception e) {
             e.printStackTrace();
         }

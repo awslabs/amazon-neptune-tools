@@ -12,13 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.KinesisConfig;
-import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.io.Target;
+import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public class PropertyGraphTargetConfig {
 
@@ -40,38 +39,41 @@ public class PropertyGraphTargetConfig {
         this.kinesisConfig = kinesisConfig;
     }
 
-    public Target output(){
+    public Target output() {
         return output;
     }
 
-    public PropertyGraphExportFormat format(){
-        return format;
+    public PropertyGraphExportFormat format() { return format;
     }
 
-    public PropertyGraphPrinter createPrinterForQueries(String name, int index, LabelSchema labelSchema) throws IOException {
+    public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema, boolean isTempFile) throws IOException {
+        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(isTempFile)), labelSchema);
+    }
 
-        OutputWriter outputWriter = output.createOutputWriter(
-                () -> directories.createQueryResultsFilePath(name, index, format),
-                kinesisConfig);
-
+    public PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+        OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
         return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
     }
 
-    public PropertyGraphPrinter createPrinterForEdges(String name, int index, LabelSchema labelSchema) throws IOException {
+    public PropertyGraphPrinter createPrinterForEdges(String name, LabelSchema labelSchema, boolean isTempFile) throws IOException {
+        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(isTempFile)), labelSchema);
+    }
 
-        OutputWriter outputWriter = output.createOutputWriter(
-                () -> directories.createEdgesFilePath(name, index, format),
-                kinesisConfig);
-
+    public PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+        OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
         return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
     }
 
-    public PropertyGraphPrinter createPrinterForNodes(String name, int index, LabelSchema labelSchema) throws IOException {
+    public PropertyGraphPrinter createPrinterForNodes(String name, LabelSchema labelSchema, boolean isTempFile) throws IOException {
+        return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(isTempFile)), labelSchema);
+    }
 
-        OutputWriter outputWriter = output.createOutputWriter(
-                () -> directories.createNodesFilePath(name, index, format),
-                kinesisConfig);
-
+    public PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+        OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
         return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
+    }
+
+    private FileExtension fileExtension(boolean tempFile) {
+        return tempFile ? FileExtension.TEMP_FILE : format;
     }
 }

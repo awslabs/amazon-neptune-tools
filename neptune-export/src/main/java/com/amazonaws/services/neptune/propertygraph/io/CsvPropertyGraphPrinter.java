@@ -86,6 +86,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         printProperties(properties, true);
     }
 
+    @Override
     public void printProperties(Map<?, ?> properties, boolean applyFormatting) {
         for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 

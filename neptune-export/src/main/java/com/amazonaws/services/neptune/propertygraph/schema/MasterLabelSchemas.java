@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
+
 import java.util.*;
 
 public class MasterLabelSchemas {
@@ -64,9 +66,9 @@ public class MasterLabelSchemas {
         graphSchema.replace(graphElementType, graphElementSchemas);
     }
 
-    public void rewrite(ExportSpecification<?> exportSpecification) throws Exception {
+    public void rewrite(ExportSpecification<?> exportSpecification, PropertyGraphTargetConfig targetConfig) throws Exception {
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
-            exportSpecification.rewrite(masterLabelSchema);
+            exportSpecification.rewrite(masterLabelSchema, targetConfig);
         }
     }
 }

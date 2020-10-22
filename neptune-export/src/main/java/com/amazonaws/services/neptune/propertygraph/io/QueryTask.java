@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -120,7 +121,11 @@ public class QueryTask implements Runnable {
         ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
 
         ResultsHandler resultsHandler = new ResultsHandler(
-                namedQuery.name(), labelWriters, writerFactory, graphElementSchemas);
+                namedQuery.name(),
+                labelWriters,
+                writerFactory,
+                graphElementSchemas);
+
         StatusHandler handler = new StatusHandler(resultsHandler, status);
 
         results.stream().
@@ -168,7 +173,8 @@ public class QueryTask implements Runnable {
                 }
 
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
+                PropertyGraphPrinter propertyGraphPrinter =
+                        writerFactory.createPrinter(Directories.fileName(label, index), labelSchema, targetConfig);
 
                 labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
 

@@ -24,10 +24,12 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ExportSpecification<T extends Map<?, ?>> {
@@ -115,17 +117,13 @@ public class ExportSpecification<T extends Map<?, ?>> {
         masterLabelSchemas.updateGraphSchema(graphSchema, graphElementType);
     }
 
-    public void rewrite(MasterLabelSchema masterLabelSchema) throws Exception {
+    public void rewrite(MasterLabelSchema masterLabelSchema, PropertyGraphTargetConfig targetConfig) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema();
-        List<String> masterHeaders = masterSchema.propertySchemas().stream()
-                .map(p -> p.property().toString())
-                .collect(Collectors.toList());
 
         for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
 
             File file  = new File(fileSpecificLabelSchema.outputId());
-            File newFile = new File(file.getAbsolutePath() + ".tmp");
 
             // need to add node or vertex token headers
             String[] filePropertyHeaders =
@@ -140,39 +138,28 @@ public class ExportSpecification<T extends Map<?, ?>> {
 
             Reader in = new FileReader(file);
 
-            CsvPropertyGraphPrinter csvPropertyGraphPrinter = new CsvPropertyGraphPrinter(
-                    new PrintOutputWriter(newFile.getAbsolutePath(), new FileWriter(newFile)),
-                    masterSchema,
-                    true,
-                    true);
-
-            if (graphElementType.equals(GraphElementTypes.Nodes)){
-                csvPropertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label");
-            } else {
-                csvPropertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
-            }
-
-            csvPropertyGraphPrinter.printHeaderRemainingColumns(masterLabelSchema.labelSchema().propertySchemas());
+            PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(file.getName(), masterSchema, targetConfig, true);
 
             CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
             Iterable<CSVRecord> records = format.parse(in);
 
             for (CSVRecord record : records) {
-                csvPropertyGraphPrinter.printStartRow();
+                printer.printStartRow();
 
                 if (graphElementType.equals(GraphElementTypes.Nodes)){
-                    csvPropertyGraphPrinter.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
+                    printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                 } else {
-                    csvPropertyGraphPrinter.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
+                    printer.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
                 }
 
-                csvPropertyGraphPrinter.printProperties(record.toMap(), false);
-                csvPropertyGraphPrinter.printEndRow();
+                printer.printProperties(record.toMap(), false);
+                printer.printEndRow();
             }
 
-            csvPropertyGraphPrinter.close();
+            printer.close();
+
             file.delete();
-            newFile.renameTo(file);
+            new File(printer.outputId()).renameTo(file);
         }
     }
 

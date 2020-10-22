@@ -85,6 +85,11 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
+    public void printProperties(Map<?, ?> properties, boolean applyFormatting) throws IOException {
+        printProperties(properties);
+    }
+
+    @Override
     public void printProperties(String id, String streamOperation, Map<?, ?> properties) throws IOException {
         printProperties(properties);
     }

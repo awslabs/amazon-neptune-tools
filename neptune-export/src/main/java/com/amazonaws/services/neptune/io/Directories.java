@@ -24,6 +24,10 @@ import java.util.Collection;
 
 public class Directories {
 
+    public static String fileName(String name, int index){
+        return String.format("%s-%s", name, index);
+    }
+
     private static final String CONFIG_FILE = "config.json";
     private static final String QUERIES_FILE = "queries.json";
 
@@ -85,21 +89,21 @@ public class Directories {
         writer.writeMessage(fileType + " files : " + resultsDirectory.toAbsolutePath().toString());
     }
 
-    public Path createNodesFilePath(String name, int index, FileExtension extension){
-        return createFilePath(nodesDirectory, name, index, extension);
+    public Path createNodesFilePath(String name, FileExtension extension){
+        return createFilePath(nodesDirectory, name, extension);
     }
 
-    public Path createEdgesFilePath(String name, int index, FileExtension extension){
-        return createFilePath(edgesDirectory, name, index, extension);
+    public Path createEdgesFilePath(String name, FileExtension extension){
+        return createFilePath(edgesDirectory, name, extension);
     }
 
-    public Path createStatementsFilePath(String name, int index, FileExtension extension){
-        return createFilePath(statementsDirectory, name, index, extension);
+    public Path createStatementsFilePath(String name, FileExtension extension){
+        return createFilePath(statementsDirectory, name, extension);
     }
 
-    public Path createQueryResultsFilePath(String name, int index, FileExtension extension){
+    public Path createQueryResultsFilePath(String name, FileExtension extension){
         Path directory = resultsDirectory.resolve(name);
-        return createFilePath(directory, name, index, extension);
+        return createFilePath(directory, name, extension);
     }
 
     public void createResultsSubdirectories(Collection<String> subdirectoryNames) throws IOException {
@@ -120,10 +124,10 @@ public class Directories {
                 NamedQueriesCollection.class);
     }
 
-    private Path createFilePath(Path directory, String name, int index, FileExtension extension) {
+    private Path createFilePath(Path directory, String name, FileExtension extension) {
         String filename = tag.isEmpty() ?
-                String.format("%s-%s.%s", name, index, extension.suffix()) :
-                String.format("%s-%s-%s.%s", tag, name, index, extension.suffix());
+                String.format("%s.%s", name, extension.suffix()) :
+                String.format("%s-%s.%s", tag, name, extension.suffix());
         return directory.resolve(filename);
     }
 

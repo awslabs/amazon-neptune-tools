@@ -20,8 +20,6 @@ import com.amazonaws.services.neptune.rdf.Prefixes;
 import org.eclipse.rdf4j.rio.RDFWriter;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.function.Supplier;
 
 public class RdfTargetConfig {
 
@@ -39,7 +37,7 @@ public class RdfTargetConfig {
 
     public OutputWriter createOutputWriter() throws IOException {
         return output.createOutputWriter(
-                () -> directories.createStatementsFilePath("statements", 0, format),
+                () -> directories.createStatementsFilePath("statements", format),
                 kinesisConfig);
     }
 

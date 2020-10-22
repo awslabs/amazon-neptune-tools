@@ -29,6 +29,8 @@ public interface PropertyGraphPrinter extends AutoCloseable {
 
     void printProperties(Map<?, ?> properties) throws IOException;
 
+    void printProperties(Map<?, ?> properties, boolean applyFormatting) throws IOException;
+
     void printProperties(String id, String streamOperation, Map<?, ?> properties) throws IOException;
 
     void printEdge(String id, String label, String from, String to) throws IOException;

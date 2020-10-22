@@ -59,6 +59,11 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
+    public void printProperties(Map<?, ?> properties, boolean applyFormatting) throws IOException {
+        printProperties(properties);
+    }
+
+    @Override
     public void printProperties(String id, String streamOperation, Map<?, ?> properties) throws IOException {
 
         for (Map.Entry<?, ?> entry : properties.entrySet()) {

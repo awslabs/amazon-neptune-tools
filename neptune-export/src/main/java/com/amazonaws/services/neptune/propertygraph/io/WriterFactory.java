@@ -18,7 +18,9 @@ import java.io.IOException;
 
 public interface WriterFactory<T> {
 
-    PropertyGraphPrinter createPrinter(String name, int index, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException;
+    PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException;
+
+    PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig, boolean isTempFile) throws IOException;
 
     LabelWriter<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
 

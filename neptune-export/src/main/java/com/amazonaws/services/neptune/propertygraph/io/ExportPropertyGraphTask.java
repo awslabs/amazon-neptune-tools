@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
@@ -153,7 +154,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
             try {
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(label, index, labelSchema, targetConfig);
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(Directories.fileName(label, index), labelSchema, targetConfig);
                 LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
                 labelWriters.put(label, labelWriter);

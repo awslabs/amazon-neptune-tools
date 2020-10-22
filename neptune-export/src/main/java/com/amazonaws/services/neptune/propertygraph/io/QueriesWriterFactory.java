@@ -20,8 +20,13 @@ import java.util.Map;
 public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
 
     @Override
-    public PropertyGraphPrinter createPrinter(String name, int index, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
-        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForQueries(name, index, labelSchema);
+    public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
+        return createPrinter(name, labelSchema, targetConfig, false);
+    }
+
+    @Override
+    public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig, boolean isTempFile) throws IOException {
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForQueries(name, labelSchema, isTempFile);
         propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
         return propertyGraphPrinter;
     }
