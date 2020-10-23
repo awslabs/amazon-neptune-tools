@@ -24,9 +24,11 @@ import java.util.Set;
 
 public class AllLabels implements LabelsFilter {
 
-    static final LabelsFilter INSTANCE = new AllLabels();
+    private final LabelStrategy labelStrategy;
 
-    private AllLabels(){}
+    public AllLabels(LabelStrategy labelStrategy) {
+        this.labelStrategy = labelStrategy;
+    }
 
     @Override
     public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
@@ -34,8 +36,8 @@ public class AllLabels implements LabelsFilter {
     }
 
     @Override
-    public Collection<String> resolveLabels(GraphClient<?> graphClient) {
-        return graphClient.labels();
+    public Collection<Label> resolveLabels(GraphClient<?> graphClient) {
+        return graphClient.labels(labelStrategy);
     }
 
     @Override

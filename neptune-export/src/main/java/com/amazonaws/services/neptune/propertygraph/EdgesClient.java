@@ -132,16 +132,8 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public Collection<String> labels() {
-        // Using dedup can cause MemoryLimitExceededException on large datasets, so do the dedup in the set
-
-        GraphTraversal<Edge, String> traversal = g.E().label();
-
-        logger.info(GremlinQueryDebugger.queryAsString(traversal));
-
-        Set<String> labels = new HashSet<>();
-        traversal.forEachRemaining(labels::add);
-        return labels;
+    public Collection<Label> labels(LabelStrategy labelStrategy) {
+        return labelStrategy.getLabels(g);
     }
 
     @Override

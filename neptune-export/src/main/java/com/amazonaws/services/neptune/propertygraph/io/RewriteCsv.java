@@ -32,7 +32,7 @@ public class RewriteCsv implements RewriteCommand {
                         PropertyGraphTargetConfig targetConfig,
                         GraphElementType<?> graphElementType) throws Exception {
 
-        Timer.timedActivity("rewriting output files",
+        Timer.timedActivity(String.format("rewriting %s files", graphElementType.name()),
                 (CheckedActivity.Runnable) () -> {
             rewriteFiles(masterLabelSchemas, targetConfig, graphElementType);
         });

@@ -12,16 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
 
-public interface LabelsFilter {
-    GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal);
-
-    Collection<Label> resolveLabels(GraphClient<?> graphClient);
-
-    String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas);
+public interface LabelStrategy {
+    Collection<Label> getLabels(GraphTraversalSource g);
 }

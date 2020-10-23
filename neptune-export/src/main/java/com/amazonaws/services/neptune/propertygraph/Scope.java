@@ -22,21 +22,22 @@ import java.util.stream.Collectors;
 public enum Scope {
     all {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
-                                                                       List<String> edgeLabels,
+        public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,
+                                                                       Collection<Label> edgeLabels,
                                                                        TokensOnly tokensOnly,
+                                                                       EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
                                                                        Collection<String> labModeFeatures) {
             return Arrays.asList(
                     new ExportSpecification<>(
                             GraphElementTypes.Nodes,
-                            Scope.labelsFilter(nodeLabels),
+                            Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                             tokensOnly.nodeTokensOnly(),
                             stats,
                             labModeFeatures),
                     new ExportSpecification<>(
                             GraphElementTypes.Edges,
-                            Scope.labelsFilter(edgeLabels),
+                            Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                             tokensOnly.edgeTokensOnly(),
                             stats,
                             labModeFeatures)
@@ -45,15 +46,16 @@ public enum Scope {
     },
     nodes {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
-                                                                       List<String> edgeLabels,
+        public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,
+                                                                       Collection<Label> edgeLabels,
                                                                        TokensOnly tokensOnly,
+                                                                       EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
                                                                        Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
                             GraphElementTypes.Nodes,
-                            Scope.labelsFilter(nodeLabels),
+                            Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                             tokensOnly.nodeTokensOnly(),
                             stats,
                             labModeFeatures)
@@ -62,15 +64,16 @@ public enum Scope {
     },
     edges {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
-                                                                       List<String> edgeLabels,
+        public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,
+                                                                       Collection<Label> edgeLabels,
                                                                        TokensOnly tokensOnly,
+                                                                       EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
                                                                        Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
                             GraphElementTypes.Edges,
-                            Scope.labelsFilter(edgeLabels),
+                            Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                             tokensOnly.edgeTokensOnly(),
                             stats,
                             labModeFeatures)
@@ -82,18 +85,19 @@ public enum Scope {
         return labels.stream().flatMap(v -> Arrays.stream(v.split(","))).collect(Collectors.toSet());
     }
 
-    private static LabelsFilter labelsFilter(Collection<String> labels){
+    private static LabelsFilter labelsFilter(Collection<Label> labels, LabelStrategy labelStrategy){
         if (labels.isEmpty()){
-            return AllLabels.INSTANCE;
+            return new AllLabels(labelStrategy);
         }
 
-        return new SpecifiedLabels(toSet(labels));
+        return new SpecifiedLabels(labels);
     }
 
     public abstract Collection<ExportSpecification<?>> exportSpecifications(
-            List<String> nodeLabels,
-            List<String> edgeLabels,
+            Collection<Label> nodeLabels,
+            Collection<Label> edgeLabels,
             TokensOnly tokensOnly,
+            EdgeLabelStrategy edgeLabelStrategy,
             ExportStats stats,
             Collection<String> labModeFeatures);
 

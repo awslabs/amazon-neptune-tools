@@ -27,7 +27,7 @@ public interface GraphClient<T> {
 
     long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig);
 
-    Collection<String> labels();
+    Collection<Label> labels(LabelStrategy labelStrategy);
 
     String getLabelsAsStringToken(T input);
 

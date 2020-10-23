@@ -24,27 +24,29 @@ import java.util.stream.Collectors;
 public class SpecifiedLabels implements LabelsFilter {
 
     public static LabelsFilter forLabels(String... labels){
-        Set<String> set = new HashSet<>();
-        Collections.addAll(set, labels);
-        return new SpecifiedLabels(set);
+        return new SpecifiedLabels(Label.forLabels(labels));
     }
 
-    private final Set<String> labels;
+    private final Collection<Label> labels;
 
-    public SpecifiedLabels(Set<String> labels) {
+    public SpecifiedLabels(Collection<Label> labels) {
         this.labels = labels;
     }
 
     @Override
     public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
-        String firstLabel = labels.stream().findFirst().orElse(null);
-        String[] remainingLabels = labels.stream().skip(1).collect(Collectors.toList()).toArray(new String[]{});
+        Label firstLabel = labels.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
+        String[] remainingLabels = labels.stream()
+                .skip(1)
+                .map(Label::label)
+                .collect(Collectors.toList())
+                .toArray(new String[]{});
 
-        return traversal.hasLabel(firstLabel, remainingLabels);
+        return traversal.hasLabel(firstLabel.label(), remainingLabels);
     }
 
     @Override
-    public Collection<String> resolveLabels(GraphClient<?> graphClient) {
+    public Collection<Label> resolveLabels(GraphClient<?> graphClient) {
         return labels;
     }
 
@@ -52,8 +54,8 @@ public class SpecifiedLabels implements LabelsFilter {
     public String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas) {
         Set<String> properties = new HashSet<>();
 
-        for (String label : labels) {
-            LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
+        for (Label label : labels) {
+            LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label.fullyQualifiedLabel());
             for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
                 properties.add(propertySchema.nameWithoutDataType());
             }

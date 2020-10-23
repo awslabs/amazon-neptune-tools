@@ -12,7 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.Scope;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
@@ -39,12 +41,23 @@ public class PropertyGraphScopeModule {
     @AllowedValues(allowedValues = {"all", "nodes", "edges"})
     private Scope scope = Scope.all;
 
-    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label) only (optional, default 'off').")
+    @Option(name = {"--tokens-only"}, description = "Export tokens (~id, ~label, ~from, ~to) only (optional, default 'off').")
     @Once
     @AllowedValues(allowedValues = {"off", "nodes", "edges", "both"})
     private TokensOnly tokensOnly = TokensOnly.off;
 
+    @Option(name = {"--edge-label-strategy"}, description = "Export edges by their edge labels, or by a combination of their start vertex label, edge label, and end vertex label (optional, default 'edgeLabelsOnly').")
+    @Once
+    @AllowedValues(allowedValues = {"edgeLabelsOnly", "edgeAndVertexLabels"})
+    private EdgeLabelStrategy edgeLabelStrategy = EdgeLabelStrategy.edgeLabelsOnly;
+
     public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats, Collection<String> labModeFeatures){
-        return scope.exportSpecifications(nodeLabels, edgeLabels, tokensOnly, stats, labModeFeatures);
+        return scope.exportSpecifications(
+                Label.forLabels(nodeLabels),
+                Label.forLabels(edgeLabels),
+                tokensOnly,
+                edgeLabelStrategy,
+                stats,
+                labModeFeatures);
     }
 }

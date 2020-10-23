@@ -13,7 +13,11 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.junit.Test;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,15 +26,19 @@ import static org.mockito.Mockito.when;
 
 public class RangeFactoryTest {
 
+    private static final LabelsFilter ALL_LABELS = new AllLabels(g -> {
+        throw new NotImplementedException();
+    });
+
     @Test
     public void shouldReturnConsecutiveRanges(){
 
-        GraphClient graphClient = mock(GraphClient.class);
+        GraphClient<?> graphClient = mock(GraphClient.class);
         when(graphClient.approxCount(any(), any())).thenReturn(2250L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
-                AllLabels.INSTANCE,
+                ALL_LABELS,
                 new RangeConfig(1000, 0, 2500, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -52,12 +60,12 @@ public class RangeFactoryTest {
     @Test
     public void shouldReturnSingleRangeForAllIfRangeSizeIsMinusOne(){
 
-        GraphClient graphClient = mock(GraphClient.class);
+        GraphClient<?> graphClient = mock(GraphClient.class);
         when(graphClient.approxCount(any(), any())).thenReturn(2250L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
-                AllLabels.INSTANCE,
+                ALL_LABELS,
                 new RangeConfig(-1, 0, Long.MAX_VALUE, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -73,12 +81,12 @@ public class RangeFactoryTest {
     @Test
     public void shouldLeaveLastRangeOpenIfNoUpperLimit(){
 
-        GraphClient graphClient = mock(GraphClient.class);
+        GraphClient<?> graphClient = mock(GraphClient.class);
         when(graphClient.approxCount(any(), any())).thenReturn(2250L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
-                AllLabels.INSTANCE,
+                ALL_LABELS,
                 new RangeConfig(1000, 0, Long.MAX_VALUE, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -100,12 +108,12 @@ public class RangeFactoryTest {
     @Test
     public void shouldIndicateThatItIsExhausted(){
 
-        GraphClient graphClient = mock(GraphClient.class);
+        GraphClient<?> graphClient = mock(GraphClient.class);
         when(graphClient.approxCount(any(), any())).thenReturn(5000L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
-                AllLabels.INSTANCE,
+                ALL_LABELS,
                 new RangeConfig(1000, 0, 2000, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -119,12 +127,12 @@ public class RangeFactoryTest {
     @Test
     public void shouldCalculateRangesStartingFromSkipNumber(){
 
-        GraphClient graphClient = mock(GraphClient.class);
+        GraphClient<?> graphClient = mock(GraphClient.class);
         when(graphClient.approxCount(any(), any())).thenReturn(30L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
-                AllLabels.INSTANCE,
+                ALL_LABELS,
                 new RangeConfig(10, 20, 10, -1, -1),
                 new ConcurrencyConfig(1));
 
