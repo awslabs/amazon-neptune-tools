@@ -28,11 +28,18 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     private final OutputWriter writer;
     private final JsonGenerator generator;
     private final LabelSchema labelSchema;
+    private final boolean allowUpdateSchema;
+    private boolean isNullable = false;
 
     public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema) throws IOException {
+        this(writer, generator, labelSchema, false);
+    }
+
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema, boolean allowUpdateSchema) throws IOException {
         this.writer = writer;
         this.generator = generator;
         this.labelSchema = labelSchema;
+        this.allowUpdateSchema = allowUpdateSchema;
     }
 
     @Override
@@ -52,36 +59,73 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
+
+        // print known properties
         for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
             Object key = propertySchema.property();
-
-            DataType dataType = propertySchema.dataType();
-            String formattedKey = propertySchema.nameWithoutDataType();
+            Object value = properties.get(key);
 
             if (properties.containsKey(key)) {
-
-                Object value = properties.get(key);
-
-                if (isList(value)) {
-                    List<?> values = (List<?>) value;
-                    if (values.size() > 1) {
-                        generator.writeFieldName(formattedKey);
-                        generator.writeStartArray();
-                        for (Object v : values) {
-                            dataType.printTo(generator, v);
-                        }
-                        generator.writeEndArray();
-                    } else {
-                        dataType.printTo(generator, formattedKey, values.get(0));
-                    }
-
-                } else {
-                    dataType.printTo(generator, formattedKey, value);
+                if (allowUpdateSchema) {
+                    propertySchema.accept(value);
+                }
+                printProperty(value, propertySchema);
+            } else {
+                if (allowUpdateSchema) {
+                    propertySchema.makeNullable();
                 }
             }
         }
 
+        // Print unknown properties
+        if (allowUpdateSchema) {
+            for (Map.Entry<?, ?> property : properties.entrySet()) {
+
+                Object key = property.getKey();
+
+                if (!labelSchema.containsProperty(key)) {
+
+                    Object value = property.getValue();
+
+                    PropertySchema propertySchema = new PropertySchema(key);
+                    propertySchema.accept(value);
+                    if (isNullable) {
+                        propertySchema.makeNullable();
+                    }
+
+                    labelSchema.put(key, propertySchema);
+
+                    printProperty(value, propertySchema);
+                }
+            }
+        }
+
+        isNullable = true;
+
+    }
+
+    private void printProperty(Object value, PropertySchema propertySchema) throws IOException {
+
+        DataType dataType = propertySchema.dataType();
+        String formattedKey = propertySchema.nameWithoutDataType();
+
+        if (isList(value)) {
+            List<?> values = (List<?>) value;
+            if (values.size() > 1) {
+                generator.writeFieldName(formattedKey);
+                generator.writeStartArray();
+                for (Object v : values) {
+                    dataType.printTo(generator, v);
+                }
+                generator.writeEndArray();
+            } else {
+                dataType.printTo(generator, formattedKey, values.get(0));
+            }
+
+        } else {
+            dataType.printTo(generator, formattedKey, value);
+        }
     }
 
     @Override

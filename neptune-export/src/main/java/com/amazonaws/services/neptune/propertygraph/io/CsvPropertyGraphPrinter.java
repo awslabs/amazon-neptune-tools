@@ -29,7 +29,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
-    private final boolean updatePropertyTypeInfo;
+    private final boolean allowUpdateSchema;
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    LabelSchema labelSchema,
@@ -42,13 +42,13 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
                                    LabelSchema labelSchema,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions,
-                                   boolean updatePropertyTypeInfo) {
+                                   boolean allowUpdateSchema) {
         this.writer = writer;
         this.labelSchema = labelSchema;
         this.commaPrinter = new CommaPrinter(writer);
         this.includeHeaders = includeHeaders;
         this.includeTypeDefinitions = includeTypeDefinitions;
-        this.updatePropertyTypeInfo = updatePropertyTypeInfo;
+        this.allowUpdateSchema = allowUpdateSchema;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
             if (properties.containsKey(property)) {
                 Object value = properties.get(property);
-                if (updatePropertyTypeInfo) {
+                if (allowUpdateSchema) {
                     propertySchema.accept(value);
                 }
                 printProperty(propertySchema.dataType(), value, applyFormatting);

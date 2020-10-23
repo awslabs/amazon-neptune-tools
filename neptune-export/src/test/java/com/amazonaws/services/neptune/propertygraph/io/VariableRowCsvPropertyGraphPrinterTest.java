@@ -100,7 +100,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     }
 
     @Test
-    public void columnsThatAppearInFirstRowButNOtSubsequentRowsAreNullable() throws IOException {
+    public void columnsThatAppearInFirstRowButNotSubsequentRowsAreNullable() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
         LabelSchema labelSchema = new LabelSchema("my-label");

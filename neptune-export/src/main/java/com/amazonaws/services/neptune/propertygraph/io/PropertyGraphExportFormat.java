@@ -19,16 +19,8 @@ import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.ArrayUtils;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
     json {
@@ -44,15 +36,14 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
 
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
-            generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
-            generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+            JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
             return new JsonPropertyGraphPrinter(writer, generator, labelSchema);
         }
 
         @Override
         PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
-            return createPrinter(writer, labelSchema, includeTypeDefinitions);
+            JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
+            return new JsonPropertyGraphPrinter(writer, generator, labelSchema, true);
         }
 
         @Override
@@ -140,9 +131,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
 
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
-            generator.setPrettyPrinter(new MinimalPrettyPrinter(""));
-            generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+            JsonGenerator generator = createJsonGenerator(writer, "");
             return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator);
         }
 
@@ -161,6 +150,13 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
             return RewriteCommand.NULL_COMMAND;
         }
     };
+
+    private static JsonGenerator createJsonGenerator(OutputWriter writer, String s) throws IOException {
+        JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
+        generator.setPrettyPrinter(new MinimalPrettyPrinter(s));
+        generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+        return generator;
+    }
 
     abstract PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException;
 
