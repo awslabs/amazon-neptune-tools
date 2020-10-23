@@ -56,7 +56,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     private CommonConnectionModule connection = new CommonConnectionModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();

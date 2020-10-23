@@ -15,12 +15,20 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.cli.RequiresSchema;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
     json {
@@ -43,8 +51,18 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
         }
 
         @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+            return createPrinter(writer, labelSchema, includeTypeDefinitions);
+        }
+
+        @Override
         public String description() {
             return "JSON";
+        }
+
+        @Override
+        public RewriteCommand createRewriteCommand() {
+            return RewriteCommand.NULL_COMMAND;
         }
     },
     csv {
@@ -64,8 +82,18 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
         }
 
         @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
+        }
+
+        @Override
         public String description() {
             return "CSV";
+        }
+
+        @Override
+        public RewriteCommand createRewriteCommand() {
+            return new RewriteCsv();
         }
     },
     csvNoHeaders {
@@ -85,29 +113,18 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
         }
 
         @Override
-        public String description() {
-            return "CSV (no headers)";
-        }
-    },
-    csvNoSchema {
-        @Override
-        public boolean requiresSchema() {
-            return false;
-        }
-
-        @Override
-        public String suffix() {
-            return "csv";
-        }
-
-        @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) {
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
             return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
         }
 
         @Override
         public String description() {
-            return "CSV";
+            return "CSV (no headers)";
+        }
+
+        @Override
+        public RewriteCommand createRewriteCommand() {
+            return new RewriteCsv();
         }
     },
     neptuneStreamsJson{
@@ -130,12 +147,26 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
         }
 
         @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+            return createPrinter(writer, labelSchema, includeTypeDefinitions);
+        }
+
+        @Override
         public String description() {
             return "JSON (Neptune Streams format)";
+        }
+
+        @Override
+        public RewriteCommand createRewriteCommand() {
+            return RewriteCommand.NULL_COMMAND;
         }
     };
 
     abstract PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException;
 
+    abstract PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException;
+
     public abstract String description();
+
+    public abstract RewriteCommand createRewriteCommand();
 }

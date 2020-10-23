@@ -39,7 +39,7 @@ public class PropertyGraphTargetModule implements RequiresSchema, CommandWriter 
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv').")
     @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson", "csvNoSchema"})
+    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
     private PropertyGraphExportFormat format = PropertyGraphExportFormat.csv;
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file').")
@@ -59,13 +59,19 @@ public class PropertyGraphTargetModule implements RequiresSchema, CommandWriter 
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 
+    private final boolean inferSchema;
+
+    public PropertyGraphTargetModule(boolean inferSchema) {
+        this.inferSchema = inferSchema;
+    }
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
         return Directories.createFor(directoryStructure, directory, exportId, tag );
     }
 
     public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, inferSchema);
     }
 
     public String description(){

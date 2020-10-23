@@ -13,24 +13,13 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
-import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.io.PrintOutputWriter;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.*;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-import java.io.*;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class ExportSpecification<T extends Map<?, ?>> {
     private final GraphElementType<T> graphElementType;
@@ -118,49 +107,8 @@ public class ExportSpecification<T extends Map<?, ?>> {
     }
 
     public void rewrite(MasterLabelSchema masterLabelSchema, PropertyGraphTargetConfig targetConfig) throws Exception {
-
-        LabelSchema masterSchema = masterLabelSchema.labelSchema();
-
-        for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
-
-            File file  = new File(fileSpecificLabelSchema.outputId());
-
-            // need to add node or vertex token headers
-            String[] filePropertyHeaders =
-                    fileSpecificLabelSchema.labelSchema().propertySchemas().stream()
-                    .map(p -> p.property().toString())
-                    .collect(Collectors.toList())
-                    .toArray(new String[]{});
-
-            String[] fileHeaders = graphElementType.equals(GraphElementTypes.Nodes) ?
-                    ArrayUtils.addAll(new String[]{"~id", "~label"}, filePropertyHeaders):
-                    ArrayUtils.addAll(new String[]{"~id", "~label", "~from", "~to"}, filePropertyHeaders);
-
-            Reader in = new FileReader(file);
-
-            PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(file.getName(), masterSchema, targetConfig, true);
-
-            CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
-            Iterable<CSVRecord> records = format.parse(in);
-
-            for (CSVRecord record : records) {
-                printer.printStartRow();
-
-                if (graphElementType.equals(GraphElementTypes.Nodes)){
-                    printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
-                } else {
-                    printer.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
-                }
-
-                printer.printProperties(record.toMap(), false);
-                printer.printEndRow();
-            }
-
-            printer.close();
-
-            file.delete();
-            new File(printer.outputId()).renameTo(file);
-        }
+        RewriteCommand rewriteCommand = targetConfig.createRewriteCommand();
+        rewriteCommand.execute(masterLabelSchema, targetConfig, graphElementType);
     }
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {

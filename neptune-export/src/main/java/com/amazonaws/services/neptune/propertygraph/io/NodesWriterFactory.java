@@ -21,12 +21,7 @@ public class NodesWriterFactory implements WriterFactory<Map<String, Object>> {
 
     @Override
     public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
-        return createPrinter(name, labelSchema, targetConfig, false);
-    }
-
-    @Override
-    public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig, boolean isTempFile) throws IOException {
-        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForNodes(name, labelSchema, isTempFile);
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForNodes(name, labelSchema);
 
         propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label");
         propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());

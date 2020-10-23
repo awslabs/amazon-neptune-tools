@@ -26,54 +26,78 @@ public class PropertyGraphTargetConfig {
     private final Target output;
     private final boolean includeTypeDefinitions;
     private final KinesisConfig kinesisConfig;
+    private final boolean inferSchema;
 
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
                                      boolean includeTypeDefinitions,
                                      PropertyGraphExportFormat format,
-                                     Target output) {
+                                     Target output,
+                                     boolean inferSchema) {
         this.directories = directories;
         this.format = format;
         this.output = output;
         this.includeTypeDefinitions = includeTypeDefinitions;
         this.kinesisConfig = kinesisConfig;
+        this.inferSchema = inferSchema;
     }
 
     public Target output() {
         return output;
     }
 
-    public PropertyGraphExportFormat format() { return format;
+    public PropertyGraphExportFormat format() {
+        return format;
     }
 
-    public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema, boolean isTempFile) throws IOException {
-        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(isTempFile)), labelSchema);
+    public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema) throws IOException {
+        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(useTempFiles())), labelSchema);
     }
 
     public PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
         OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
-        return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
+        return createPrinter(labelSchema, outputWriter);
     }
 
-    public PropertyGraphPrinter createPrinterForEdges(String name, LabelSchema labelSchema, boolean isTempFile) throws IOException {
-        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(isTempFile)), labelSchema);
+    public PropertyGraphPrinter createPrinterForEdges(String name, LabelSchema labelSchema) throws IOException {
+        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(useTempFiles())), labelSchema);
     }
 
     public PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
         OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
-        return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
+        return createPrinter(labelSchema, outputWriter);
     }
 
-    public PropertyGraphPrinter createPrinterForNodes(String name, LabelSchema labelSchema, boolean isTempFile) throws IOException {
-        return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(isTempFile)), labelSchema);
+    public PropertyGraphPrinter createPrinterForNodes(String name, LabelSchema labelSchema) throws IOException {
+        return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(useTempFiles())), labelSchema);
     }
 
     public PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
         OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
-        return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
+        return createPrinter(labelSchema, outputWriter);
+    }
+
+    public PropertyGraphTargetConfig forFileConsolidation(){
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, false);
+    }
+
+    private boolean useTempFiles(){
+        return !inferSchema;
+    }
+
+    private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {
+        if (inferSchema){
+            return format.createPrinterForInferredSchema(outputWriter, labelSchema, includeTypeDefinitions);
+        } else {
+            return format.createPrinter(outputWriter, labelSchema, includeTypeDefinitions);
+        }
     }
 
     private FileExtension fileExtension(boolean tempFile) {
         return tempFile ? FileExtension.TEMP_FILE : format;
+    }
+
+    public RewriteCommand createRewriteCommand() {
+        return format.createRewriteCommand();
     }
 }

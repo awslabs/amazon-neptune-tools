@@ -30,6 +30,11 @@ public class GraphElementTypes {
         }
 
         @Override
+        public Collection<String> tokenNames() {
+            return Arrays.asList("~id", "~label");
+        }
+
+        @Override
         public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures) {
             return new NodesClient(g, tokensOnly, stats, labModeFeatures);
         }
@@ -44,6 +49,11 @@ public class GraphElementTypes {
         @Override
         public String name() {
             return "edges";
+        }
+
+        @Override
+        public Collection<String> tokenNames() {
+            return Arrays.asList("~id", "~label", "~from", "~to");
         }
 
         @Override

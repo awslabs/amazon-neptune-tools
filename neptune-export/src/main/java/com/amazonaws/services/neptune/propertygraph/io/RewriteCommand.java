@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -12,14 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
+import com.amazonaws.services.neptune.propertygraph.schema.MasterLabelSchema;
 
-import java.io.IOException;
+public interface RewriteCommand {
 
-public interface WriterFactory<T> {
+    RewriteCommand NULL_COMMAND = (masterLabelSchema, targetConfig, graphElementType) -> {
+        //Do nothing
+    };
 
-    PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException;
-
-    LabelWriter<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
-
+    void execute(MasterLabelSchema masterLabelSchema, PropertyGraphTargetConfig targetConfig, GraphElementType<?> graphElementType) throws Exception;
 }

@@ -21,6 +21,7 @@ import java.util.Collection;
 
 public interface GraphElementType<T> {
     String name();
+    Collection<String> tokenNames();
     GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures);
     WriterFactory<T> writerFactory();
 }

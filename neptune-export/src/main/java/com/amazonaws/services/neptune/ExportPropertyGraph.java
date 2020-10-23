@@ -67,7 +67,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(true);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -103,9 +103,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
 
-                        GraphSchema graphSchema = targetConfig.format() != PropertyGraphExportFormat.csvNoSchema ?
-                                sampling.createSchemaCommand(exportSpecifications, g).execute() :
-                                new GraphSchema();
+                        //Temp until fix for json
+                        GraphSchema graphSchema = targetConfig.format() == PropertyGraphExportFormat.csv ||  targetConfig.format() == PropertyGraphExportFormat.csv?
+                                new GraphSchema() :
+                                sampling.createSchemaCommand(exportSpecifications, g).execute();
 
                         ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                                 exportSpecifications,

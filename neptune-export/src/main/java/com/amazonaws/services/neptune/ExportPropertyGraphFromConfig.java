@@ -57,7 +57,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
