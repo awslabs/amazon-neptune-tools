@@ -63,8 +63,7 @@ public class ExportPropertyGraphJob {
     }
 
     private void export(ExportSpecification<?> exportSpecification,
-                        Collection<Future<FileSpecificLabelSchemas>> futures)
-            throws InterruptedException, java.util.concurrent.ExecutionException {
+                        Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
 
         System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
@@ -94,6 +93,16 @@ public class ExportPropertyGraphJob {
             throw new RuntimeException(e);
         }
 
+        MasterLabelSchemas masterLabelSchemas =
+                MasterLabelSchemas.fromCollection(getFileSpecificLabelSchemas(futures));
+
+        exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
+        exportSpecification.rewrite(masterLabelSchemas, targetConfig);
+    }
+
+    private Collection<FileSpecificLabelSchemas> getFileSpecificLabelSchemas(
+            Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
+
         Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas = new ArrayList<>();
 
         for (Future<FileSpecificLabelSchemas> future : futures) {
@@ -105,16 +114,7 @@ public class ExportPropertyGraphJob {
             }
             allFileSpecificLabelSchemas.add(future.get());
         }
+        return allFileSpecificLabelSchemas;
 
-        MasterLabelSchemas masterLabelSchemas =
-                MasterLabelSchemas.fromCollection(allFileSpecificLabelSchemas);
-
-        exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
-
-        try {
-            masterLabelSchemas.rewrite(exportSpecification, targetConfig);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

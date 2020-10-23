@@ -12,23 +12,17 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.cli.RequiresSchema;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
 
 import java.io.IOException;
 
-public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
+public enum PropertyGraphExportFormat implements FileExtension {
     json {
-        @Override
-        public boolean requiresSchema() {
-            return true;
-        }
-
         @Override
         public String suffix() {
             return "json";
@@ -58,11 +52,6 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
     },
     csv {
         @Override
-        public boolean requiresSchema() {
-            return true;
-        }
-
-        @Override
         public String suffix() {
             return "csv";
         }
@@ -89,11 +78,6 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
     },
     csvNoHeaders {
         @Override
-        public boolean requiresSchema() {
-            return true;
-        }
-
-        @Override
         public String suffix() {
             return "csv";
         }
@@ -118,12 +102,7 @@ public enum PropertyGraphExportFormat implements FileExtension, RequiresSchema {
             return new RewriteCsv();
         }
     },
-    neptuneStreamsJson{
-        @Override
-        public boolean requiresSchema() {
-            return false;
-        }
-
+    neptuneStreamsJson {
         @Override
         public String suffix() {
             return "json";

@@ -21,20 +21,14 @@ public class SchemaSamplingSpecification {
 
     private final boolean sample;
     private final long sampleSize;
-    private final boolean requiresSchema;
 
-    public SchemaSamplingSpecification(boolean sample, long sampleSize, boolean requiresSchema) {
+    public SchemaSamplingSpecification(boolean sample, long sampleSize) {
         this.sample = sample;
         this.sampleSize = sampleSize;
-        this.requiresSchema = requiresSchema;
     }
 
     public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                         GraphTraversalSource g) {
-        if (!requiresSchema){
-            return GraphSchema::new;
-        }
-
         if (sample) {
             return new CreateGraphSchemaFromSample(exportSpecifications, g, sampleSize);
         } else {

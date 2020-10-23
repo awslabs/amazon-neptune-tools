@@ -23,8 +23,6 @@ import java.util.Collection;
 
 public class PropertyGraphSchemaSamplingModule {
 
-    private final RequiresSchema requiresSchema;
-
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating schema.")
     @Once
     private boolean sample = false;
@@ -33,13 +31,9 @@ public class PropertyGraphSchemaSamplingModule {
     @Once
     private long sampleSize = 1000;
 
-    public PropertyGraphSchemaSamplingModule(RequiresSchema requiresSchema) {
-        this.requiresSchema = requiresSchema;
-    }
 
     public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                         GraphTraversalSource g){
-        return new SchemaSamplingSpecification(sample, sampleSize, requiresSchema.requiresSchema())
-                .createSchemaCommand(exportSpecifications, g);
+        return new SchemaSamplingSpecification(sample, sampleSize).createSchemaCommand(exportSpecifications, g);
     }
 }

@@ -106,9 +106,9 @@ public class ExportSpecification<T extends Map<?, ?>> {
         masterLabelSchemas.updateGraphSchema(graphSchema, graphElementType);
     }
 
-    public void rewrite(MasterLabelSchema masterLabelSchema, PropertyGraphTargetConfig targetConfig) throws Exception {
+    public void rewrite(MasterLabelSchemas masterLabelSchemas, PropertyGraphTargetConfig targetConfig) throws Exception {
         RewriteCommand rewriteCommand = targetConfig.createRewriteCommand();
-        rewriteCommand.execute(masterLabelSchema, targetConfig, graphElementType);
+        rewriteCommand.execute(masterLabelSchemas, targetConfig, graphElementType);
     }
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {

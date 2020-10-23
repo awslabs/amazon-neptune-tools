@@ -61,7 +61,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule(() -> true);
+    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule();
 
     @Override
     public void run() {

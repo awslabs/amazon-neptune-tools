@@ -25,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-public class PropertyGraphTargetModule implements RequiresSchema, CommandWriter {
+public class PropertyGraphTargetModule implements CommandWriter {
 
     @Option(name = {"-d", "--dir"}, description = "Root directory for output.")
     @Required
@@ -86,10 +86,5 @@ public class PropertyGraphTargetModule implements RequiresSchema, CommandWriter 
     @Override
     public void writeMessage(String value) {
         output.writeMessage(value);
-    }
-
-    @Override
-    public boolean requiresSchema() {
-        return format.requiresSchema();
     }
 }
