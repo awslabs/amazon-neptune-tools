@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.PrintOutputWriter;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class JsonPropertyGraphPrinterTest {
 
         try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                new LabelSchema("my-label"),
+                new LabelSchema(new Label("my-label")),
                 true)) {
 
             propertyGraphPrinter.printStartRow();
@@ -54,7 +55,7 @@ public class JsonPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
@@ -83,7 +84,7 @@ public class JsonPropertyGraphPrinterTest {
     public void updatesDataTypesForColumnsWithEachNewRowWhenInferringSchema() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
@@ -104,7 +105,7 @@ public class JsonPropertyGraphPrinterTest {
     public void columnsThatDoNotAppearInFirstRowAreNullable() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
@@ -127,7 +128,7 @@ public class JsonPropertyGraphPrinterTest {
     public void columnsThatAppearInFirstRowButNotSubsequentRowsAreNullable() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
@@ -136,7 +137,7 @@ public class JsonPropertyGraphPrinterTest {
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),
-                map( entry("p-2", 40), entry("p-3", 50)),
+                map(entry("p-2", 40), entry("p-3", 50)),
                 map(entry("p-1", 60), entry("p-2", 70), entry("p-4", 80))
         );
 

@@ -18,9 +18,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class AllLabels implements LabelsFilter {
 
@@ -36,7 +34,7 @@ public class AllLabels implements LabelsFilter {
     }
 
     @Override
-    public Collection<Label> resolveLabels(GraphClient<?> graphClient) {
+    public Collection<Label> getLabelsUsing(GraphClient<?> graphClient) {
         return graphClient.labels(labelStrategy);
     }
 
@@ -45,9 +43,9 @@ public class AllLabels implements LabelsFilter {
 
         Set<String> properties = new HashSet<>();
 
-        Iterable<String> labels = graphElementSchemas.labels();
+        Iterable<Label> labels = graphElementSchemas.labels();
 
-        for (String label : labels) {
+        for (Label label : labels) {
             LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
             for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
                 properties.add(propertySchema.nameWithoutDataType());
@@ -55,5 +53,25 @@ public class AllLabels implements LabelsFilter {
         }
 
         return properties.toArray(new String[]{});
+    }
+
+    @Override
+    public Label getLabelFor(Map<String, Object> input) {
+        return labelStrategy.getLabelFor(input);
+    }
+
+    @Override
+    public String[] addAdditionalColumnNames(String... columns) {
+        return labelStrategy.additionalColumns(columns);
+    }
+
+    @Override
+    public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+        return labelStrategy.addAdditionalColumns(t);
+    }
+
+    @Override
+    public LabelsFilter filterFor(Label label) {
+        return new SpecifiedLabels(Collections.singletonList(label), labelStrategy);
     }
 }

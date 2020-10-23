@@ -23,14 +23,12 @@ import java.util.stream.Collectors;
 
 public class SpecifiedLabels implements LabelsFilter {
 
-    public static LabelsFilter forLabels(String... labels){
-        return new SpecifiedLabels(Label.forLabels(labels));
-    }
-
     private final Collection<Label> labels;
+    private final LabelStrategy labelStrategy;
 
-    public SpecifiedLabels(Collection<Label> labels) {
+    public SpecifiedLabels(Collection<Label> labels, LabelStrategy labelStrategy) {
         this.labels = labels;
+        this.labelStrategy = labelStrategy;
     }
 
     @Override
@@ -46,7 +44,7 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public Collection<Label> resolveLabels(GraphClient<?> graphClient) {
+    public Collection<Label> getLabelsUsing(GraphClient<?> graphClient) {
         return labels;
     }
 
@@ -55,12 +53,32 @@ public class SpecifiedLabels implements LabelsFilter {
         Set<String> properties = new HashSet<>();
 
         for (Label label : labels) {
-            LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label.fullyQualifiedLabel());
+            LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
             for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
                 properties.add(propertySchema.nameWithoutDataType());
             }
         }
 
         return properties.toArray(new String[]{});
+    }
+
+    @Override
+    public Label getLabelFor(Map<String, Object> input) {
+        return labelStrategy.getLabelFor(input);
+    }
+
+    @Override
+    public String[] addAdditionalColumnNames(String... columns) {
+        return labelStrategy.additionalColumns(columns);
+    }
+
+    @Override
+    public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+        return labelStrategy.addAdditionalColumns(t);
+    }
+
+    @Override
+    public LabelsFilter filterFor(Label label) {
+        return new SpecifiedLabels(Collections.singletonList(label), labelStrategy);
     }
 }

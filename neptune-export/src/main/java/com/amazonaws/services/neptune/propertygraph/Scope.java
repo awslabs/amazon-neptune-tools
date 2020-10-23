@@ -90,7 +90,7 @@ public enum Scope {
             return new AllLabels(labelStrategy);
         }
 
-        return new SpecifiedLabels(labels);
+        return new SpecifiedLabels(labels, labelStrategy);
     }
 
     public abstract Collection<ExportSpecification<?>> exportSpecifications(

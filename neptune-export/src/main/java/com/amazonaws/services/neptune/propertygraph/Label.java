@@ -1,14 +1,33 @@
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.util.*;
 
 public class Label {
 
-    public static Collection<Label> forLabels(String... labels){
-        return forLabels(Arrays.asList(labels));
+    public static Label fromJson(JsonNode jsonNode) {
+        if (jsonNode.isContainerNode()) {
+            ArrayNode startLabels = (ArrayNode) jsonNode.path("startLabels");
+            String label = jsonNode.path("name").textValue();
+            ArrayNode endLabels = (ArrayNode) jsonNode.path("endLabels");
+            Collection<String> preLabels = new ArrayList<>();
+            startLabels.forEach(l -> preLabels.add(l.textValue()));
+            Collection<String> postLabels = new ArrayList<>();
+            endLabels.forEach(l -> postLabels.add(l.textValue()));
+            return new Label(label, preLabels, postLabels);
+        } else {
+            return new Label(jsonNode.textValue());
+        }
     }
 
-    public static Collection<Label> forLabels(Collection<String> labels){
+    public static Collection<Label> forLabels(Collection<String> labels) {
         Set<Label> results = new HashSet<>();
         for (String label : labels) {
             results.add(new Label(label));
@@ -29,10 +48,9 @@ public class Label {
         this.label = label;
         this.preLabels = preLabels;
         this.postLabels = postLabels;
-        List<String> labels = new ArrayList<>(preLabels);
-        labels.add(label);
-        labels.addAll(postLabels);
-        this.fullyQualifiedLabel = String.join("::", labels);
+        this.fullyQualifiedLabel = preLabels.isEmpty() || postLabels.isEmpty() ?
+                label :
+                String.format("(%s)-[%s]->(%s)", String.join("|", preLabels), label, String.join("|", postLabels));
     }
 
     public String label() {
@@ -54,5 +72,30 @@ public class Label {
     @Override
     public int hashCode() {
         return Objects.hash(fullyQualifiedLabel);
+    }
+
+    public JsonNode toJson() {
+
+        if (preLabels.isEmpty() || postLabels.isEmpty()) {
+            return JsonNodeFactory.instance.textNode(label);
+        }
+
+        ObjectNode labelNode = JsonNodeFactory.instance.objectNode();
+        ArrayNode startLabels = JsonNodeFactory.instance.arrayNode();
+        ArrayNode endLabels = JsonNodeFactory.instance.arrayNode();
+
+        labelNode.put("name", label);
+
+        for (String preLabel : preLabels) {
+            startLabels.add(preLabel);
+        }
+        labelNode.set("startLabels", startLabels);
+
+        for (String postLabel : postLabels) {
+            endLabels.add(postLabel);
+        }
+        labelNode.set("endLabels", endLabels);
+
+        return labelNode;
     }
 }

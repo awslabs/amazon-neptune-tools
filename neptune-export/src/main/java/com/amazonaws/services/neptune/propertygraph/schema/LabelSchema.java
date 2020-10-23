@@ -13,6 +13,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -20,10 +22,10 @@ import java.util.Map;
 
 public class LabelSchema {
 
-    private final String label;
+    private final Label label;
     private final Map<Object, PropertySchema> propertySchemas = new LinkedHashMap<>();
 
-    public LabelSchema(String label) {
+    public LabelSchema(Label label) {
         this.label = label;
     }
 
@@ -50,7 +52,7 @@ public class LabelSchema {
         return propertySchemas.size();
     }
 
-    public String label() {
+    public Label label() {
         return label;
     }
 

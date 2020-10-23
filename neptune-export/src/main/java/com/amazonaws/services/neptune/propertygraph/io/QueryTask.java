@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
@@ -57,7 +58,7 @@ public class QueryTask implements Runnable {
     public void run() {
 
         QueriesWriterFactory writerFactory = new QueriesWriterFactory();
-        Map<String, LabelWriter<Map<?, ?>>> labelWriters = new HashMap<>();
+        Map<Label, LabelWriter<Map<?, ?>>> labelWriters = new HashMap<>();
 
         try {
 
@@ -109,19 +110,19 @@ public class QueryTask implements Runnable {
         firstPassResults.stream().
                 map(r -> castToMap(r.getObject())).
                 forEach(r -> {
-                    graphElementSchemas.update(namedQuery.name(), r, true);
+                    graphElementSchemas.update(new Label(namedQuery.name()), r, true);
                 });
     }
 
     private void executeQuery(NamedQuery namedQuery,
                               QueriesWriterFactory writerFactory,
-                              Map<String, LabelWriter<Map<?, ?>>> labelWriters,
+                              Map<Label, LabelWriter<Map<?, ?>>> labelWriters,
                               GraphElementSchemas graphElementSchemas) {
 
         ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
 
         ResultsHandler resultsHandler = new ResultsHandler(
-                namedQuery.name(),
+                new Label(namedQuery.name()),
                 labelWriters,
                 writerFactory,
                 graphElementSchemas);
@@ -149,13 +150,13 @@ public class QueryTask implements Runnable {
 
     private class ResultsHandler implements GraphElementHandler<Map<?, ?>> {
 
-        private final String label;
-        private final Map<String, LabelWriter<Map<?, ?>>> labelWriters;
+        private final Label label;
+        private final Map<Label, LabelWriter<Map<?, ?>>> labelWriters;
         private final QueriesWriterFactory writerFactory;
         private final GraphElementSchemas graphElementSchemas;
 
-        private ResultsHandler(String label,
-                               Map<String, LabelWriter<Map<?, ?>>> labelWriters,
+        private ResultsHandler(Label label,
+                               Map<Label, LabelWriter<Map<?, ?>>> labelWriters,
                                QueriesWriterFactory writerFactory,
                                GraphElementSchemas graphElementSchemas) {
             this.label = label;
@@ -174,7 +175,7 @@ public class QueryTask implements Runnable {
 
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
                 PropertyGraphPrinter propertyGraphPrinter =
-                        writerFactory.createPrinter(Directories.fileName(label, index), labelSchema, targetConfig);
+                        writerFactory.createPrinter(Directories.fileName(label.fullyQualifiedLabel(), index), labelSchema, targetConfig);
 
                 labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
 

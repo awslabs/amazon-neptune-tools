@@ -13,11 +13,14 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.junit.Test;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Collection;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,8 +29,26 @@ import static org.mockito.Mockito.when;
 
 public class RangeFactoryTest {
 
-    private static final LabelsFilter ALL_LABELS = new AllLabels(g -> {
-        throw new NotImplementedException();
+    private static final LabelsFilter ALL_LABELS = new AllLabels(new LabelStrategy() {
+        @Override
+        public Collection<Label> getLabels(GraphTraversalSource g) {
+            throw new NotImplementedException();
+        }
+
+        @Override
+        public Label getLabelFor(Map<String, Object> input) {
+            throw new NotImplementedException();
+        }
+
+        @Override
+        public String[] additionalColumns(String... columns) {
+            throw new NotImplementedException();
+        }
+
+        @Override
+        public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+            throw new NotImplementedException();
+        }
     });
 
     @Test

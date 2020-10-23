@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.PrintOutputWriter;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import org.junit.Test;
@@ -32,7 +33,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -60,7 +61,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     public void updatesDataTypesForColumnsWithEachNewRow() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -81,7 +82,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     public void columnsThatDoNotAppearInFirstRowAreNullable() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -103,7 +104,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
     public void columnsThatAppearInFirstRowButNotSubsequentRowsAreNullable() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        LabelSchema labelSchema = new LabelSchema("my-label");
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
@@ -111,7 +112,7 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),
-                map( entry("p-2", 40), entry("p-3", 50)),
+                map(entry("p-2", 40), entry("p-3", 50)),
                 map(entry("p-1", 60), entry("p-2", 70), entry("p-4", 80))
         );
 

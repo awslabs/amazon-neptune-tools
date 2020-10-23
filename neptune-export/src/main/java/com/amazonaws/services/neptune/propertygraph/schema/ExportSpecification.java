@@ -59,13 +59,13 @@ public class ExportSpecification<T extends Map<?, ?>> {
         }
 
         GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
-        Collection<Label> labels = labelsFilter.resolveLabels(graphClient);
+        Collection<Label> labels = labelsFilter.getLabelsUsing(graphClient);
 
         for (Label label : labels) {
             graphClient.queryForSchema(
                     new CreateSchemaHandler(graphElementType, graphSchema),
                     new Range(0, sampleSize),
-                    SpecifiedLabels.forLabels(label.label()));
+                    labelsFilter.filterFor(label));
         }
     }
 

@@ -14,13 +14,12 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public enum NodeLabelStrategy implements LabelStrategy {
 
@@ -36,6 +35,26 @@ public enum NodeLabelStrategy implements LabelStrategy {
             Set<Label> labels = new HashSet<>();
             traversal.forEachRemaining(r -> labels.add(new Label(r)));
             return labels;
+        }
+
+        @Override
+        public Label getLabelFor(Map<String, Object> input) {
+            List<String> labels = (List<String>) input.get("label");
+            if (labels.size() > 1) {
+                return new Label(labels.toString());
+            } else {
+                return new Label(labels.get(0));
+            }
+        }
+
+        @Override
+        public String[] additionalColumns(String... columns) {
+            return columns;
+        }
+
+        @Override
+        public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+            return t;
         }
 
     };

@@ -82,8 +82,8 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1));
         GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
-        GraphTraversal<? extends Element, Map<String, Object>> traversal = t3.
-                        project("id", "label", "properties", "from", "to").
+        GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
+                        project("id", labelsFilter.addAdditionalColumnNames("label", "properties", "from", "to")).
                         by(T.id).
                         by(T.label).
                         by(tokensOnly ?
@@ -93,7 +93,9 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                         by(outV().id()).
                         by(inV().id());
 
-        logger.info(GremlinQueryDebugger.queryAsString(t1));
+        GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t4);
+
+        logger.info(GremlinQueryDebugger.queryAsString(traversal));
 
         traversal.forEachRemaining(p -> {
             try {
@@ -137,12 +139,12 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public String getLabelsAsStringToken(Map<String, Object> input) {
-        return (String) input.get("label");
+    public Label getLabelFor(Map<String, Object> input, LabelsFilter labelsFilter) {
+        return labelsFilter.getLabelFor(input);
     }
 
     @Override
-    public void updateStats(String label) {
+    public void updateStats(Label label) {
         stats.incrementEdgeStats(label);
     }
 

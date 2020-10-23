@@ -12,9 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +40,21 @@ public enum EdgeLabelStrategy implements LabelStrategy {
             return labels;
         }
 
+        @Override
+        public Label getLabelFor(Map<String, Object> input) {
+            return new Label(input.get("label").toString());
+        }
+
+        @Override
+        public String[] additionalColumns(String... columns) {
+            return columns;
+        }
+
+        @Override
+        public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+            return t;
+        }
+
     },
     edgeAndVertexLabels {
         @Override
@@ -54,13 +71,28 @@ public enum EdgeLabelStrategy implements LabelStrategy {
 
             Set<Label> labels = new HashSet<>();
             traversal.forEachRemaining(r -> {
-                Collection<String> startLabels = (Collection<String>) r.get("startLabels");
-                String label = String.valueOf(r.get("label"));
-                Collection<String> endLabels = (Collection<String>) r.get("endLabels");
-                labels.add(new Label(label, startLabels, endLabels));
+                labels.add(getLabelFor(r));
             });
 
             return labels;
+        }
+
+        @Override
+        public Label getLabelFor(Map<String, Object> input) {
+            Collection<String> startLabels = (Collection<String>) input.get("startLabels");
+            String label = String.valueOf(input.get("label"));
+            Collection<String> endLabels = (Collection<String>) input.get("endLabels");
+            return new Label(label, startLabels, endLabels);
+        }
+
+        @Override
+        public String[] additionalColumns(String... columns) {
+            return ArrayUtils.addAll(columns, "startLabels", "endLabels");
+        }
+
+        @Override
+        public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+            return t.by(outV().label().fold()).by(inV().label().fold());
         }
 
     };

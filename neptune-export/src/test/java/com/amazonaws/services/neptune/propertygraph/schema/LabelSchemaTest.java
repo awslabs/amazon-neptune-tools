@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -20,13 +21,13 @@ public class LabelSchemaTest {
 
     @Test
     public void unioningShouldUpdateDataTypesOfExistingProperties(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
         labelSchema1.put("p3", new PropertySchema("p3", false, DataType.Double, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Double, false));
         labelSchema2.put("p2", new PropertySchema("p2", false, DataType.Integer, true));
@@ -44,13 +45,13 @@ public class LabelSchemaTest {
 
     @Test
     public void unioningShouldAddNewProperties(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
         labelSchema1.put("p3", new PropertySchema("p3", false, DataType.Double, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p4", new PropertySchema("p4", false, DataType.String, false));
         labelSchema2.put("p5", new PropertySchema("p5", false, DataType.Integer, true));
@@ -67,12 +68,12 @@ public class LabelSchemaTest {
 
     @Test
     public void schemasWithSameLabelAndPropertySchemasAreSame(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema2.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
@@ -82,12 +83,12 @@ public class LabelSchemaTest {
 
     @Test
     public void schemasWithDifferentLabelsAreNotSame(){
-        LabelSchema labelSchema1 = new LabelSchema("this-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("this-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("that-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("that-label"));
 
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema2.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
@@ -97,11 +98,11 @@ public class LabelSchemaTest {
 
     @Test
     public void schemasWithDifferentPropertiesAreNotSame(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Double, true));
 
@@ -110,18 +111,18 @@ public class LabelSchemaTest {
 
     @Test
     public void schemasWithDifferentNumberOfPropertiesAreNotSame(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema2.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
         labelSchema2.put("p3", new PropertySchema("p3", false, DataType.Integer, false));
 
-        LabelSchema labelSchema3 = new LabelSchema("my-label");
+        LabelSchema labelSchema3 = new LabelSchema(new Label("my-label"));
 
         labelSchema3.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
 
@@ -131,12 +132,12 @@ public class LabelSchemaTest {
 
     @Test
     public void schemasWithPropertySchemasInDifferentOrderAreNotSame(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
@@ -145,13 +146,13 @@ public class LabelSchemaTest {
     }
 
     @Test
-    public void schemasWithPropertiesWithDifferentNullbaleCharacteristicsAreNotSame(){
-        LabelSchema labelSchema1 = new LabelSchema("my-label");
+    public void schemasWithPropertiesWithDifferentNullableCharacteristicsAreNotSame(){
+        LabelSchema labelSchema1 = new LabelSchema(new Label("my-label"));
 
         labelSchema1.put("p1", new PropertySchema("p1", true, DataType.Integer, false));
         labelSchema1.put("p2", new PropertySchema("p2", false, DataType.Integer, false));
 
-        LabelSchema labelSchema2 = new LabelSchema("my-label");
+        LabelSchema labelSchema2 = new LabelSchema(new Label("my-label"));
 
         labelSchema2.put("p1", new PropertySchema("p1", false, DataType.Integer, false));
         labelSchema2.put("p2", new PropertySchema("p2", false, DataType.Integer, false));

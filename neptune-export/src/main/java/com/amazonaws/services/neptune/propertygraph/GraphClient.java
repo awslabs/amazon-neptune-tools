@@ -29,7 +29,7 @@ public interface GraphClient<T> {
 
     Collection<Label> labels(LabelStrategy labelStrategy);
 
-    String getLabelsAsStringToken(T input);
+    Label getLabelFor(T input, LabelsFilter labelsFilter);
 
-    void updateStats(String label);
+    void updateStats(Label label);
 }

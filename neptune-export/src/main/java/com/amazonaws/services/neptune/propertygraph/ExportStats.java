@@ -23,8 +23,8 @@ public class ExportStats {
     private long nodeCount = 0;
     private long edgeCount = 0;
 
-    private final ConcurrentHashMap<String, LabelStats> nodeStats = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, LabelStats> edgeStats = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Label, LabelStats> nodeStats = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Label, LabelStats> edgeStats = new ConcurrentHashMap<>();
 
     public void setNodeCount(long value) {
         nodeCount = value;
@@ -35,11 +35,11 @@ public class ExportStats {
     }
 
 
-    public void incrementNodeStats(String label) {
+    public void incrementNodeStats(Label label) {
         nodeStats.computeIfAbsent(label, LabelStats::new).increment();
     }
 
-    public void incrementEdgeStats(String label) {
+    public void incrementEdgeStats(Label label) {
         edgeStats.computeIfAbsent(label, LabelStats::new).increment();
     }
 
@@ -79,7 +79,7 @@ public class ExportStats {
         for (LabelStats entry : nodeStats.values()) {
             ObjectNode nodeNode = JsonNodeFactory.instance.objectNode();
             nodesArrayNode.add(nodeNode);
-            nodeNode.put("label", entry.label());
+            nodeNode.put("label", entry.label().fullyQualifiedLabel());
             nodeNode.put("count", entry.count());
         }
         ArrayNode edgesArrayNode = JsonNodeFactory.instance.arrayNode();
@@ -87,17 +87,17 @@ public class ExportStats {
         for (LabelStats entry : edgeStats.values()) {
             ObjectNode edgeNode = JsonNodeFactory.instance.objectNode();
             edgesArrayNode.add(edgeNode);
-            edgeNode.put("label", entry.label());
+            edgeNode.put("label", entry.label().fullyQualifiedLabel());
             edgeNode.put("count", entry.count());
         }
     }
 
 
     private static class LabelStats {
-        private final String label;
+        private final Label label;
         private final AtomicLong count = new AtomicLong(0);
 
-        private LabelStats(String label) {
+        private LabelStats(Label label) {
             this.label = label;
         }
 
@@ -109,13 +109,13 @@ public class ExportStats {
             return count.get();
         }
 
-        public String label() {
+        public Label label() {
             return label;
         }
 
         @Override
         public String toString() {
-            return String.format("%s: %s", label, count.get());
+            return String.format("%s: %s", label.fullyQualifiedLabel(), count.get());
         }
     }
 }

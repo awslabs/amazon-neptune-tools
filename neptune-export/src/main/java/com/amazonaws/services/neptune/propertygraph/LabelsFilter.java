@@ -17,11 +17,20 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.Collection;
+import java.util.Map;
 
 public interface LabelsFilter {
     GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal);
 
-    Collection<Label> resolveLabels(GraphClient<?> graphClient);
+    Collection<Label> getLabelsUsing(GraphClient<?> graphClient);
 
     String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas);
+
+    Label getLabelFor(Map<String, Object> input);
+
+    String[] addAdditionalColumnNames(String... columns);
+
+    <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t);
+
+    LabelsFilter filterFor(Label label);
 }

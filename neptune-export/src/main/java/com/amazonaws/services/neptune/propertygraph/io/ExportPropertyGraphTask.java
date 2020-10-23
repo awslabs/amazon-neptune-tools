@@ -14,10 +14,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
-import com.amazonaws.services.neptune.propertygraph.GraphClient;
-import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
-import com.amazonaws.services.neptune.propertygraph.Range;
-import com.amazonaws.services.neptune.propertygraph.RangeFactory;
+import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 
 import java.io.IOException;
@@ -34,7 +31,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
     private final RangeFactory rangeFactory;
     private final Status status;
     private final int index;
-    private final Map<String, LabelWriter<T>> labelWriters = new HashMap<>();
+    private final Map<Label, LabelWriter<T>> labelWriters = new HashMap<>();
     private final GraphSchema graphSchema;
     private final GraphElementType<T> graphElementType;
 
@@ -109,7 +106,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         private final FileSpecificLabelSchemas fileSpecificLabelSchemas;
         private final PropertyGraphTargetConfig targetConfig;
         private final WriterFactory<T> writerFactory;
-        private final Map<String, LabelWriter<T>> labelWriters;
+        private final Map<Label, LabelWriter<T>> labelWriters;
         private final GraphClient<T> graphClient;
         private final Status status;
         private final int index;
@@ -118,7 +115,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                             FileSpecificLabelSchemas fileSpecificLabelSchemas,
                             PropertyGraphTargetConfig targetConfig,
                             WriterFactory<T> writerFactory,
-                            Map<String, LabelWriter<T>> labelWriters,
+                            Map<Label, LabelWriter<T>> labelWriters,
                             GraphClient<T> graphClient,
                             Status status,
                             int index) {
@@ -135,8 +132,9 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         @Override
         public void handle(T input, boolean allowTokens) throws IOException {
             status.update();
-            String label = graphClient.getLabelsAsStringToken(input);
+            Label label = graphClient.getLabelFor(input, labelsFilter);
             if (!labelWriters.containsKey(label)) {
+                System.out.println("LABEL: " + label.fullyQualifiedLabel() + " PROPERTIES: " + input);
                 createWriterFor(label);
             }
             graphClient.updateStats(label);
@@ -150,11 +148,11 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
             }
         }
 
-        private void createWriterFor(String label) {
+        private void createWriterFor(Label label) {
             try {
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(Directories.fileName(label, index), labelSchema, targetConfig);
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(Directories.fileName(label.fullyQualifiedLabel(), index), labelSchema, targetConfig);
                 LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
                 labelWriters.put(label, labelWriter);

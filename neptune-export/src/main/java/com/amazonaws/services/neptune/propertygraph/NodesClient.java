@@ -77,12 +77,12 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
                                LabelsFilter labelsFilter,
                                GraphElementSchemas graphElementSchemas) {
 
-        GraphTraversal<? extends Element, ?> traversal = createTraversal(range, labelsFilter);
+        GraphTraversal<? extends Element, ?> t1 = createTraversal(range, labelsFilter);
 
-        traversal = filterByPropertyKeys(traversal, labelsFilter, graphElementSchemas);
+        GraphTraversal<? extends Element, ?> t2 = filterByPropertyKeys(t1, labelsFilter, graphElementSchemas);
 
-        GraphTraversal<? extends Element, Map<String, Object>> t = traversal.
-                project("id", "label", "properties").
+        GraphTraversal<? extends Element, Map<String, Object>> t3 = t2.
+                project("id",labelsFilter.addAdditionalColumnNames(  "label", "properties")).
                 by(T.id).
                 by(label().fold()).
                 by(tokensOnly ?
@@ -90,9 +90,11 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
                         valueMap(labelsFilter.getPropertiesForLabels(graphElementSchemas))
                 );
 
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t3);
 
-        t.forEachRemaining(m -> {
+        logger.info(GremlinQueryDebugger.queryAsString(traversal));
+
+        traversal.forEachRemaining(m -> {
             try {
                 handler.handle(m, false);
             } catch (IOException e) {
@@ -133,18 +135,12 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public String getLabelsAsStringToken(Map<String, Object> input) {
-
-        List<String> labels = (List<String>) input.get("label");
-        if (labels.size() > 1) {
-            return labels.toString();
-        } else {
-            return labels.get(0);
-        }
+    public Label getLabelFor(Map<String, Object> input, LabelsFilter labelsFilter) {
+        return labelsFilter.getLabelFor(input);
     }
 
     @Override
-    public void updateStats(String label) {
+    public void updateStats(Label label) {
         stats.incrementNodeStats(label);
     }
 

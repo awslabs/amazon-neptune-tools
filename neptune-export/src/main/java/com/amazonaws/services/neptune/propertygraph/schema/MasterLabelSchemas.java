@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
+import com.amazonaws.services.neptune.propertygraph.Label;
 
 import java.util.*;
 
@@ -20,13 +20,13 @@ public class MasterLabelSchemas {
 
     public static MasterLabelSchemas fromCollection(Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemasCollection) {
 
-        Set<String> labels = new HashSet<>();
+        Set<Label> labels = new HashSet<>();
 
         fileSpecificLabelSchemasCollection.forEach(s -> labels.addAll(s.labels()));
 
-        Map<String, MasterLabelSchema> masterLabelSchemas = new HashMap<>();
+        Map<Label, MasterLabelSchema> masterLabelSchemas = new HashMap<>();
 
-        for (String label : labels) {
+        for (Label label : labels) {
 
             LabelSchema masterLabelSchema = new LabelSchema(label);
             Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas = new ArrayList<>();
@@ -46,19 +46,18 @@ public class MasterLabelSchemas {
                     new MasterLabelSchema(masterLabelSchema, fileSpecificLabelSchemas));
 
 
-
         }
 
         return new MasterLabelSchemas(masterLabelSchemas);
     }
 
-    private final Map<String, MasterLabelSchema> masterLabelSchemas;
+    private final Map<Label, MasterLabelSchema> masterLabelSchemas;
 
-    public MasterLabelSchemas(Map<String, MasterLabelSchema> masterLabelSchemas) {
+    public MasterLabelSchemas(Map<Label, MasterLabelSchema> masterLabelSchemas) {
         this.masterLabelSchemas = masterLabelSchemas;
     }
 
-    public void updateGraphSchema(GraphSchema graphSchema, GraphElementType<?> graphElementType){
+    public void updateGraphSchema(GraphSchema graphSchema, GraphElementType<?> graphElementType) {
         GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
             graphElementSchemas.addLabelSchema(masterLabelSchema.labelSchema());
@@ -66,7 +65,7 @@ public class MasterLabelSchemas {
         graphSchema.replace(graphElementType, graphElementSchemas);
     }
 
-    public Collection<MasterLabelSchema> schemas(){
+    public Collection<MasterLabelSchema> schemas() {
         return masterLabelSchemas.values();
     }
 }

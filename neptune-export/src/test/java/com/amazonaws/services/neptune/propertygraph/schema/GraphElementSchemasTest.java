@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import org.junit.Test;
 
 import static com.amazonaws.services.neptune.util.MapUtils.entry;
@@ -25,9 +26,9 @@ public class GraphElementSchemasTest {
 
         GraphElementSchemas original = new GraphElementSchemas();
 
-        original.update("label1", map(entry("fname", "fname-1")), false);
-        original.update("label1", map(entry("lname", "lname-1")), false);
-        original.update("label2", map(entry("fname", "fname-2"), entry("lname", "lname-2")), false);
+        original.update(new Label("label1"), map(entry("fname", "fname-1")), false);
+        original.update(new Label("label1"), map(entry("lname", "lname-1")), false);
+        original.update(new Label("label2"), map(entry("fname", "fname-2"), entry("lname", "lname-2")), false);
 
         GraphElementSchemas copy = original.createCopy();
 

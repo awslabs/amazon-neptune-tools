@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -25,10 +26,10 @@ import java.util.function.Function;
 public class GraphElementSchemas {
 
     public static GraphElementSchemas fromJson(ArrayNode arrayNode) {
-        Map<String, LabelSchema> labelSchemas = new HashMap<>();
+        Map<Label, LabelSchema> labelSchemas = new HashMap<>();
 
         for (JsonNode node : arrayNode) {
-            String label = node.path("label").asText();
+            Label label = Label.fromJson(node.path("label"));
 
             labelSchemas.put(label, new LabelSchema(label));
             ArrayNode propertiesArray = (ArrayNode) node.path("properties");
@@ -49,13 +50,13 @@ public class GraphElementSchemas {
         return new GraphElementSchemas(labelSchemas);
     }
 
-    private final Map<String, LabelSchema> labelSchemas;
+    private final Map<Label, LabelSchema> labelSchemas;
 
     public GraphElementSchemas() {
         this(new HashMap<>());
     }
 
-    private GraphElementSchemas(Map<String, LabelSchema> labelSchemas) {
+    private GraphElementSchemas(Map<Label, LabelSchema> labelSchemas) {
         this.labelSchemas = labelSchemas;
     }
 
@@ -63,7 +64,7 @@ public class GraphElementSchemas {
         labelSchemas.put(labelSchema.label(), labelSchema);
     }
 
-    public LabelSchema getSchemaFor(String label) {
+    public LabelSchema getSchemaFor(Label label) {
 
         if (!labelSchemas.containsKey(label)) {
             labelSchemas.put(label, new LabelSchema(label));
@@ -72,18 +73,18 @@ public class GraphElementSchemas {
         return labelSchemas.get(label);
     }
 
-    public boolean hasSchemaFor(String label) {
+    public boolean hasSchemaFor(Label label) {
         return labelSchemas.containsKey(label);
     }
 
     public void update(Map<?, ?> properties, boolean allowStructuralElements) {
 
-        String label = String.valueOf(properties.get(org.apache.tinkerpop.gremlin.structure.T.label));
+        Label label = new Label(String.valueOf(properties.get(org.apache.tinkerpop.gremlin.structure.T.label)));
 
         update(label, properties, allowStructuralElements);
     }
 
-    public void update(String label, Map<?, ?> properties, boolean allowStructuralElements) {
+    public void update(Label label, Map<?, ?> properties, boolean allowStructuralElements) {
 
         if (!labelSchemas.containsKey(label)) {
             labelSchemas.put(label, new LabelSchema(label));
@@ -110,7 +111,7 @@ public class GraphElementSchemas {
         }
     }
 
-    public Iterable<String> labels() {
+    public Iterable<Label> labels() {
         return labelSchemas.keySet();
     }
 
@@ -122,12 +123,12 @@ public class GraphElementSchemas {
 
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
-        for (Map.Entry<String, LabelSchema> entry : labelSchemas.entrySet()) {
+        for (Map.Entry<Label, LabelSchema> entry : labelSchemas.entrySet()) {
 
-            String label = entry.getKey();
+            Label label = entry.getKey();
 
             ObjectNode labelNode = JsonNodeFactory.instance.objectNode();
-            labelNode.put("label", label);
+            labelNode.set("label", label.toJson());
 
             ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
 

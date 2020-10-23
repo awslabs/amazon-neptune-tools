@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 public class FileSpecificLabelSchemas {
 
-    private final Map<String, Collection<FileSpecificLabelSchema>> fileSpecificLabelSchemas = new HashMap<>();
+    private final Map<Label, Collection<FileSpecificLabelSchema>> fileSpecificLabelSchemas = new HashMap<>();
 
     public void add(String outputId, PropertyGraphExportFormat format, LabelSchema labelSchema) {
 
@@ -32,15 +33,15 @@ public class FileSpecificLabelSchemas {
         fileSpecificLabelSchemas.get(labelSchema.label()).add(new FileSpecificLabelSchema(outputId, format, labelSchema));
     }
 
-    public Collection<? extends String> labels() {
+    public Collection<Label> labels() {
         return fileSpecificLabelSchemas.keySet();
     }
 
-    public boolean hasSchemasForLabel(String label){
+    public boolean hasSchemasForLabel(Label label){
         return fileSpecificLabelSchemas.containsKey(label);
     }
 
-    public Collection<FileSpecificLabelSchema> fileSpecificLabelSchemasFor(String label){
+    public Collection<FileSpecificLabelSchema> fileSpecificLabelSchemasFor(Label label){
         return fileSpecificLabelSchemas.get(label);
     }
 }
