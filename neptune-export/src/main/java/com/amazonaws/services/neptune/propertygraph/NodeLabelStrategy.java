@@ -39,7 +39,7 @@ public enum NodeLabelStrategy implements LabelStrategy {
 
         @Override
         public Label getLabelFor(Map<String, Object> input) {
-            List<String> labels = (List<String>) input.get("label");
+            List<String> labels = (List<String>) input.get("~label");
             if (labels.size() > 1) {
                 return new Label(labels.toString());
             } else {

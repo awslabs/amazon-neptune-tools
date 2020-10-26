@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 
 import java.io.IOException;
@@ -22,24 +23,24 @@ public class EdgeWriter implements LabelWriter<Map<String, Object>> {
     private final PropertyGraphPrinter propertyGraphPrinter;
     private final boolean hasFromAndToLabels;
 
-    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter, LabelsFilter labelsFilter) {
+    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter, Label label) {
         this.propertyGraphPrinter = propertyGraphPrinter;
-        this.hasFromAndToLabels = labelsFilter.addAdditionalColumnNames().length > 0;
+        this.hasFromAndToLabels = label.hasFromAndToLabels();
     }
 
     @Override
     public void handle(Map<String, Object> map, boolean allowTokens) throws IOException {
-        String from = String.valueOf(map.get("from"));
-        String to = String.valueOf(map.get("to"));
+        String from = String.valueOf(map.get("~from"));
+        String to = String.valueOf(map.get("~to"));
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
-        String id = (String) map.get("id");
-        String label = (String) map.get("label");
+        String id = (String) map.get("~id");
+        String label = (String) map.get("~label");
 
         propertyGraphPrinter.printStartRow();
 
         if (hasFromAndToLabels){
-            Collection<String> fromLabels = (Collection<String>) map.get("fromLabels");
-            Collection<String> toLabels = (Collection<String>) map.get("toLabels");
+            Collection<String> fromLabels = (Collection<String>) map.get("~fromLabels");
+            Collection<String> toLabels = (Collection<String>) map.get("~toLabels");
             propertyGraphPrinter.printEdge(id, label, from, to, fromLabels, toLabels);
         } else {
             propertyGraphPrinter.printEdge(id, label, from, to);

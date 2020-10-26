@@ -83,7 +83,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
-                        project("id", labelsFilter.addAdditionalColumnNames("label", "properties", "from", "to")).
+                        project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties", "~from", "~to")).
                         by(T.id).
                         by(T.label).
                         by(tokensOnly ?

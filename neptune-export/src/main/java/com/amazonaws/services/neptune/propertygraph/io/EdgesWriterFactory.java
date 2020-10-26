@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
     }
 
     @Override
-    public LabelWriter<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter, LabelsFilter labelsFilter) {
-        return new EdgeWriter(propertyGraphPrinter, labelsFilter);
+    public LabelWriter<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter, Label label) {
+        return new EdgeWriter(propertyGraphPrinter, label);
     }
 }

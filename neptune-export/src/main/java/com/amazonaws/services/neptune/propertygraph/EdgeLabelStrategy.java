@@ -62,7 +62,7 @@ public enum EdgeLabelStrategy implements LabelStrategy {
             // Using dedup can cause MemoryLimitExceededException on large datasets, so do the dedup in the set
 
             GraphTraversal<Edge, Map<String, Object>> traversal = g.E()
-                    .project("fromLabels", "label", "toLabels")
+                    .project("~fromLabels", "~label", "~toLabels")
                     .by(outV().label().fold())
                     .by(label())
                     .by(inV().label().fold());
@@ -79,15 +79,15 @@ public enum EdgeLabelStrategy implements LabelStrategy {
 
         @Override
         public Label getLabelFor(Map<String, Object> input) {
-            Collection<String> fromLabels = (Collection<String>) input.get("fromLabels");
-            String label = String.valueOf(input.get("label"));
-            Collection<String> toLabels = (Collection<String>) input.get("toLabels");
+            Collection<String> fromLabels = (Collection<String>) input.get("~fromLabels");
+            String label = String.valueOf(input.get("~label"));
+            Collection<String> toLabels = (Collection<String>) input.get("~toLabels");
             return new Label(label, fromLabels, toLabels);
         }
 
         @Override
         public String[] additionalColumns(String... columns) {
-            return ArrayUtils.addAll(columns, "fromLabels", "toLabels");
+            return ArrayUtils.addAll(columns, "~fromLabels", "~toLabels");
         }
 
         @Override

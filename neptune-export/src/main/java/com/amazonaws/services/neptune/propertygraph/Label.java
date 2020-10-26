@@ -23,9 +23,9 @@ public class Label {
 
     public static Label fromJson(JsonNode jsonNode) {
         if (jsonNode.isContainerNode()) {
-            ArrayNode startLabels = (ArrayNode) jsonNode.path("fromLabels");
-            String label = jsonNode.path("name").textValue();
-            ArrayNode endLabels = (ArrayNode) jsonNode.path("toLabels");
+            ArrayNode startLabels = (ArrayNode) jsonNode.path("~fromLabels");
+            String label = jsonNode.path("~label").textValue();
+            ArrayNode endLabels = (ArrayNode) jsonNode.path("~toLabels");
             Collection<String> fromLabels = new ArrayList<>();
             startLabels.forEach(l -> fromLabels.add(l.textValue()));
             Collection<String> toLabels = new ArrayList<>();
@@ -97,17 +97,17 @@ public class Label {
         ArrayNode startLabels = JsonNodeFactory.instance.arrayNode();
         ArrayNode endLabels = JsonNodeFactory.instance.arrayNode();
 
-        labelNode.put("name", label);
+        labelNode.put("~label", label);
 
         for (String fromLabel : fromLabels) {
             startLabels.add(fromLabel);
         }
-        labelNode.set("fromLabels", startLabels);
+        labelNode.set("~fromLabels", startLabels);
 
         for (String toLabel : toLabels) {
             endLabels.add(toLabel);
         }
-        labelNode.set("toLabels", endLabels);
+        labelNode.set("~toLabels", endLabels);
 
         return labelNode;
     }

@@ -175,7 +175,7 @@ public class QueryTask implements Runnable {
                 PropertyGraphPrinter propertyGraphPrinter =
                         writerFactory.createPrinter(Directories.fileName(label.fullyQualifiedLabel(), index), labelSchema, targetConfig);
 
-                labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter, LabelsFilter.NULL_FILTER));
+                labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter, label));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);

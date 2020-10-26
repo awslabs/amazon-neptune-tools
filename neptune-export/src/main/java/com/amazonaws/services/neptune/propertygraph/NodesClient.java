@@ -82,7 +82,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, ?> t2 = filterByPropertyKeys(t1, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t3 = t2.
-                project("id",labelsFilter.addAdditionalColumnNames(  "label", "properties")).
+                project("~id",labelsFilter.addAdditionalColumnNames(  "~label", "properties")).
                 by(T.id).
                 by(label().fold()).
                 by(tokensOnly ?

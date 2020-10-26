@@ -24,14 +24,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RewriteCsv implements RewriteCommand {
-
-    private static final Map<String, Object> NULL_ADDITIONAL_EDGE_VALUES = Collections.emptyMap();
 
     @Override
     public void execute(MasterLabelSchemas masterLabelSchemas,
