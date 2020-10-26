@@ -21,49 +21,85 @@ import java.util.*;
 
 public class Label {
 
+    public static List<String> fixLabelsIssue(List<String> list) {
+        if (list.size() == 1 && list.get(0).contains("::")){
+            List<String> newResults = Arrays.asList(list.get(0).split("::"));
+            newResults.sort(String::compareTo);
+            return newResults;
+        }
+        return list;
+    }
+
     public static Label fromJson(JsonNode jsonNode) {
         if (jsonNode.isContainerNode()) {
-            ArrayNode startLabels = (ArrayNode) jsonNode.path("~fromLabels");
-            String label = jsonNode.path("~label").textValue();
-            ArrayNode endLabels = (ArrayNode) jsonNode.path("~toLabels");
+
+            ArrayNode fromLabelsArrays = (ArrayNode) jsonNode.path("~fromLabels");
+            String label =  jsonNode.path("~label").textValue();
+            ArrayNode toLabelsArray = (ArrayNode) jsonNode.path("~toLabels");
+
             Collection<String> fromLabels = new ArrayList<>();
-            startLabels.forEach(l -> fromLabels.add(l.textValue()));
+            fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
+
             Collection<String> toLabels = new ArrayList<>();
-            endLabels.forEach(l -> toLabels.add(l.textValue()));
-            return new Label(label, fromLabels, toLabels);
+            toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
+
+            return new Label(Collections.singletonList(label), fromLabels, toLabels);
         } else {
-            return new Label(jsonNode.textValue());
+            if (jsonNode.isArray()){
+                ArrayNode labelsNode = (ArrayNode) jsonNode;
+                Collection<String> labels = new ArrayList<>();
+                labelsNode.forEach(l -> labels.add(l.textValue()));
+                return new Label(labels);
+            } else {
+                return new Label(Collections.singletonList(jsonNode.textValue()));
+            }
+
         }
     }
 
     public static Collection<Label> forLabels(Collection<String> labels) {
         Set<Label> results = new HashSet<>();
         for (String label : labels) {
-            results.add(new Label(label));
+            results.add(new Label(Collections.singletonList(label)));
         }
         return results;
     }
 
-    private final String label;
+    private final List<String> labels;
+    private final List<String> fromLabels;
+    private final List<String> toLabels;
     private final String fullyQualifiedLabel;
-    private final Collection<String> fromLabels;
-    private final Collection<String> toLabels;
 
     public Label(String label) {
-        this(label, Collections.emptyList(), Collections.emptyList());
+        this(Collections.singletonList(label));
     }
 
-    public Label(String label, Collection<String> fromLabels, Collection<String> toLabels) {
-        this.label = label;
-        this.fromLabels = fromLabels;
-        this.toLabels = toLabels;
-        this.fullyQualifiedLabel = fromLabels.isEmpty() || toLabels.isEmpty() ?
-                label :
-                String.format("(%s)-[%s]->(%s)", String.join("|", fromLabels), label, String.join("|", toLabels));
+    public Label(Collection<String> labels) {
+        this(labels, Collections.emptyList(), Collections.emptyList());
     }
 
-    public String label() {
-        return label;
+    public Label(Collection<String> labels, Collection<String> fromLabels, Collection<String> toLabels) {
+        this.labels = labelList(labels);
+        this.fromLabels = labelList(fromLabels);
+        this.toLabels = labelList(toLabels);
+
+        this.fullyQualifiedLabel = hasFromAndToLabels() ?
+                String.format("(%s)-[%s]->(%s)",
+                        String.join(";", this.fromLabels),
+                        String.join(";", this.labels),
+                        String.join(";", this.toLabels)) :
+                String.join(";", this.labels) ;
+    }
+
+    private List<String> labelList(Collection<String> col){
+        List<String> results = new ArrayList<>(col);
+        results = fixLabelsIssue(results);
+        results.sort(String::compareTo);
+        return results;
+    }
+
+    public List<String> label() {
+        return labels;
     }
 
     public String fullyQualifiedLabel() {
@@ -89,25 +125,35 @@ public class Label {
 
     public JsonNode toJson() {
 
-        if (fromLabels.isEmpty() || toLabels.isEmpty()) {
-            return JsonNodeFactory.instance.textNode(label);
+        if (!hasFromAndToLabels()) {
+            if (labels.size() > 1){
+                ArrayNode labelsArray = JsonNodeFactory.instance.arrayNode();
+                for (String label : labels) {
+                    labelsArray.add(label);
+                }
+                return labelsArray;
+            } else {
+                return JsonNodeFactory.instance.textNode(labels.get(0));
+            }
         }
+
 
         ObjectNode labelNode = JsonNodeFactory.instance.objectNode();
-        ArrayNode startLabels = JsonNodeFactory.instance.arrayNode();
-        ArrayNode endLabels = JsonNodeFactory.instance.arrayNode();
 
-        labelNode.put("~label", label);
+        ArrayNode fromLabelsArray = JsonNodeFactory.instance.arrayNode();
+        ArrayNode toLabelsArray = JsonNodeFactory.instance.arrayNode();
+
+        labelNode.put("~label", labels.get(0));
 
         for (String fromLabel : fromLabels) {
-            startLabels.add(fromLabel);
+            fromLabelsArray.add(fromLabel);
         }
-        labelNode.set("~fromLabels", startLabels);
+        labelNode.set("~fromLabels", fromLabelsArray);
 
         for (String toLabel : toLabels) {
-            endLabels.add(toLabel);
+            toLabelsArray.add(toLabel);
         }
-        labelNode.set("~toLabels", endLabels);
+        labelNode.set("~toLabels", toLabelsArray);
 
         return labelNode;
     }

@@ -12,7 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
+
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +36,8 @@ public class NodeWriter implements LabelWriter<Map<String, Object>> {
         String id = (String) map.get("~id");
         @SuppressWarnings("unchecked")
         List<String> labels = (List<String>) map.get("~label");
+
+        labels = Label.fixLabelsIssue(labels);
 
         propertyGraphPrinter.printStartRow();
         propertyGraphPrinter.printNode(id, labels);

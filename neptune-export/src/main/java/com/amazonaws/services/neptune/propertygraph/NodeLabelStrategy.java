@@ -39,12 +39,11 @@ public enum NodeLabelStrategy implements LabelStrategy {
 
         @Override
         public Label getLabelFor(Map<String, Object> input) {
+            @SuppressWarnings("unchecked")
             List<String> labels = (List<String>) input.get("~label");
-            if (labels.size() > 1) {
-                return new Label(labels.toString());
-            } else {
-                return new Label(labels.get(0));
-            }
+            labels = Label.fixLabelsIssue(labels);
+
+            return new Label(labels);
         }
 
         @Override

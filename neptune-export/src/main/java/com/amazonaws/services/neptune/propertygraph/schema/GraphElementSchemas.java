@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -79,7 +80,11 @@ public class GraphElementSchemas {
 
     public void update(Map<?, ?> properties, boolean allowStructuralElements) {
 
-        Label label = new Label(String.valueOf(properties.get(org.apache.tinkerpop.gremlin.structure.T.label)));
+        Object value = properties.get(T.label);
+
+        Label label = List.class.isAssignableFrom(value.getClass()) ?
+                new Label((List<String>)value) :
+                new Label(String.valueOf(value));
 
         update(label, properties, allowStructuralElements);
     }

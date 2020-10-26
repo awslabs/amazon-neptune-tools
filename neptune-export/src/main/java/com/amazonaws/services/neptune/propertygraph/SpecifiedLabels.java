@@ -17,9 +17,12 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
+import sun.misc.FDBigInteger;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SpecifiedLabels implements LabelsFilter {
 
@@ -33,14 +36,17 @@ public class SpecifiedLabels implements LabelsFilter {
 
     @Override
     public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
-        Label firstLabel = labels.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
-        String[] remainingLabels = labels.stream()
+        List<String> labelList = labels.stream()
+                .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
+                .collect(Collectors.toList());
+
+        String firstLabel = labelList.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
+        String[] remainingLabels = labelList.stream()
                 .skip(1)
-                .map(Label::label)
                 .collect(Collectors.toList())
                 .toArray(new String[]{});
 
-        return traversal.hasLabel(firstLabel.label(), remainingLabels);
+        return traversal.hasLabel(firstLabel, remainingLabels);
     }
 
     @Override

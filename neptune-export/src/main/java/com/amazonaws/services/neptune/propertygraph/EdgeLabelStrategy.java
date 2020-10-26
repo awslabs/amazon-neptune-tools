@@ -42,7 +42,7 @@ public enum EdgeLabelStrategy implements LabelStrategy {
 
         @Override
         public Label getLabelFor(Map<String, Object> input) {
-            return new Label(input.get("label").toString());
+            return new Label(input.get("~label").toString());
         }
 
         @Override
@@ -79,10 +79,12 @@ public enum EdgeLabelStrategy implements LabelStrategy {
 
         @Override
         public Label getLabelFor(Map<String, Object> input) {
+            @SuppressWarnings("unchecked")
             Collection<String> fromLabels = (Collection<String>) input.get("~fromLabels");
-            String label = String.valueOf(input.get("~label"));
+            Collection<String> labels = Collections.singletonList( String.valueOf(input.get("~label")));
+            @SuppressWarnings("unchecked")
             Collection<String> toLabels = (Collection<String>) input.get("~toLabels");
-            return new Label(label, fromLabels, toLabels);
+            return new Label(labels, fromLabels, toLabels);
         }
 
         @Override

@@ -32,6 +32,7 @@ public class EdgeWriter implements LabelWriter<Map<String, Object>> {
     public void handle(Map<String, Object> map, boolean allowTokens) throws IOException {
         String from = String.valueOf(map.get("~from"));
         String to = String.valueOf(map.get("~to"));
+        @SuppressWarnings("unchecked")
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
         String id = (String) map.get("~id");
         String label = (String) map.get("~label");
@@ -39,8 +40,15 @@ public class EdgeWriter implements LabelWriter<Map<String, Object>> {
         propertyGraphPrinter.printStartRow();
 
         if (hasFromAndToLabels){
-            Collection<String> fromLabels = (Collection<String>) map.get("~fromLabels");
-            Collection<String> toLabels = (Collection<String>) map.get("~toLabels");
+            @SuppressWarnings("unchecked")
+            List<String> fromLabels = (List<String>) map.get("~fromLabels");
+            @SuppressWarnings("unchecked")
+            List<String> toLabels = (List<String>) map.get("~toLabels");
+
+            // Temp fix for concatenated label issue
+            fromLabels = Label.fixLabelsIssue(fromLabels);
+            toLabels = Label.fixLabelsIssue(toLabels);
+
             propertyGraphPrinter.printEdge(id, label, from, to, fromLabels, toLabels);
         } else {
             propertyGraphPrinter.printEdge(id, label, from, to);
