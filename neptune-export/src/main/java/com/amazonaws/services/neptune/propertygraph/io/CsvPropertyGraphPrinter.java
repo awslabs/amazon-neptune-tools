@@ -131,7 +131,12 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printEdge(String id, String label, String from, String to) {
+    public void printEdge(String id, String label, String from, String to) throws IOException {
+        printEdge(id, label, from, to, null, null);
+    }
+
+    @Override
+    public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
         commaPrinter.printComma();
         writer.print(DataType.String.format(id));
         commaPrinter.printComma();
@@ -140,6 +145,14 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         writer.print(DataType.String.format(from));
         commaPrinter.printComma();
         writer.print(DataType.String.format(to));
+        if (fromLabels != null){
+            commaPrinter.printComma();
+            writer.print(DataType.String.formatList(fromLabels));
+        }
+        if (toLabels != null){
+            commaPrinter.printComma();
+            writer.print(DataType.String.formatList(toLabels));
+        }
     }
 
     @Override

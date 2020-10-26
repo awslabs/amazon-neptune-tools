@@ -54,13 +54,13 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
 
     @Override
     public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
-        GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
+        GraphTraversal<? extends Element, Map<Object, Object>> t1 = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);
 
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        logger.info(GremlinQueryDebugger.queryAsString(t1));
 
-        t.forEachRemaining(m -> {
+        t1.forEachRemaining(m -> {
             try {
                 handler.handle(m, false);
             } catch (IOException e) {

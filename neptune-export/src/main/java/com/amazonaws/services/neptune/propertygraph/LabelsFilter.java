@@ -17,9 +17,48 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public interface LabelsFilter {
+
+    LabelsFilter NULL_FILTER = new LabelsFilter() {
+        @Override
+        public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
+            return traversal;
+        }
+
+        @Override
+        public Collection<Label> getLabelsUsing(GraphClient<?> graphClient) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas) {
+            return new String[]{};
+        }
+
+        @Override
+        public Label getLabelFor(Map<String, Object> input) {
+            return new Label("UNKNOWN");
+        }
+
+        @Override
+        public String[] addAdditionalColumnNames(String... columns) {
+            return new String[]{};
+        }
+
+        @Override
+        public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+            return t;
+        }
+
+        @Override
+        public LabelsFilter filterFor(Label label) {
+            return this;
+        }
+    };
+
     GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal);
 
     Collection<Label> getLabelsUsing(GraphClient<?> graphClient);

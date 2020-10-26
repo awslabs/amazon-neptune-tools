@@ -110,6 +110,10 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
         DataType dataType = propertySchema.dataType();
         String formattedKey = propertySchema.nameWithoutDataType();
 
+        printProperty(value, dataType, formattedKey);
+    }
+
+    private void printProperty(Object value, DataType dataType, String formattedKey) throws IOException {
         if (isList(value)) {
             List<?> values = (List<?>) value;
             if (values.size() > 1) {
@@ -120,7 +124,9 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                 }
                 generator.writeEndArray();
             } else {
-                dataType.printTo(generator, formattedKey, values.get(0));
+                if (!values.isEmpty()){
+                    dataType.printTo(generator, formattedKey, values.get(0));
+                }
             }
 
         } else {
@@ -140,10 +146,21 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printEdge(String id, String label, String from, String to) throws IOException {
+        printEdge(id, label, from, to, null, null);
+    }
+
+    @Override
+    public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
         generator.writeStringField("~id", id);
         generator.writeStringField("~label", label);
         generator.writeStringField("~from", from);
         generator.writeStringField("~to", to);
+        if (fromLabels != null){
+            printProperty(fromLabels, DataType.String, "~fromLabels");
+        }
+        if (toLabels != null){
+            printProperty(toLabels, DataType.String, "~toLabels");
+        }
     }
 
     @Override

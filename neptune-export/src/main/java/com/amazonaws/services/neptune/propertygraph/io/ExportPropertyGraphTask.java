@@ -155,7 +155,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                         Directories.fileName(label.fullyQualifiedLabel(), index),
                         labelSchema,
                         targetConfig);
-                LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
+                LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter, labelsFilter);
 
                 labelWriters.put(label, labelWriter);
                 fileSpecificLabelSchemas.add(labelWriter.outputId(), targetConfig.format(), labelSchema);

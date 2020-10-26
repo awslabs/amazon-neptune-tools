@@ -14,19 +14,17 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
-import com.amazonaws.services.neptune.propertygraph.Label;
-import com.amazonaws.services.neptune.propertygraph.NamedQuery;
-import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
+import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
+import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 public class QueryTask implements Runnable {
     private final Queue<NamedQuery> queries;
@@ -177,7 +175,7 @@ public class QueryTask implements Runnable {
                 PropertyGraphPrinter propertyGraphPrinter =
                         writerFactory.createPrinter(Directories.fileName(label.fullyQualifiedLabel(), index), labelSchema, targetConfig);
 
-                labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter));
+                labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter, LabelsFilter.NULL_FILTER));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);

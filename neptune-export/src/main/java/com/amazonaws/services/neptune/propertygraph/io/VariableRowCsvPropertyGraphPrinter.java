@@ -62,7 +62,7 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
         // Check to see whether known properties are present
         for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
-            if (!properties.containsKey(propertySchema.property())){
+            if (!properties.containsKey(propertySchema.property())) {
                 propertySchema.makeNullable();
             }
         }
@@ -78,7 +78,7 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
 
                 PropertySchema propertySchema = new PropertySchema(key);
                 propertySchema.accept(value);
-                if (isNullable){
+                if (isNullable) {
                     propertySchema.makeNullable();
                 }
 
@@ -102,8 +102,13 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
     }
 
     @Override
-    public void printEdge(String id, String label, String from, String to) {
-        csvPropertyGraphPrinter.printEdge(id, label, from, to);
+    public void printEdge(String id, String label, String from, String to) throws IOException {
+        printEdge(id, label, from, to, null, null);
+    }
+
+    @Override
+    public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
+        csvPropertyGraphPrinter.printEdge(id, label, from, to, fromLabels, toLabels);
     }
 
     @Override

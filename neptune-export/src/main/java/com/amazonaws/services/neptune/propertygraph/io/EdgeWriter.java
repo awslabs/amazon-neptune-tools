@@ -12,15 +12,19 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
+
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 
 public class EdgeWriter implements LabelWriter<Map<String, Object>> {
 
     private final PropertyGraphPrinter propertyGraphPrinter;
+    private final boolean hasFromAndToLabels;
 
-    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter) {
+    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter, LabelsFilter labelsFilter) {
         this.propertyGraphPrinter = propertyGraphPrinter;
+        this.hasFromAndToLabels = labelsFilter.addAdditionalColumnNames().length > 0;
     }
 
     @Override
@@ -32,7 +36,15 @@ public class EdgeWriter implements LabelWriter<Map<String, Object>> {
         String label = (String) map.get("label");
 
         propertyGraphPrinter.printStartRow();
-        propertyGraphPrinter.printEdge(id, label, from, to);
+
+        if (hasFromAndToLabels){
+            Collection<String> fromLabels = (Collection<String>) map.get("fromLabels");
+            Collection<String> toLabels = (Collection<String>) map.get("toLabels");
+            propertyGraphPrinter.printEdge(id, label, from, to, fromLabels, toLabels);
+        } else {
+            propertyGraphPrinter.printEdge(id, label, from, to);
+        }
+
         propertyGraphPrinter.printProperties(id, "ep", properties);
         propertyGraphPrinter.printEndRow();
     }

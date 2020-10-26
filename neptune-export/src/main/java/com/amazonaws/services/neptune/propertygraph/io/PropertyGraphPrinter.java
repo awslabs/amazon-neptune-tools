@@ -35,6 +35,8 @@ public interface PropertyGraphPrinter extends AutoCloseable {
 
     void printEdge(String id, String label, String from, String to) throws IOException;
 
+    void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException;
+
     void printNode(String id, List<String> labels) throws IOException;
 
     void printStartRow() throws IOException;

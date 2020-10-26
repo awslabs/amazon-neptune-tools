@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
@@ -23,9 +24,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RewriteCsv implements RewriteCommand {
+
+    private static final Map<String, Object> NULL_ADDITIONAL_EDGE_VALUES = Collections.emptyMap();
 
     @Override
     public void execute(MasterLabelSchemas masterLabelSchemas,
@@ -34,8 +40,8 @@ public class RewriteCsv implements RewriteCommand {
 
         Timer.timedActivity(String.format("rewriting %s files", graphElementType.name()),
                 (CheckedActivity.Runnable) () -> {
-            rewriteFiles(masterLabelSchemas, targetConfig, graphElementType);
-        });
+                    rewriteFiles(masterLabelSchemas, targetConfig, graphElementType);
+                });
     }
 
     private void rewriteFiles(MasterLabelSchemas masterLabelSchemas,
@@ -57,15 +63,22 @@ public class RewriteCsv implements RewriteCommand {
 
             File file = new File(fileSpecificLabelSchema.outputId());
 
+            LabelSchema labelSchema = fileSpecificLabelSchema.labelSchema();
+            Label label = labelSchema.label();
+
+            String[] additionalElementHeaders = label.hasFromAndToLabels() ?
+                    new String[]{"~fromLabels", "~toLabels"} :
+                    new String[]{};
+
             String[] filePropertyHeaders =
-                    fileSpecificLabelSchema.labelSchema().propertySchemas().stream()
+                    labelSchema.propertySchemas().stream()
                             .map(p -> p.property().toString())
                             .collect(Collectors.toList())
                             .toArray(new String[]{});
 
             String[] fileHeaders = ArrayUtils.addAll(
                     graphElementType.tokenNames().toArray(new String[]{}),
-                    filePropertyHeaders);
+                    ArrayUtils.addAll(additionalElementHeaders, filePropertyHeaders));
 
             try (Reader in = new FileReader(file);
                  PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(
@@ -82,7 +95,17 @@ public class RewriteCsv implements RewriteCommand {
                     if (graphElementType.equals(GraphElementTypes.Nodes)) {
                         printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                     } else {
-                        printer.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
+                        if (label.hasFromAndToLabels()) {
+                            printer.printEdge(
+                                    record.get("~id"),
+                                    record.get("~label"),
+                                    record.get("~from"),
+                                    record.get("~to"),
+                                    Arrays.asList(record.get("~fromLabels").split(";")),
+                                    Arrays.asList(record.get("~toLabels").split(";")));
+                        } else {
+                            printer.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
+                        }
                     }
 
                     printer.printProperties(record.toMap(), false);

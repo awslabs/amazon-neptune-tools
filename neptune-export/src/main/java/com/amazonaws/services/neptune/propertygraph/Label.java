@@ -1,8 +1,17 @@
+/*
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this file except in compliance with the License.
+A copy of the License is located at
+    http://www.apache.org/licenses/LICENSE-2.0
+or in the "license" file accompanying this file. This file is distributed
+on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+express or implied. See the License for the specific language governing
+permissions and limitations under the License.
+*/
+
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
-import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -14,14 +23,14 @@ public class Label {
 
     public static Label fromJson(JsonNode jsonNode) {
         if (jsonNode.isContainerNode()) {
-            ArrayNode startLabels = (ArrayNode) jsonNode.path("startLabels");
+            ArrayNode startLabels = (ArrayNode) jsonNode.path("fromLabels");
             String label = jsonNode.path("name").textValue();
-            ArrayNode endLabels = (ArrayNode) jsonNode.path("endLabels");
-            Collection<String> preLabels = new ArrayList<>();
-            startLabels.forEach(l -> preLabels.add(l.textValue()));
-            Collection<String> postLabels = new ArrayList<>();
-            endLabels.forEach(l -> postLabels.add(l.textValue()));
-            return new Label(label, preLabels, postLabels);
+            ArrayNode endLabels = (ArrayNode) jsonNode.path("toLabels");
+            Collection<String> fromLabels = new ArrayList<>();
+            startLabels.forEach(l -> fromLabels.add(l.textValue()));
+            Collection<String> toLabels = new ArrayList<>();
+            endLabels.forEach(l -> toLabels.add(l.textValue()));
+            return new Label(label, fromLabels, toLabels);
         } else {
             return new Label(jsonNode.textValue());
         }
@@ -37,20 +46,20 @@ public class Label {
 
     private final String label;
     private final String fullyQualifiedLabel;
-    private final Collection<String> preLabels;
-    private final Collection<String> postLabels;
+    private final Collection<String> fromLabels;
+    private final Collection<String> toLabels;
 
     public Label(String label) {
         this(label, Collections.emptyList(), Collections.emptyList());
     }
 
-    public Label(String label, Collection<String> preLabels, Collection<String> postLabels) {
+    public Label(String label, Collection<String> fromLabels, Collection<String> toLabels) {
         this.label = label;
-        this.preLabels = preLabels;
-        this.postLabels = postLabels;
-        this.fullyQualifiedLabel = preLabels.isEmpty() || postLabels.isEmpty() ?
+        this.fromLabels = fromLabels;
+        this.toLabels = toLabels;
+        this.fullyQualifiedLabel = fromLabels.isEmpty() || toLabels.isEmpty() ?
                 label :
-                String.format("(%s)-[%s]->(%s)", String.join("|", preLabels), label, String.join("|", postLabels));
+                String.format("(%s)-[%s]->(%s)", String.join("|", fromLabels), label, String.join("|", toLabels));
     }
 
     public String label() {
@@ -59,6 +68,10 @@ public class Label {
 
     public String fullyQualifiedLabel() {
         return fullyQualifiedLabel;
+    }
+
+    public boolean hasFromAndToLabels() {
+        return !fromLabels.isEmpty() && !toLabels.isEmpty();
     }
 
     @Override
@@ -76,7 +89,7 @@ public class Label {
 
     public JsonNode toJson() {
 
-        if (preLabels.isEmpty() || postLabels.isEmpty()) {
+        if (fromLabels.isEmpty() || toLabels.isEmpty()) {
             return JsonNodeFactory.instance.textNode(label);
         }
 
@@ -86,15 +99,15 @@ public class Label {
 
         labelNode.put("name", label);
 
-        for (String preLabel : preLabels) {
-            startLabels.add(preLabel);
+        for (String fromLabel : fromLabels) {
+            startLabels.add(fromLabel);
         }
-        labelNode.set("startLabels", startLabels);
+        labelNode.set("fromLabels", startLabels);
 
-        for (String postLabel : postLabels) {
-            endLabels.add(postLabel);
+        for (String toLabel : toLabels) {
+            endLabels.add(toLabel);
         }
-        labelNode.set("endLabels", endLabels);
+        labelNode.set("toLabels", endLabels);
 
         return labelNode;
     }
