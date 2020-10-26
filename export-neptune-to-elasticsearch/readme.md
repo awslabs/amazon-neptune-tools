@@ -25,7 +25,7 @@ The export process uses SSL to connect to Neptune. It currently supports IAM Dat
     
 ### Installation
 
-  1. Launch the [Neptune-to-ElasticSearch CloudFormation stack](https://ianrob-examples.s3-eu-west-1.amazonaws.com/cloudformation-templates/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.json) for your Region from the table below.
+  1. Launch the [Neptune-to-ElasticSearch CloudFormation stack](https://github.com/awslabs/amazon-neptune-tools/blob/master/export-neptune-to-elasticsearch/cloudformation-templates/export-neptune-to-elasticsearch.json) for your Region from the table below.
   
   2. Once the stack has been provisioned, open a terminal and run the __StartExportCommand__ AWS Command Line Interface (CLI) command from the CloudFormation output. For example:
 
