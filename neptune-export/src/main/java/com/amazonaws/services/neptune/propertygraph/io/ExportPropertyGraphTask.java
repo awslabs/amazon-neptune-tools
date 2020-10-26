@@ -134,7 +134,6 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
             status.update();
             Label label = graphClient.getLabelFor(input, labelsFilter);
             if (!labelWriters.containsKey(label)) {
-                System.out.println("LABEL: " + label.fullyQualifiedLabel() + " PROPERTIES: " + input);
                 createWriterFor(label);
             }
             graphClient.updateStats(label);
@@ -152,7 +151,10 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
             try {
                 LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
 
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(Directories.fileName(label.fullyQualifiedLabel(), index), labelSchema, targetConfig);
+                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(
+                        Directories.fileName(label.fullyQualifiedLabel(), index),
+                        labelSchema,
+                        targetConfig);
                 LabelWriter<T> labelWriter = writerFactory.createLabelWriter(propertyGraphPrinter);
 
                 labelWriters.put(label, labelWriter);
