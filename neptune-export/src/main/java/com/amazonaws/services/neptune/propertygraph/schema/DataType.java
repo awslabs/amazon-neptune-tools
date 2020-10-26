@@ -119,18 +119,22 @@ public enum DataType {
         public String format(Object value) {
             return java.lang.String.format(
                     "\"%s\"",
-                    doubleQuotes(value));
+                    escapeDoubleQuotes(value));
         }
 
-        private String doubleQuotes(Object value) {
-            return value.toString().replace("\"", "\"\"");
+        public String escapeDoubleQuotes(Object value) {
+            String temp = value.toString().replace("\"\"", "\"");
+            return temp.replace("\"", "\"\"");
         }
+
+
 
         @Override
         public String formatList(Collection<?> values) {
             return java.lang.String.format("\"%s\"",
                     values.stream().
-                            map(this::doubleQuotes).
+                            map(DataType::escapeSemicolons).
+                            map(this::escapeDoubleQuotes).
                             collect(Collectors.joining(";")));
         }
     },
@@ -182,6 +186,11 @@ public enum DataType {
                 return oldType;
             }
         }
+    }
+
+    public static String escapeSemicolons(Object value) {
+        String temp = value.toString().replace("\\;", ";");
+        return temp.replace(";", "\\;");
     }
 
     public String typeDescription() {

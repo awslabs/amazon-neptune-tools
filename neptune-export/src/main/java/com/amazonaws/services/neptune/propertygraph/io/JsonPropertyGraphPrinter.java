@@ -166,7 +166,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printNode(String id, List<String> labels) throws IOException {
         generator.writeStringField("~id", id);
-        generator.writeStringField("~label", String.join("::", labels));
+        printProperty(labels, DataType.String, "~label");
     }
 
     @Override
@@ -189,6 +189,6 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     private boolean isList(Object value) {
-        return value.getClass().isAssignableFrom(java.util.ArrayList.class);
+        return List.class.isAssignableFrom(value.getClass());
     }
 }

@@ -24,4 +24,16 @@ public class DataTypeTest {
         assertEquals("", result);
     }
 
+    @Test
+    public void shouldEscapeDoubleQuotes(){
+        String result = DataType.String.format("One \"two\" three");
+        assertEquals("\"One \"\"two\"\" three\"", result);
+    }
+
+    @Test
+    public void shouldNotDoubleEscapeDoubleQuotesThatHaveAlreadyBeenEscaped(){
+        String result = DataType.String.format("One \"\"two\"\" three");
+        assertEquals("\"One \"\"two\"\" three\"", result);
+    }
+
 }

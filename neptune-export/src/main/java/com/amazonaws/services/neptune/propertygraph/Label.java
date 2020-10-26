@@ -12,12 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Label {
 
@@ -85,10 +87,14 @@ public class Label {
 
         this.fullyQualifiedLabel = hasFromAndToLabels() ?
                 String.format("(%s)-[%s]->(%s)",
-                        String.join(";", this.fromLabels),
-                        String.join(";", this.labels),
-                        String.join(";", this.toLabels)) :
-                String.join(";", this.labels) ;
+                        String.join(";", escapeSemicolons(this.fromLabels)),
+                        String.join(";", escapeSemicolons(this.labels)),
+                        String.join(";", escapeSemicolons(this.toLabels))) :
+                String.join(";", escapeSemicolons(this.labels)) ;
+    }
+
+    private List<String> escapeSemicolons(List<String> list){
+        return list.stream().map(DataType::escapeSemicolons).collect(Collectors.toList());
     }
 
     private List<String> labelList(Collection<String> col){
