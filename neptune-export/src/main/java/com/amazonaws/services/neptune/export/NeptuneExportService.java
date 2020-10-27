@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.export;
 
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
@@ -203,6 +204,11 @@ public class NeptuneExportService {
             });
 
             result.set(outputS3ObjectInfo);
+        }
+
+        @Override
+        public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+            onExportComplete(outputPath, stats);
         }
 
         public S3ObjectInfo result() {

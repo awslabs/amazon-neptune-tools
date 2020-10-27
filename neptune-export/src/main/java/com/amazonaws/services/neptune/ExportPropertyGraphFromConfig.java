@@ -117,7 +117,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                     System.err.println(stats.toString());
 
                     Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, stats);
+                    onExportComplete(outputPath, stats, graphSchema);
                 }
             });
         } catch (Exception e) {

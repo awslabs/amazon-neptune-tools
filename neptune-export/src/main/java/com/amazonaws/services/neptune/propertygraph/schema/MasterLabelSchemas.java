@@ -60,7 +60,7 @@ public class MasterLabelSchemas {
     public void updateGraphSchema(GraphSchema graphSchema, GraphElementType<?> graphElementType) {
         GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
-            graphElementSchemas.addLabelSchema(masterLabelSchema.labelSchema());
+            graphElementSchemas.addLabelSchema(masterLabelSchema.labelSchema(), masterLabelSchema.outputIds());
         }
         graphSchema.replace(graphElementType, graphElementSchemas);
     }

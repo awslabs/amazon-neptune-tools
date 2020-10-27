@@ -19,20 +19,19 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tinkerpop.gremlin.structure.T;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.*;
 
 public class GraphElementSchemas {
 
     public static GraphElementSchemas fromJson(ArrayNode arrayNode) {
-        Map<Label, LabelSchema> labelSchemas = new HashMap<>();
+
+        GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
 
         for (JsonNode node : arrayNode) {
             Label label = Label.fromJson(node.path("label"));
 
-            labelSchemas.put(label, new LabelSchema(label));
+            graphElementSchemas.addLabelSchema(new LabelSchema(label));
+
             ArrayNode propertiesArray = (ArrayNode) node.path("properties");
 
             for (JsonNode propertyNode : propertiesArray) {
@@ -45,33 +44,39 @@ public class GraphElementSchemas {
                         propertyNode.path("isNullable").booleanValue() :
                         false;
 
-                labelSchemas.get(label).put(key, new PropertySchema(key, isNullable, dataType, isMultiValue));
+                graphElementSchemas.getSchemaFor(label).put(key, new PropertySchema(key, isNullable, dataType, isMultiValue));
             }
         }
-        return new GraphElementSchemas(labelSchemas);
+
+        return graphElementSchemas;
     }
 
-    private final Map<Label, LabelSchema> labelSchemas;
+    private final Map<Label, LabelSchemaContainer> labelSchemas = new HashMap<>();
 
-    public GraphElementSchemas() {
-        this(new HashMap<>());
+    public void addLabelSchema(LabelSchema labelSchema) {
+        addLabelSchema(labelSchema, Collections.emptyList());
     }
 
-    private GraphElementSchemas(Map<Label, LabelSchema> labelSchemas) {
-        this.labelSchemas = labelSchemas;
-    }
-
-    public void addLabelSchema(LabelSchema labelSchema){
-        labelSchemas.put(labelSchema.label(), labelSchema);
+    public void addLabelSchema(LabelSchema labelSchema, Collection<String> outputIds) {
+        labelSchemas.put(labelSchema.label(), new LabelSchemaContainer(labelSchema, outputIds));
     }
 
     public LabelSchema getSchemaFor(Label label) {
 
         if (!labelSchemas.containsKey(label)) {
-            labelSchemas.put(label, new LabelSchema(label));
+            addLabelSchema(new LabelSchema(label));
         }
 
-        return labelSchemas.get(label);
+        return labelSchemas.get(label).labelSchema();
+    }
+
+    public Collection<String> getOutputIdsFor(Label label) {
+
+        if (!labelSchemas.containsKey(label)) {
+            return Collections.emptyList();
+        }
+
+        return labelSchemas.get(label).outputIds();
     }
 
     public boolean hasSchemaFor(Label label) {
@@ -83,7 +88,7 @@ public class GraphElementSchemas {
         Object value = properties.get(T.label);
 
         Label label = List.class.isAssignableFrom(value.getClass()) ?
-                new Label((List<String>)value) :
+                new Label((List<String>) value) :
                 new Label(String.valueOf(value));
 
         update(label, properties, allowStructuralElements);
@@ -94,7 +99,7 @@ public class GraphElementSchemas {
         LabelSchema labelSchema = getSchemaFor(label);
 
         for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
-            if (!properties.containsKey(propertySchema.property())){
+            if (!properties.containsKey(propertySchema.property())) {
                 propertySchema.makeNullable();
             }
         }
@@ -124,7 +129,7 @@ public class GraphElementSchemas {
 
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
-        for (Map.Entry<Label, LabelSchema> entry : labelSchemas.entrySet()) {
+        for (Map.Entry<Label, LabelSchemaContainer> entry : labelSchemas.entrySet()) {
 
             Label label = entry.getKey();
 
@@ -133,7 +138,7 @@ public class GraphElementSchemas {
 
             ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
 
-            LabelSchema labelSchema = entry.getValue();
+            LabelSchema labelSchema = entry.getValue().labelSchema();
 
             for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
@@ -155,5 +160,23 @@ public class GraphElementSchemas {
 
     public GraphElementSchemas createCopy() {
         return fromJson(toJson());
+    }
+
+    private static class LabelSchemaContainer {
+        private final LabelSchema labelSchema;
+        private final Collection<String> outputIds;
+
+        private LabelSchemaContainer(LabelSchema labelSchema, Collection<String> outputIds) {
+            this.labelSchema = labelSchema;
+            this.outputIds = outputIds;
+        }
+
+        public LabelSchema labelSchema() {
+            return labelSchema;
+        }
+
+        public Collection<String> outputIds() {
+            return outputIds;
+        }
     }
 }

@@ -97,10 +97,11 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     ExportStats stats = new ExportStats();
                     Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
+                    GraphSchema graphSchema = new GraphSchema();
+
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
 
-                        GraphSchema graphSchema = new GraphSchema();
 
                         ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                                 exportSpecifications,
@@ -121,7 +122,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     System.err.println(stats.toString());
 
                     Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, stats);
+                    onExportComplete(outputPath, stats, graphSchema);
 
                 }
             });

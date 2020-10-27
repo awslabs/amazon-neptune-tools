@@ -16,10 +16,7 @@ import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
-import com.github.rvesse.airline.annotations.restrictions.Once;
-import com.github.rvesse.airline.annotations.restrictions.PathKind;
-import com.github.rvesse.airline.annotations.restrictions.Required;
+import com.github.rvesse.airline.annotations.restrictions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,12 +36,12 @@ public class RdfTargetModule implements CommandWriter {
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file').")
     @Once
-    @AllowedValues(allowedValues = {"files", "stdout", "stream"})
+    @AllowedEnumValues(Target.class)
     private Target output = Target.files;
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'turtle').")
     @Once
-    @AllowedValues(allowedValues = {"turtle", "nquads", "neptuneStreamsJson"})
+    @AllowedEnumValues(RdfExportFormat.class)
     private RdfExportFormat format = RdfExportFormat.turtle;
 
     @Option(name = {"--stream-name"}, description = "Name of an Amazon Kinesis Data Stream.")

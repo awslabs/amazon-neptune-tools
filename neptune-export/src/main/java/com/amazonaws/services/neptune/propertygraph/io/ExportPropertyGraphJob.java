@@ -57,12 +57,12 @@ public class ExportPropertyGraphJob {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
 
             Timer.timedActivity("exporting " + exportSpecification.description(),
-                    (CheckedActivity.Callable<MasterLabelSchemas>) () -> export(exportSpecification, futures));
+                    (CheckedActivity.Runnable) () -> export(exportSpecification, futures));
         }
     }
 
-    private MasterLabelSchemas export(ExportSpecification<?> exportSpecification,
-                                      Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
+    private void export(ExportSpecification<?> exportSpecification,
+                        Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
 
         System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
@@ -97,8 +97,6 @@ public class ExportPropertyGraphJob {
 
         exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
         exportSpecification.rewrite(masterLabelSchemas, targetConfig);
-
-        return masterLabelSchemas;
     }
 
     private Collection<FileSpecificLabelSchemas> getFileSpecificLabelSchemas(
@@ -107,10 +105,10 @@ public class ExportPropertyGraphJob {
         Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas = new ArrayList<>();
 
         for (Future<FileSpecificLabelSchemas> future : futures) {
-            if (future.isCancelled()){
+            if (future.isCancelled()) {
                 throw new IllegalStateException("Unable to complete job because at least one task was cancelled");
             }
-            if (!future.isDone()){
+            if (!future.isDone()) {
                 throw new IllegalStateException("Unable to complete job because at least one task has not completed");
             }
             allFileSpecificLabelSchemas.add(future.get());

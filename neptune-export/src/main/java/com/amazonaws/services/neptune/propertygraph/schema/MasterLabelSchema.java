@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class MasterLabelSchema {
 
@@ -34,4 +35,7 @@ public class MasterLabelSchema {
         return fileSpecificLabelSchemas;
     }
 
+    public Collection<String> outputIds() {
+        return fileSpecificLabelSchemas.stream().map(FileSpecificLabelSchema::outputId).collect(Collectors.toList());
+    }
 }

@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune;
 import com.amazonaws.services.neptune.cli.LabModeModule;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
@@ -41,6 +42,10 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
 
     public void setEventHandler(NeptuneExportEventHandler eventHandler) {
         this.eventHandler = eventHandler;
+    }
+
+    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception{
+        eventHandler.onExportComplete(outputPath, stats, graphSchema);
     }
 
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception{
