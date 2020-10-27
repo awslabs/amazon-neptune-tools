@@ -85,7 +85,6 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         logger.log("completionFilePayload : " + completionFilePayload.toString());
 
         NeptuneExportService neptuneExportService = new NeptuneExportService(
-                logger,
                 cmd,
                 localOutputPath,
                 outputS3Path,

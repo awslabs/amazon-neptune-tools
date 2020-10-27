@@ -33,7 +33,7 @@ public class Label {
     }
 
     public static Label fromJson(JsonNode jsonNode) {
-        if (jsonNode.isContainerNode()) {
+        if (jsonNode.isObject()) {
 
             ArrayNode fromLabelsArrays = (ArrayNode) jsonNode.path("~fromLabels");
             String label =  jsonNode.path("~label").textValue();

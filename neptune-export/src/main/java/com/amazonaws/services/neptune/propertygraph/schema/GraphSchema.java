@@ -52,17 +52,18 @@ public class GraphSchema implements Jsonizable {
     }
 
     public void update(GraphElementType<?> graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
-        if (!graphElementsSchemas.containsKey(graphElementType)) {
-            graphElementsSchemas.put(graphElementType, new GraphElementSchemas());
-        }
-        graphElementsSchemas.get(graphElementType).update(properties, allowStructuralElements);
+        graphElementSchemasFor(graphElementType).update(properties, allowStructuralElements);
     }
 
     public GraphElementSchemas copyOfGraphElementSchemasFor(GraphElementType<?> graphElementType) {
+        return graphElementSchemasFor(graphElementType).createCopy();
+    }
+
+    public GraphElementSchemas graphElementSchemasFor(GraphElementType<?> graphElementType) {
         if (!graphElementsSchemas.containsKey(graphElementType)) {
             graphElementsSchemas.put(graphElementType, new GraphElementSchemas());
         }
-        return graphElementsSchemas.get(graphElementType).createCopy();
+        return graphElementsSchemas.get(graphElementType);
     }
 
     @Override

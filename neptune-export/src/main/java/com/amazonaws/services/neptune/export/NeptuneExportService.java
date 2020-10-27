@@ -12,37 +12,29 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.propertygraph.ExportStats;
-import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
-import com.amazonaws.services.neptune.util.CheckedActivity;
+import com.amazonaws.services.neptune.dgl.DglNeptuneExportEventHandler;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
-import com.amazonaws.services.neptune.util.Timer;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.ObjectTagging;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.model.Tag;
-import com.amazonaws.services.s3.transfer.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.amazonaws.services.s3.transfer.Download;
+import com.amazonaws.services.s3.transfer.TransferManager;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class NeptuneExportService {
 
-    private static final List<Tag> TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneExportService.class);
 
-    private final Logger logger;
+    public static final List<Tag> TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
+
     private final String cmd;
     private final String localOutputPath;
     private final String outputS3Path;
@@ -52,8 +44,7 @@ public class NeptuneExportService {
     private final ObjectNode completionFilePayload;
     private final int maxConcurrency;
 
-    public NeptuneExportService(Logger logger,
-                                String cmd,
+    public NeptuneExportService(String cmd,
                                 String localOutputPath,
                                 String outputS3Path,
                                 String configFileS3Path,
@@ -61,7 +52,6 @@ public class NeptuneExportService {
                                 String completionFileS3Path,
                                 ObjectNode completionFilePayload,
                                 int maxConcurrency) {
-        this.logger = logger;
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
@@ -103,28 +93,30 @@ public class NeptuneExportService {
             throw new RuntimeException(e);
         }
 
-        TransferManager transferManager = TransferManagerBuilder.standard().build();
+        try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 
-        clearTempFiles();
+            clearTempFiles();
 
-        if (StringUtils.isNotEmpty(configFileS3Path)) {
-            updateArgs(args, "--config-file", downloadFile(transferManager, configFileS3Path));
-        }
-        if (StringUtils.isNotEmpty(queriesFileS3Path)) {
-            updateArgs(args, "--queries", downloadFile(transferManager, queriesFileS3Path));
+            if (StringUtils.isNotEmpty(configFileS3Path)) {
+                updateArgs(args, "--config-file", downloadFile(transferManager.get(), configFileS3Path));
+            }
+            if (StringUtils.isNotEmpty(queriesFileS3Path)) {
+                updateArgs(args, "--queries", downloadFile(transferManager.get(), queriesFileS3Path));
+            }
         }
 
         ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
-                logger,
-                transferManager,
                 localOutputPath,
                 outputS3Path,
                 completionFileS3Path,
                 completionFilePayload);
 
-        new NeptuneExportRunner(args.values(), eventHandler).run();
+        DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path);
 
-        transferManager.shutdownNow();
+        EventHandlerCollection eventHandlerCollection = new EventHandlerCollection(
+                Arrays.asList(eventHandler, dglEventHandler));
+
+        new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 
         return eventHandler.result();
     }
@@ -151,9 +143,9 @@ public class NeptuneExportService {
         S3ObjectInfo configFileS3ObjectInfo = new S3ObjectInfo(s3Path);
         File file = configFileS3ObjectInfo.createDownloadFile(localOutputPath);
 
-        logger.log("Bucket: " + configFileS3ObjectInfo.bucket());
-        logger.log("Key   : " + configFileS3ObjectInfo.key());
-        logger.log("File  : " + file);
+        logger.info("Bucket: " + configFileS3ObjectInfo.bucket());
+        logger.info("Key   : " + configFileS3ObjectInfo.key());
+        logger.info("File  : " + file);
 
         Download download = transferManager.download(
                 configFileS3ObjectInfo.bucket(),
@@ -162,156 +154,11 @@ public class NeptuneExportService {
         try {
             download.waitForCompletion();
         } catch (InterruptedException e) {
-            logger.log(e.getMessage());
+            logger.warn(e.getMessage());
             Thread.currentThread().interrupt();
         }
 
         return file.getAbsoluteFile();
-    }
-
-    private static class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHandler {
-
-        private final Logger logger;
-        private final TransferManager transferManager;
-        private final String localOutputPath;
-        private final String outputS3Path;
-        private final String completionFileS3Path;
-        private final ObjectNode completionFilePayload;
-        private final AtomicReference<S3ObjectInfo> result = new AtomicReference<>();
-
-        private ExportToS3NeptuneExportEventHandler(Logger logger,
-                                                    TransferManager transferManager,
-                                                    String localOutputPath,
-                                                    String outputS3Path,
-                                                    String completionFileS3Path,
-                                                    ObjectNode completionFilePayload) {
-            this.logger = logger;
-            this.transferManager = transferManager;
-            this.localOutputPath = localOutputPath;
-            this.outputS3Path = outputS3Path;
-            this.completionFileS3Path = completionFileS3Path;
-            this.completionFilePayload = completionFilePayload;
-        }
-
-        @Override
-        public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-            File outputDirectory = outputPath.toFile();
-            S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
-
-            Timer.timedActivity("uploading files to S3", (CheckedActivity.Runnable) () -> {
-                uploadExportFilesToS3(transferManager, outputDirectory, outputS3ObjectInfo);
-                uploadCompletionFileToS3(transferManager, outputDirectory, outputS3ObjectInfo, stats);
-            });
-
-            result.set(outputS3ObjectInfo);
-        }
-
-        @Override
-        public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
-            onExportComplete(outputPath, stats);
-        }
-
-        public S3ObjectInfo result() {
-            return result.get();
-        }
-
-        private S3ObjectInfo calculateOutputS3Path(File outputDirectory) {
-            S3ObjectInfo outputBaseS3ObjectInfo = new S3ObjectInfo(outputS3Path);
-            return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
-        }
-
-        private void uploadCompletionFileToS3(TransferManager transferManager,
-                                              File directory,
-                                              S3ObjectInfo outputS3ObjectInfo,
-                                              ExportStats stats) throws IOException {
-
-            if (StringUtils.isEmpty(completionFileS3Path)) {
-                return;
-            }
-
-            if (directory == null || !directory.exists()) {
-                logger.log("Ignoring request to upload completion file to S3 because directory from which to upload files does not exist");
-                return;
-            }
-
-            File completionFile = new File(localOutputPath, directory.getName() + ".json");
-
-            ObjectNode neptuneExportNode = JsonNodeFactory.instance.objectNode();
-            completionFilePayload.set("neptuneExport", neptuneExportNode);
-            neptuneExportNode.put("outputS3Path", outputS3ObjectInfo.toString());
-            stats.addTo(neptuneExportNode);
-
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(completionFile), UTF_8))) {
-                ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-                writer.write(objectWriter.writeValueAsString(completionFilePayload));
-            }
-
-            S3ObjectInfo completionFileS3ObjectInfo =
-                    new S3ObjectInfo(completionFileS3Path).replaceOrAppendKey(
-                            "_COMPLETION_ID_",
-                            FilenameUtils.getBaseName(completionFile.getName()),
-                            completionFile.getName());
-
-
-            try (InputStream inputStream = new FileInputStream(completionFile)) {
-
-                ObjectMetadata objectMetadata = new ObjectMetadata();
-                objectMetadata.setContentLength(completionFile.length());
-                objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-
-                PutObjectRequest putObjectRequest = new PutObjectRequest(completionFileS3ObjectInfo.bucket(),
-                        completionFileS3ObjectInfo.key(),
-                        inputStream,
-                        objectMetadata).withTagging(new ObjectTagging(TAGS));
-
-                Upload upload = transferManager.upload(putObjectRequest);
-
-                upload.waitForUploadResult();
-
-            } catch (InterruptedException e) {
-                logger.log(e.getMessage());
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        private void uploadExportFilesToS3(TransferManager transferManager, File directory, S3ObjectInfo outputS3ObjectInfo) {
-
-            if (directory == null || !directory.exists()) {
-                logger.log("Ignoring request to upload files to S3 because upload directory from which to upload files does not exist");
-                return;
-            }
-
-            try {
-
-                ObjectMetadataProvider metadataProvider = new ObjectMetadataProvider() {
-                    @Override
-                    public void provideObjectMetadata(File file, ObjectMetadata objectMetadata) {
-                        objectMetadata.setContentLength(file.length());
-                        objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-                    }
-                };
-
-                ObjectTaggingProvider taggingProvider = new ObjectTaggingProvider() {
-                    @Override
-                    public ObjectTagging provideObjectTags(UploadContext uploadContext) {
-                        return new ObjectTagging(TAGS);
-                    }
-                };
-
-                MultipleFileUpload upload = transferManager.uploadDirectory(
-                        outputS3ObjectInfo.bucket(),
-                        outputS3ObjectInfo.key(),
-                        directory,
-                        true,
-                        metadataProvider,
-                        taggingProvider);
-
-                upload.waitForCompletion();
-            } catch (InterruptedException e) {
-                logger.log(e.getMessage());
-                Thread.currentThread().interrupt();
-            }
-        }
     }
 
 }
