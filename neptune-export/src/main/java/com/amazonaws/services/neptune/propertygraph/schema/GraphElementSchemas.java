@@ -91,11 +91,7 @@ public class GraphElementSchemas {
 
     public void update(Label label, Map<?, ?> properties, boolean allowStructuralElements) {
 
-        if (!labelSchemas.containsKey(label)) {
-            labelSchemas.put(label, new LabelSchema(label));
-        }
-
-        LabelSchema labelSchema = labelSchemas.get(label);
+        LabelSchema labelSchema = getSchemaFor(label);
 
         for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
             if (!properties.containsKey(propertySchema.property())){

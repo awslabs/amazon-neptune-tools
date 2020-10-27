@@ -49,13 +49,13 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
 
     void handleException(Throwable e){
         if (e.getCause() != null && RemoteConnectionException.class.isAssignableFrom(e.getCause().getClass())){
+            e.printStackTrace();
             System.err.println("An error occurred while connecting to Neptune. " +
                     "Ensure you have specified the --use-ssl flag if the database requires SSL in transit. " +
                     "Ensure you have specified the --use-iam-auth flag if the database uses IAM database authentication.");
-            e.printStackTrace();
         } else {
-            System.err.println("An error occurred while exporting from Neptune:");
             e.printStackTrace();
+            System.err.println("An error occurred while exporting from Neptune: " + e.getMessage());
         }
     }
 

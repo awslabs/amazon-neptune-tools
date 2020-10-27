@@ -110,8 +110,8 @@ public class RunNeptuneExportSvc implements Runnable {
                 }
             });
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
             e.printStackTrace();
+            System.err.println("An error occurred while exporting from Neptune: " + e.getMessage());
             System.exit(-1);
         }
 

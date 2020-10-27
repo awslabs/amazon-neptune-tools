@@ -17,7 +17,6 @@ import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
-import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -58,12 +57,12 @@ public class ExportPropertyGraphJob {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
 
             Timer.timedActivity("exporting " + exportSpecification.description(),
-                    (CheckedActivity.Runnable) () -> export(exportSpecification, futures));
+                    (CheckedActivity.Callable<MasterLabelSchemas>) () -> export(exportSpecification, futures));
         }
     }
 
-    private void export(ExportSpecification<?> exportSpecification,
-                        Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
+    private MasterLabelSchemas export(ExportSpecification<?> exportSpecification,
+                                      Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
 
         System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
@@ -98,6 +97,8 @@ public class ExportPropertyGraphJob {
 
         exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
         exportSpecification.rewrite(masterLabelSchemas, targetConfig);
+
+        return masterLabelSchemas;
     }
 
     private Collection<FileSpecificLabelSchemas> getFileSpecificLabelSchemas(

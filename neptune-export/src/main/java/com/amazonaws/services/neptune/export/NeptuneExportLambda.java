@@ -97,8 +97,12 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
-            writer.write(outputS3ObjectInfo.toString());
+        if (outputS3ObjectInfo != null){
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
+                writer.write(outputS3ObjectInfo.toString());
+            }
+        } else {
+            System.exit(-1);
         }
     }
 }
