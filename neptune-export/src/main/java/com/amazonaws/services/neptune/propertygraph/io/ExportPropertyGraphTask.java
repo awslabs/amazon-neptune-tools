@@ -24,6 +24,7 @@ import java.util.concurrent.Callable;
 
 public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<FileSpecificLabelSchemas> {
 
+    private final GraphElementSchemas graphElementSchemas;
     private final LabelsFilter labelsFilter;
     private final GraphClient<T> graphClient;
     private final WriterFactory<T> writerFactory;
@@ -32,11 +33,8 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
     private final Status status;
     private final int index;
     private final Map<Label, LabelWriter<T>> labelWriters = new HashMap<>();
-    private final GraphSchema graphSchema;
-    private final GraphElementType<T> graphElementType;
 
-    public ExportPropertyGraphTask(GraphSchema graphSchema,
-                                   GraphElementType<T> graphElementType,
+    public ExportPropertyGraphTask(GraphElementSchemas graphElementSchemas,
                                    LabelsFilter labelsFilter,
                                    GraphClient<T> graphClient,
                                    WriterFactory<T> writerFactory,
@@ -44,8 +42,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                                    RangeFactory rangeFactory,
                                    Status status,
                                    int index) {
-        this.graphSchema = graphSchema;
-        this.graphElementType = graphElementType;
+        this.graphElementSchemas = graphElementSchemas;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
         this.writerFactory = writerFactory;
@@ -58,15 +55,11 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
     @Override
     public FileSpecificLabelSchemas call() {
 
-        GraphElementSchemas graphElementSchemas =
-                graphSchema.copyOfGraphElementSchemasFor(graphElementType);
-
         FileSpecificLabelSchemas fileSpecificLabelSchemas = new FileSpecificLabelSchemas();
 
         CountingHandler handler = new CountingHandler(
                 new TaskHandler(
-                        graphElementSchemas,
-                        fileSpecificLabelSchemas,
+                        fileSpecificLabelSchemas, graphElementSchemas,
                         targetConfig,
                         writerFactory,
                         labelWriters,
@@ -102,8 +95,8 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
 
     private class TaskHandler implements GraphElementHandler<T> {
 
-        private final GraphElementSchemas graphElementSchemas;
         private final FileSpecificLabelSchemas fileSpecificLabelSchemas;
+        private final GraphElementSchemas graphElementSchemas;
         private final PropertyGraphTargetConfig targetConfig;
         private final WriterFactory<T> writerFactory;
         private final Map<Label, LabelWriter<T>> labelWriters;
@@ -111,16 +104,16 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         private final Status status;
         private final int index;
 
-        private TaskHandler(GraphElementSchemas graphElementSchemas,
-                            FileSpecificLabelSchemas fileSpecificLabelSchemas,
+        private TaskHandler(FileSpecificLabelSchemas fileSpecificLabelSchemas,
+                            GraphElementSchemas graphElementSchemas,
                             PropertyGraphTargetConfig targetConfig,
                             WriterFactory<T> writerFactory,
                             Map<Label, LabelWriter<T>> labelWriters,
                             GraphClient<T> graphClient,
                             Status status,
                             int index) {
-            this.graphElementSchemas = graphElementSchemas;
             this.fileSpecificLabelSchemas = fileSpecificLabelSchemas;
+            this.graphElementSchemas = graphElementSchemas;
             this.targetConfig = targetConfig;
             this.writerFactory = writerFactory;
             this.labelWriters = labelWriters;

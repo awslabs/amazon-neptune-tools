@@ -12,14 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.propertygraph.schema.MasterLabelSchemas;
 
 public interface RewriteCommand {
 
-    RewriteCommand NULL_COMMAND = (masterLabelSchemas, targetConfig, graphElementType) -> {
-        //Do nothing
-    };
+    RewriteCommand NULL_COMMAND = (MasterLabelSchemas masterLabelSchemas) -> masterLabelSchemas;
 
-    void execute(MasterLabelSchemas masterLabelSchemas, PropertyGraphTargetConfig targetConfig, GraphElementType<?> graphElementType) throws Exception;
+    MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception;
 }

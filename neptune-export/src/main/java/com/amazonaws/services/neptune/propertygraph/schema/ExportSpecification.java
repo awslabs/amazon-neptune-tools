@@ -18,8 +18,7 @@ import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.*;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 public class ExportSpecification<T extends Map<?, ?>> {
     private final GraphElementType<T> graphElementType;
@@ -90,8 +89,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
                                                        Status status,
                                                        int index) {
         return new ExportPropertyGraphTask<>(
-                graphSchema,
-                graphElementType,
+                graphSchema.copyOfGraphElementSchemasFor(graphElementType),
                 labelsFilter,
                 graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
                 graphElementType.writerFactory(),
@@ -102,13 +100,37 @@ public class ExportSpecification<T extends Map<?, ?>> {
         );
     }
 
-    public void updateGraphSchema(GraphSchema graphSchema, MasterLabelSchemas masterLabelSchemas) {
-        masterLabelSchemas.updateGraphSchema(graphSchema, graphElementType);
-    }
+    public MasterLabelSchemas createMasterLabelSchemas(Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemasCollection) {
 
-    public void rewrite(MasterLabelSchemas masterLabelSchemas, PropertyGraphTargetConfig targetConfig) throws Exception {
-        RewriteCommand rewriteCommand = targetConfig.createRewriteCommand();
-        rewriteCommand.execute(masterLabelSchemas, targetConfig, graphElementType);
+        Set<Label> labels = new HashSet<>();
+
+        fileSpecificLabelSchemasCollection.forEach(s -> labels.addAll(s.labels()));
+
+        Map<Label, MasterLabelSchema> masterLabelSchemas = new HashMap<>();
+
+        for (Label label : labels) {
+
+            LabelSchema masterLabelSchema = new LabelSchema(label);
+            Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas = new ArrayList<>();
+
+            for (FileSpecificLabelSchemas fileSpecificLabelSchemasForTask : fileSpecificLabelSchemasCollection) {
+                if (fileSpecificLabelSchemasForTask.hasSchemasForLabel(label)) {
+                    for (FileSpecificLabelSchema fileSpecificLabelSchema :
+                            fileSpecificLabelSchemasForTask.fileSpecificLabelSchemasFor(label)) {
+                        masterLabelSchema = masterLabelSchema.union(fileSpecificLabelSchema.labelSchema());
+                        fileSpecificLabelSchemas.add(fileSpecificLabelSchema);
+                    }
+                }
+            }
+
+            masterLabelSchemas.put(
+                    label,
+                    new MasterLabelSchema(masterLabelSchema, fileSpecificLabelSchemas));
+
+
+        }
+
+        return new MasterLabelSchemas(masterLabelSchemas, graphElementType);
     }
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {

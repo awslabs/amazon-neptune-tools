@@ -106,8 +106,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                                 range.config(),
                                 clusterStrategy.concurrencyConfig(),
                                 targetConfig);
-                        exportJob.execute();
-
+                        graphSchema = exportJob.execute();
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);

@@ -47,10 +47,6 @@ public class GraphSchema implements Jsonizable {
         this.graphElementsSchemas = graphElementsSchemas;
     }
 
-    public void replace(GraphElementType<?> graphElementType, GraphElementSchemas schemas){
-        graphElementsSchemas.put(graphElementType, schemas);
-    }
-
     public void update(GraphElementType<?> graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
         graphElementSchemasFor(graphElementType).update(properties, allowStructuralElements);
     }

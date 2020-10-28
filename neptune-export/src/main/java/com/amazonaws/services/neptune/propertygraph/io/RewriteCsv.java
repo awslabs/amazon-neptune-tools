@@ -21,42 +21,59 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.Arrays;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RewriteCsv implements RewriteCommand {
 
-    @Override
-    public void execute(MasterLabelSchemas masterLabelSchemas,
-                        PropertyGraphTargetConfig targetConfig,
-                        GraphElementType<?> graphElementType) throws Exception {
+    private final PropertyGraphTargetConfig targetConfig;
 
-        Timer.timedActivity(String.format("rewriting %s files", graphElementType.name()),
-                (CheckedActivity.Runnable) () -> {
-                    rewriteFiles(masterLabelSchemas, targetConfig, graphElementType);
-                });
+    public RewriteCsv(PropertyGraphTargetConfig targetConfig) {
+        this.targetConfig = targetConfig;
     }
 
-    private void rewriteFiles(MasterLabelSchemas masterLabelSchemas,
-                              PropertyGraphTargetConfig targetConfig,
-                              GraphElementType<?> graphElementType) throws Exception {
+    @Override
+    public MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception {
+        GraphElementType<?> graphElementType = masterLabelSchemas.graphElementType();
+        return Timer.timedActivity(String.format("rewriting %s files", graphElementType.name()),
+                (CheckedActivity.Callable<MasterLabelSchemas>) () ->
+                        rewriteFiles(masterLabelSchemas, graphElementType, targetConfig));
+    }
+
+    private MasterLabelSchemas rewriteFiles(MasterLabelSchemas masterLabelSchemas,
+                                            GraphElementType<?> graphElementType,
+                                            PropertyGraphTargetConfig targetConfig) throws Exception {
+
+        Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
 
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.schemas()) {
-            rewrite(targetConfig, graphElementType, masterLabelSchema);
+            if (targetConfig.mergeFiles()) {
+                updatedSchemas.put(
+                        masterLabelSchema.labelSchema().label(),
+                        rewriteAndMerge(targetConfig, graphElementType, masterLabelSchema));
+            } else {
+                updatedSchemas.put(
+                        masterLabelSchema.labelSchema().label(),
+                        rewrite(targetConfig, graphElementType, masterLabelSchema));
+            }
+
         }
+
+        return new MasterLabelSchemas(updatedSchemas, graphElementType);
     }
 
-    private void rewrite(PropertyGraphTargetConfig targetConfig,
-                         GraphElementType<?> graphElementType,
-                         MasterLabelSchema masterLabelSchema) throws Exception {
+    private MasterLabelSchema rewrite(PropertyGraphTargetConfig targetConfig,
+                                      GraphElementType<?> graphElementType,
+                                      MasterLabelSchema masterLabelSchema) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema();
 
-        for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
+        RenameableFiles renameableFiles = new RenameableFiles();
 
-            File file = new File(fileSpecificLabelSchema.outputId());
+        for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
 
             LabelSchema labelSchema = fileSpecificLabelSchema.labelSchema();
             Label label = labelSchema.label();
@@ -75,11 +92,15 @@ public class RewriteCsv implements RewriteCommand {
                     graphElementType.tokenNames().toArray(new String[]{}),
                     ArrayUtils.addAll(additionalElementHeaders, filePropertyHeaders));
 
-            try (Reader in = new FileReader(file);
+            try (DeletableFile deletableFile = new DeletableFile(new File(fileSpecificLabelSchema.outputId()));
+                 Reader in = deletableFile.reader();
                  PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(
-                         file.getName(),
+                         new File(fileSpecificLabelSchema.outputId()).getName(),
                          masterSchema,
-                         targetConfig.forFileConsolidation())) {
+                         targetConfig.forFileConsolidation());
+            ) {
+
+                renameableFiles.add(new File(printer.outputId()), deletableFile.name());
 
                 CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
                 Iterable<CSVRecord> records = format.parse(in);
@@ -106,13 +127,135 @@ public class RewriteCsv implements RewriteCommand {
                     printer.printProperties(record.toMap(), false);
                     printer.printEndRow();
                 }
+            }
 
-                boolean deletedOriginalFile = file.delete();
-                new File(printer.outputId()).renameTo(file);
+        }
 
-                if (!deletedOriginalFile) {
-                    throw new IllegalStateException("Unable to delete file: " + file.getAbsolutePath());
+        renameableFiles.rename();
+
+        return masterLabelSchema;
+    }
+
+    private MasterLabelSchema rewriteAndMerge(PropertyGraphTargetConfig targetConfig,
+                                              GraphElementType<?> graphElementType,
+                                              MasterLabelSchema masterLabelSchema) throws Exception {
+
+        LabelSchema masterSchema = masterLabelSchema.labelSchema();
+
+        String filename = String.format("%s.%s",
+                masterSchema.label().fullyQualifiedLabel(),
+                targetConfig.format().suffix());
+
+        RenameableFiles renameableFiles = new RenameableFiles();
+
+        try (PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(
+                filename,
+                masterSchema,
+                targetConfig.forFileConsolidation())) {
+
+            renameableFiles.add(new File(printer.outputId()), filename);
+
+            for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
+
+                try (DeletableFile file = new DeletableFile(new File(fileSpecificLabelSchema.outputId()))) {
+
+                    LabelSchema labelSchema = fileSpecificLabelSchema.labelSchema();
+                    Label label = labelSchema.label();
+
+                    String[] additionalElementHeaders = label.hasFromAndToLabels() ?
+                            new String[]{"~fromLabels", "~toLabels"} :
+                            new String[]{};
+
+                    String[] filePropertyHeaders =
+                            labelSchema.propertySchemas().stream()
+                                    .map(p -> p.property().toString())
+                                    .collect(Collectors.toList())
+                                    .toArray(new String[]{});
+
+                    String[] fileHeaders = ArrayUtils.addAll(
+                            graphElementType.tokenNames().toArray(new String[]{}),
+                            ArrayUtils.addAll(additionalElementHeaders, filePropertyHeaders));
+
+                    try (Reader in = file.reader()) {
+
+                        CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
+                        Iterable<CSVRecord> records = format.parse(in);
+
+                        for (CSVRecord record : records) {
+                            printer.printStartRow();
+
+                            if (graphElementType.equals(GraphElementTypes.Nodes)) {
+                                printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
+                            } else {
+                                if (label.hasFromAndToLabels()) {
+                                    printer.printEdge(
+                                            record.get("~id"),
+                                            record.get("~label"),
+                                            record.get("~from"),
+                                            record.get("~to"),
+                                            Arrays.asList(record.get("~fromLabels").split(";")),
+                                            Arrays.asList(record.get("~toLabels").split(";")));
+                                } else {
+                                    printer.printEdge(record.get("~id"), record.get("~label"), record.get("~from"), record.get("~to"));
+                                }
+                            }
+
+                            printer.printProperties(record.toMap(), false);
+                            printer.printEndRow();
+                        }
+
+                    }
                 }
+            }
+
+        }
+
+        renameableFiles.rename();
+
+        return new MasterLabelSchema(
+                masterSchema,
+                Collections.singletonList(new FileSpecificLabelSchema(filename, targetConfig.format(), masterSchema)));
+    }
+
+    private static class RenameableFiles {
+
+        private final Map<File, String> entries = new HashMap<>();
+
+        public void add(File file, String filename) {
+            entries.put(file, filename);
+        }
+
+        public void rename() {
+            for (Map.Entry<File, String> entry : entries.entrySet()) {
+                File file = entry.getKey();
+                String filename = entry.getValue();
+                file.renameTo(new File(file.getParentFile(), filename));
+            }
+        }
+    }
+
+    private static class DeletableFile implements AutoCloseable {
+
+        private final File file;
+
+        private DeletableFile(File file) {
+            this.file = file;
+        }
+
+        public Reader reader() throws FileNotFoundException {
+            return new FileReader(file);
+        }
+
+        public String name() {
+            return file.getName();
+        }
+
+        @Override
+        public void close() {
+            boolean deletedOriginalFile = file.delete();
+
+            if (!deletedOriginalFile) {
+                throw new IllegalStateException("Unable to delete file: " + file.getAbsolutePath());
             }
         }
     }

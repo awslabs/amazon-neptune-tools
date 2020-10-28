@@ -18,54 +18,27 @@ import java.util.*;
 
 public class MasterLabelSchemas {
 
-    public static MasterLabelSchemas fromCollection(Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemasCollection) {
-
-        Set<Label> labels = new HashSet<>();
-
-        fileSpecificLabelSchemasCollection.forEach(s -> labels.addAll(s.labels()));
-
-        Map<Label, MasterLabelSchema> masterLabelSchemas = new HashMap<>();
-
-        for (Label label : labels) {
-
-            LabelSchema masterLabelSchema = new LabelSchema(label);
-            Collection<FileSpecificLabelSchema> fileSpecificLabelSchemas = new ArrayList<>();
-
-            for (FileSpecificLabelSchemas fileSpecificLabelSchemasForTask : fileSpecificLabelSchemasCollection) {
-                if (fileSpecificLabelSchemasForTask.hasSchemasForLabel(label)) {
-                    for (FileSpecificLabelSchema fileSpecificLabelSchema :
-                            fileSpecificLabelSchemasForTask.fileSpecificLabelSchemasFor(label)) {
-                        masterLabelSchema = masterLabelSchema.union(fileSpecificLabelSchema.labelSchema());
-                        fileSpecificLabelSchemas.add(fileSpecificLabelSchema);
-                    }
-                }
-            }
-
-            masterLabelSchemas.put(
-                    label,
-                    new MasterLabelSchema(masterLabelSchema, fileSpecificLabelSchemas));
-
-
-        }
-
-        return new MasterLabelSchemas(masterLabelSchemas);
-    }
-
     private final Map<Label, MasterLabelSchema> masterLabelSchemas;
+    private final GraphElementType<?> graphElementType;
 
-    public MasterLabelSchemas(Map<Label, MasterLabelSchema> masterLabelSchemas) {
+    public MasterLabelSchemas(Map<Label, MasterLabelSchema> masterLabelSchemas, GraphElementType<?> graphElementType) {
         this.masterLabelSchemas = masterLabelSchemas;
-    }
-
-    public void updateGraphSchema(GraphSchema graphSchema, GraphElementType<?> graphElementType) {
-        GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
-        for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
-            graphElementSchemas.addLabelSchema(masterLabelSchema.labelSchema(), masterLabelSchema.outputIds());
-        }
-        graphSchema.replace(graphElementType, graphElementSchemas);
+        this.graphElementType = graphElementType;
     }
 
     public Collection<MasterLabelSchema> schemas() {
         return masterLabelSchemas.values();
+    }
+
+    public GraphElementType<?> graphElementType() {
+        return graphElementType;
+    }
+
+    public GraphElementSchemas toGraphElementSchemas() {
+        GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
+        for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.values()) {
+            graphElementSchemas.addLabelSchema(masterLabelSchema.labelSchema(), masterLabelSchema.outputIds());
+        }
+        return graphElementSchemas;
     }
 }

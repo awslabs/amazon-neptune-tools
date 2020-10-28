@@ -46,7 +46,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand() {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
             return RewriteCommand.NULL_COMMAND;
         }
     },
@@ -72,8 +72,8 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand() {
-            return new RewriteCsv();
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
+            return new RewriteCsv(targetConfig);
         }
     },
     csvNoHeaders {
@@ -98,8 +98,8 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand() {
-            return new RewriteCsv();
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
+            return new RewriteCsv(targetConfig);
         }
     },
     neptuneStreamsJson {
@@ -125,7 +125,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand() {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
             return RewriteCommand.NULL_COMMAND;
         }
     };
@@ -143,5 +143,5 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
     public abstract String description();
 
-    public abstract RewriteCommand createRewriteCommand();
+    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig);
 }

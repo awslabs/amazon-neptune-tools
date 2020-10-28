@@ -1,0 +1,8 @@
+~id,~label,type:string,code:string,desc:string
+"3635","continent","continent","EU","Europe"
+"3636","continent","continent","AF","Africa"
+"3637","continent","continent","NA","North America"
+"3638","continent","continent","SA","South America"
+"3639","continent","continent","AS","Asia"
+"3640","continent","continent","OC","Oceania"
+"3641","continent","continent","AN","Antarctica"

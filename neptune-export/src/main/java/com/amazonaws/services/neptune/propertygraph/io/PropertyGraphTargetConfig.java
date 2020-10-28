@@ -27,19 +27,22 @@ public class PropertyGraphTargetConfig {
     private final boolean includeTypeDefinitions;
     private final KinesisConfig kinesisConfig;
     private final boolean inferSchema;
+    private final boolean mergeFiles;
 
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
                                      boolean includeTypeDefinitions,
                                      PropertyGraphExportFormat format,
                                      Target output,
-                                     boolean inferSchema) {
+                                     boolean inferSchema,
+                                     boolean mergeFiles) {
         this.directories = directories;
         this.format = format;
         this.output = output;
         this.includeTypeDefinitions = includeTypeDefinitions;
         this.kinesisConfig = kinesisConfig;
         this.inferSchema = inferSchema;
+        this.mergeFiles = mergeFiles;
     }
 
     public Target output() {
@@ -48,6 +51,10 @@ public class PropertyGraphTargetConfig {
 
     public PropertyGraphExportFormat format() {
         return format;
+    }
+
+    public boolean mergeFiles() {
+        return mergeFiles;
     }
 
     public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema) throws IOException {
@@ -78,7 +85,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphTargetConfig forFileConsolidation(){
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, false);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, false, mergeFiles);
     }
 
     private boolean useTempFiles(){
@@ -98,6 +105,6 @@ public class PropertyGraphTargetConfig {
     }
 
     public RewriteCommand createRewriteCommand() {
-        return format.createRewriteCommand();
+        return format.createRewriteCommand(this);
     }
 }

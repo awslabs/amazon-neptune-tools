@@ -23,6 +23,8 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -50,19 +52,22 @@ public class ExportPropertyGraphJob {
         this.targetConfig = targetConfig;
     }
 
-    public void execute() throws Exception {
+    public GraphSchema execute() throws Exception {
+        Map<GraphElementType<?>, GraphElementSchemas> revisedGraphElementSchemas = new HashMap<>();
 
         for (ExportSpecification<?> exportSpecification : exportSpecifications) {
-
-            Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
-
-            Timer.timedActivity("exporting " + exportSpecification.description(),
-                    (CheckedActivity.Runnable) () -> export(exportSpecification, futures));
+            MasterLabelSchemas masterLabelSchemas =
+                    Timer.timedActivity("exporting " + exportSpecification.description(),
+                            (CheckedActivity.Callable<MasterLabelSchemas>) () -> export(exportSpecification));
+            revisedGraphElementSchemas.put(masterLabelSchemas.graphElementType(), masterLabelSchemas.toGraphElementSchemas());
         }
+
+        return new GraphSchema(revisedGraphElementSchemas);
     }
 
-    private void export(ExportSpecification<?> exportSpecification,
-                        Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
+    private MasterLabelSchemas export(ExportSpecification<?> exportSpecification) throws Exception {
+
+        Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
 
         System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
@@ -92,11 +97,12 @@ public class ExportPropertyGraphJob {
             throw new RuntimeException(e);
         }
 
-        MasterLabelSchemas masterLabelSchemas =
-                MasterLabelSchemas.fromCollection(getFileSpecificLabelSchemas(futures));
+        Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas = getFileSpecificLabelSchemas(futures);
+        MasterLabelSchemas masterLabelSchemas = exportSpecification.createMasterLabelSchemas(fileSpecificLabelSchemas);
 
-        exportSpecification.updateGraphSchema(graphSchema, masterLabelSchemas);
-        exportSpecification.rewrite(masterLabelSchemas, targetConfig);
+        RewriteCommand rewriteCommand = targetConfig.createRewriteCommand();
+
+        return rewriteCommand.execute(masterLabelSchemas);
     }
 
     private Collection<FileSpecificLabelSchemas> getFileSpecificLabelSchemas(
@@ -113,7 +119,7 @@ public class ExportPropertyGraphJob {
             }
             allFileSpecificLabelSchemas.add(future.get());
         }
-        return allFileSpecificLabelSchemas;
 
+        return allFileSpecificLabelSchemas;
     }
 }

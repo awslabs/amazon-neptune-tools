@@ -52,6 +52,10 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private String region;
 
+    @Option(name = {"--merge-files"}, description = "Merge files for each vertex or edge label.")
+    @Once
+    private boolean mergeFiles = false;
+
     @Option(name = {"--export-id"}, description = "Export id", hidden = true)
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
@@ -68,7 +72,7 @@ public class PropertyGraphTargetModule implements CommandWriter {
 
     public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, inferSchema);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, inferSchema, mergeFiles);
     }
 
     public String description(){
