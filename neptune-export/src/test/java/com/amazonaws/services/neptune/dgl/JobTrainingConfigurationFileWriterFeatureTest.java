@@ -1,26 +1,31 @@
+/*
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this file except in compliance with the License.
+A copy of the License is located at
+    http://www.apache.org/licenses/LICENSE-2.0
+or in the "license" file accompanying this file. This file is distributed
+on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+express or implied. See the License for the specific language governing
+permissions and limitations under the License.
+*/
+
 package com.amazonaws.services.neptune.dgl;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class JobTrainingConfigurationFileWriterTest {
+public class JobTrainingConfigurationFileWriterFeatureTest {
 
     @Test
     public void shouldWriteNewObjectForEach() throws IOException {
@@ -35,7 +40,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(4, graph.size());
 
@@ -59,7 +64,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(2, graph.size());
 
@@ -84,7 +89,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(1, graph.size());
 
@@ -95,16 +100,18 @@ public class JobTrainingConfigurationFileWriterTest {
 
         JsonNode edge = edges.get(0);
 
-        assertEquals("rel_edge", edge.path("edge_spec_type").textValue());
+        assertEquals("edge", edge.path("edge_spec_type").textValue());
 
         ArrayNode cols = (ArrayNode) edge.path("cols");
 
         assertEquals("~from", cols.get(0).textValue());
         assertEquals("~to", cols.get(1).textValue());
-        assertEquals("~label", cols.get(2).textValue());
 
-        assertEquals("Admin;Person", edge.path("src_node_type").textValue());
-        assertEquals("Person;Temp", edge.path("dst_node_type").textValue());
+        ArrayNode edgeType = (ArrayNode) edge.path("edge_type");
+
+        assertEquals("Admin;Person", edgeType.get(0).textValue());
+        assertEquals("follows", edgeType.get(1).textValue());
+        assertEquals("Person;Temp", edgeType.get(2).textValue());
     }
 
     @Test
@@ -126,7 +133,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(1, graph.size());
 
@@ -171,7 +178,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(1, graph.size());
 
@@ -216,7 +223,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(1, graph.size());
 
@@ -262,7 +269,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(1, graph.size());
 
@@ -307,7 +314,7 @@ public class JobTrainingConfigurationFileWriterTest {
 
         new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
 
-        JsonNode graph = output.json();
+        JsonNode graph = output.graph();
 
         assertEquals(1, graph.size());
 
@@ -331,29 +338,6 @@ public class JobTrainingConfigurationFileWriterTest {
         assertEquals("movieType", cols.get(1).textValue());
 
         assertTrue(feature.path("norm").isMissingNode());
-    }
-
-    private static class Output {
-        private final StringWriter writer = new StringWriter();
-        private final JsonGenerator generator;
-
-        public Output() throws IOException {
-            this.generator = createJsonGenerator(writer);
-        }
-
-        public JsonGenerator generator(){
-            return generator;
-        }
-
-        public JsonNode json() throws JsonProcessingException {
-            return new ObjectMapper().readTree(writer.toString()).path("graph");
-        }
-
-        private JsonGenerator createJsonGenerator(Writer writer) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer);
-            generator.setPrettyPrinter(new DefaultPrettyPrinter());
-            return generator;
-        }
     }
 
 }
