@@ -43,8 +43,22 @@ public class GraphElementSchemas {
                 boolean isNullable = propertyNode.has("isNullable") ?
                         propertyNode.path("isNullable").booleanValue() :
                         false;
+                int minMultiValueSize = propertyNode.has("minMultiValueSize") ?
+                        propertyNode.path("minMultiValueSize").intValue() :
+                        0;
+                int maxMultiValueSize = propertyNode.has("maxMultiValueSize") ?
+                        propertyNode.path("maxMultiValueSize").intValue() :
+                        0;
 
-                graphElementSchemas.getSchemaFor(label).put(key, new PropertySchema(key, isNullable, dataType, isMultiValue));
+                graphElementSchemas.getSchemaFor(label).put(
+                        key,
+                        new PropertySchema(
+                                key,
+                                isNullable,
+                                dataType,
+                                isMultiValue,
+                                minMultiValueSize,
+                                maxMultiValueSize));
             }
         }
 
@@ -147,6 +161,8 @@ public class GraphElementSchemas {
                 propertyNode.put("dataType", propertySchema.dataType().name());
                 propertyNode.put("isMultiValue", propertySchema.isMultiValue());
                 propertyNode.put("isNullable", propertySchema.isNullable());
+                propertyNode.put("minMultiValueSize", propertySchema.minMultiValueSize());
+                propertyNode.put("maxMultiValueSize", propertySchema.maxMultiValueSize());
                 propertiesNode.add(propertyNode);
             }
 

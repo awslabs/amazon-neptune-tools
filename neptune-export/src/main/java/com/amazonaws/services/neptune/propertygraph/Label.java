@@ -87,10 +87,10 @@ public class Label {
 
         this.fullyQualifiedLabel = hasFromAndToLabels() ?
                 String.format("(%s)-[%s]->(%s)",
-                        String.join(";", escapeSemicolons(this.fromLabels)),
-                        String.join(";", escapeSemicolons(this.labels)),
-                        String.join(";", escapeSemicolons(this.toLabels))) :
-                String.join(";", escapeSemicolons(this.labels)) ;
+                        fromLabelsAsString(),
+                        labelsAsString(),
+                        toLabelsAsString()):
+                labelsAsString() ;
     }
 
     private List<String> escapeSemicolons(List<String> list){
@@ -106,6 +106,18 @@ public class Label {
 
     public List<String> label() {
         return labels;
+    }
+
+    public String fromLabelsAsString(){
+        return String.join(";", escapeSemicolons(fromLabels));
+    }
+
+    public String toLabelsAsString(){
+        return String.join(";", escapeSemicolons(toLabels));
+    }
+
+    public String labelsAsString(){
+        return String.join(";", escapeSemicolons(labels));
     }
 
     public String fullyQualifiedLabel() {
