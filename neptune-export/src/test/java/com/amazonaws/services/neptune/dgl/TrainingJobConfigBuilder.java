@@ -23,7 +23,7 @@ public class TrainingJobConfigBuilder {
     }
 
     Map<Label, String> nodeClassLabels = new HashMap<>();
-    Collection<Label> edgeClassLabels = new ArrayList<>();
+    Map<Label, String> edgeClassLabels = new HashMap<>();
     Collection<TrainingJobConfig.Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
     Collection<TrainingJobConfig.NumericalBucketFeatureConfig> numericalBucketFeatures = new ArrayList<>();
     Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
@@ -38,8 +38,8 @@ public class TrainingJobConfigBuilder {
         return this;
     }
 
-    public TrainingJobConfigBuilder withEdgeClassLabel(Label label) {
-        edgeClassLabels.add(label);
+    public TrainingJobConfigBuilder withEdgeClassLabel(Label label, String column) {
+        edgeClassLabels.put(label, column);
         return this;
     }
 

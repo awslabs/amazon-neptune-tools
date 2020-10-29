@@ -85,7 +85,7 @@ public class JobTrainingConfigurationFileWriter {
             for (String outputId : outputIds) {
                 generator.writeStartObject();
                 writeFileName(graphElementType, outputId);
-                writeSeparator();
+                writeSeparator(",");
                 if (config.hasNodeClassificationSpecificationForNodeType(nodeLabel)) {
                     writeNodeClassLabel(labelSchema, config.getNodeClassificationColumnForNodeType(nodeLabel));
                 } else {
@@ -113,7 +113,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeEndArray();
             writeSplitRates();
             if (propertySchema.isMultiValue()) {
-                generator.writeStringField("separator", ";");
+                writeSeparator(";");
             }
             generator.writeStringField("node_type", label.labelsAsString());
             generator.writeEndObject();
@@ -167,7 +167,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeString(getColumnName.apply(propertySchema));
             generator.writeEndArray();
             if (propertySchema.isMultiValue()) {
-                generator.writeStringField("separator", ";");
+                writeSeparator(";");
             }
             generator.writeStringField("node_type", label.labelsAsString());
             generator.writeEndObject();
@@ -209,7 +209,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeString(getColumnName.apply(propertySchema));
             generator.writeEndArray();
             if (propertySchema.isMultiValue()) {
-                generator.writeStringField("separator", ";");
+                writeSeparator(";");
             }
             generator.writeStringField("node_type", label.labelsAsString());
             generator.writeEndObject();
@@ -273,7 +273,7 @@ public class JobTrainingConfigurationFileWriter {
             for (String outputId : outputIds) {
                 generator.writeStartObject();
                 writeFileName(graphElementType, outputId);
-                writeSeparator();
+                writeSeparator(",");
 
                 generator.writeArrayFieldStart("edges");
                 generator.writeStartObject();
@@ -284,7 +284,7 @@ public class JobTrainingConfigurationFileWriter {
                 generator.writeEndArray();
 
                 if (config.hasEdgeClassificationSpecificationForEdgeType(edgeLabel)) {
-                    writeEdgeClassLabel(edgeLabel);
+                    writeEdgeClassLabel(labelSchema, config.getEdgeClassificationColumnForEdgeType(edgeLabel));
                 } else {
                     writeEdgeFeatures(edgeLabel, labelSchema.propertySchemas());
                 }
@@ -303,7 +303,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeNumericalEdgeFeature(Label label, PropertySchema propertySchema) throws IOException {
-        if (!propertySchema.isMultiValue()){
+        if (!propertySchema.isMultiValue()) {
             generator.writeStartObject();
             generator.writeStringField("feat_type", "edge");
             generator.writeStringField("sub_feat_type", "numerical");
@@ -318,23 +318,36 @@ public class JobTrainingConfigurationFileWriter {
         }
     }
 
-    private void writeEdgeClassLabel(Label label) throws IOException {
-        generator.writeArrayFieldStart("labels");
-        generator.writeStartObject();
-        generator.writeStringField("label_type", "edge");
-        generator.writeStringField("sub_label_type", "edge_class_label");
-        generator.writeArrayFieldStart("cols");
-        generator.writeString("~from");
-        generator.writeString("~to");
-        generator.writeEndArray();
-        writeSplitRates();
-        writeEdgeType(label);
-        generator.writeEndObject();
-        generator.writeEndArray();
+    private void writeEdgeClassLabel(LabelSchema labelSchema, String column) throws IOException {
+
+        Label label = labelSchema.label();
+        if (labelSchema.containsProperty(column)) {
+            generator.writeArrayFieldStart("labels");
+            generator.writeStartObject();
+            generator.writeStringField("label_type", "edge");
+            generator.writeStringField("sub_label_type", "edge_class_label");
+            generator.writeArrayFieldStart("cols");
+            generator.writeString("~from");
+            generator.writeString("~to");
+            generator.writeString(column);
+            generator.writeEndArray();
+            writeSplitRates();
+            if (labelSchema.getPropertySchema(column).isMultiValue()){
+                writeSeparator(";");
+            }
+            writeEdgeType(label);
+            generator.writeEndObject();
+            generator.writeEndArray();
+        } else {
+            warnings.add(
+                    String.format("Unable to add edge class label: Edge of type '%s' does not contain property '%s'.",
+                            label.labelsAsString(),
+                            column));
+        }
     }
 
-    private void writeSeparator() throws IOException {
-        generator.writeStringField("separator", ",");
+    private void writeSeparator(String separator) throws IOException {
+        generator.writeStringField("separator", separator);
     }
 
     private void writeFileName(GraphElementType<Map<String, Object>> graphElementType, String outputId) throws IOException {

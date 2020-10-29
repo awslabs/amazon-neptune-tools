@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -142,9 +143,9 @@ public class RewriteCsv implements RewriteCommand {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema();
 
-        String filename = String.format("%s.%s",
+        String filename = Directories.fileName(String.format("%s.%s",
                 masterSchema.label().fullyQualifiedLabel(),
-                targetConfig.format().suffix());
+                targetConfig.format().suffix()));
 
         RenameableFiles renameableFiles = new RenameableFiles();
 
@@ -228,8 +229,7 @@ public class RewriteCsv implements RewriteCommand {
         public void rename() {
             for (Map.Entry<File, String> entry : entries.entrySet()) {
                 File file = entry.getKey();
-                String filename = entry.getValue();
-                file.renameTo(new File(file.getParentFile(), filename));
+                file.renameTo(new File(file.getParentFile(), entry.getValue()));
             }
         }
     }

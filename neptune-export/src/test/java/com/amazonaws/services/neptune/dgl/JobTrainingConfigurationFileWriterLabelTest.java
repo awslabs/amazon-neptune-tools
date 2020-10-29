@@ -127,7 +127,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
     }
 
     @Test
-    public void shouldAddSeparatorIfNodeClassLabelIsMutiValued() throws IOException {
+    public void shouldAddSeparatorIfNodeClassLabelIsMultiValued() throws IOException {
 
         DataType dataType = DataType.String;
         boolean isNullable = false;
@@ -173,10 +173,15 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 Collections.singletonList("Person"),
                 Collections.singletonList("Person"));
 
+        DataType dataType = DataType.String;
+        boolean isNullable = false;
+        boolean isMultiValue = false;
+
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, 0, 0));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 
@@ -186,7 +191,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
-                        .withEdgeClassLabel(knowsLabel)
+                        .withEdgeClassLabel(knowsLabel, "contact")
                         .build())
                 .write();
 
@@ -206,10 +211,11 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         ArrayNode cols = (ArrayNode) label.path("cols");
 
-        assertEquals(2, cols.size());
+        assertEquals(3, cols.size());
 
         assertEquals("~from", cols.get(0).textValue());
         assertEquals("~to", cols.get(1).textValue());
+        assertEquals("contact", cols.get(2).textValue());
 
         ArrayNode splitRates = (ArrayNode) label.path("split_rate");
 
@@ -226,6 +232,92 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         assertEquals("Person", edgeType.get(2).textValue());
 
         assertTrue(label.path("separator").isMissingNode());
+    }
+
+    @Test
+    public void shouldAddWarningIfColumnDoesNotExistForEdgeClassLabel() throws IOException {
+
+        Label knowsLabel = new Label(Collections.singletonList("knows"),
+                Collections.singletonList("Person"),
+                Collections.singletonList("Person"));
+
+        DataType dataType = DataType.String;
+        boolean isNullable = false;
+        boolean isMultiValue = false;
+
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+
+        LabelSchema labelSchema = new LabelSchema(knowsLabel);
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, 0, 0));
+
+        edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
+
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                .withEdgeClassLabel(knowsLabel, "does-not-exist")
+                .build())
+                .write();
+
+        JsonNode graph = output.graph();
+        ArrayNode warnings = output.warnings();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+
+        assertTrue(array.get(0).path("labels").isMissingNode());
+        assertTrue(array.get(0).path("features").isMissingNode());
+
+        assertEquals(1, warnings.size());
+        assertEquals("Unable to add edge class label: Edge of type 'knows' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
+    }
+
+    @Test
+    public void shouldAddSeparatorIfEdgeClassLabelIsMultiValued() throws IOException {
+
+        Label knowsLabel = new Label(Collections.singletonList("knows"),
+                Collections.singletonList("Person"),
+                Collections.singletonList("Person"));
+
+        DataType dataType = DataType.String;
+        boolean isNullable = false;
+        boolean isMultiValue = true;
+
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+
+        LabelSchema labelSchema = new LabelSchema(knowsLabel);
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, 0, 0));
+
+        edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
+
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                .withEdgeClassLabel(knowsLabel, "contact")
+                .build())
+                .write();
+
+        JsonNode graph = output.graph();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+        ArrayNode labels = (ArrayNode) array.get(0).path("labels");
+
+        assertEquals(1, labels.size());
+
+        JsonNode label = labels.get(0);
+
+        assertEquals(";", label.path("separator").textValue());
     }
 
 }

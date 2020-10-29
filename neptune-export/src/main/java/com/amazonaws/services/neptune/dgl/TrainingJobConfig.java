@@ -20,17 +20,17 @@ import java.util.*;
 public class TrainingJobConfig {
 
     private final Map<Label, String> nodeClassLabels;
-    private final Collection<Label> edgeClassLabels;
+    private final Map<Label, String> edgeClassLabels;
     private final Collection<Word2VecConfig> word2VecNodeFeatures;
     private final Collection<NumericalBucketFeatureConfig> numericalBucketFeatures;
     private final Collection<Double> splitRates;
 
     public TrainingJobConfig() {
-        this(Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Arrays.asList(0.7, 0.1, 0.2));
+        this(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), Arrays.asList(0.7, 0.1, 0.2));
     }
 
     public TrainingJobConfig(Map<Label, String> nodeClassLabels,
-                             Collection<Label> edgeClassLabels,
+                             Map<Label, String> edgeClassLabels,
                              Collection<Word2VecConfig> word2VecNodeFeatures,
                              Collection<NumericalBucketFeatureConfig> numericalBucketFeatures,
                              Collection<Double> splitRates) {
@@ -60,7 +60,11 @@ public class TrainingJobConfig {
     }
 
     public boolean hasEdgeClassificationSpecificationForEdgeType(Label edgeType){
-        return edgeClassLabels.contains(edgeType);
+        return edgeClassLabels.containsKey(edgeType);
+    }
+
+    public String getEdgeClassificationColumnForEdgeType(Label nodeType) {
+        return edgeClassLabels.get(nodeType);
     }
 
     public boolean hasWord2VecSpecificationForNodeTypeAndColumn(Label nodeType, String column){

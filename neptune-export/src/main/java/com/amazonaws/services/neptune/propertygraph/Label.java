@@ -86,7 +86,7 @@ public class Label {
         this.toLabels = labelList(toLabels);
 
         this.fullyQualifiedLabel = hasFromAndToLabels() ?
-                String.format("(%s)-[%s]->(%s)",
+                String.format("(%s)-%s-(%s)",
                         fromLabelsAsString(),
                         labelsAsString(),
                         toLabelsAsString()):

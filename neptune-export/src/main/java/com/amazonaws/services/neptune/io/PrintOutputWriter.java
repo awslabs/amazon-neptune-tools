@@ -23,17 +23,17 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
         this.outputId = outputId;
     }
 
-    PrintOutputWriter(String outputId,Writer out, boolean autoFlush) {
+    PrintOutputWriter(String outputId, Writer out, boolean autoFlush) {
         super(out, autoFlush);
         this.outputId = outputId;
     }
 
-    PrintOutputWriter(String outputId,OutputStream out) {
+    PrintOutputWriter(String outputId, OutputStream out) {
         super(out);
         this.outputId = outputId;
     }
 
-    PrintOutputWriter(String outputId,OutputStream out, boolean autoFlush) {
+    PrintOutputWriter(String outputId, OutputStream out, boolean autoFlush) {
         super(out, autoFlush);
         this.outputId = outputId;
     }

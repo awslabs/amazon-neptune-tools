@@ -25,12 +25,15 @@ import java.util.UUID;
 
 public class Directories {
 
+    private final static String REPLACE_REGEX = "[^0-9a-zA-Z\\/\\!\\-_\\.\\*'\\(\\)]";
+
     public static String fileName(String name, int index){
-        return String.format("%s-%s", name, index);
+        String filename = String.format("%s-%s", name, index);
+        return filename.replaceAll(REPLACE_REGEX, "_");
     }
 
-    public static String randomFileName(){
-        return UUID.randomUUID().toString().replace("-", "");
+    public static String fileName(String name){
+        return name.replaceAll(REPLACE_REGEX, "_");
     }
 
     private static final String CONFIG_FILE = "config.json";
