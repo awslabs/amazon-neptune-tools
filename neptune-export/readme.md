@@ -12,6 +12,7 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
 
 ### Topics
 
+  - [Best practices](#best-practices)
   - [Exporting to the Bulk Loader CSV Format](#exporting-to-the-bulk-loader-csv-format)
   - [Exporting the Results of User-Supplied Queries](#exporting-the-results-of-user-supplied-queries)
   - [Exporting an RDF Graph](#exporting-an-rdf-graph)
@@ -19,6 +20,50 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
   - [Security](#security)
   - [Deploying neptune-export as an AWS Lambda Function](#deploying-neptune-export-as-an-aws-lambda-function)
  
+## Best practices
+
+### Export from a cloned cluster
+
+_neptune-export_ cannot guarantee the consistency of exported data if you export from a Neptune cluster whose data is changing while the export is taking place. Therefore, we recommend exporting from a clone of your cluster. This ensures the export takes place against a static version of the data at the point in time the database was cloned. Further, exporting from a clone ensures the export doesn’t impact the query performance of the original cluster.
+
+_neptune-export_ makes it easy to export from a clone. Simply supply a `--clone-cluster` option with the command. You can also use the `--clone-cluster-replica-count` option to specify the number of read replicas to be added to the cloned cluster, and the `--clone-cluster-instance-type` parameter to tell _neptune-export_ which instance type – e.g. `db.r5.2xlarge` –  to use for each instance in the cloned cluster (by default, _neptune-export_ will use the same instance type as the primary in the original cluster.)
+
+If you clone your cluster using the `--clone-cluster` option, _neptune-export_ will ignore any `--concurrency` option supplied in the params, and will instead work out a concurrency setting based on the number of instances in the cloned cluster and their instance types.
+
+If you use the cluster cloning features of _neptune-export_, you must ensure the AWS Identity and Access Management identity with which the process runs can perform the following actions:
+
+  - rds:AddTagsToResource
+  - rds:DescribeDBClusters
+  - rds:DescribeDBInstances
+  - rds:ListTagsForResource
+  - rds:DescribeDBClusterParameters
+  - rds:DescribeDBParameters
+  - rds:ModifyDBParameterGroup
+  - rds:ModifyDBClusterParameterGroup
+  - rds:RestoreDBClusterToPointInTime
+  - rds:DeleteDBInstance
+  - rds:DeleteDBClusterParameterGroup
+  - rds:DeleteDBParameterGroup
+  - rds:DeleteDBCluster
+  - rds:CreateDBInstance
+  - rds:CreateDBClusterParameterGroup
+  - rds:CreateDBParameterGroup
+
+
+### Use a config file
+
+Use the `export-pg-from-config` command in preference to `export-pg` when exporting property graphs from Neptune. The `export-pg` command makes two passes over your data: the first to generate metadata, the second to create the data files. This first pass takes place on a single thread, and for very large datasets can take many hours – often much longer than the export itself.
+
+The preferred approach is to generate the metadata once using `create-pg-config`, store the config file in S3, and then refer to it from `export-pg-from-config` using the `--config-file` option.
+
+### Supply approximate node and edge counts
+
+When performing a parallel export (`--concurrency` is larger than one), _neptune-export_ must first query your database to determine the number of nodes and edges to be exported. These numbers are then used to calculate ranges for each query in a set of parallel queries. Counting the nodes and edges in a large dataset can take many minutes.
+
+_neptune-export_ now includes `--approx-node-count` and `--approx-edge-count` options that allow you to supply estimates for the number of nodes and edges you expect to export. By specifying approximate counts you can reduce the export time, because _neptune-export_ will no longer have to query the database to count the nodes and edges.
+
+The numbers you supply need only be approximate – it doesn’t matter if you’re within ten percent of the real counts. One way of calculating these numbers is to use the counts from a previous export, adjusted based on the approximate number of additions and deletions that have taken place in the interim. 
+
 ## Exporting to the Bulk Loader CSV Format
 
 When exporting to the [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), _neptune-export_ generates CSV files based on metadata derived from scanning your graph. This metadata is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
