@@ -61,7 +61,7 @@ public class PropertyGraphTargetConfig {
         return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(useTempFiles())), labelSchema);
     }
 
-    public PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+    private PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
         OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
         return createPrinter(labelSchema, outputWriter);
     }
@@ -70,7 +70,7 @@ public class PropertyGraphTargetConfig {
         return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(useTempFiles())), labelSchema);
     }
 
-    public PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+    private PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
         OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
         return createPrinter(labelSchema, outputWriter);
     }
@@ -79,7 +79,7 @@ public class PropertyGraphTargetConfig {
         return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(useTempFiles())), labelSchema);
     }
 
-    public PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+    private PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
         OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
         return createPrinter(labelSchema, outputWriter);
     }

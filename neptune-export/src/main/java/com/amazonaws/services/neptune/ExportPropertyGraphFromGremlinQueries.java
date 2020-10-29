@@ -105,7 +105,6 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
-
                         QueryJob queryJob = new QueryJob(
                                 namedQueries.flatten(),
                                 queryClient,

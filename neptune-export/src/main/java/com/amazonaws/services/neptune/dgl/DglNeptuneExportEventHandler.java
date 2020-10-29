@@ -12,9 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.dgl;
 
+import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.TAGS;
 
@@ -44,10 +47,12 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
 
     private final String localOutputPath;
     private final String outputS3Path;
+    private final Args args;
 
-    public DglNeptuneExportEventHandler(String localOutputPath, String outputS3Path) {
+    public DglNeptuneExportEventHandler(String localOutputPath, String outputS3Path, Args args) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
+        this.args = args;
     }
 
     @Override
@@ -57,14 +62,19 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+
+        Function<PropertySchema, String> getColumnName = args.contains("--exclude-type-definitions") ?
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE :
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITH_DATATYPE;
+
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
             File outputDirectory = outputPath.toFile();
             S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
 
-            File trainingJobConfigurationFile = new File(new File(localOutputPath), "training-job-configuration.json");
+            File trainingJobConfigurationFile = new File(new File(localOutputPath), FILE_NAME);
 
             try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-                new JobTrainingConfigurationFileWriter(graphSchema, createJsonGenerator(writer)).write();
+                new JobTrainingConfigurationFileWriter(graphSchema, createJsonGenerator(writer), getColumnName).write();
             }
 
             Timer.timedActivity("uploading training job configuration file to S3", (CheckedActivity.Runnable) () -> {
@@ -80,7 +90,7 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
                                                         File trainingJobConfigurationFile,
                                                         S3ObjectInfo outputS3ObjectInfo) throws IOException {
 
-        S3ObjectInfo s3ObjectInfo = outputS3ObjectInfo.withNewKeySuffix("training-job-configuration.json");
+        S3ObjectInfo s3ObjectInfo = outputS3ObjectInfo.withNewKeySuffix(FILE_NAME);
 
         logger.info(FileUtils.readFileToString(trainingJobConfigurationFile, StandardCharsets.UTF_8));
 

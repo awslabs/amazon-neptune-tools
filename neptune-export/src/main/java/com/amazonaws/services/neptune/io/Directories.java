@@ -21,11 +21,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.UUID;
 
 public class Directories {
 
     public static String fileName(String name, int index){
         return String.format("%s-%s", name, index);
+    }
+
+    public static String randomFileName(){
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     private static final String CONFIG_FILE = "config.json";

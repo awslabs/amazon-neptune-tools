@@ -39,7 +39,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -63,7 +63,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -88,7 +88,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -132,7 +132,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -177,7 +177,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -222,7 +222,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -268,7 +268,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -313,7 +313,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator()).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
 
         JsonNode graph = output.graph();
 
@@ -361,7 +361,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withWord2VecNodeFeature(
                                 movieLabel,
                                 "genre",
@@ -422,7 +422,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
                         .build())
                 .write();
@@ -464,7 +464,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
     @Test
     public void shouldAddNumericalBucketFeatureForAllNumberTypes() throws IOException {
-        Collection<DataType> dataTypes = Arrays.asList(DataType.Integer, DataType.Double, DataType.Float, DataType.Long, DataType.Short);
+        Collection<DataType> dataTypes = Arrays.asList(DataType.Byte, DataType.Integer, DataType.Double, DataType.Float, DataType.Long, DataType.Short);
 
         boolean isNullable = false;
         boolean isMultiValue = false;
@@ -484,7 +484,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
             new JobTrainingConfigurationFileWriter(
                     graphSchema,
                     output.generator(),
-                    TrainingJobConfigBuilder.builder()
+                    JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                             .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
                             .build())
                     .write();
@@ -525,7 +525,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
                         .build())
                 .write();
@@ -546,6 +546,63 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         assertEquals(1, warnings.size());
         assertEquals("Unable to add numerical bucket feature: Property 'score' of node type 'Movie' is a multi-value property.", warnings.get(0).textValue());
+    }
+
+    @Test
+    public void singleValueNumericFeatureForEdge() throws IOException {
+
+        Collection<DataType> dataTypes = Arrays.asList(DataType.Byte, DataType.Integer, DataType.Double, DataType.Float, DataType.Long, DataType.Short);
+
+        boolean isNullable = false;
+        boolean isMultiValue = false;
+
+        for (DataType dataType : dataTypes) {
+            GraphSchema graphSchema = new GraphSchema();
+            GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+
+            LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("knows"), Collections.singletonList("Person"), Collections.singletonList("Person")));
+            labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue, 0, 0));
+
+            edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
+
+            Output output = new Output();
+
+            new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+
+            JsonNode graph = output.graph();
+
+            assertEquals(1, graph.size());
+
+            ArrayNode array = (ArrayNode) graph;
+            ArrayNode features = (ArrayNode) array.get(0).path("features");
+
+            assertEquals(1, features.size());
+
+            JsonNode feature = features.get(0);
+
+            assertEquals("edge", feature.path("feat_type").textValue());
+            assertEquals("numerical", feature.path("sub_feat_type").textValue());
+            assertEquals("min-max", feature.path("norm").textValue());
+
+            ArrayNode cols = (ArrayNode) feature.path("cols");
+
+            assertEquals(3, cols.size());
+
+            assertEquals("~from", cols.get(0).textValue());
+            assertEquals("~to", cols.get(1).textValue());
+            assertEquals("strength", cols.get(2).textValue());
+
+            ArrayNode edgeType = (ArrayNode) feature.path("edge_type");
+
+            assertEquals(3, edgeType.size());
+
+            assertEquals("Person", edgeType.get(0).textValue());
+            assertEquals("knows", edgeType.get(1).textValue());
+            assertEquals("Person", edgeType.get(2).textValue());
+
+            assertTrue(feature.path("separator").isMissingNode());
+
+        }
     }
 
 }

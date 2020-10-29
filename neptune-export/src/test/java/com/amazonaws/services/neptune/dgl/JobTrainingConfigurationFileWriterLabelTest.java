@@ -47,7 +47,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -107,7 +107,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "does-not-exist")
                         .build())
                 .write();
@@ -147,7 +147,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -185,7 +185,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
                         .withEdgeClassLabel(knowsLabel)
                         .build())
                 .write();
