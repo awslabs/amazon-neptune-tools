@@ -44,14 +44,25 @@ public class JobTrainingConfigurationFileWriter {
     public void write() throws IOException {
 
         generator.writeStartObject();
-        generator.writeArrayFieldStart("graph");
 
+        generator.writeArrayFieldStart("graph");
         writeNodes();
         writeEdges();
-
         generator.writeEndArray();
+
+        generator.writeArrayFieldStart("warnings");
+        writeWarnings();
+        generator.writeEndArray();
+
         generator.writeEndObject();
+
         generator.flush();
+    }
+
+    private void writeWarnings() throws IOException {
+        for (String warning : warnings) {
+            generator.writeString(warning);
+        }
     }
 
     private void writeNodes() throws IOException {
@@ -66,8 +77,8 @@ public class JobTrainingConfigurationFileWriter {
                 generator.writeStartObject();
                 writeFileName(graphElementType, outputId);
                 writeSeparator();
-                if (config.hasNodeClassSpecificationForNodeType(nodeLabel)){
-                    writeNodeClassLabel(labelSchema, config.getColumnForNodeClass(nodeLabel));
+                if (config.hasNodeClassificationSpecificationForNodeType(nodeLabel)) {
+                    writeNodeClassLabel(labelSchema, config.getNodeClassificationColumnForNodeType(nodeLabel));
                 } else {
                     writeFeatures(nodeLabel, labelSchema.propertySchemas());
                 }
@@ -79,11 +90,9 @@ public class JobTrainingConfigurationFileWriter {
 
     private void writeNodeClassLabel(LabelSchema labelSchema, String column) throws IOException {
 
-
-
         Label label = labelSchema.label();
-        
-        if (labelSchema.containsProperty(column)){
+
+        if (labelSchema.containsProperty(column)) {
             generator.writeArrayFieldStart("labels");
             PropertySchema propertySchema = labelSchema.getPropertySchema(column);
             generator.writeStartObject();
@@ -94,7 +103,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeString(column);
             generator.writeEndArray();
             writeSplitRates();
-            if (propertySchema.isMultiValue()){
+            if (propertySchema.isMultiValue()) {
                 generator.writeStringField("separator", ";");
             }
             generator.writeStringField("node_type", label.labelsAsString());
@@ -119,58 +128,128 @@ public class JobTrainingConfigurationFileWriter {
     private void writeFeatures(Label label, Collection<PropertySchema> propertySchemas) throws IOException {
         generator.writeArrayFieldStart("features");
         for (PropertySchema propertySchema : propertySchemas) {
-            generator.writeStartObject();
-            if (propertySchema.dataType() == DataType.Float || propertySchema.dataType() == DataType.Double){
+            if (propertySchema.dataType() == DataType.Float || propertySchema.dataType() == DataType.Double) {
                 writeNumericalFeatureForFloat(label, propertySchema);
             }
             if (propertySchema.dataType() == DataType.Short ||
                     propertySchema.dataType() == DataType.Integer ||
-                    propertySchema.dataType() == DataType.Long){
+                    propertySchema.dataType() == DataType.Long) {
                 writeNumericalFeatureForInt(label, propertySchema);
             }
-            if (propertySchema.dataType() == DataType.String){
+            if (propertySchema.dataType() == DataType.String) {
                 writeCategoricalFeatureForString(label, propertySchema);
             }
-            generator.writeEndObject();
         }
         generator.writeEndArray();
     }
 
     private void writeCategoricalFeatureForString(Label label, PropertySchema propertySchema) throws IOException {
+
+        if (config.hasWord2VecSpecificationForNodeTypeAndColumn(label, propertySchema.nameWithoutDataType())){
+            writeWord2VecFeature(label, propertySchema);
+        } else {
+            generator.writeStartObject();
+            generator.writeStringField("feat_type", "node");
+            generator.writeStringField("sub_feat_type", "category");
+            generator.writeArrayFieldStart("cols");
+            generator.writeString("~id");
+            generator.writeString(propertySchema.nameWithoutDataType());
+            generator.writeEndArray();
+            if (propertySchema.isMultiValue()) {
+                generator.writeStringField("separator", ";");
+            }
+            generator.writeStringField("node_type", label.labelsAsString());
+            generator.writeEndObject();
+        }
+
+
+    }
+
+    private void writeWord2VecFeature(Label label, PropertySchema propertySchema) throws IOException {
+        TrainingJobConfig.Word2VecConfig word2VecConfig =
+                config.getWord2VecSpecificationForNodeType(label, propertySchema.nameWithoutDataType());
+
+        generator.writeStartObject();
         generator.writeStringField("feat_type", "node");
-        generator.writeStringField("sub_feat_type", "category");
+        generator.writeStringField("sub_feat_type", "word2vec");
         generator.writeArrayFieldStart("cols");
         generator.writeString("~id");
         generator.writeString(propertySchema.nameWithoutDataType());
         generator.writeEndArray();
-        if (propertySchema.isMultiValue()){
-            generator.writeStringField("separator", ";");
+        generator.writeArrayFieldStart("language");
+        for (String language : word2VecConfig.languages()) {
+            generator.writeString(language);
         }
+        generator.writeEndArray();
         generator.writeStringField("node_type", label.labelsAsString());
+        generator.writeEndObject();
     }
 
     private void writeNumericalFeatureForFloat(Label label, PropertySchema propertySchema) throws IOException {
-        generator.writeStringField("feat_type", "node");
-        generator.writeStringField("sub_feat_type", "numerical");
-        generator.writeArrayFieldStart("cols");
-        generator.writeString("~id");
-        generator.writeString(propertySchema.nameWithoutDataType());
-        generator.writeEndArray();
-        if (propertySchema.isMultiValue()){
-            generator.writeStringField("separator", ";");
+
+        if (config.hasNumericalBucketSpecificationForNodeType(label, propertySchema.nameWithoutDataType())){
+            writeNumericalBucketFeature(label, propertySchema);
+        } else {
+            generator.writeStartObject();
+            generator.writeStringField("feat_type", "node");
+            generator.writeStringField("sub_feat_type", "numerical");
+            generator.writeArrayFieldStart("cols");
+            generator.writeString("~id");
+            generator.writeString(propertySchema.nameWithoutDataType());
+            generator.writeEndArray();
+            if (propertySchema.isMultiValue()) {
+                generator.writeStringField("separator", ";");
+            }
+            generator.writeStringField("node_type", label.labelsAsString());
+            generator.writeEndObject();
         }
-        generator.writeStringField("node_type", label.labelsAsString());
+
+
     }
 
     private void writeNumericalFeatureForInt(Label label, PropertySchema propertySchema) throws IOException {
-        generator.writeStringField("feat_type", "node");
-        generator.writeStringField("sub_feat_type", "numerical");
-        generator.writeArrayFieldStart("cols");
-        generator.writeString("~id");
-        generator.writeString(propertySchema.nameWithoutDataType());
-        generator.writeEndArray();
-        generator.writeStringField("norm", "min-max");
-        generator.writeStringField("node_type", label.labelsAsString());
+        if (config.hasNumericalBucketSpecificationForNodeType(label, propertySchema.nameWithoutDataType())){
+            writeNumericalBucketFeature(label, propertySchema);
+        } else {
+            generator.writeStartObject();
+            generator.writeStringField("feat_type", "node");
+            generator.writeStringField("sub_feat_type", "numerical");
+            generator.writeArrayFieldStart("cols");
+            generator.writeString("~id");
+            generator.writeString(propertySchema.nameWithoutDataType());
+            generator.writeEndArray();
+            generator.writeStringField("norm", "min-max");
+            generator.writeStringField("node_type", label.labelsAsString());
+            generator.writeEndObject();
+        }
+    }
+
+    private void writeNumericalBucketFeature(Label label, PropertySchema propertySchema) throws IOException {
+        TrainingJobConfig.NumericalBucketFeatureConfig featureConfig =
+                config.getNumericalBucketSpecificationForNodeType(label, propertySchema.nameWithoutDataType());
+
+        if (propertySchema.isMultiValue()){
+            warnings.add(String.format(
+                    "Unable to add numerical bucket feature: Property '%s' of node type '%s' is a multi-value property.",
+                    propertySchema.nameWithoutDataType(),
+                    label.fullyQualifiedLabel()));
+        } else {
+            generator.writeStartObject();
+            generator.writeStringField("feat_type", "node");
+            generator.writeStringField("sub_feat_type", "bucket_numerical");
+            generator.writeArrayFieldStart("cols");
+            generator.writeString("~id");
+            generator.writeString(propertySchema.nameWithoutDataType());
+            generator.writeEndArray();
+            generator.writeArrayFieldStart("range");
+            generator.writeObject(featureConfig.low());
+            generator.writeObject(featureConfig.high());
+            generator.writeEndArray();
+            generator.writeNumberField("bucket_cnt", featureConfig.bucketCount());
+            generator.writeNumberField("slide_window_size", featureConfig.slideWindowSize());
+            generator.writeStringField("node_type", label.labelsAsString());
+            generator.writeEndObject();
+        }
     }
 
     private void writeEdges() throws IOException {
@@ -183,6 +262,7 @@ public class JobTrainingConfigurationFileWriter {
                 generator.writeStartObject();
                 writeFileName(graphElementType, outputId);
                 writeSeparator();
+
                 generator.writeArrayFieldStart("edges");
                 generator.writeStartObject();
                 writeEdgeSpecType();
@@ -190,9 +270,33 @@ public class JobTrainingConfigurationFileWriter {
                 writeEdgeType(edgeLabel);
                 generator.writeEndObject();
                 generator.writeEndArray();
+
+                if (config.hasEdgeClassificationSpecificationForEdgeType(edgeLabel)) {
+                    writeEdgeClassLabel(edgeLabel);
+                }
+
                 generator.writeEndObject();
             }
         }
+    }
+
+    private void writeEdgeClassLabel(Label label) throws IOException {
+        generator.writeArrayFieldStart("labels");
+        generator.writeStartObject();
+        generator.writeStringField("label_type", "edge");
+        generator.writeStringField("sub_label_type", "edge_class_label");
+        generator.writeArrayFieldStart("cols");
+        generator.writeString("~from");
+        generator.writeString("~to");
+        generator.writeEndArray();
+        writeSplitRates();
+        generator.writeArrayFieldStart("edge_type");
+        generator.writeString(label.fromLabelsAsString());
+        generator.writeString(label.labelsAsString());
+        generator.writeString(label.toLabelsAsString());
+        generator.writeEndArray();
+        generator.writeEndObject();
+        generator.writeEndArray();
     }
 
     private void writeSeparator() throws IOException {

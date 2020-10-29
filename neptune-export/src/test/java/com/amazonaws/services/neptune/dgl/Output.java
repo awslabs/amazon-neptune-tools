@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -37,6 +38,10 @@ class Output {
 
     public JsonNode graph() throws JsonProcessingException {
         return new ObjectMapper().readTree(writer.toString()).path("graph");
+    }
+
+    public ArrayNode warnings() throws JsonProcessingException {
+        return (ArrayNode) new ObjectMapper().readTree(writer.toString()).path("warnings");
     }
 
     private JsonGenerator createJsonGenerator(Writer writer) throws IOException {

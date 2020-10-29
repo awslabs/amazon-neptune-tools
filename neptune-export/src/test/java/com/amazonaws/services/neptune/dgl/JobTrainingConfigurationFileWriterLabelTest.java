@@ -34,9 +34,6 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         boolean isMultiValue = false;
         Label personLabel = new Label(Collections.singletonList("Person"));
 
-        Map<Label, String> nodeClassLabels = new HashMap<>();
-        nodeClassLabels.put(personLabel, "role");
-
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
@@ -50,7 +47,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingClassConfigBuilder.builder()
+                TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -90,15 +87,12 @@ public class JobTrainingConfigurationFileWriterLabelTest {
     }
 
     @Test
-    public void shouldAddSeparatorIfNodeClassLabelIsMutiValued() throws IOException {
+    public void shouldAddWarningIfColumnDoesNotExistForNodeClassLabel() throws IOException {
 
         DataType dataType = DataType.String;
         boolean isNullable = false;
-        boolean isMultiValue = true;
+        boolean isMultiValue = false;
         Label personLabel = new Label(Collections.singletonList("Person"));
-
-        Map<Label, String> nodeClassLabels = new HashMap<>();
-        nodeClassLabels.put(personLabel, "role");
 
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
@@ -113,7 +107,47 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                TrainingClassConfigBuilder.builder()
+                TrainingJobConfigBuilder.builder()
+                        .withNodeClassLabel(personLabel, "does-not-exist")
+                        .build())
+                .write();
+
+        JsonNode graph = output.graph();
+        ArrayNode warnings = output.warnings();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+
+        assertTrue(array.get(0).path("labels").isMissingNode());
+        assertTrue(array.get(0).path("features").isMissingNode());
+
+        assertEquals(1, warnings.size());
+        assertEquals("Unable to add node class label: Node of type 'Person' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
+    }
+
+    @Test
+    public void shouldAddSeparatorIfNodeClassLabelIsMutiValued() throws IOException {
+
+        DataType dataType = DataType.String;
+        boolean isNullable = false;
+        boolean isMultiValue = true;
+        Label personLabel = new Label(Collections.singletonList("Person"));
+
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+
+        LabelSchema labelSchema = new LabelSchema(personLabel);
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, 0, 0));
+
+        nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
+
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -132,28 +166,66 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         assertEquals(";", label.path("separator").textValue());
     }
 
-    public static class TrainingClassConfigBuilder {
+    @Test
+    public void shouldAddEdgeClassLabelIfSpecifiedInConfig() throws IOException {
 
-        public static TrainingClassConfigBuilder builder() {
-            return new TrainingClassConfigBuilder();
-        }
+        Label knowsLabel = new Label(Collections.singletonList("knows"),
+                Collections.singletonList("Person"),
+                Collections.singletonList("Person"));
 
-        Map<Label, String> nodeClassLabels = new HashMap<>();
-        Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
-        public TrainingClassConfigBuilder withNodeClassLabel(Label label, String column) {
-            nodeClassLabels.clear();
-            nodeClassLabels.put(label, column);
-            return this;
-        }
+        LabelSchema labelSchema = new LabelSchema(knowsLabel);
 
-        public TrainingClassConfigBuilder withSplitRates(double train, double valid, double test) {
-            splitRates = Arrays.asList(train, valid, test);
-            return this;
-        }
+        edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 
-        public TrainingJobConfig build() {
-            return new TrainingJobConfig(nodeClassLabels, splitRates);
-        }
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                TrainingJobConfigBuilder.builder()
+                        .withEdgeClassLabel(knowsLabel)
+                        .build())
+                .write();
+
+        JsonNode graph = output.graph();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+        ArrayNode labels = (ArrayNode) array.get(0).path("labels");
+
+        assertEquals(1, labels.size());
+
+        JsonNode label = labels.get(0);
+
+        assertEquals("edge", label.path("label_type").textValue());
+        assertEquals("edge_class_label", label.path("sub_label_type").textValue());
+
+        ArrayNode cols = (ArrayNode) label.path("cols");
+
+        assertEquals(2, cols.size());
+
+        assertEquals("~from", cols.get(0).textValue());
+        assertEquals("~to", cols.get(1).textValue());
+
+        ArrayNode splitRates = (ArrayNode) label.path("split_rate");
+
+        assertEquals(3, splitRates.size());
+
+        assertEquals(0.7, splitRates.get(0).doubleValue(), 0.0);
+        assertEquals(0.1, splitRates.get(1).doubleValue(), 0.0);
+        assertEquals(0.2, splitRates.get(2).doubleValue(), 0.0);
+
+        ArrayNode edgeType = (ArrayNode) label.path("edge_type");
+
+        assertEquals("Person", edgeType.get(0).textValue());
+        assertEquals("knows", edgeType.get(1).textValue());
+        assertEquals("Person", edgeType.get(2).textValue());
+
+        assertTrue(label.path("separator").isMissingNode());
     }
+
 }

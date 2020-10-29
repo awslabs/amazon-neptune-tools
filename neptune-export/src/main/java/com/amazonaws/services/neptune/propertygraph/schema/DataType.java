@@ -15,7 +15,11 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalField;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -25,6 +29,16 @@ public enum DataType {
         @Override
         public String typeDescription() {
             return "";
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return false;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return value;
         }
     },
     Boolean {
@@ -42,6 +56,16 @@ public enum DataType {
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeBooleanField(key, (boolean) value);
         }
+
+        @Override
+        public boolean isNumeric() {
+            return false;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Boolean.parseBoolean(java.lang.String.valueOf(value));
+        }
     },
     Byte {
         @Override
@@ -53,6 +77,16 @@ public enum DataType {
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeNumberField(key, (byte) value);
         }
+
+        @Override
+        public boolean isNumeric() {
+            return true;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Byte.parseByte(java.lang.String.valueOf(value));
+        }
     },
     Short {
         @Override
@@ -63,6 +97,16 @@ public enum DataType {
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeNumberField(key, (short) value);
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return true;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Short.parseShort(java.lang.String.valueOf(value));
         }
     },
     Integer {
@@ -80,6 +124,16 @@ public enum DataType {
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeNumberField(key, (int) value);
         }
+
+        @Override
+        public boolean isNumeric() {
+            return true;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Integer.parseInt(java.lang.String.valueOf(value));
+        }
     },
     Long {
         @Override
@@ -90,6 +144,16 @@ public enum DataType {
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeNumberField(key, (long) value);
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return true;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Long.parseLong(java.lang.String.valueOf(value));
         }
     },
     Float {
@@ -102,6 +166,16 @@ public enum DataType {
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeNumberField(key, (float) value);
         }
+
+        @Override
+        public boolean isNumeric() {
+            return true;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Float.parseFloat(java.lang.String.valueOf(value));
+        }
     },
     Double {
         @Override
@@ -112,6 +186,16 @@ public enum DataType {
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeNumberField(key, (double) value);
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return true;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.Double.parseDouble(java.lang.String.valueOf(value));
         }
     },
     String {
@@ -128,7 +212,6 @@ public enum DataType {
         }
 
 
-
         @Override
         public String formatList(Collection<?> values) {
             return java.lang.String.format("\"%s\"",
@@ -136,6 +219,16 @@ public enum DataType {
                             map(DataType::escapeSemicolons).
                             map(this::escapeDoubleQuotes).
                             collect(Collectors.joining(";")));
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return false;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            return java.lang.String.valueOf(value);
         }
     },
     Date {
@@ -158,6 +251,20 @@ public enum DataType {
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeStringField(key, format(value));
+        }
+
+        @Override
+        public boolean isNumeric() {
+            return false;
+        }
+
+        @Override
+        public Object convert(Object value) {
+            if (java.util.Date.class.isAssignableFrom(value.getClass())){
+                return value;
+            }
+            Instant instant = Instant.parse(value.toString());
+            return new java.util.Date(instant.toEpochMilli());
         }
     };
 
@@ -205,7 +312,6 @@ public enum DataType {
         generator.writeString(value.toString());
     }
 
-
     public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
         generator.writeStringField(key, value.toString());
     }
@@ -213,4 +319,8 @@ public enum DataType {
     public String formatList(Collection<?> values) {
         return values.stream().map(this::format).collect(Collectors.joining(";"));
     }
+
+    public abstract boolean isNumeric();
+
+    public abstract Object convert(Object value);
 }

@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -338,6 +339,213 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         assertEquals("movieType", cols.get(1).textValue());
 
         assertTrue(feature.path("norm").isMissingNode());
+    }
+
+    @Test
+    public void shouldAddWord2VecFeatureIfSpecifiedInConfig() throws IOException {
+        DataType dataType = DataType.String;
+        boolean isNullable = false;
+        boolean isMultiValue = false;
+
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+
+        Label movieLabel = new Label(Collections.singletonList("Movie"));
+        LabelSchema labelSchema = new LabelSchema(movieLabel);
+        labelSchema.put("genre", new PropertySchema("genre", isNullable, dataType, isMultiValue, 0, 0));
+
+        nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
+
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                TrainingJobConfigBuilder.builder()
+                        .withWord2VecNodeFeature(
+                                movieLabel,
+                                "genre",
+                                "en_core_web_lg", "fr_core_news_lg")
+                        .build())
+                .write();
+
+        JsonNode graph = output.graph();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+        ArrayNode features = (ArrayNode) array.get(0).path("features");
+
+        assertEquals(1, features.size());
+
+        JsonNode feature = features.get(0);
+
+        assertEquals("node", feature.path("feat_type").textValue());
+        assertEquals("word2vec", feature.path("sub_feat_type").textValue());
+        assertEquals("Movie", feature.path("node_type").textValue());
+
+        ArrayNode cols = (ArrayNode) feature.path("cols");
+
+        assertEquals(2, cols.size());
+
+        assertEquals("~id", cols.get(0).textValue());
+        assertEquals("genre", cols.get(1).textValue());
+
+        ArrayNode language = (ArrayNode) feature.path("language");
+
+        assertEquals(2, language.size());
+
+        assertEquals("en_core_web_lg", language.get(0).textValue());
+        assertEquals("fr_core_news_lg", language.get(1).textValue());
+
+        assertTrue(feature.path("norm").isMissingNode());
+        assertTrue(feature.path("separator").isMissingNode());
+    }
+
+    @Test
+    public void shouldNumericalBucketFeatureIfSpecifiedInConfig() throws IOException {
+        DataType dataType = DataType.Integer;
+        boolean isNullable = false;
+        boolean isMultiValue = false;
+
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+
+        Label movieLabel = new Label(Collections.singletonList("Movie"));
+        LabelSchema labelSchema = new LabelSchema(movieLabel);
+        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, 0, 0));
+
+        nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
+
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                TrainingJobConfigBuilder.builder()
+                        .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
+                        .build())
+                .write();
+
+        JsonNode graph = output.graph();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+        ArrayNode features = (ArrayNode) array.get(0).path("features");
+
+        assertEquals(1, features.size());
+
+        JsonNode feature = features.get(0);
+
+        assertEquals("node", feature.path("feat_type").textValue());
+        assertEquals("bucket_numerical", feature.path("sub_feat_type").textValue());
+        assertEquals("Movie", feature.path("node_type").textValue());
+        assertEquals(10, feature.path("bucket_cnt").intValue());
+        assertEquals(2, feature.path("slide_window_size").intValue());
+
+        ArrayNode cols = (ArrayNode) feature.path("cols");
+
+        assertEquals(2, cols.size());
+
+        assertEquals("~id", cols.get(0).textValue());
+        assertEquals("score", cols.get(1).textValue());
+
+        ArrayNode range = (ArrayNode) feature.path("range");
+
+        assertEquals(2, range.size());
+
+        assertEquals(1, range.get(0).intValue());
+        assertEquals(100, range.get(1).intValue());
+
+        assertTrue(feature.path("norm").isMissingNode());
+        assertTrue(feature.path("separator").isMissingNode());
+    }
+
+    @Test
+    public void shouldAddNumericalBucketFeatureForAllNumberTypes() throws IOException {
+        Collection<DataType> dataTypes = Arrays.asList(DataType.Integer, DataType.Double, DataType.Float, DataType.Long, DataType.Short);
+
+        boolean isNullable = false;
+        boolean isMultiValue = false;
+
+        for (DataType dataType : dataTypes) {
+            GraphSchema graphSchema = new GraphSchema();
+            GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+
+            Label movieLabel = new Label(Collections.singletonList("Movie"));
+            LabelSchema labelSchema = new LabelSchema(movieLabel);
+            labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, 0, 0));
+
+            nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
+
+            Output output = new Output();
+
+            new JobTrainingConfigurationFileWriter(
+                    graphSchema,
+                    output.generator(),
+                    TrainingJobConfigBuilder.builder()
+                            .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
+                            .build())
+                    .write();
+
+            JsonNode graph = output.graph();
+
+            assertEquals(1, graph.size());
+
+            ArrayNode array = (ArrayNode) graph;
+            ArrayNode features = (ArrayNode) array.get(0).path("features");
+
+            assertEquals(1, features.size());
+
+            JsonNode feature = features.get(0);
+
+            assertEquals("node", feature.path("feat_type").textValue());
+            assertEquals("bucket_numerical", feature.path("sub_feat_type").textValue());
+        }
+    }
+
+    @Test
+    public void shouldAddWarningIfAttemptingToCreateNumericalBucketFeatureForMultiValueDataType() throws IOException {
+        DataType dataType = DataType.Integer;
+        boolean isNullable = false;
+        boolean isMultiValue = true;
+
+        GraphSchema graphSchema = new GraphSchema();
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+
+        Label movieLabel = new Label(Collections.singletonList("Movie"));
+        LabelSchema labelSchema = new LabelSchema(movieLabel);
+        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, 0, 0));
+
+        nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
+
+        Output output = new Output();
+
+        new JobTrainingConfigurationFileWriter(
+                graphSchema,
+                output.generator(),
+                TrainingJobConfigBuilder.builder()
+                        .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
+                        .build())
+                .write();
+
+        JsonNode graph = output.graph();
+
+        ArrayNode warnings = output.warnings();
+
+        assertEquals(1, graph.size());
+
+        ArrayNode array = (ArrayNode) graph;
+
+        assertTrue(array.get(0).path("labels").isMissingNode());
+
+        ArrayNode features = (ArrayNode) array.get(0).path("features");
+
+        assertEquals(0, features.size());
+
+        assertEquals(1, warnings.size());
+        assertEquals("Unable to add numerical bucket feature: Property 'score' of node type 'Movie' is a multi-value property.", warnings.get(0).textValue());
     }
 
 }

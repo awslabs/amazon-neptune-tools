@@ -14,26 +14,37 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.Date;
+
+import static org.junit.Assert.assertEquals;
 
 public class DataTypeTest {
 
     @Test
-    public void emptyStringDateValueShouldReturnEmptyString(){
+    public void emptyStringDateValueShouldReturnEmptyString() {
         String result = DataType.Date.format("");
         assertEquals("", result);
     }
 
     @Test
-    public void shouldEscapeDoubleQuotes(){
+    public void shouldEscapeDoubleQuotes() {
         String result = DataType.String.format("One \"two\" three");
         assertEquals("\"One \"\"two\"\" three\"", result);
     }
 
     @Test
-    public void shouldNotDoubleEscapeDoubleQuotesThatHaveAlreadyBeenEscaped(){
+    public void shouldNotDoubleEscapeDoubleQuotesThatHaveAlreadyBeenEscaped() {
         String result = DataType.String.format("One \"\"two\"\" three");
         assertEquals("\"One \"\"two\"\" three\"", result);
+    }
+
+    @Test
+    public void shouldRoundTripDate() {
+        Date now = new Date();
+        DataType dataType = DataType.dataTypeFor(now.getClass());
+        String nowString = dataType.format(now);
+        Object converted = dataType.convert(nowString);
+        assertEquals(now, converted);
     }
 
 }
