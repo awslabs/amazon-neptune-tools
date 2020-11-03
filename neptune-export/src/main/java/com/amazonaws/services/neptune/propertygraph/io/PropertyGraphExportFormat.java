@@ -73,7 +73,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
         @Override
         public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
-            return new RewriteCsv(targetConfig);
+            if (targetConfig.mergeFiles()) {
+                return new RewriteAndMergeCsv(targetConfig);
+            } else {
+                return new RewriteCsv(targetConfig);
+            }
         }
     },
     csvNoHeaders {
@@ -99,7 +103,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
         @Override
         public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
-            return new RewriteCsv(targetConfig);
+            if (targetConfig.mergeFiles()) {
+                return new RewriteAndMergeCsv(targetConfig);
+            } else {
+                return new RewriteCsv(targetConfig);
+            }
         }
     },
     neptuneStreamsJson {
