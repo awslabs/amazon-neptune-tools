@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.kinesis.model.KMSAccessDeniedException;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;

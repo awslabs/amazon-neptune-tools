@@ -14,26 +14,30 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
+import org.apache.commons.lang.StringUtils;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class LabelSchema {
 
     private final Label label;
     private final Map<Object, PropertySchema> propertySchemas = new LinkedHashMap<>();
+    private final Map<Object, PropertySchemaStats> propertySchemaStats = new LinkedHashMap<>();
 
     public LabelSchema(Label label) {
         this.label = label;
     }
 
     public void put(Object property, PropertySchema propertySchema) {
+        put(property, propertySchema, new PropertySchemaStats(property));
+    }
+
+    private void put(Object property, PropertySchema propertySchema, PropertySchemaStats stats) {
         if (!property.equals(propertySchema.property())) {
             throw new IllegalStateException(String.format("Property name mismatch: %s, %s", property, propertySchema.property()));
         }
         propertySchemas.put(property, propertySchema);
+        propertySchemaStats.put(property, stats);
     }
 
     public boolean containsProperty(Object property) {
@@ -44,8 +48,30 @@ public class LabelSchema {
         return propertySchemas.get(property);
     }
 
+    public void recordObservation(Object property){
+        propertySchemaStats.get(property).recordObservation();
+    }
+
+    public void recordObservation(PropertySchema propertySchema, Object value) {
+        if (propertySchema.isNullable()){
+            if (StringUtils.isNotEmpty(String.valueOf(value))){
+                propertySchemaStats.get(propertySchema.property()).recordObservation();
+            }
+        } else {
+            propertySchemaStats.get(propertySchema.property()).recordObservation();
+        }
+    }
+
+    private PropertySchemaStats getPropertySchemaStats(Object property) {
+        return propertySchemaStats.get(property);
+    }
+
     public Collection<PropertySchema> propertySchemas() {
         return propertySchemas.values();
+    }
+
+    public Collection<PropertySchemaStats> propertySchemaStats(){
+        return propertySchemaStats.values();
     }
 
     public int propertyCount() {
@@ -56,29 +82,42 @@ public class LabelSchema {
         return label;
     }
 
-    public LabelSchema createCopy() {
+    private LabelSchema createCopy() {
 
         LabelSchema result = new LabelSchema(label);
 
-        propertySchemas.values().forEach(p -> result.put(p.property(), p.createCopy()));
+        for (PropertySchema schema : propertySchemas.values()) {
+            Object property = schema.property();
+            result.put(property, schema.createCopy(), propertySchemaStats.get(property).createCopy());
+        }
 
         return result;
+    }
+
+    public void initStats(){
+        Set<Object> keys = propertySchemaStats.keySet();
+
+        for (Object key : keys) {
+            propertySchemaStats.put(key, new PropertySchemaStats(key));
+        }
     }
 
     public LabelSchema union(LabelSchema other) {
 
         LabelSchema result = createCopy();
 
-        other.propertySchemas().forEach(p -> {
-            Object property = p.property();
-            if (result.containsProperty(property)) {
-                PropertySchema oldValue = result.getPropertySchema(property);
-                PropertySchema newValue = oldValue.createRevision(p);
-                result.put(property, newValue);
+        for (PropertySchema otherSchema : other.propertySchemas()) {
+            Object property = otherSchema.property();
+            if (result.containsProperty(property)){
+                PropertySchema oldSchema = result.getPropertySchema(property);
+                PropertySchema newSchema = oldSchema.union(otherSchema);
+                PropertySchemaStats oldStats = result.getPropertySchemaStats(property);
+                PropertySchemaStats newStats = oldStats.union(other.getPropertySchemaStats(property));
+                result.put(property, newSchema, newStats);
             } else {
-                result.put(property, p.createCopy());
+                result.put(property, otherSchema.createCopy(), other.getPropertySchemaStats(property).createCopy());
             }
-        });
+        }
 
         return result;
     }

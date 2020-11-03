@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,6 +61,10 @@ public class GraphSchema implements Jsonizable {
             graphElementsSchemas.put(graphElementType, new GraphElementSchemas());
         }
         return graphElementsSchemas.get(graphElementType);
+    }
+
+    public Collection<GraphElementSchemas> graphElementSchemas(){
+        return graphElementsSchemas.values();
     }
 
     @Override

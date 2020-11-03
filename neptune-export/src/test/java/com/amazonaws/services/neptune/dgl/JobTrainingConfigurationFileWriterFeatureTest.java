@@ -126,7 +126,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema( new Label(Arrays.asList("Person", "Admin")));
-        labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -171,7 +171,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("Movie")));
-        labelSchema.put("encoding", new PropertySchema("encoding", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("encoding", new PropertySchema("encoding", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -216,7 +216,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema( new Label(Arrays.asList("Person", "Admin")));
-        labelSchema.put("age", new PropertySchema("age", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("age", new PropertySchema("age", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -262,7 +262,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("Movie")));
-        labelSchema.put("class", new PropertySchema("class", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("class", new PropertySchema("class", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -307,7 +307,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("Movie")));
-        labelSchema.put("movieType", new PropertySchema("movieType", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("movieType", new PropertySchema("movieType", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -352,7 +352,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
-        labelSchema.put("genre", new PropertySchema("genre", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("genre", new PropertySchema("genre", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -413,7 +413,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
-        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -475,7 +475,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
             Label movieLabel = new Label(Collections.singletonList("Movie"));
             LabelSchema labelSchema = new LabelSchema(movieLabel);
-            labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, 0, 0));
+            labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue));
 
             nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -516,7 +516,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
-        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -561,7 +561,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
             GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
             LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("knows"), Collections.singletonList("Person"), Collections.singletonList("Person")));
-            labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue, 0, 0));
+            labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue));
 
             edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 

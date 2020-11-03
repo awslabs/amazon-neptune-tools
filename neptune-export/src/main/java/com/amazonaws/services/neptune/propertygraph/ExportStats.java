@@ -12,12 +12,17 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 public class ExportStats {
     private long nodeCount = 0;
@@ -43,9 +48,7 @@ public class ExportStats {
         edgeStats.computeIfAbsent(label, LabelStats::new).increment();
     }
 
-    @Override
-    public String toString() {
-
+    public String formatStats(GraphSchema graphSchema){
         StringBuilder sb = new StringBuilder();
 
         sb.append("Source:").append(System.lineSeparator());
@@ -54,41 +57,108 @@ public class ExportStats {
         sb.append("Export:").append(System.lineSeparator());
         sb.append("  Nodes: ").append(nodeStats.values().stream().map(LabelStats::count).reduce(0L, Long::sum)).append(System.lineSeparator());
         sb.append("  Edges: ").append(edgeStats.values().stream().map(LabelStats::count).reduce(0L, Long::sum)).append(System.lineSeparator());
+
+        sb.append("  Properties: ").append(getNumberOfProperties(graphSchema)).append(System.lineSeparator());
+
         sb.append("Details:").append(System.lineSeparator());
+
         sb.append("  Nodes: ").append(System.lineSeparator());
-        for (LabelStats entry : nodeStats.values()) {
-            sb.append("    ").append(entry.toString()).append(System.lineSeparator());
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        for (Map.Entry<Label, LabelStats> entry : nodeStats.entrySet()) {
+            Label label = entry.getKey();
+            LabelStats labelStats = entry.getValue();
+            LabelSchema labelSchema = nodeSchemas.getSchemaFor(label);
+            sb.append("    ").append(labelStats.toString()).append(System.lineSeparator());
+            for (PropertySchemaStats stats : labelSchema.propertySchemaStats()) {
+                sb.append("        ").append(stats.property()).append(": ").append(stats.observationCount()).append(System.lineSeparator());
+            }
         }
+
         sb.append("  Edges: ").append(System.lineSeparator());
-        for (LabelStats entry : edgeStats.values()) {
-            sb.append("    ").append(entry.toString()).append(System.lineSeparator());
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        for (Map.Entry<Label, LabelStats> entry : edgeStats.entrySet()) {
+            Label label = entry.getKey();
+            LabelStats labelStats = entry.getValue();
+            LabelSchema labelSchema = edgeSchemas.getSchemaFor(label);
+            sb.append("    ").append(labelStats.toString()).append(System.lineSeparator());
+            for (PropertySchemaStats stats : labelSchema.propertySchemaStats()) {
+                sb.append("        ").append(stats.property()).append(": ").append(stats.observationCount()).append(System.lineSeparator());
+            }
         }
 
         return sb.toString();
     }
 
-    public void addTo(ObjectNode exportNode) {
+    private Long getNumberOfProperties(GraphSchema graphSchema) {
+        return graphSchema.graphElementSchemas().stream()
+                    .map(s -> s.labelSchemas().stream()
+                            .map(l -> l.propertySchemaStats().stream()
+                                    .map(p -> (long)p.observationCount()).reduce(0L, Long::sum))
+                            .reduce(0L, Long::sum))
+                    .reduce(0L, Long::sum);
+    }
+
+    public void addTo(ObjectNode exportNode, GraphSchema graphSchema) {
         ObjectNode statsNode = JsonNodeFactory.instance.objectNode();
         exportNode.set("stats", statsNode);
         statsNode.put("nodes", nodeStats.values().stream().map(LabelStats::count).reduce(0L, Long::sum));
         statsNode.put("edges", edgeStats.values().stream().map(LabelStats::count).reduce(0L, Long::sum));
+        statsNode.put("properties", getNumberOfProperties(graphSchema));
         ObjectNode detailsNode = JsonNodeFactory.instance.objectNode();
+
         statsNode.set("details", detailsNode);
+
         ArrayNode nodesArrayNode = JsonNodeFactory.instance.arrayNode();
         detailsNode.set("nodes", nodesArrayNode);
-        for (LabelStats entry : nodeStats.values()) {
+
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        for (Map.Entry<Label, LabelStats> entry : nodeStats.entrySet()) {
+
+            Label label = entry.getKey();
+            LabelStats labelStats = entry.getValue();
+            LabelSchema labelSchema = nodeSchemas.getSchemaFor(label);
+
             ObjectNode nodeNode = JsonNodeFactory.instance.objectNode();
             nodesArrayNode.add(nodeNode);
-            nodeNode.put("label", entry.label().fullyQualifiedLabel());
-            nodeNode.put("count", entry.count());
+            nodeNode.put("label", label.fullyQualifiedLabel());
+            nodeNode.put("count", labelStats.count());
+
+            ArrayNode propertiesArray = JsonNodeFactory.instance.arrayNode();
+
+            for (PropertySchemaStats stats : labelSchema.propertySchemaStats()) {
+                ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
+                propertyNode.put("name", stats.property().toString());
+                propertyNode.put("count", stats.observationCount());
+                propertiesArray.add(propertyNode);
+            }
+
+            nodeNode.set("properties", propertiesArray);
         }
+
         ArrayNode edgesArrayNode = JsonNodeFactory.instance.arrayNode();
         detailsNode.set("edges", edgesArrayNode);
-        for (LabelStats entry : edgeStats.values()) {
+
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        for (Map.Entry<Label, LabelStats> entry : edgeStats.entrySet()) {
+            Label label = entry.getKey();
+            LabelStats labelStats = entry.getValue();
+            LabelSchema labelSchema = edgeSchemas.getSchemaFor(label);
+
             ObjectNode edgeNode = JsonNodeFactory.instance.objectNode();
             edgesArrayNode.add(edgeNode);
-            edgeNode.put("label", entry.label().fullyQualifiedLabel());
-            edgeNode.put("count", entry.count());
+            edgeNode.put("label", label.fullyQualifiedLabel());
+            edgeNode.put("count", labelStats.count());
+
+            ArrayNode propertiesArray = JsonNodeFactory.instance.arrayNode();
+
+            for (PropertySchemaStats stats : labelSchema.propertySchemaStats()) {
+                ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
+                propertyNode.put("name", stats.property().toString());
+                propertyNode.put("count", stats.observationCount());
+                propertiesArray.add(propertyNode);
+            }
+
+            edgeNode.set("properties", propertiesArray);
         }
     }
 

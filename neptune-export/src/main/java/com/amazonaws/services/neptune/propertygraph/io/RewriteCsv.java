@@ -63,6 +63,7 @@ public class RewriteCsv implements RewriteCommand {
                                       MasterLabelSchema masterLabelSchema) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema();
+        masterSchema.initStats();
 
         RenameableFiles renameableFiles = new RenameableFiles();
 

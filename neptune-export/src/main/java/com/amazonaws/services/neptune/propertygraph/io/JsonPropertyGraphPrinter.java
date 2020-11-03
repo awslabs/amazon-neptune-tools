@@ -70,6 +70,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                 if (allowUpdateSchema) {
                     propertySchema.accept(value);
                 }
+                labelSchema.recordObservation(key);
                 printProperty(value, propertySchema);
             } else {
                 if (allowUpdateSchema) {
@@ -95,6 +96,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                     }
 
                     labelSchema.put(key, propertySchema);
+                    labelSchema.recordObservation(key);
 
                     printProperty(value, propertySchema);
                 }

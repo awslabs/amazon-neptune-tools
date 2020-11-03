@@ -65,6 +65,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                                               MasterLabelSchema masterLabelSchema) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema();
+        masterSchema.initStats();
 
         String filename = Directories.fileName(String.format("%s.%s",
                 masterSchema.label().fullyQualifiedLabel(),

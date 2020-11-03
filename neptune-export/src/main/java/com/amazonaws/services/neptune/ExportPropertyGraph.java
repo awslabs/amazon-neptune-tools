@@ -119,7 +119,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     configFileResource.writeResourcePathAsMessage(target);
 
                     System.err.println();
-                    System.err.println(stats.toString());
+                    System.err.println(stats.formatStats(graphSchema));
 
                     Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
                     onExportComplete(outputPath, stats, graphSchema);

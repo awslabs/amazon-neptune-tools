@@ -38,7 +38,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
-        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -98,7 +98,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
-        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -138,7 +138,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
-        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -181,7 +181,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
-        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 
@@ -249,7 +249,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
-        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 
@@ -292,7 +292,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
-        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, 0, 0));
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 

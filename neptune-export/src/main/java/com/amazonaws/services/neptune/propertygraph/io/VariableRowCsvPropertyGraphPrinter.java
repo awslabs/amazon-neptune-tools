@@ -83,6 +83,7 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
                 }
 
                 labelSchema.put(key, propertySchema);
+                labelSchema.recordObservation(key);
 
                 csvPropertyGraphPrinter.printProperty(propertySchema.dataType(), value);
             }

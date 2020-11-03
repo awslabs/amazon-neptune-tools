@@ -60,6 +60,12 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
 
+        onExportComplete(outputPath, stats, new GraphSchema());
+    }
+
+    @Override
+    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 
             File outputDirectory = outputPath.toFile();
@@ -67,16 +73,11 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
             Timer.timedActivity("uploading files to S3", (CheckedActivity.Runnable) () -> {
                 uploadExportFilesToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo);
-                uploadCompletionFileToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo, stats);
+                uploadCompletionFileToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo, stats, graphSchema);
             });
 
             result.set(outputS3ObjectInfo);
         }
-    }
-
-    @Override
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
-        onExportComplete(outputPath, stats);
     }
 
     public S3ObjectInfo result() {
@@ -91,7 +92,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     private void uploadCompletionFileToS3(TransferManager transferManager,
                                           File directory,
                                           S3ObjectInfo outputS3ObjectInfo,
-                                          ExportStats stats) throws IOException {
+                                          ExportStats stats, GraphSchema graphSchema) throws IOException {
 
         if (StringUtils.isEmpty(completionFileS3Path)) {
             return;
@@ -107,7 +108,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
         ObjectNode neptuneExportNode = JsonNodeFactory.instance.objectNode();
         completionFilePayload.set("neptuneExport", neptuneExportNode);
         neptuneExportNode.put("outputS3Path", outputS3ObjectInfo.toString());
-        stats.addTo(neptuneExportNode);
+        stats.addTo(neptuneExportNode, graphSchema);
 
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(completionFile), UTF_8))) {
             ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();

@@ -21,8 +21,6 @@ public class PropertySchema {
     private boolean isNullable = false;
     private DataType dataType = DataType.None;
     private boolean isMultiValue = false;
-    private int minMultiValueSize = 0;
-    private int maxMultiValueSize = 0;
 
     public PropertySchema(Object property) {
         this.property = property;
@@ -31,15 +29,11 @@ public class PropertySchema {
     public PropertySchema(String property,
                           boolean isNullable,
                           DataType dataType,
-                          boolean isMultiValue,
-                          int minMultiValueSize,
-                          int maxMultiValueSize) {
+                          boolean isMultiValue) {
         this.property = property;
         this.isNullable = isNullable;
         this.dataType = dataType;
         this.isMultiValue = isMultiValue;
-        this.minMultiValueSize = minMultiValueSize;
-        this.maxMultiValueSize = maxMultiValueSize;
     }
 
     public Object property() {
@@ -51,12 +45,6 @@ public class PropertySchema {
         if (isList(value)) {
             List<?> values = (List<?>) value;
             int size = values.size();
-            if (size > maxMultiValueSize){
-                maxMultiValueSize = size;
-            }
-            if (minMultiValueSize > 0 && minMultiValueSize > size){
-                minMultiValueSize = size;
-            }
             if (size > 1) {
                 isMultiValue = true;
             }
@@ -86,18 +74,6 @@ public class PropertySchema {
 
     public boolean isNullable() {
         return isNullable;
-    }
-
-    public boolean isUniformMultiValueSize(){
-        return minMultiValueSize == maxMultiValueSize;
-    }
-
-    public int minMultiValueSize() {
-        return minMultiValueSize;
-    }
-
-    public int maxMultiValueSize() {
-        return maxMultiValueSize;
     }
 
     public String nameWithDataType() {
@@ -133,30 +109,31 @@ public class PropertySchema {
                 ", isNullable=" + isNullable +
                 ", dataType=" + dataType +
                 ", isMultiValue=" + isMultiValue +
-                ", minMultiValueSize=" + minMultiValueSize +
-                ", maxMultiValueSize=" + maxMultiValueSize +
                 '}';
     }
 
     public PropertySchema createCopy() {
-        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue, minMultiValueSize, maxMultiValueSize);
+        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue);
     }
 
-    public PropertySchema createRevision(PropertySchema propertySchema) {
+    public PropertySchema union(PropertySchema other) {
 
-        if (propertySchema.isMultiValue() == isMultiValue &&
-                propertySchema.dataType() == dataType &&
-                propertySchema.isNullable() == isNullable) {
+        if (other.isMultiValue() == isMultiValue &&
+                other.dataType() == dataType &&
+                other.isNullable() == isNullable) {
             return this;
         }
 
-        boolean newIsNullable = propertySchema.isNullable() || isNullable;
-        boolean newIsMultiValue = propertySchema.isMultiValue() || isMultiValue;
-        DataType newDataType = DataType.getBroadestType(dataType, propertySchema.dataType());
-        int newMinMultiValueSize = Math.min(minMultiValueSize, propertySchema.minMultiValueSize());
-        int newMaxMultiValueSize = Math.max(maxMultiValueSize, propertySchema.maxMultiValueSize());
+        boolean newIsNullable = other.isNullable() || isNullable;
+        boolean newIsMultiValue = other.isMultiValue() || isMultiValue;
+        DataType newDataType = DataType.getBroadestType(dataType, other.dataType());
 
-        return new PropertySchema(property.toString(), newIsNullable, newDataType, newIsMultiValue, newMinMultiValueSize, newMaxMultiValueSize );
+        return new PropertySchema(
+                property.toString(),
+                newIsNullable,
+                newDataType,
+                newIsMultiValue
+        );
     }
 
     @Override
@@ -166,14 +143,12 @@ public class PropertySchema {
         PropertySchema schema = (PropertySchema) o;
         return isNullable == schema.isNullable &&
                 isMultiValue == schema.isMultiValue &&
-                minMultiValueSize == schema.minMultiValueSize &&
-                maxMultiValueSize == schema.maxMultiValueSize &&
                 property.equals(schema.property) &&
                 dataType == schema.dataType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(property, isNullable, dataType, isMultiValue, minMultiValueSize, maxMultiValueSize);
+        return Objects.hash(property, isNullable, dataType, isMultiValue);
     }
 }
