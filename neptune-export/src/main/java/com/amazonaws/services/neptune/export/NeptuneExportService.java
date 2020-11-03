@@ -42,6 +42,7 @@ public class NeptuneExportService {
     private final String queriesFileS3Path;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
+    private final ObjectNode additionalParams;
     private final int maxConcurrency;
 
     public NeptuneExportService(String cmd,
@@ -51,6 +52,7 @@ public class NeptuneExportService {
                                 String queriesFileS3Path,
                                 String completionFileS3Path,
                                 ObjectNode completionFilePayload,
+                                ObjectNode additionalParams,
                                 int maxConcurrency) {
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
@@ -59,6 +61,7 @@ public class NeptuneExportService {
         this.queriesFileS3Path = queriesFileS3Path;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
+        this.additionalParams = additionalParams;
         this.maxConcurrency = maxConcurrency;
     }
 
@@ -113,7 +116,7 @@ public class NeptuneExportService {
 
 
 
-        DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path, args);
+        DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
 
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection(
                 Arrays.asList(eventHandler, dglEventHandler));

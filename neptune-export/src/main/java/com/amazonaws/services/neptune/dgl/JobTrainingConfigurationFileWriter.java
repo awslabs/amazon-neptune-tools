@@ -31,19 +31,19 @@ public class JobTrainingConfigurationFileWriter {
     private final GraphSchema graphSchema;
     private final JsonGenerator generator;
     private final Function<PropertySchema, String> getColumnName;
-    private final TrainingJobConfig config;
+    private final TrainingJobWriterConfig config;
     private final Collection<String> warnings = new ArrayList<>();
 
     public JobTrainingConfigurationFileWriter(GraphSchema graphSchema,
                                               JsonGenerator generator,
                                               Function<PropertySchema, String> getColumnName) {
-        this(graphSchema, generator, getColumnName, new TrainingJobConfig());
+        this(graphSchema, generator, getColumnName, new TrainingJobWriterConfig());
     }
 
     public JobTrainingConfigurationFileWriter(GraphSchema graphSchema,
                                               JsonGenerator generator,
                                               Function<PropertySchema, String> getColumnName,
-                                              TrainingJobConfig config) {
+                                              TrainingJobWriterConfig config) {
         this.graphSchema = graphSchema;
         this.generator = generator;
         this.getColumnName = getColumnName;
@@ -177,7 +177,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeWord2VecFeature(Label label, PropertySchema propertySchema) throws IOException {
-        TrainingJobConfig.Word2VecConfig word2VecConfig =
+        TrainingJobWriterConfig.Word2VecConfig word2VecConfig =
                 config.getWord2VecSpecificationForNodeType(label, propertySchema.nameWithoutDataType());
 
         generator.writeStartObject();
@@ -236,7 +236,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeNumericalBucketFeature(Label label, PropertySchema propertySchema) throws IOException {
-        TrainingJobConfig.NumericalBucketFeatureConfig featureConfig =
+        TrainingJobWriterConfig.NumericalBucketFeatureConfig featureConfig =
                 config.getNumericalBucketSpecificationForNodeType(label, propertySchema.nameWithoutDataType());
 
         if (propertySchema.isMultiValue()) {

@@ -30,7 +30,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
     private final String localOutputPath;
 
-    public NeptuneExportLambda(){
+    public NeptuneExportLambda() {
         this(TEMP_PATH);
     }
 
@@ -73,6 +73,10 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                                 "{}")).
                         deepCopy();
 
+        ObjectNode additionalParams = json.has("additionalParams") ?
+                json.path("additionalParams").deepCopy() :
+                new ObjectMapper().readTree("{}").deepCopy();
+
         int maxConcurrency = json.has("jobSize") ?
                 JobSize.parse(json.path("jobSize").textValue()).maxConcurrency() :
                 -1;
@@ -82,7 +86,8 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         logger.log("configFileS3Path      : " + configFileS3Path);
         logger.log("queriesFileS3Path     : " + queriesFileS3Path);
         logger.log("completionFileS3Path  : " + completionFileS3Path);
-        logger.log("completionFilePayload : " + completionFilePayload.toString());
+        logger.log("completionFilePayload : " + completionFilePayload.toPrettyString());
+        logger.log("additionalParams      : " + additionalParams.toPrettyString());
 
         NeptuneExportService neptuneExportService = new NeptuneExportService(
                 cmd,
@@ -92,11 +97,12 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 queriesFileS3Path,
                 completionFileS3Path,
                 completionFilePayload,
+                additionalParams,
                 maxConcurrency);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 
-        if (outputS3ObjectInfo != null){
+        if (outputS3ObjectInfo != null) {
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
                 writer.write(outputS3ObjectInfo.toString());
             }

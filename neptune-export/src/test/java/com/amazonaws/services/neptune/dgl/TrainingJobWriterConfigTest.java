@@ -21,7 +21,7 @@ import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
-public class TrainingJobConfigTest {
+public class TrainingJobWriterConfigTest {
 
     @Test
     public void shouldThrowExceptionIfLowOrHighAreNotNumeric(){
@@ -39,7 +39,7 @@ public class TrainingJobConfigTest {
             Object high = iterator.next();
 
             try {
-                new TrainingJobConfig.NumericalBucketFeatureConfig(
+                new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
                         new Label("my-label"),
                         "column", low, high, 10, 2);
                 fail("Expected IllegalArgumentException");
@@ -55,14 +55,14 @@ public class TrainingJobConfigTest {
     public void shouldConvertLowOrHighToBroadestType(){
 
 
-        TrainingJobConfig.NumericalBucketFeatureConfig config1 = new TrainingJobConfig.NumericalBucketFeatureConfig(
+        TrainingJobWriterConfig.NumericalBucketFeatureConfig config1 = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
                 new Label("my-label"),
                 "column", 1, 10L, 10, 2);
 
         assertEquals(Long.class, config1.high().getClass());
         assertEquals(Long.class, config1.low().getClass());
 
-        TrainingJobConfig.NumericalBucketFeatureConfig config2 = new TrainingJobConfig.NumericalBucketFeatureConfig(
+        TrainingJobWriterConfig.NumericalBucketFeatureConfig config2 = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
                 new Label("my-label"),
                 "column", 0.1, 10, 10, 2);
 

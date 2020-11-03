@@ -29,6 +29,8 @@ import com.amazonaws.services.s3.transfer.Upload;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +50,28 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
     private final String localOutputPath;
     private final String outputS3Path;
     private final Args args;
+    private final TrainingJobWriterConfig trainingJobWriterConfig;
 
-    public DglNeptuneExportEventHandler(String localOutputPath, String outputS3Path, Args args) {
+    public DglNeptuneExportEventHandler(String localOutputPath,
+                                        String outputS3Path,
+                                        ObjectNode additionalParams,
+                                        Args args) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.args = args;
+        this.trainingJobWriterConfig = createTrainingJobConfig(additionalParams);
+    }
+
+    private TrainingJobWriterConfig createTrainingJobConfig(ObjectNode additionalParams) {
+        JsonNode dglNode = additionalParams.path("dgl");
+        if (dglNode.isMissingNode()){
+            logger.info("No 'dgl' config node in additional params so creating default training config");
+            return new TrainingJobWriterConfig();
+        } else {
+            TrainingJobWriterConfig trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(dglNode);
+            logger.info("Training job writer config: {}", trainingJobWriterConfig);
+            return trainingJobWriterConfig;
+        }
     }
 
     @Override
@@ -74,7 +93,11 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
             File trainingJobConfigurationFile = new File(new File(localOutputPath), FILE_NAME);
 
             try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-                new JobTrainingConfigurationFileWriter(graphSchema, createJsonGenerator(writer), getColumnName).write();
+                new JobTrainingConfigurationFileWriter(
+                        graphSchema,
+                        createJsonGenerator(writer),
+                        getColumnName,
+                        trainingJobWriterConfig).write();
             }
 
             Timer.timedActivity("uploading training job configuration file to S3", (CheckedActivity.Runnable) () -> {

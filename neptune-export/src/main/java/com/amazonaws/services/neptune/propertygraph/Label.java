@@ -23,6 +23,10 @@ import java.util.stream.Collectors;
 
 public class Label {
 
+    public static String format(String fromLabels, String label, String toLabels){
+        return String.format("(%s)-%s-(%s)", fromLabels, label, toLabels);
+    }
+
     public static List<String> fixLabelsIssue(List<String> list) {
         if (list.size() == 1 && list.get(0).contains("::")){
             List<String> newResults = Arrays.asList(list.get(0).split("::"));
@@ -86,10 +90,7 @@ public class Label {
         this.toLabels = labelList(toLabels);
 
         this.fullyQualifiedLabel = hasFromAndToLabels() ?
-                String.format("(%s)-%s-(%s)",
-                        fromLabelsAsString(),
-                        labelsAsString(),
-                        toLabelsAsString()):
+                format(fromLabelsAsString(), labelsAsString(), toLabelsAsString()):
                 labelsAsString() ;
     }
 
