@@ -88,12 +88,28 @@ public class TrainingJobWriterConfig {
         return nodeClassLabels.get(nodeType);
     }
 
+    public boolean isNodeClassificationColumnForNodeType(Label nodeType, String column) {
+        if (hasNodeClassificationSpecificationForNodeType(nodeType)){
+            return getNodeClassificationColumnForNodeType(nodeType).equals(column);
+        } else {
+            return false;
+        }
+    }
+
     public boolean hasEdgeClassificationSpecificationForEdgeType(Label edgeType) {
         return edgeClassLabels.containsKey(edgeType);
     }
 
     public String getEdgeClassificationColumnForEdgeType(Label nodeType) {
         return edgeClassLabels.get(nodeType);
+    }
+
+    public boolean isEdgeClassificationColumnForEdgeType(Label edgeType, String column) {
+        if (hasEdgeClassificationSpecificationForEdgeType(edgeType)){
+            return getEdgeClassificationColumnForEdgeType(edgeType).equals(column);
+        } else {
+            return false;
+        }
     }
 
     public boolean hasWord2VecSpecificationForNodeTypeAndColumn(Label nodeType, String column) {

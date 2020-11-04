@@ -120,7 +120,6 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         ArrayNode array = (ArrayNode) graph;
 
         assertTrue(array.get(0).path("labels").isMissingNode());
-        assertTrue(array.get(0).path("features").isMissingNode());
 
         assertEquals(1, warnings.size());
         assertEquals("Unable to add node class label: Node of type 'Person' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
@@ -271,7 +270,6 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         ArrayNode array = (ArrayNode) graph;
 
         assertTrue(array.get(0).path("labels").isMissingNode());
-        assertTrue(array.get(0).path("features").isMissingNode());
 
         assertEquals(1, warnings.size());
         assertEquals("Unable to add edge class label: Edge of type 'knows' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
