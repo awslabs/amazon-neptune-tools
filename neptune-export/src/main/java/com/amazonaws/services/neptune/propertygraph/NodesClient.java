@@ -14,6 +14,8 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -82,7 +84,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, ?> t2 = filterByPropertyKeys(t1, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t3 = t2.
-                project("~id",labelsFilter.addAdditionalColumnNames(  "~label", "properties")).
+                project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties")).
                 by(T.id).
                 by(label().fold()).
                 by(tokensOnly ?
@@ -116,17 +118,23 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
     @Override
     public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
+
         if (rangeConfig.approxNodeCount() > 0) {
             return rangeConfig.approxNodeCount();
         }
 
-        GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter).count();
+        System.err.println("Counting nodes...");
 
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        return Timer.timedActivity("counting nodes", (Activity.Callable<Long>) () ->
+        {
+            GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter).count();
 
-        Long count = t.next();
-        stats.setNodeCount(count);
-        return count;
+            logger.info(GremlinQueryDebugger.queryAsString(t));
+
+            Long count = t.next();
+            stats.setNodeCount(count);
+            return count;
+        });
     }
 
     @Override

@@ -14,6 +14,8 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -76,22 +78,22 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                                GraphElementSchemas graphElementSchemas) {
 
         GraphTraversal<Edge, Edge> t1 = tokensOnly ?
-                g.withSideEffect("x", new HashMap<String, Object>()).E():
+                g.withSideEffect("x", new HashMap<String, Object>()).E() :
                 g.E();
 
         GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1));
         GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
-                        project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties", "~from", "~to")).
-                        by(T.id).
-                        by(T.label).
-                        by(tokensOnly ?
-                                select("x"):
-                                valueMap(labelsFilter.getPropertiesForLabels(graphElementSchemas))
-                        ).
-                        by(outV().id()).
-                        by(inV().id());
+                project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties", "~from", "~to")).
+                by(T.id).
+                by(T.label).
+                by(tokensOnly ?
+                        select("x") :
+                        valueMap(labelsFilter.getPropertiesForLabels(graphElementSchemas))
+                ).
+                by(outV().id()).
+                by(inV().id());
 
         GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t4);
 
@@ -120,17 +122,21 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     @Override
     public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
 
-        if (rangeConfig.approxEdgeCount() > 0){
+        if (rangeConfig.approxEdgeCount() > 0) {
             return rangeConfig.approxEdgeCount();
         }
 
-        GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        System.err.println("Counting edges...");
 
-        Long count = t.next();
+        return Timer.timedActivity("counting edges", (Activity.Callable<Long>) () -> {
+            GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
+            logger.info(GremlinQueryDebugger.queryAsString(t));
 
-        stats.setEdgeCount(count);
-        return count;
+            Long count = t.next();
+
+            stats.setEdgeCount(count);
+            return count;
+        });
     }
 
     @Override
