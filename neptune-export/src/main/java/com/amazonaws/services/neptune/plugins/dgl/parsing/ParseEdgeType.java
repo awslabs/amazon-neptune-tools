@@ -10,34 +10,31 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.dgl.parsing;
+package com.amazonaws.services.neptune.plugins.dgl.parsing;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.util.ArrayList;
-import java.util.Collection;
+public class ParseEdgeType {
 
-public class ParseLanguages {
     private final JsonNode json;
     private final String description;
 
-    public ParseLanguages(JsonNode json, String description) {
-
+    public ParseEdgeType(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public Collection<String> parseLanguages() {
-        if (json.has("language") && json.path("language").isArray()) {
-            Collection<String> languages = new ArrayList<>();
-            ArrayNode language = (ArrayNode) json.path("language");
-            for (JsonNode node : language) {
-                languages.add(node.textValue());
+    public Label parseEdgeType() {
+        if (json.has("edge_type") && json.path("edge_type").isArray()){
+            ArrayNode array = (ArrayNode) json;
+            if (array.size() != 3){
+                throw new IllegalArgumentException(String.format("Error parsing 'edge_type' field: expected an array with 3 values for %s", description));
             }
-            return languages;
+            return new Label(Label.format(array.get(0).textValue(), array.get(1).textValue(), array.get(2).textValue()));
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'language' field: expected a text array value for %s", description));
+            throw new IllegalArgumentException(String.format("Error parsing 'edge_type' field: expected an array with 3 values for %s", description));
         }
     }
 }

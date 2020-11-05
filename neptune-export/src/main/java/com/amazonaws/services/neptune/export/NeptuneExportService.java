@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.dgl.DglNeptuneExportEventHandler;
+import com.amazonaws.services.neptune.plugins.dgl.DglNeptuneExportEventHandler;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.model.Tag;
@@ -108,16 +108,20 @@ public class NeptuneExportService {
             }
         }
 
+        EventHandlerCollection eventHandlerCollection = new EventHandlerCollection();
+
         ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
                 completionFileS3Path,
                 completionFilePayload);
 
-        DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
+        eventHandlerCollection.addHandler(eventHandler);
 
-        EventHandlerCollection eventHandlerCollection = new EventHandlerCollection(
-                Arrays.asList(eventHandler, dglEventHandler));
+        if (args.contains("--plugin", "dgl")){
+            DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
+            eventHandlerCollection.addHandler(dglEventHandler);
+        }
 
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 

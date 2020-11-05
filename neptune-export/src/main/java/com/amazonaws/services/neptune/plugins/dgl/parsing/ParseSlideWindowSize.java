@@ -10,26 +10,25 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.dgl.parsing;
+package com.amazonaws.services.neptune.plugins.dgl.parsing;
 
-import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseNodeType {
+public class ParseSlideWindowSize {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseNodeType(JsonNode json, String description) {
+    public ParseSlideWindowSize(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public Label parseNodeType(){
-        if (json.has("node_type") && json.path("node_type").isTextual()){
-            return new Label(json.path("node_type").textValue());
+    public int parseSlideWindowSize() {
+        if (json.has("slide_window_size") && json.path("slide_window_size").isInt()) {
+            return json.path("slide_window_size").asInt();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'node_type' field: expected a text value for %s", description));
+            throw new IllegalArgumentException(String.format("Error parsing 'slide_window_size' field: expected an integer value for %s", description));
         }
     }
 }

@@ -16,6 +16,7 @@ import org.codehaus.plexus.util.cli.CommandLineUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class Args {
@@ -64,6 +65,19 @@ public class Args {
         for (String arg : args) {
             if (arg.equals(name)){
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean contains(String name, String value){
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext() && iterator.next().equals(value)){
+                    return true;
+                }
             }
         }
         return false;

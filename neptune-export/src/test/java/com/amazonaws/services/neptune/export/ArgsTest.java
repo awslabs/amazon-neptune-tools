@@ -60,4 +60,18 @@ public class ArgsTest {
         assertEquals("-e endpoint -c config", args.toString());
     }
 
+    @Test
+    public void shouldIndicateWhetherArgsContainArg(){
+        Args args = new Args("-e endpoint -c config");
+        assertTrue(args.contains("-c"));
+        assertFalse(args.contains("-x"));
+    }
+
+    @Test
+    public void shouldIndicateWhetherArgsContainWithValue(){
+        Args args = new Args("-e endpoint --plugin xyz --plugin dgl -c config -b");
+        assertTrue(args.contains("--plugin", "dgl"));
+        assertFalse(args.contains("-b", "xyz"));
+    }
+
 }

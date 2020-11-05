@@ -17,16 +17,17 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class EventHandlerCollection implements NeptuneExportEventHandler {
 
-    private final Collection<NeptuneExportEventHandler> handlers;
+    private final Collection<NeptuneExportEventHandler> handlers = new ArrayList<>();
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(EventHandlerCollection.class);
 
-    public EventHandlerCollection(Collection<NeptuneExportEventHandler> handlers) {
-        this.handlers = handlers;
+    public void addHandler(NeptuneExportEventHandler handler){
+        handlers.add(handler);
     }
 
     @Override
