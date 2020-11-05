@@ -38,6 +38,9 @@ public class RewriteCsv implements RewriteCommand {
     @Override
     public MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception {
         GraphElementType<?> graphElementType = masterLabelSchemas.graphElementType();
+
+        System.err.println(String.format("Rewriting %s files...", graphElementType.name()));
+
         return Timer.timedActivity(String.format("rewriting %s files", graphElementType.name()),
                 (CheckedActivity.Callable<MasterLabelSchemas>) () ->
                         rewriteFiles(masterLabelSchemas, graphElementType, targetConfig));

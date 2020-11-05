@@ -40,7 +40,10 @@ public class RewriteAndMergeCsv implements RewriteCommand {
     @Override
     public MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception {
         GraphElementType<?> graphElementType = masterLabelSchemas.graphElementType();
-        return Timer.timedActivity(String.format("rewriting %s files", graphElementType.name()),
+
+        System.err.println(String.format("Rewriting and merging %s files...", graphElementType.name()));
+
+        return Timer.timedActivity(String.format("rewriting and merging %s files", graphElementType.name()),
                 (CheckedActivity.Callable<MasterLabelSchemas>) () ->
                         rewriteFiles(masterLabelSchemas, graphElementType, targetConfig));
     }
