@@ -75,8 +75,6 @@ public class CommonConnectionModule {
             throw new IllegalStateException("You must supply a cluster ID or one or more endpoints");
         }
 
-
-
         return new ConnectionConfig(
                 endpoints,
                 port,

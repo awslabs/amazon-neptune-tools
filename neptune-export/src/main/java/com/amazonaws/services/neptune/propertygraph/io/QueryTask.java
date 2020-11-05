@@ -14,19 +14,26 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
-import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.NamedQuery;
+import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
-import org.apache.tinkerpop.gremlin.structure.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
 
 public class QueryTask implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryTask.class);
+
     private final Queue<NamedQuery> queries;
     private final NeptuneGremlinClient.QueryClient queryClient;
     private final PropertyGraphTargetConfig targetConfig;
@@ -84,19 +91,19 @@ public class QueryTask implements Runnable {
                     }
 
                 } catch (IllegalStateException e) {
-                    System.err.printf("%nWARNING: Unexpected result value. %s. Proceeding with next query.%n", e.getMessage());
+                    logger.warn("Unexpected result value. {}. Proceeding with next query.", e.getMessage());
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                for (LabelWriter<Map<?, ?>> labelWriter : labelWriters.values()) {
+            for (LabelWriter<Map<?, ?>> labelWriter : labelWriters.values()) {
+                try {
                     labelWriter.close();
+                } catch (Exception e) {
+                    logger.warn("Error closing label writer: {}.", e.getMessage());
                 }
-            } catch (Exception e) {
-                System.err.printf("%nWARNING: Error closing writer: %s%n", e.getMessage());
             }
         }
 

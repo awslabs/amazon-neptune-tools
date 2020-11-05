@@ -15,7 +15,11 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.*;
-import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.propertygraph.schema.FileSpecificLabelSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,6 +27,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<FileSpecificLabelSchemas> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExportPropertyGraphTask.class);
 
     private final GraphElementSchemas graphElementSchemas;
     private final LabelsFilter labelsFilter;
@@ -80,13 +86,11 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             try {
                 handler.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error while closing handler", e);
             }
         }
 
@@ -134,9 +138,13 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             for (LabelWriter<T> labelWriter : labelWriters.values()) {
-                labelWriter.close();
+                try {
+                    labelWriter.close();
+                } catch (Exception e) {
+                    logger.warn("Error closing label writer: {}.", e.getMessage());
+                }
             }
         }
 

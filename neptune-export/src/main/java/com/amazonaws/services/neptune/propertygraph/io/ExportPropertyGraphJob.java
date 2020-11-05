@@ -12,9 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.kinesis.model.KMSAccessDeniedException;
-import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
@@ -32,6 +31,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class ExportPropertyGraphJob {
+
     private final Collection<ExportSpecification<?>> exportSpecifications;
     private final GraphSchema graphSchema;
     private final GraphTraversalSource g;

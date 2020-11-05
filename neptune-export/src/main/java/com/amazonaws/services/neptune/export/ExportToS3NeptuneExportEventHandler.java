@@ -26,11 +26,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ivy.osgi.updatesite.xml.EclipseFeature;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -65,6 +68,14 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+
+        try
+        {
+            long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length() ).sum();
+            logger.info("Total size: {}", FileUtils.byteCountToDisplaySize(size));
+        } catch (Exception e){
+            // Ignore
+        }
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 

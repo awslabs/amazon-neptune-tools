@@ -114,8 +114,6 @@ public class NeptuneExportService {
                 completionFileS3Path,
                 completionFilePayload);
 
-
-
         DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
 
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection(
