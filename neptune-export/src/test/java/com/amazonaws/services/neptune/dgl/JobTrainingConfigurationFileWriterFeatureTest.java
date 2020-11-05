@@ -80,10 +80,10 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
         edgeSchemas.addLabelSchema(new LabelSchema(
-                new Label(
-                        Collections.singletonList("follows"),
-                        Arrays.asList("Person", "Admin"),
-                        Arrays.asList("Person", "Temp"))),
+                        new Label(
+                                Collections.singletonList("follows"),
+                                Arrays.asList("Person", "Admin"),
+                                Arrays.asList("Person", "Temp"))),
                 Collections.singletonList("follows-1.csv"));
 
         Output output = new Output();
@@ -125,7 +125,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
-        LabelSchema labelSchema = new LabelSchema( new Label(Arrays.asList("Person", "Admin")));
+        LabelSchema labelSchema = new LabelSchema(new Label(Arrays.asList("Person", "Admin")));
         labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
@@ -170,7 +170,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
-        LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("Movie")));
+        LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
         labelSchema.put("encoding", new PropertySchema("encoding", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
@@ -215,7 +215,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
-        LabelSchema labelSchema = new LabelSchema( new Label(Arrays.asList("Person", "Admin")));
+        LabelSchema labelSchema = new LabelSchema(new Label(Arrays.asList("Person", "Admin")));
         labelSchema.put("age", new PropertySchema("age", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
@@ -261,7 +261,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
-        LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("Movie")));
+        LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
         labelSchema.put("class", new PropertySchema("class", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
@@ -306,7 +306,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphSchema graphSchema = new GraphSchema();
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
 
-        LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("Movie")));
+        LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
         labelSchema.put("movieType", new PropertySchema("movieType", isNullable, dataType, isMultiValue));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
@@ -362,11 +362,11 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
-                        .withWord2VecNodeFeature(
-                                movieLabel,
-                                "genre",
-                                "en_core_web_lg", "fr_core_news_lg")
-                        .build())
+                .withWord2VecNodeFeature(
+                        movieLabel,
+                        "genre",
+                        "en_core_web_lg", "fr_core_news_lg")
+                .build())
                 .write();
 
         JsonNode graph = output.graph();
@@ -423,8 +423,8 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
-                        .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
-                        .build())
+                .withNumericalBucketFeature(movieLabel, "score", new TrainingJobWriterConfig.Range(1, 100), 10, 2)
+                .build())
                 .write();
 
         JsonNode graph = output.graph();
@@ -485,8 +485,8 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
                     graphSchema,
                     output.generator(),
                     JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
-                            .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
-                            .build())
+                    .withNumericalBucketFeature(movieLabel, "score", new TrainingJobWriterConfig.Range(1, 100), 10, 2)
+                    .build())
                     .write();
 
             JsonNode graph = output.graph();
@@ -526,8 +526,8 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
-                        .withNumericalBucketFeature(movieLabel, "score", 1, 100, 10, 2)
-                        .build())
+                .withNumericalBucketFeature(movieLabel, "score", new TrainingJobWriterConfig.Range(1, 100), 10, 2)
+                .build())
                 .write();
 
         JsonNode graph = output.graph();
@@ -560,7 +560,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
             GraphSchema graphSchema = new GraphSchema();
             GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
-            LabelSchema labelSchema = new LabelSchema( new Label(Collections.singletonList("knows"), Collections.singletonList("Person"), Collections.singletonList("Person")));
+            LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("knows"), Collections.singletonList("Person"), Collections.singletonList("Person")));
             labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue));
 
             edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));

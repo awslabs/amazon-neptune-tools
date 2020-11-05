@@ -22,38 +22,33 @@ public class TrainingJobConfigBuilder {
         return new TrainingJobConfigBuilder();
     }
 
-    Map<Label, String> nodeClassLabels = new HashMap<>();
-    Map<Label, String> edgeClassLabels = new HashMap<>();
+    Map<Label, TrainingJobWriterConfig.LabelConfig> nodeClassLabels = new HashMap<>();
+    Map<Label, TrainingJobWriterConfig.LabelConfig> edgeClassLabels = new HashMap<>();
     Collection<TrainingJobWriterConfig.Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
     Collection<TrainingJobWriterConfig.NumericalBucketFeatureConfig> numericalBucketFeatures = new ArrayList<>();
     Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
 
     public TrainingJobConfigBuilder withNodeClassLabel(Label label, String column) {
-        nodeClassLabels.put(label, column);
-        return this;
-    }
-
-    public TrainingJobConfigBuilder withSplitRates(double train, double valid, double test) {
-        splitRates = Arrays.asList(train, valid, test);
+        nodeClassLabels.put(label, new TrainingJobWriterConfig.LabelConfig(column, splitRates));
         return this;
     }
 
     public TrainingJobConfigBuilder withEdgeClassLabel(Label label, String column) {
-        edgeClassLabels.put(label, column);
+        edgeClassLabels.put(label, new TrainingJobWriterConfig.LabelConfig(column, splitRates));
         return this;
     }
 
-    public TrainingJobConfigBuilder withWord2VecNodeFeature(Label label, String column, String... languages){
+    public TrainingJobConfigBuilder withWord2VecNodeFeature(Label label, String column, String... languages) {
         word2VecNodeFeatures.add(new TrainingJobWriterConfig.Word2VecConfig(label, column, Arrays.asList(languages)));
         return this;
     }
 
-    public TrainingJobConfigBuilder withNumericalBucketFeature(Label label, String column, Object low, Object high, int bucketCount, int slideWindowSize ){
-        numericalBucketFeatures.add(new TrainingJobWriterConfig.NumericalBucketFeatureConfig(label, column, low, high, bucketCount, slideWindowSize));
+    public TrainingJobConfigBuilder withNumericalBucketFeature(Label label, String column, TrainingJobWriterConfig.Range range, int bucketCount, int slideWindowSize) {
+        numericalBucketFeatures.add(new TrainingJobWriterConfig.NumericalBucketFeatureConfig(label, column, range, bucketCount, slideWindowSize));
         return this;
     }
 
     public TrainingJobWriterConfig build() {
-        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures, splitRates);
+        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures);
     }
 }

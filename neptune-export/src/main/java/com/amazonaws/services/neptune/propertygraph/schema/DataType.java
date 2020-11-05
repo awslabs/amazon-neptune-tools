@@ -15,11 +15,8 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalField;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -39,6 +36,11 @@ public enum DataType {
         @Override
         public Object convert(Object value) {
             return value;
+        }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return -1;
         }
     },
     Boolean {
@@ -66,6 +68,11 @@ public enum DataType {
         public Object convert(Object value) {
             return java.lang.Boolean.parseBoolean(java.lang.String.valueOf(value));
         }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Boolean.compare((boolean) v1, (boolean) v2);
+        }
     },
     Byte {
         @Override
@@ -87,6 +94,11 @@ public enum DataType {
         public Object convert(Object value) {
             return java.lang.Byte.parseByte(java.lang.String.valueOf(value));
         }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Byte.compare((Byte) v1, (Byte) v2);
+        }
     },
     Short {
         @Override
@@ -107,6 +119,11 @@ public enum DataType {
         @Override
         public Object convert(Object value) {
             return java.lang.Short.parseShort(java.lang.String.valueOf(value));
+        }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Short.compare((short) v1, (short) v2);
         }
     },
     Integer {
@@ -134,6 +151,11 @@ public enum DataType {
         public Object convert(Object value) {
             return java.lang.Integer.parseInt(java.lang.String.valueOf(value));
         }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Integer.compare((int) v1, (int) v2);
+        }
     },
     Long {
         @Override
@@ -154,6 +176,11 @@ public enum DataType {
         @Override
         public Object convert(Object value) {
             return java.lang.Long.parseLong(java.lang.String.valueOf(value));
+        }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Long.compare((long) v1, (long) v2);
         }
     },
     Float {
@@ -176,6 +203,11 @@ public enum DataType {
         public Object convert(Object value) {
             return java.lang.Float.parseFloat(java.lang.String.valueOf(value));
         }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Float.compare((float) v1, (float) v2);
+        }
     },
     Double {
         @Override
@@ -196,6 +228,11 @@ public enum DataType {
         @Override
         public Object convert(Object value) {
             return java.lang.Double.parseDouble(java.lang.String.valueOf(value));
+        }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.Double.compare((double) v1, (double) v2);
         }
     },
     String {
@@ -230,6 +267,11 @@ public enum DataType {
         public Object convert(Object value) {
             return java.lang.String.valueOf(value);
         }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return java.lang.String.valueOf(v1).compareTo(java.lang.String.valueOf(v2));
+        }
     },
     Date {
         @Override
@@ -260,11 +302,16 @@ public enum DataType {
 
         @Override
         public Object convert(Object value) {
-            if (java.util.Date.class.isAssignableFrom(value.getClass())){
+            if (java.util.Date.class.isAssignableFrom(value.getClass())) {
                 return value;
             }
             Instant instant = Instant.parse(value.toString());
             return new java.util.Date(instant.toEpochMilli());
+        }
+
+        @Override
+        public int compare(Object v1, Object v2) {
+            return ((java.util.Date) v1).compareTo((java.util.Date) v2);
         }
     };
 
@@ -323,4 +370,6 @@ public enum DataType {
     public abstract boolean isNumeric();
 
     public abstract Object convert(Object value);
+
+    public abstract int compare(Object v1, Object v2);
 }

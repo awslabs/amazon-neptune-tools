@@ -96,13 +96,13 @@ public class JobTrainingConfigurationFileWriter {
 
     }
 
-    private void writeNodeClassLabel(LabelSchema labelSchema, String column) throws IOException {
+    private void writeNodeClassLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
 
         Label label = labelSchema.label();
 
-        if (labelSchema.containsProperty(column)) {
+        if (labelSchema.containsProperty(labelConfig.col())) {
             generator.writeArrayFieldStart("labels");
-            PropertySchema propertySchema = labelSchema.getPropertySchema(column);
+            PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.col());
             generator.writeStartObject();
             generator.writeStringField("label_type", "node");
             generator.writeStringField("sub_label_type", "node_class_label");
@@ -110,7 +110,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeString("~id");
             generator.writeString(getColumnName.apply(propertySchema));
             generator.writeEndArray();
-            writeSplitRates();
+            writeSplitRates(labelConfig);
             if (propertySchema.isMultiValue()) {
                 writeSeparator(";");
             }
@@ -121,13 +121,13 @@ public class JobTrainingConfigurationFileWriter {
             warnings.add(
                     String.format("Unable to add node class label: Node of type '%s' does not contain property '%s'.",
                             label.fullyQualifiedLabel(),
-                            column));
+                            labelConfig.col()));
         }
     }
 
-    private void writeSplitRates() throws IOException {
+    private void writeSplitRates(TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
         generator.writeArrayFieldStart("split_rate");
-        for (Double rate : config.splitRates()) {
+        for (Double rate : labelConfig.splitRates()) {
             generator.writeNumber(rate);
         }
         generator.writeEndArray();
@@ -265,8 +265,8 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeString(getColumnName.apply(propertySchema));
             generator.writeEndArray();
             generator.writeArrayFieldStart("range");
-            generator.writeObject(featureConfig.low());
-            generator.writeObject(featureConfig.high());
+            generator.writeObject(featureConfig.range().low());
+            generator.writeObject(featureConfig.range().high());
             generator.writeEndArray();
             generator.writeNumberField("bucket_cnt", featureConfig.bucketCount());
             generator.writeNumberField("slide_window_size", featureConfig.slideWindowSize());
@@ -340,11 +340,11 @@ public class JobTrainingConfigurationFileWriter {
         }
     }
 
-    private void writeEdgeClassLabel(LabelSchema labelSchema, String column) throws IOException {
+    private void writeEdgeClassLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
 
         Label label = labelSchema.label();
-        if (labelSchema.containsProperty(column)) {
-            PropertySchema propertySchema = labelSchema.getPropertySchema(column);
+        if (labelSchema.containsProperty(labelConfig.col())) {
+            PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.col());
             generator.writeArrayFieldStart("labels");
             generator.writeStartObject();
             generator.writeStringField("label_type", "edge");
@@ -354,7 +354,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeString("~to");
             generator.writeString(getColumnName.apply(propertySchema));
             generator.writeEndArray();
-            writeSplitRates();
+            writeSplitRates(labelConfig);
             if (propertySchema.isMultiValue()) {
                 writeSeparator(";");
             }
@@ -365,7 +365,7 @@ public class JobTrainingConfigurationFileWriter {
             warnings.add(
                     String.format("Unable to add edge class label: Edge of type '%s' does not contain property '%s'.",
                             label.labelsAsString(),
-                            column));
+                            labelConfig.col()));
         }
     }
 

@@ -41,7 +41,7 @@ public class TrainingJobWriterConfigTest {
             try {
                 new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
                         new Label("my-label"),
-                        "column", low, high, 10, 2);
+                        "column", new TrainingJobWriterConfig.Range(low, high), 10, 2);
                 fail("Expected IllegalArgumentException");
             } catch (IllegalArgumentException e){
                 assertEquals("Low and high values must be numeric", e.getMessage());
@@ -57,17 +57,17 @@ public class TrainingJobWriterConfigTest {
 
         TrainingJobWriterConfig.NumericalBucketFeatureConfig config1 = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
                 new Label("my-label"),
-                "column", 1, 10L, 10, 2);
+                "column", new TrainingJobWriterConfig.Range(1, 10L), 10, 2);
 
-        assertEquals(Long.class, config1.high().getClass());
-        assertEquals(Long.class, config1.low().getClass());
+        assertEquals(Long.class, config1.range().high().getClass());
+        assertEquals(Long.class, config1.range().low().getClass());
 
         TrainingJobWriterConfig.NumericalBucketFeatureConfig config2 = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
                 new Label("my-label"),
-                "column", 0.1, 10, 10, 2);
+                "column", new TrainingJobWriterConfig.Range(0.1, 10), 10, 2);
 
-        assertEquals(Double.class, config2.high().getClass());
-        assertEquals(Double.class, config2.low().getClass());
+        assertEquals(Double.class, config2.range().high().getClass());
+        assertEquals(Double.class, config2.range().low().getClass());
 
     }
 

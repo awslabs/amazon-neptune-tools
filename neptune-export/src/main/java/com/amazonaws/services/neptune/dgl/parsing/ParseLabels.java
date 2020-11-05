@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.dgl.parsing;
 
+import com.amazonaws.services.neptune.dgl.TrainingJobWriterConfig;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -20,16 +21,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import static com.amazonaws.services.neptune.dgl.TrainingJobWriterConfig.DEFAULT_SPLIT_RATES;
+
 public class ParseLabels {
 
     private final Collection<JsonNode> nodes;
+    private final Collection<Double> defaultSplitRates;
 
-    public ParseLabels(Collection<JsonNode> nodes) {
+    public ParseLabels(Collection<JsonNode> nodes, Collection<Double> defaultSplitRates) {
         this.nodes = nodes;
+        this.defaultSplitRates = defaultSplitRates;
     }
 
-    public Map<Label, String> parseNodeClassLabels() {
-        Map<Label, String> nodeClassLabels = new HashMap<>();
+    public Map<Label, TrainingJobWriterConfig.LabelConfig> parseNodeClassLabels() {
+        Map<Label, TrainingJobWriterConfig.LabelConfig> nodeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             String labelType = node.get("label_type").textValue();
             String subLabelType = node.get("sub_label_type").textValue();
@@ -37,14 +42,15 @@ public class ParseLabels {
             if (isNodeClass(labelType, subLabelType)) {
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
                 String col = new ParseCols(node, description).parseSingleColumn();
-                nodeClassLabels.put(nodeType, col);
+                Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
+                nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(col, splitRates));
             }
         }
         return nodeClassLabels;
     }
 
-    public Map<Label, String> parseEdgeClassLabels() {
-        Map<Label, String> edgeClassLabels = new HashMap<>();
+    public Map<Label, TrainingJobWriterConfig.LabelConfig> parseEdgeClassLabels() {
+        Map<Label, TrainingJobWriterConfig.LabelConfig> edgeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             String labelType = node.get("label_type").textValue();
             String subLabelType = node.get("sub_label_type").textValue();
@@ -52,7 +58,8 @@ public class ParseLabels {
             if (isEdgeClass(labelType, subLabelType)) {
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
                 String col = new ParseCols(node, description).parseSingleColumn();
-                edgeClassLabels.put(edgeType, col);
+                Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
+                edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(col, splitRates));
             }
         }
         return edgeClassLabels;

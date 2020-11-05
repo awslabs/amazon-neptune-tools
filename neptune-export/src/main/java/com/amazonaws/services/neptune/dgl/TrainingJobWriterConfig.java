@@ -12,85 +12,89 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.dgl;
 
+import com.amazonaws.services.neptune.dgl.parsing.ParseFeatures;
 import com.amazonaws.services.neptune.dgl.parsing.ParseLabels;
+import com.amazonaws.services.neptune.dgl.parsing.ParseSplitRate;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.*;
 
 public class TrainingJobWriterConfig {
 
-    private static final Collection<Double> DEFAULT_SPLIT_RATES = Arrays.asList(0.7, 0.1, 0.2);
+    public static final Collection<Double> DEFAULT_SPLIT_RATES = Arrays.asList(0.7, 0.1, 0.2);
 
     public static TrainingJobWriterConfig fromJson(JsonNode json) {
 
-        Map<Label, String> nodeClassLabels = new HashMap<>();
-        Map<Label, String> edgeClassLabels = new HashMap<>();
+        Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
+        Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfig> numericalBucketFeatures = new ArrayList<>();
+
+        Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES).parseSplitRates();
 
         if (json.has("labels")) {
             JsonNode labels = json.path("labels");
             Collection<JsonNode> labelNodes = new ArrayList<>();
-            if (labels.isArray()){
+            if (labels.isArray()) {
                 labels.forEach(labelNodes::add);
             } else {
                 labelNodes.add(labels);
             }
-            ParseLabels parseLabels = new ParseLabels(labelNodes);
+            ParseLabels parseLabels = new ParseLabels(labelNodes, defaultSplitRates);
             parseLabels.validate();
             nodeClassLabels.putAll(parseLabels.parseNodeClassLabels());
             edgeClassLabels.putAll(parseLabels.parseEdgeClassLabels());
         }
 
-        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures, DEFAULT_SPLIT_RATES);
+        if (json.has("features")) {
+            JsonNode features = json.path("features");
+            Collection<JsonNode> featureNodes = new ArrayList<>();
+            if (features.isArray()) {
+                features.forEach(featureNodes::add);
+            } else {
+                featureNodes.add(features);
+            }
+            ParseFeatures parseFeatures = new ParseFeatures(featureNodes);
+            parseFeatures.validate();
+            word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecNodeFeatures());
+            numericalBucketFeatures.addAll(parseFeatures.parseNumericalBucketFeatures());
+        }
+
+        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures);
     }
 
-    private final Map<Label, String> nodeClassLabels;
-    private final Map<Label, String> edgeClassLabels;
+    private final Map<Label, LabelConfig> nodeClassLabels;
+    private final Map<Label, LabelConfig> edgeClassLabels;
     private final Collection<Word2VecConfig> word2VecNodeFeatures;
     private final Collection<NumericalBucketFeatureConfig> numericalBucketFeatures;
-    private final Collection<Double> splitRates;
 
     public TrainingJobWriterConfig() {
-        this(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), DEFAULT_SPLIT_RATES);
+        this(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
     }
 
-    public TrainingJobWriterConfig(Map<Label, String> nodeClassLabels,
-                                   Map<Label, String> edgeClassLabels,
+    public TrainingJobWriterConfig(Map<Label, LabelConfig> nodeClassLabels,
+                                   Map<Label, LabelConfig> edgeClassLabels,
                                    Collection<Word2VecConfig> word2VecNodeFeatures,
-                                   Collection<NumericalBucketFeatureConfig> numericalBucketFeatures,
-                                   Collection<Double> splitRates) {
+                                   Collection<NumericalBucketFeatureConfig> numericalBucketFeatures) {
         this.nodeClassLabels = nodeClassLabels;
         this.edgeClassLabels = edgeClassLabels;
         this.word2VecNodeFeatures = word2VecNodeFeatures;
         this.numericalBucketFeatures = numericalBucketFeatures;
-        this.splitRates = splitRates;
-
-        if (this.splitRates.size() != 3) {
-            throw new IllegalArgumentException("splitRates must contain 3 values");
-        }
-
-        Optional<Double> sum = this.splitRates.stream().reduce(Double::sum);
-
-        if (sum.orElse(0.0) != 1.0) {
-            throw new IllegalArgumentException("splitRates values must add up to 1.0");
-        }
     }
 
     public boolean hasNodeClassificationSpecificationForNodeType(Label nodeType) {
         return nodeClassLabels.containsKey(nodeType);
     }
 
-    public String getNodeClassificationColumnForNodeType(Label nodeType) {
+    public LabelConfig getNodeClassificationColumnForNodeType(Label nodeType) {
         return nodeClassLabels.get(nodeType);
     }
 
     public boolean isNodeClassificationColumnForNodeType(Label nodeType, String column) {
-        if (hasNodeClassificationSpecificationForNodeType(nodeType)){
-            return getNodeClassificationColumnForNodeType(nodeType).equals(column);
+        if (hasNodeClassificationSpecificationForNodeType(nodeType)) {
+            return getNodeClassificationColumnForNodeType(nodeType).col().equals(column);
         } else {
             return false;
         }
@@ -100,13 +104,13 @@ public class TrainingJobWriterConfig {
         return edgeClassLabels.containsKey(edgeType);
     }
 
-    public String getEdgeClassificationColumnForEdgeType(Label nodeType) {
+    public LabelConfig getEdgeClassificationColumnForEdgeType(Label nodeType) {
         return edgeClassLabels.get(nodeType);
     }
 
     public boolean isEdgeClassificationColumnForEdgeType(Label edgeType, String column) {
-        if (hasEdgeClassificationSpecificationForEdgeType(edgeType)){
-            return getEdgeClassificationColumnForEdgeType(edgeType).equals(column);
+        if (hasEdgeClassificationSpecificationForEdgeType(edgeType)) {
+            return getEdgeClassificationColumnForEdgeType(edgeType).col().equals(column);
         } else {
             return false;
         }
@@ -138,9 +142,6 @@ public class TrainingJobWriterConfig {
                 .orElse(null);
     }
 
-    public Collection<Double> splitRates() {
-        return splitRates;
-    }
 
     @Override
     public String toString() {
@@ -149,7 +150,6 @@ public class TrainingJobWriterConfig {
                 ", edgeClassLabels=" + edgeClassLabels +
                 ", word2VecNodeFeatures=" + word2VecNodeFeatures +
                 ", numericalBucketFeatures=" + numericalBucketFeatures +
-                ", splitRates=" + splitRates +
                 '}';
     }
 
@@ -186,20 +186,39 @@ public class TrainingJobWriterConfig {
         }
     }
 
-    public static class NumericalBucketFeatureConfig {
-        private final Label label;
-        private final String column;
+    public static class LabelConfig {
+        private final String col;
+        private final Collection<Double> splitRates;
+
+        public LabelConfig(String col, Collection<Double> splitRates) {
+            this.col = col;
+            this.splitRates = splitRates;
+
+            if (this.splitRates.size() != 3) {
+                throw new IllegalArgumentException("splitRates must contain 3 values");
+            }
+
+            Optional<Double> sum = this.splitRates.stream().reduce(Double::sum);
+
+            if (sum.orElse(0.0) != 1.0) {
+                throw new IllegalArgumentException("splitRates values must add up to 1.0");
+            }
+        }
+
+        public String col() {
+            return col;
+        }
+
+        public Collection<Double> splitRates() {
+            return splitRates;
+        }
+    }
+
+    public static class Range {
         private final Object low;
         private final Object high;
-        private final int bucketCount;
-        private final int slideWindowSize;
 
-        public NumericalBucketFeatureConfig(Label label,
-                                            String column,
-                                            Object low,
-                                            Object high,
-                                            int bucketCount,
-                                            int slideWindowSize) {
+        public Range(Object low, Object high) {
 
             DataType lowDataType = DataType.dataTypeFor(low.getClass());
             DataType highDataType = DataType.dataTypeFor(high.getClass());
@@ -210,10 +229,46 @@ public class TrainingJobWriterConfig {
 
             DataType dataType = DataType.getBroadestType(lowDataType, highDataType);
 
+            Object highValue = dataType.convert(high);
+            Object lowValue = dataType.convert(low);
+
+            this.high = dataType.compare(highValue, lowValue) >= 0 ? highValue : lowValue;
+            this.low = dataType.compare(highValue, lowValue) >= 0 ? lowValue : highValue;
+        }
+
+        public Object low() {
+            return low;
+        }
+
+        public Object high() {
+            return high;
+        }
+
+        @Override
+        public String toString() {
+            return "Range{" +
+                    "low=" + low +
+                    ", high=" + high +
+                    '}';
+        }
+    }
+
+    public static class NumericalBucketFeatureConfig {
+        private final Label label;
+        private final String column;
+        private final Range range;
+        private final int bucketCount;
+        private final int slideWindowSize;
+
+        public NumericalBucketFeatureConfig(Label label,
+                                            String column,
+                                            Range range,
+                                            int bucketCount,
+                                            int slideWindowSize) {
+
             this.label = label;
             this.column = column;
-            this.high = dataType.convert(high);
-            this.low = dataType.convert(low);
+            this.range = range;
             this.bucketCount = bucketCount;
             this.slideWindowSize = slideWindowSize;
         }
@@ -226,14 +281,6 @@ public class TrainingJobWriterConfig {
             return column;
         }
 
-        public Object high() {
-            return high;
-        }
-
-        public Object low() {
-            return low;
-        }
-
         public int bucketCount() {
             return bucketCount;
         }
@@ -242,13 +289,16 @@ public class TrainingJobWriterConfig {
             return slideWindowSize;
         }
 
+        public Range range() {
+            return range;
+        }
+
         @Override
         public String toString() {
             return "NumericalBucketFeatureConfig{" +
                     "label=" + label +
                     ", column='" + column + '\'' +
-                    ", low=" + low +
-                    ", high=" + high +
+                    ", range=" + range +
                     ", bucketCount=" + bucketCount +
                     ", slideWindowSize=" + slideWindowSize +
                     '}';
