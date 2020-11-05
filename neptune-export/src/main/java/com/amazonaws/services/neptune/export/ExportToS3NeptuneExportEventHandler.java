@@ -72,7 +72,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
         try
         {
             long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length() ).sum();
-            logger.info("Total size: {}", FileUtils.byteCountToDisplaySize(size));
+            logger.info("Total size of exported files: {}", FileUtils.byteCountToDisplaySize(size));
         } catch (Exception e){
             // Ignore
         }
