@@ -83,12 +83,15 @@ public class RewriteCsv implements RewriteCommand {
 
             LabelSchema labelSchema = fileSpecificLabelSchema.labelSchema();
             Label label = labelSchema.label();
+            File sourceCsvFile = new File(fileSpecificLabelSchema.outputId());
 
-            if (labelSchema.isSameAs(masterSchema)){
-                logger.info("Schema of file {} conforms to master schema, so no need to rewrite", fileSpecificLabelSchema.outputId());
+            if (labelSchema.isSameAs(masterSchema)) {
+                logger.info("Ignoring rewrite request because schema of file {}/{} conforms to master schema",
+                        sourceCsvFile.getParentFile().getName(),
+                        sourceCsvFile.getName());
                 continue;
             }
-
+`
             String[] additionalElementHeaders = label.hasFromAndToLabels() ?
                     new String[]{"~fromLabels", "~toLabels"} :
                     new String[]{};
@@ -103,10 +106,10 @@ public class RewriteCsv implements RewriteCommand {
                     graphElementType.tokenNames().toArray(new String[]{}),
                     ArrayUtils.addAll(additionalElementHeaders, filePropertyHeaders));
 
-            try (DeletableFile deletableFile = new DeletableFile(new File(fileSpecificLabelSchema.outputId()));
+            try (DeletableFile deletableFile = new DeletableFile(sourceCsvFile);
                  Reader in = deletableFile.reader();
                  PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(
-                         new File(fileSpecificLabelSchema.outputId()).getName(),
+                         sourceCsvFile.getName(),
                          masterSchema,
                          targetConfig.forFileConsolidation());
             ) {
