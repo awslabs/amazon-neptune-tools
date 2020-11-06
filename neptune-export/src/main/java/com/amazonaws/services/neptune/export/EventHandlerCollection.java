@@ -16,6 +16,8 @@ import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,23 +34,37 @@ public class EventHandlerCollection implements NeptuneExportEventHandler {
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
+        boolean error = false;
+
         for (NeptuneExportEventHandler handler : handlers) {
             try {
                 handler.onExportComplete(outputPath, stats);
             } catch (Exception e) {
+                error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);
             }
+        }
+
+        if (error){
+            throw new RuntimeException("One or more errors occurred while executing onExportComplete event handlers. See the logs for details.");
         }
     }
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+        boolean error = false;
+
         for (NeptuneExportEventHandler handler : handlers) {
             try {
                 handler.onExportComplete(outputPath, stats, graphSchema);
             } catch (Exception e) {
+                error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);
             }
+        }
+
+        if (error){
+            throw new RuntimeException("One or more errors occurred while executing onExportComplete event handlers. See the logs for details.");
         }
     }
 }

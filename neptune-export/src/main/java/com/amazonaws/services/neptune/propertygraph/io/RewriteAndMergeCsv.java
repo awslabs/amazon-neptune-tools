@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
@@ -32,9 +33,11 @@ import java.util.stream.Collectors;
 public class RewriteAndMergeCsv implements RewriteCommand {
 
     private final PropertyGraphTargetConfig targetConfig;
+    private final ConcurrencyConfig concurrencyConfig;
 
-    public RewriteAndMergeCsv(PropertyGraphTargetConfig targetConfig) {
+    public RewriteAndMergeCsv(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
         this.targetConfig = targetConfig;
+        this.concurrencyConfig = concurrencyConfig;
     }
 
     @Override

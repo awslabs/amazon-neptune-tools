@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
@@ -46,7 +47,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
             return RewriteCommand.NULL_COMMAND;
         }
     },
@@ -72,11 +73,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
             if (targetConfig.mergeFiles()) {
-                return new RewriteAndMergeCsv(targetConfig);
+                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
             } else {
-                return new RewriteCsv(targetConfig);
+                return new RewriteCsv(targetConfig, concurrencyConfig);
             }
         }
     },
@@ -102,11 +103,11 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
             if (targetConfig.mergeFiles()) {
-                return new RewriteAndMergeCsv(targetConfig);
+                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
             } else {
-                return new RewriteCsv(targetConfig);
+                return new RewriteCsv(targetConfig, concurrencyConfig);
             }
         }
     },
@@ -133,7 +134,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
             return RewriteCommand.NULL_COMMAND;
         }
     };
@@ -151,5 +152,5 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
     public abstract String description();
 
-    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig);
+    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig);
 }

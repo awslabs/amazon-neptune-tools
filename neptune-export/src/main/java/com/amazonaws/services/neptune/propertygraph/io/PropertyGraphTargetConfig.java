@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
@@ -104,7 +105,7 @@ public class PropertyGraphTargetConfig {
         return tempFile ? FileExtension.TEMP_FILE : format;
     }
 
-    public RewriteCommand createRewriteCommand() {
-        return format.createRewriteCommand(this);
+    public RewriteCommand createRewriteCommand(ConcurrencyConfig concurrencyConfig) {
+        return format.createRewriteCommand(this, concurrencyConfig);
     }
 }

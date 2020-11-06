@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.plugins.dgl.DglNeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -19,6 +21,7 @@ import com.amazonaws.services.neptune.util.Timer;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.Reader;
@@ -29,10 +32,14 @@ import java.util.stream.Collectors;
 
 public class RewriteCsv implements RewriteCommand {
 
-    private final PropertyGraphTargetConfig targetConfig;
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RewriteCsv.class);
 
-    public RewriteCsv(PropertyGraphTargetConfig targetConfig) {
+    private final PropertyGraphTargetConfig targetConfig;
+    private final ConcurrencyConfig concurrencyConfig;
+
+    public RewriteCsv(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
         this.targetConfig = targetConfig;
+        this.concurrencyConfig = concurrencyConfig;
     }
 
     @Override
@@ -53,8 +60,10 @@ public class RewriteCsv implements RewriteCommand {
         Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
 
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.schemas()) {
+            // Use thread pool?
+            Label label = masterLabelSchema.labelSchema().label();
             updatedSchemas.put(
-                    masterLabelSchema.labelSchema().label(),
+                    label,
                     rewrite(targetConfig, graphElementType, masterLabelSchema));
         }
 
@@ -74,6 +83,11 @@ public class RewriteCsv implements RewriteCommand {
 
             LabelSchema labelSchema = fileSpecificLabelSchema.labelSchema();
             Label label = labelSchema.label();
+
+            if (labelSchema.isSameAs(masterSchema)){
+                logger.info("Schema of file {} conforms to master schema, so no need to rewrite", fileSpecificLabelSchema.outputId());
+                continue;
+            }
 
             String[] additionalElementHeaders = label.hasFromAndToLabels() ?
                     new String[]{"~fromLabels", "~toLabels"} :
