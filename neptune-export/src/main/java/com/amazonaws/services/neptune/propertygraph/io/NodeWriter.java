@@ -12,13 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
+
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
+public class NodeWriter implements LabelWriter<Map<String, Object>> {
 
     private final PropertyGraphPrinter propertyGraphPrinter;
 
@@ -32,9 +33,11 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
 
         @SuppressWarnings("unchecked")
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
-        String id = (String) map.get("id");
+        String id = (String) map.get("~id");
         @SuppressWarnings("unchecked")
-        List<String> labels = (List<String>) map.get("label");
+        List<String> labels = (List<String>) map.get("~label");
+
+        labels = Label.fixLabelsIssue(labels);
 
         propertyGraphPrinter.printStartRow();
         propertyGraphPrinter.printNode(id, labels);
@@ -45,5 +48,10 @@ public class NodeWriter implements GraphElementHandler<Map<String, Object>> {
     @Override
     public void close() throws Exception {
         propertyGraphPrinter.close();
+    }
+
+    @Override
+    public String outputId() {
+        return propertyGraphPrinter.outputId();
     }
 }

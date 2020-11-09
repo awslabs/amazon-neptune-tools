@@ -12,7 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
 import java.util.Map;
@@ -20,15 +21,22 @@ import java.util.Map;
 public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
 
     @Override
-    public PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException {
-        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, index, metadata);
-        propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
+    public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, labelSchema);
+
+        if (labelSchema.label().hasFromAndToLabels()){
+            propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to", "~fromLabels", "~toLabels");
+        } else {
+            propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
+        }
+
+        propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
 
         return propertyGraphPrinter;
     }
 
     @Override
-    public GraphElementHandler<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
-        return new EdgeWriter(propertyGraphPrinter);
+    public LabelWriter<Map<String, Object>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter, Label label) {
+        return new EdgeWriter(propertyGraphPrinter, label);
     }
 }

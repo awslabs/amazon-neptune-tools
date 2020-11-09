@@ -15,18 +15,14 @@ package com.amazonaws.services.neptune.cli;
 import com.amazonaws.services.neptune.io.*;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
-import com.github.rvesse.airline.annotations.restrictions.Once;
-import com.github.rvesse.airline.annotations.restrictions.PathKind;
-import com.github.rvesse.airline.annotations.restrictions.Required;
+import com.github.rvesse.airline.annotations.restrictions.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-public class PropertyGraphTargetModule implements RequiresMetadata, CommandWriter {
+public class PropertyGraphTargetModule implements CommandWriter {
 
     @Option(name = {"-d", "--dir"}, description = "Root directory for output.")
     @Required
@@ -40,12 +36,12 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
 
     @Option(name = {"--format"}, description = "Output format (optional, default 'csv').")
     @Once
-    @AllowedValues(allowedValues = {"csv", "csvNoHeaders", "json", "neptuneStreamsJson"})
+    @AllowedEnumValues(PropertyGraphExportFormat.class)
     private PropertyGraphExportFormat format = PropertyGraphExportFormat.csv;
 
     @Option(name = {"-o", "--output"}, description = "Output target (optional, default 'file').")
     @Once
-    @AllowedValues(allowedValues = {"files", "stdout", "stream"})
+    @AllowedEnumValues(Target.class)
     private Target output = Target.files;
 
     @Option(name = {"--stream-name"}, description = "Name of an Amazon Kinesis Data Stream.")
@@ -56,9 +52,19 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
     @Once
     private String region;
 
-    @Option(name = {"--export-id"}, description = "Export ID", hidden = true)
+    @Option(name = {"--merge-files"}, description = "Merge files for each vertex or edge label.")
+    @Once
+    private boolean mergeFiles = false;
+
+    @Option(name = {"--export-id"}, description = "Export id", hidden = true)
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
+
+    private final boolean inferSchema;
+
+    public PropertyGraphTargetModule(boolean inferSchema) {
+        this.inferSchema = inferSchema;
+    }
 
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
         return Directories.createFor(directoryStructure, directory, exportId, tag );
@@ -66,7 +72,7 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
 
     public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, inferSchema, mergeFiles);
     }
 
     public String description(){
@@ -81,10 +87,5 @@ public class PropertyGraphTargetModule implements RequiresMetadata, CommandWrite
     @Override
     public void writeMessage(String value) {
         output.writeMessage(value);
-    }
-
-    @Override
-    public boolean requiresMetadata() {
-        return format.requiresMetadata();
     }
 }

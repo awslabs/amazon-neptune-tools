@@ -21,8 +21,9 @@ import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -40,10 +41,10 @@ import java.util.Collection;
         "bin/neptune-export.sh export-pg-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output",
         "bin/neptune-export.sh export-pg-from-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -c /home/ec2-user/config.json -d /home/ec2-user/output --format json"
 }, descriptions = {
-        "Export data using the metadata config in /home/ec2-user/config.json",
-        "Export data as JSON using the metadata config in /home/ec2-user/config.json"
+        "Export data using the schema config in /home/ec2-user/config.json",
+        "Export data as JSON using the schema config in /home/ec2-user/config.json"
 })
-@Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing config file.")
+@Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing schema config file.")
 public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
@@ -56,7 +57,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -67,7 +68,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
-    @Option(name = {"-c", "--config-file"}, description = "Path to JSON config file (file path, or 'https' or 's3' URI)")
+    @Option(name = {"-c", "--config-file"}, description = "Path to JSON schema config file (file path, or 'https' or 's3' URI)")
     @Required
     @Once
     private URI configFile;
@@ -79,46 +80,45 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("export-pg-from-config");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
-            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
-            JsonResource<PropertiesMetadataCollection> configFileResource = new JsonResource<>(
-                    "Config file",
-                    configFile,
-                    PropertiesMetadataCollection.class);
+                    Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+                    JsonResource<GraphSchema> configFileResource = new JsonResource<>(
+                            "Config file",
+                            configFile,
+                            GraphSchema.class);
 
-            PropertiesMetadataCollection metadataCollection = configFileResource.get();
+                    GraphSchema graphSchema = configFileResource.get();
+                    ExportStats stats = new ExportStats();
 
-            ExportStats stats = new ExportStats();
-            stats.prepare(metadataCollection);
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         GraphTraversalSource g = client.newTraversalSource()) {
 
-            try( NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 GraphTraversalSource g = client.newTraversalSource()) {
+                        ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                                exportSpecifications,
+                                graphSchema,
+                                g,
+                                range.config(),
+                                clusterStrategy.concurrencyConfig(),
+                                targetConfig);
+                        graphSchema = exportJob.execute();
+                    }
 
-                ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                        exportSpecifications,
-                        metadataCollection,
-                        g,
-                        range.config(),
-                        clusterStrategy.concurrencyConfig(),
-                        targetConfig);
-                exportJob.execute();
+                    directories.writeRootDirectoryPathAsMessage(target.description(), target);
+                    configFileResource.writeResourcePathAsMessage(target);
 
-            }
+                    System.err.println();
+                    System.err.println(stats.formatStats(graphSchema));
 
-            directories.writeRootDirectoryPathAsMessage(target.description(), target);
-            configFileResource.writeResourcePathAsMessage(target);
-
-            System.err.println();
-            System.err.println(stats.toString());
-
-            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-            onExportComplete(outputPath, stats);
-
+                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(outputPath, stats, graphSchema);
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }

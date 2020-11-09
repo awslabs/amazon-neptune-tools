@@ -13,17 +13,26 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.export;
 
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 
 import java.nio.file.Path;
 
 public interface NeptuneExportEventHandler {
 
     NeptuneExportEventHandler NULL_EVENT_HANDLER = new NeptuneExportEventHandler() {
+
         @Override
-        public void onExportComplete(Path outputPath, ExportStats stats) {
-            // Do nothing
+        public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
+            //Do nothing
+        }
+
+        @Override
+        public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+            //Do nothing
         }
     };
 
-    void onExportComplete(Path outputPath, ExportStats stats);
+    void onExportComplete(Path outputPath, ExportStats stats) throws Exception;
+
+    void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception;
 }

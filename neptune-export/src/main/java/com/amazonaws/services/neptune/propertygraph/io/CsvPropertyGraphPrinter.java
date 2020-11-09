@@ -13,33 +13,47 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
-    private final Map<Object, PropertyTypeInfo> metadata;
+    private final LabelSchema labelSchema;
     private final CommaPrinter commaPrinter;
     private final boolean includeHeaders;
     private final boolean includeTypeDefinitions;
+    private final boolean allowUpdateSchema;
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
-                                   Map<Object, PropertyTypeInfo> metadata,
+                                   LabelSchema labelSchema,
                                    boolean includeHeaders,
                                    boolean includeTypeDefinitions) {
+        this(writer, labelSchema, includeHeaders, includeTypeDefinitions, false);
+    }
+
+    public CsvPropertyGraphPrinter(OutputWriter writer,
+                                   LabelSchema labelSchema,
+                                   boolean includeHeaders,
+                                   boolean includeTypeDefinitions,
+                                   boolean allowUpdateSchema) {
         this.writer = writer;
-        this.metadata = metadata;
+        this.labelSchema = labelSchema;
         this.commaPrinter = new CommaPrinter(writer);
         this.includeHeaders = includeHeaders;
         this.includeTypeDefinitions = includeTypeDefinitions;
+        this.allowUpdateSchema = allowUpdateSchema;
+    }
+
+    @Override
+    public String outputId() {
+        return writer.outputId();
     }
 
     @Override
@@ -53,9 +67,9 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         if (includeHeaders) {
-            for (PropertyTypeInfo property : remainingColumns) {
+            for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
                 if (includeTypeDefinitions) {
                     writer.print(property.nameWithDataType());
@@ -69,22 +83,45 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printProperties(Map<?, ?> properties) {
-        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
+        printProperties(properties, true);
+    }
 
-            Object property = entry.getKey();
-            DataType dataType = entry.getValue().dataType();
+    @Override
+    public void printProperties(Map<?, ?> properties, boolean applyFormatting) {
+        for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
+
+            Object property = propertySchema.property();
 
             if (properties.containsKey(property)) {
-                commaPrinter.printComma();
-
                 Object value = properties.get(property);
-                String formattedValue = isList(value) ?
-                        formatList(value, dataType) :
-                        dataType.format(value);
-                writer.print(formattedValue);
-
+                if (allowUpdateSchema) {
+                    propertySchema.accept(value);
+                }
+                labelSchema.recordObservation(propertySchema, value);
+                printProperty(propertySchema.dataType(), value, applyFormatting);
             } else {
                 commaPrinter.printComma();
+            }
+        }
+    }
+
+    public void printProperty(DataType dataType, Object value) {
+        printProperty(dataType, value, true);
+    }
+
+    private void printProperty(DataType dataType, Object value, boolean applyFormatting) {
+        commaPrinter.printComma();
+
+        if (applyFormatting){
+            String formattedValue = isList(value) ?
+                    formatList(value, dataType) :
+                    dataType.format(value);
+            writer.print(formattedValue);
+        } else {
+            if (dataType == DataType.String) {
+                writer.print(DataType.String.format(value));
+            } else {
+                writer.print(String.valueOf(value));
             }
         }
     }
@@ -95,7 +132,12 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printEdge(String id, String label, String from, String to) {
+    public void printEdge(String id, String label, String from, String to) throws IOException {
+        printEdge(id, label, from, to, null, null);
+    }
+
+    @Override
+    public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
         commaPrinter.printComma();
         writer.print(DataType.String.format(id));
         commaPrinter.printComma();
@@ -104,6 +146,14 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         writer.print(DataType.String.format(from));
         commaPrinter.printComma();
         writer.print(DataType.String.format(to));
+        if (fromLabels != null){
+            commaPrinter.printComma();
+            writer.print(DataType.String.formatList(fromLabels));
+        }
+        if (toLabels != null){
+            commaPrinter.printComma();
+            writer.print(DataType.String.formatList(toLabels));
+        }
     }
 
     @Override
@@ -140,24 +190,4 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         writer.close();
     }
 
-    private static class CommaPrinter {
-        private final OutputWriter outputWriter;
-        private boolean printComma = false;
-
-        private CommaPrinter(OutputWriter outputWriter) {
-            this.outputWriter = outputWriter;
-        }
-
-        void printComma() {
-            if (printComma) {
-                outputWriter.print(",");
-            } else {
-                printComma = true;
-            }
-        }
-
-        void init() {
-            printComma = false;
-        }
-    }
 }

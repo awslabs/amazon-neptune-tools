@@ -16,6 +16,7 @@ import org.codehaus.plexus.util.cli.CommandLineUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class Args {
@@ -69,6 +70,19 @@ public class Args {
         return false;
     }
 
+    public boolean contains(String name, String value){
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext() && iterator.next().equals(value)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public String[] values() {
         return args.toArray(new String[]{});
     }
@@ -76,5 +90,9 @@ public class Args {
     @Override
     public String toString() {
         return String.join(" ", args);
+    }
+
+    public void addFlag(String flag) {
+        args.add(flag);
     }
 }

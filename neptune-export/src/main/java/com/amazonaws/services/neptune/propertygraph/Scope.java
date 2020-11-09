@@ -12,31 +12,33 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.MetadataTypes;
-import com.amazonaws.services.neptune.propertygraph.metadata.TokensOnly;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementTypes;
+import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public enum Scope {
+
     all {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
-                                                                       List<String> edgeLabels,
+        public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,
+                                                                       Collection<Label> edgeLabels,
                                                                        TokensOnly tokensOnly,
+                                                                       EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
                                                                        Collection<String> labModeFeatures) {
             return Arrays.asList(
                     new ExportSpecification<>(
-                            MetadataTypes.Nodes,
-                            Scope.labelsFilter(nodeLabels),
+                            GraphElementTypes.Nodes,
+                            Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                             tokensOnly.nodeTokensOnly(),
                             stats,
                             labModeFeatures),
                     new ExportSpecification<>(
-                            MetadataTypes.Edges,
-                            Scope.labelsFilter(edgeLabels),
+                            GraphElementTypes.Edges,
+                            Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                             tokensOnly.edgeTokensOnly(),
                             stats,
                             labModeFeatures)
@@ -45,15 +47,16 @@ public enum Scope {
     },
     nodes {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
-                                                                       List<String> edgeLabels,
+        public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,
+                                                                       Collection<Label> edgeLabels,
                                                                        TokensOnly tokensOnly,
+                                                                       EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
                                                                        Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
-                            MetadataTypes.Nodes,
-                            Scope.labelsFilter(nodeLabels),
+                            GraphElementTypes.Nodes,
+                            Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                             tokensOnly.nodeTokensOnly(),
                             stats,
                             labModeFeatures)
@@ -62,15 +65,16 @@ public enum Scope {
     },
     edges {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(List<String> nodeLabels,
-                                                                       List<String> edgeLabels,
+        public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,
+                                                                       Collection<Label> edgeLabels,
                                                                        TokensOnly tokensOnly,
+                                                                       EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
                                                                        Collection<String> labModeFeatures) {
             return Collections.singletonList(
                     new ExportSpecification<>(
-                            MetadataTypes.Edges,
-                            Scope.labelsFilter(edgeLabels),
+                            GraphElementTypes.Edges,
+                            Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                             tokensOnly.edgeTokensOnly(),
                             stats,
                             labModeFeatures)
@@ -82,18 +86,19 @@ public enum Scope {
         return labels.stream().flatMap(v -> Arrays.stream(v.split(","))).collect(Collectors.toSet());
     }
 
-    private static LabelsFilter labelsFilter(Collection<String> labels){
+    private static LabelsFilter labelsFilter(Collection<Label> labels, LabelStrategy labelStrategy){
         if (labels.isEmpty()){
-            return AllLabels.INSTANCE;
+            return new AllLabels(labelStrategy);
         }
 
-        return new SpecifiedLabels(toSet(labels));
+        return new SpecifiedLabels(labels, labelStrategy);
     }
 
     public abstract Collection<ExportSpecification<?>> exportSpecifications(
-            List<String> nodeLabels,
-            List<String> edgeLabels,
+            Collection<Label> nodeLabels,
+            Collection<Label> edgeLabels,
             TokensOnly tokensOnly,
+            EdgeLabelStrategy edgeLabelStrategy,
             ExportStats stats,
             Collection<String> labModeFeatures);
 

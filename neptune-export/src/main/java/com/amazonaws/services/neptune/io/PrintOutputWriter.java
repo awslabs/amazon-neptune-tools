@@ -15,36 +15,52 @@ package com.amazonaws.services.neptune.io;
 import java.io.*;
 
 public class PrintOutputWriter extends PrintWriter implements OutputWriter {
-    public PrintOutputWriter(Writer out) {
+
+    private final String outputId;
+
+    public PrintOutputWriter(String outputId, Writer out) {
         super(out);
+        this.outputId = outputId;
     }
 
-    public PrintOutputWriter(Writer out, boolean autoFlush) {
+    PrintOutputWriter(String outputId, Writer out, boolean autoFlush) {
         super(out, autoFlush);
+        this.outputId = outputId;
     }
 
-    public PrintOutputWriter(OutputStream out) {
+    PrintOutputWriter(String outputId, OutputStream out) {
         super(out);
+        this.outputId = outputId;
     }
 
-    public PrintOutputWriter(OutputStream out, boolean autoFlush) {
+    PrintOutputWriter(String outputId, OutputStream out, boolean autoFlush) {
         super(out, autoFlush);
+        this.outputId = outputId;
     }
 
-    public PrintOutputWriter(String fileName) throws FileNotFoundException {
+    PrintOutputWriter(String fileName) throws FileNotFoundException {
         super(fileName);
+        this.outputId = fileName;
     }
 
-    public PrintOutputWriter(String fileName, String csn) throws FileNotFoundException, UnsupportedEncodingException {
+    PrintOutputWriter(String fileName, String csn) throws FileNotFoundException, UnsupportedEncodingException {
         super(fileName, csn);
+        this.outputId = fileName;
     }
 
-    public PrintOutputWriter(File file) throws FileNotFoundException {
+    PrintOutputWriter(File file) throws FileNotFoundException {
         super(file);
+        this.outputId = file.getAbsolutePath();
     }
 
-    public PrintOutputWriter(File file, String csn) throws FileNotFoundException, UnsupportedEncodingException {
+    PrintOutputWriter(File file, String csn) throws FileNotFoundException, UnsupportedEncodingException {
         super(file, csn);
+        this.outputId = file.getAbsolutePath();
+    }
+
+    @Override
+    public String outputId() {
+        return outputId;
     }
 
     @Override
@@ -54,9 +70,7 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
 
     @Override
     public void endCommit() {
-//        if (checkError()){
-//            throw new RuntimeException("An error occurred while writing to a file");
-//        }
+        // Do nothing
     }
 
     @Override
@@ -73,13 +87,4 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     public void endOp() {
         // Do nothing
     }
-
-//    @Override
-//    public void close() {
-//        boolean isError = checkError();
-//        super.close();
-//        if (isError){
-//          throw new RuntimeException("An error occurred while writing to a file");
-//        }
-//    }
 }

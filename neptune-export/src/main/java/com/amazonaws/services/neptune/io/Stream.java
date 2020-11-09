@@ -56,14 +56,17 @@ public class Stream {
                 ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKey.getAndIncrement()), data);
                 Futures.addCallback(future, CALLBACK);
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
                 logger.error(e.getMessage());
+                Thread.currentThread().interrupt();
             } catch (UnsupportedEncodingException e) {
                 logger.error(e.getMessage());
             }
         }
     }
 
+    public String name() {
+        return streamName;
+    }
 
     public void flushRecords() {
         kinesisProducer.flushSync();

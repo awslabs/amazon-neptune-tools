@@ -13,6 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.rdf.io;
 
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 
 public class ExportRdfGraphJob {
@@ -26,11 +28,10 @@ public class ExportRdfGraphJob {
     }
 
     public void execute() throws Exception {
-
-        try (Timer timer = new Timer("exporting RDF as " + targetConfig.format().description())) {
-            System.err.println("Creating statement files");
-
-            client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", targetConfig);
-        }
+        Timer.timedActivity("exporting RDF as " + targetConfig.format().description(),
+                (CheckedActivity.Runnable) () -> {
+                    System.err.println("Creating statement files");
+                    client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", targetConfig);
+                });
     }
 }

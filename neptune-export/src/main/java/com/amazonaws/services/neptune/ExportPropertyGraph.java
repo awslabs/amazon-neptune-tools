@@ -20,19 +20,24 @@ import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import org.apache.jena.vocabulary.VOID;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-pg -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output",
@@ -62,16 +67,13 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(true);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
 
     @Inject
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
-
-    @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(target);
 
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
@@ -83,46 +85,47 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("export-pg");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
-            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
+                    Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
-            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
 
-            ExportStats stats = new ExportStats();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    ExportStats stats = new ExportStats();
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 GraphTraversalSource g = client.newTraversalSource()) {
+                    GraphSchema graphSchema = new GraphSchema();
 
-                PropertiesMetadataCollection metadataCollection =
-                        sampling.createMetadataCommand(exportSpecifications, g).execute();
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         GraphTraversalSource g = client.newTraversalSource()) {
 
-                stats.prepare(metadataCollection);
 
-                configFileResource.save(metadataCollection);
+                        ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                                exportSpecifications,
+                                graphSchema,
+                                g,
+                                range.config(),
+                                clusterStrategy.concurrencyConfig(),
+                                targetConfig);
+                        graphSchema = exportJob.execute();
 
-                ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                        exportSpecifications,
-                        metadataCollection,
-                        g,
-                        range.config(),
-                        clusterStrategy.concurrencyConfig(),
-                        targetConfig);
-                exportJob.execute();
-            }
+                        configFileResource.save(graphSchema);
+                    }
 
-            directories.writeRootDirectoryPathAsMessage(target.description(), target);
-            configFileResource.writeResourcePathAsMessage(target);
+                    directories.writeRootDirectoryPathAsMessage(target.description(), target);
+                    configFileResource.writeResourcePathAsMessage(target);
 
-            System.err.println();
-            System.err.println(stats.toString());
+                    System.err.println();
+                    System.err.println(stats.formatStats(graphSchema));
 
-            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-            onExportComplete(outputPath, stats);
+                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(outputPath, stats, graphSchema);
 
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }

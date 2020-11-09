@@ -16,39 +16,41 @@ import java.io.*;
 
 public class StdOutPrintOutputWriter extends PrintOutputWriter {
 
-    public StdOutPrintOutputWriter(){
+    private static final String StdOut = "StdOut";
+
+    public StdOutPrintOutputWriter() {
         this(System.out, true);
     }
 
-    public StdOutPrintOutputWriter(Writer out) {
-        super(out);
+    private StdOutPrintOutputWriter(Writer out) {
+        super(StdOut, out);
     }
 
-    public StdOutPrintOutputWriter(Writer out, boolean autoFlush) {
-        super(out, autoFlush);
+    private StdOutPrintOutputWriter(Writer out, boolean autoFlush) {
+        super(StdOut, out, autoFlush);
     }
 
-    public StdOutPrintOutputWriter(OutputStream out) {
-        super(out);
+    private StdOutPrintOutputWriter(OutputStream out) {
+        super(StdOut, out);
     }
 
-    public StdOutPrintOutputWriter(OutputStream out, boolean autoFlush) {
-        super(out, autoFlush);
+    private StdOutPrintOutputWriter(OutputStream out, boolean autoFlush) {
+        super(StdOut, out, autoFlush);
     }
 
-    public StdOutPrintOutputWriter(String fileName) throws FileNotFoundException {
+    private StdOutPrintOutputWriter(String fileName) throws FileNotFoundException {
         super(fileName);
     }
 
-    public StdOutPrintOutputWriter(String fileName, String csn) throws FileNotFoundException, UnsupportedEncodingException {
+    private StdOutPrintOutputWriter(String fileName, String csn) throws FileNotFoundException, UnsupportedEncodingException {
         super(fileName, csn);
     }
 
-    public StdOutPrintOutputWriter(File file) throws FileNotFoundException {
+    private StdOutPrintOutputWriter(File file) throws FileNotFoundException {
         super(file);
     }
 
-    public StdOutPrintOutputWriter(File file, String csn) throws FileNotFoundException, UnsupportedEncodingException {
+    private StdOutPrintOutputWriter(File file, String csn) throws FileNotFoundException, UnsupportedEncodingException {
         super(file, csn);
     }
 
@@ -58,7 +60,7 @@ public class StdOutPrintOutputWriter extends PrintOutputWriter {
     }
 
     @Override
-    public void close(){
+    public void close() {
         flush();
     }
 

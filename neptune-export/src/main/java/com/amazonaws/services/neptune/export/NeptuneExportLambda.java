@@ -30,7 +30,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
     private final String localOutputPath;
 
-    public NeptuneExportLambda(){
+    public NeptuneExportLambda() {
         this(TEMP_PATH);
     }
 
@@ -43,11 +43,17 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         Logger logger = s -> context.getLogger().log(s);
 
-        JsonNode json = new ObjectMapper().readTree(inputStream);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JsonNode json = objectMapper.readTree(inputStream);
 
         String cmd = json.has("command") ?
                 json.path("command").textValue() :
                 EnvironmentVariableUtils.getMandatoryEnv("COMMAND");
+
+        ObjectNode params = json.has("params") ?
+                (ObjectNode) json.get("params") :
+                objectMapper.readTree("{}").deepCopy();
 
         String outputS3Path = json.has("outputS3Path") ?
                 json.path("outputS3Path").textValue() :
@@ -67,25 +73,36 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         ObjectNode completionFilePayload = json.has("completionFilePayload") ?
                 json.path("completionFilePayload").deepCopy() :
-                new ObjectMapper().readTree(
+                objectMapper.readTree(
                         EnvironmentVariableUtils.getOptionalEnv(
                                 "COMPLETION_FILE_PAYLOAD",
                                 "{}")).
                         deepCopy();
+
+        ObjectNode additionalParams = json.has("additionalParams") ?
+                json.path("additionalParams").deepCopy() :
+                objectMapper.readTree("{}").deepCopy();
 
         int maxConcurrency = json.has("jobSize") ?
                 JobSize.parse(json.path("jobSize").textValue()).maxConcurrency() :
                 -1;
 
         logger.log("cmd                   : " + cmd);
+        logger.log("params                : " + params.toPrettyString());
         logger.log("outputS3Path          : " + outputS3Path);
         logger.log("configFileS3Path      : " + configFileS3Path);
         logger.log("queriesFileS3Path     : " + queriesFileS3Path);
         logger.log("completionFileS3Path  : " + completionFileS3Path);
-        logger.log("completionFilePayload : " + completionFilePayload.toString());
+        logger.log("completionFilePayload : " + completionFilePayload.toPrettyString());
+        logger.log("additionalParams      : " + additionalParams.toPrettyString());
+
+        if (!cmd.contains(" ") && !params.isEmpty()){
+            cmd = ParamConverter.fromJson(cmd, params).toString();
+        }
+
+        logger.log("revised cmd           : " + cmd);
 
         NeptuneExportService neptuneExportService = new NeptuneExportService(
-                logger,
                 cmd,
                 localOutputPath,
                 outputS3Path,
@@ -93,12 +110,17 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 queriesFileS3Path,
                 completionFileS3Path,
                 completionFilePayload,
+                additionalParams,
                 maxConcurrency);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
-            writer.write(outputS3ObjectInfo.toString());
+        if (outputS3ObjectInfo != null) {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
+                writer.write(outputS3ObjectInfo.toString());
+            }
+        } else {
+            System.exit(-1);
         }
     }
 }

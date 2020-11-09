@@ -41,9 +41,13 @@ public class CommonConnectionModule {
     @Once
     private boolean useIamAuth = false;
 
-    @Option(name = {"--use-ssl"}, description = "Enables connectivity over SSL")
+    @Option(name = {"--use-ssl"}, description = "Enables connectivity over SSL. This option is deprecated: neptune-export will always connect via SSL unless you use --disable-ssl to explicitly disable connectivity over SSL.")
     @Once
-    private boolean useSsl = false;
+    private boolean useSsl = true;
+
+    @Option(name = {"--disable-ssl"}, description = "Disables connectivity over SSL.")
+    @Once
+    private boolean disableSsl = false;
 
     @Option(name = {"--nlb-endpoint"}, description = "Network load balancer endpoint (optional: use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer).")
     @Once
@@ -78,6 +82,6 @@ public class CommonConnectionModule {
                 applicationLoadBalancerEndpoint,
                 loadBalancerPort,
                 useIamAuth,
-                useSsl);
+                !disableSsl);
     }
 }

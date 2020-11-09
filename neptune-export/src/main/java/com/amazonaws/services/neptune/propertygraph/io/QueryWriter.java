@@ -15,7 +15,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import java.io.IOException;
 import java.util.Map;
 
-public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
+public class QueryWriter implements LabelWriter<Map<?, ?>> {
 
     private final PropertyGraphPrinter propertyGraphPrinter;
 
@@ -34,5 +34,10 @@ public class QueryWriter implements GraphElementHandler<Map<?, ?>> {
     @Override
     public void close() throws Exception {
         propertyGraphPrinter.close();
+    }
+
+    @Override
+    public String outputId() {
+        return propertyGraphPrinter.outputId();
     }
 }

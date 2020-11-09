@@ -66,31 +66,31 @@ The numbers you supply need only be approximate – it doesn’t matter if you�
 
 ## Exporting to the Bulk Loader CSV Format
 
-When exporting to the [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), _neptune-export_ generates CSV files based on metadata derived from scanning your graph. This metadata is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
+When exporting to the [CSV format](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html) used by the [Amazon Neptune bulk loader](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load.html), _neptune-export_ generates CSV files based on a schema derived from scanning your graph. This schema is persisted in a JSON file. There are three ways in which you can use the tool to generate bulk load files:
 
- - [`export-pg`](docs/export-pg.md) – This command makes two passes over your data: the first to generate the metadata, the second to create the data files. By scanning all nodes and edges in the first pass, the tool captures the superset of properties for each label, identifies the broadest datatype for each property, and identifies any properties for which at least one vertex or edge has multiple values. If exporting to CSV, these latter properties are exported to CSV as array types. If exporting to JSON, these property values are exported as array nodes.
- - [`create-pg-config`](docs/create-pg-config.md) – This command makes a single pass over your data to generate the metadata config file.
- - [`export-pg-from-config`](docs/export-pg-from-config.md) – This command makes a single pass over your data to create the CSV or JSON files. It uses a preexisting metadata config file.
+ - [`export-pg`](docs/export-pg.md) – This command makes two passes over your data: the first to generate the schema, the second to create the data files. By scanning all nodes and edges in the first pass, the tool captures the superset of properties for each label, identifies the datatype for each property, and identifies any properties for which at least one vertex or edge has multiple values. If exporting to CSV, these latter properties are exported to CSV as array types. If exporting to JSON, these property values are exported as array nodes.
+ - [`create-pg-config`](docs/create-pg-config.md) – This command makes a single pass over your data to generate the schema config file.
+ - [`export-pg-from-config`](docs/export-pg-from-config.md) – This command makes a single pass over your data to create the CSV or JSON files. It uses a preexisting schema config file.
  
-### Generating metadata
+### Generating schema
 
-[`export-pg`](docs/export-pg.md) and [`create-pg-config`](docs/create-pg-config.md) both generate metadata JSON files describing the properties associated with each node and edge label. By default, these commands will scan the entire database. For large datasets, this can take a long time. 
+[`export-pg`](docs/export-pg.md) and [`create-pg-config`](docs/create-pg-config.md) both generate schema JSON files describing the properties associated with each node and edge label. By default, these commands will scan the entire database. For large datasets, this can take a long time. 
 
-Both commands also allow you to sample a range of nodes and edges in order to create this metadata. If you are confident that sampling your data will yield the same metadata as scanning the entire dataset, specify the `--sample` option with these commands. If, however, you have reason to believe the same property on different nodes or edges could yield different datatypes, or different cardinalities, or that nodes or edges with the same labels could contain different sets of properties, you should consider retaining the default behaviour of a full scan.
+Both commands also allow you to sample a range of nodes and edges in order to create this schema. If you are confident that sampling your data will yield the same schema as scanning the entire dataset, specify the `--sample` option with these commands. If, however, you have reason to believe the same property on different nodes or edges could yield different datatypes, or different cardinalities, or that nodes or edges with the same labels could contain different sets of properties, you should consider retaining the default behaviour of a full scan.
 
-Once you have generated a metadata file, either with `export-pg` or `create-pg-config`, you can reuse it for subsequent exports in `export-pg-from-config`. You can also modify the file to restrict the labels and properties that will be exported.
+Once you have generated a schema file, either with `export-pg` or `create-pg-config`, you can reuse it for subsequent exports in `export-pg-from-config`. You can also modify the file to restrict the labels and properties that will be exported.
 
 ### Label filters
 
 All three commands allow you to supply vertex and edge label filters. 
 
- - If you supply label filters to the [`export-pg`](docs/export-pg.md) command, the metadata file and the exported data files will contain data only for the labels specified in the filters.
- - If you supply label filters to the [`create-pg-config`](docs/create-pg-config.md) command, the metadata file will contain data only for the labels specified in the filters.
+ - If you supply label filters to the [`export-pg`](docs/export-pg.md) command, the schema file and the exported data files will contain data only for the labels specified in the filters.
+ - If you supply label filters to the [`create-pg-config`](docs/create-pg-config.md) command, the schema file will contain data only for the labels specified in the filters.
  - If you supply label filters to the [`export-pg-from-config`](docs/export-pg-from-config.md) command, the exported data files will contain data for the intersection of labels in the config file and the labels specified in the command filters.
  
 ### Token-only export
 
-For some offline use cases you may want to export only the structural data in the graph: that is, just the labels and IDs of vertices and edges. `export-pg` allows you to specify a `--tokens-only` option with the value `nodes`, `edges` or `both`. A token-only export does not scan for metadata, nor does it export any property data: for vertices it simply exports `~id` and `~label`; for edges, it exports `~id`, `~from`, `~to` and `~label`. You can still use label filters to determine exactly which vertices and edges will be exported.
+For some offline use cases you may want to export only the structural data in the graph: that is, just the labels and IDs of vertices and edges. `export-pg` allows you to specify a `--tokens-only` option with the value `nodes`, `edges` or `both`. A token-only export does not generate a schema, nor does it export any property data: for vertices it simply exports `~id` and `~label`; for edges, it exports `~id`, `~from`, `~to` and `~label`. You can still use label filters to determine exactly which vertices and edges will be exported.
  
 ### Parallel export
 
@@ -102,7 +102,7 @@ You can load balance requests across multiple instances in your cluster (or even
 
 ### Long-running queries
 
-_neptune-export_ uses long-running queries to generate the metadata and the data files. You may need to increase the `neptune_query_timeout` [DB parameter](https://docs.aws.amazon.com/neptune/latest/userguide/parameters.html) in order to run the tool against large datasets.
+_neptune-export_ uses long-running queries to generate the schema and the data files. You may need to increase the `neptune_query_timeout` [DB parameter](https://docs.aws.amazon.com/neptune/latest/userguide/parameters.html) in order to run the tool against large datasets.
 
 For large datasets, we recommend running this tool against a standalone database instance that has been restored from a snapshot of your database.
 

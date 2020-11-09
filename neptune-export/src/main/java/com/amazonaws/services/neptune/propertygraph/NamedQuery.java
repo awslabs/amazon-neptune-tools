@@ -17,8 +17,16 @@ public class NamedQuery {
     private final String query;
 
     public NamedQuery(String name, String query) {
+
+        if (query.contains(".addV(") || query.contains(".addE(") || query.contains(".drop(") || query.contains(".property(")){
+            throw new IllegalArgumentException("Query must not contain any Gremlin write steps");
+        }
+
+
         this.name = name;
         this.query = query;
+
+
     }
 
     public String name() {

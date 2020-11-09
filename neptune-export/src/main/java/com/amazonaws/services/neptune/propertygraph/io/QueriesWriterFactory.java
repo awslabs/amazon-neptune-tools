@@ -12,7 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
 import java.util.Map;
@@ -20,12 +21,14 @@ import java.util.Map;
 public class QueriesWriterFactory implements WriterFactory<Map<?, ?>> {
 
     @Override
-    public PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException {
-        return targetConfig.createPrinterForQueries(name, index, metadata);
+    public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
+        PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForQueries(name, labelSchema);
+        propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
+        return propertyGraphPrinter;
     }
 
     @Override
-    public GraphElementHandler<Map<?, ?>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter) {
+    public LabelWriter<Map<?, ?>> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter, Label label) {
         return new QueryWriter(propertyGraphPrinter);
     }
 }
