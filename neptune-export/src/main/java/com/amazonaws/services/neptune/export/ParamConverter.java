@@ -12,40 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-/*
-def add_arg(arg_name, arg_value, args):
-
-    prefix = '' if arg_name.startswith('-') else '--'
-
-    if isinstance(arg_value, str):
-       arg_value = '"{}"'.format(arg_value)
-
-    if isinstance(arg_value, bool):
-        if arg_value:
-            args.append('{}{}'.format(prefix, arg_name))
-    else:
-        args.append('{}{} {}'.format(prefix, arg_name, arg_value))
-
-
-def parse_args_from_params(params):
-
-    print('params: {}'.format(params))
-
-    args = []
-    for field in params.keys():
-        arg_name = inflection.underscore(field).replace('_', '-')
-        if isinstance(params[field], list):
-            arg_name = inflection.singularize(arg_name)
-            for arg_value in params[field]:
-                add_arg(arg_name, arg_value, args)
-        else:
-            add_arg(arg_name, params[field], args)
-
-    print('args: {}'.format(args))
-
-    return args
- */
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
