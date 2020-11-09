@@ -35,4 +35,8 @@ public interface LabelsFilter {
     <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t);
 
     LabelsFilter filterFor(Label label);
+
+    LabelsFilter union(Collection<Label> labels);
+
+    boolean isEmpty();
 }

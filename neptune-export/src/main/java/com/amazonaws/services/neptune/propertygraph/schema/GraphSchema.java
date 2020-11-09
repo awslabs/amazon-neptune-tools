@@ -12,12 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.Jsonizable;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,6 +67,18 @@ public class GraphSchema implements Jsonizable {
 
     public Collection<GraphElementSchemas> graphElementSchemas(){
         return graphElementsSchemas.values();
+    }
+
+    public boolean isEmpty(){
+        return graphElementsSchemas.isEmpty();
+    }
+
+    public boolean hasNodeSchemas(){
+        return graphElementsSchemas.containsKey(GraphElementTypes.Nodes);
+    }
+
+    public boolean hasEdgeSchemas(){
+        return graphElementsSchemas.containsKey(GraphElementTypes.Edges);
     }
 
     @Override

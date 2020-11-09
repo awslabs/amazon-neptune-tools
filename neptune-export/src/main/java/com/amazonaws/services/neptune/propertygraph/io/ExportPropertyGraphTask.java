@@ -65,7 +65,8 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
 
         CountingHandler handler = new CountingHandler(
                 new TaskHandler(
-                        fileSpecificLabelSchemas, graphElementSchemas,
+                        fileSpecificLabelSchemas,
+                        graphElementSchemas,
                         targetConfig,
                         writerFactory,
                         labelWriters,

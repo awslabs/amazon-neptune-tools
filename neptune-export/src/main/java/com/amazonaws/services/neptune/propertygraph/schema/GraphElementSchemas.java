@@ -39,8 +39,12 @@ public class GraphElementSchemas {
 
                 String key = propertyNode.path("property").textValue();
 
-                DataType dataType = Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue());
-                boolean isMultiValue = propertyNode.path("isMultiValue").booleanValue();
+                DataType dataType = propertyNode.has("dataType") ?
+                        Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue()) :
+                        DataType.String;
+                boolean isMultiValue = propertyNode.has("isMultiValue") ?
+                        propertyNode.path("isMultiValue").booleanValue() :
+                        false;
                 boolean isNullable = propertyNode.has("isNullable") ?
                         propertyNode.path("isNullable").booleanValue() :
                         false;
@@ -68,7 +72,7 @@ public class GraphElementSchemas {
         labelSchemas.put(labelSchema.label(), new LabelSchemaContainer(labelSchema, outputIds));
     }
 
-    public Collection<LabelSchema> labelSchemas(){
+    public Collection<LabelSchema> labelSchemas() {
         return labelSchemas.values().stream().map(LabelSchemaContainer::labelSchema).collect(Collectors.toList());
     }
 
@@ -128,7 +132,7 @@ public class GraphElementSchemas {
         }
     }
 
-    public Iterable<Label> labels() {
+    public Collection<Label> labels() {
         return labelSchemas.keySet();
     }
 

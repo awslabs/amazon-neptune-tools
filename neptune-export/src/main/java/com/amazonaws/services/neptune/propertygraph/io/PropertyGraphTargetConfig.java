@@ -29,6 +29,7 @@ public class PropertyGraphTargetConfig {
     private final KinesisConfig kinesisConfig;
     private final boolean inferSchema;
     private final boolean mergeFiles;
+    private final boolean useTempFiles;
 
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
@@ -37,6 +38,17 @@ public class PropertyGraphTargetConfig {
                                      Target output,
                                      boolean inferSchema,
                                      boolean mergeFiles) {
+        this(directories, kinesisConfig, includeTypeDefinitions, format, output, inferSchema, mergeFiles, false);
+    }
+
+    private PropertyGraphTargetConfig(Directories directories,
+                                     KinesisConfig kinesisConfig,
+                                     boolean includeTypeDefinitions,
+                                     PropertyGraphExportFormat format,
+                                     Target output,
+                                     boolean inferSchema,
+                                     boolean mergeFiles,
+                                      boolean useTempFiles) {
         this.directories = directories;
         this.format = format;
         this.output = output;
@@ -44,6 +56,7 @@ public class PropertyGraphTargetConfig {
         this.kinesisConfig = kinesisConfig;
         this.inferSchema = inferSchema;
         this.mergeFiles = mergeFiles;
+        this.useTempFiles = useTempFiles;
     }
 
     public Target output() {
@@ -59,7 +72,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema) throws IOException {
-        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(useTempFiles())), labelSchema);
+        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(useTempFiles)), labelSchema);
     }
 
     private PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
@@ -68,7 +81,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForEdges(String name, LabelSchema labelSchema) throws IOException {
-        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(useTempFiles())), labelSchema);
+        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(useTempFiles)), labelSchema);
     }
 
     private PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
@@ -77,7 +90,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForNodes(String name, LabelSchema labelSchema) throws IOException {
-        return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(useTempFiles())), labelSchema);
+        return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(useTempFiles)), labelSchema);
     }
 
     private PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
@@ -86,11 +99,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphTargetConfig forFileConsolidation(){
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, false, mergeFiles);
-    }
-
-    private boolean useTempFiles(){
-        return !inferSchema;
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, false, mergeFiles, true);
     }
 
     private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {

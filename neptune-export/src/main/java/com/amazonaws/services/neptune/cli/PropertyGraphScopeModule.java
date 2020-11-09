@@ -17,10 +17,10 @@ import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.Scope;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedEnumValues;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 
 import java.util.ArrayList;
@@ -53,7 +53,14 @@ public class PropertyGraphScopeModule {
     private EdgeLabelStrategy edgeLabelStrategy = EdgeLabelStrategy.edgeLabelsOnly;
 
     public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats, Collection<String> labModeFeatures){
+        return exportSpecifications(new GraphSchema(), stats, labModeFeatures);
+    }
+
+    public Collection<ExportSpecification<?>> exportSpecifications(GraphSchema graphSchema,
+                                                                   ExportStats stats,
+                                                                   Collection<String> labModeFeatures){
         return scope.exportSpecifications(
+                graphSchema,
                 Label.forLabels(nodeLabels),
                 Label.forLabels(edgeLabels),
                 tokensOnly,

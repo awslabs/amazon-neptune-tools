@@ -19,7 +19,6 @@ import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
-import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -29,11 +28,9 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
 import com.github.rvesse.airline.annotations.restrictions.Once;
-import com.github.rvesse.airline.annotations.restrictions.Required;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -68,10 +65,8 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
-    @Option(name = {"-c", "--config-file"}, description = "Path to JSON schema config file (file path, or 'https' or 's3' URI)")
-    @Required
-    @Once
-    private URI configFile;
+    @Inject
+    private ExportPropertyGraphFromConfigModule graphSchemaProvider = new ExportPropertyGraphFromConfigModule();
 
     @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
     @Once
@@ -86,15 +81,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
-                    JsonResource<GraphSchema> configFileResource = new JsonResource<>(
-                            "Config file",
-                            configFile,
-                            GraphSchema.class);
-
-                    GraphSchema graphSchema = configFileResource.get();
+                    GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
 
-                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
@@ -110,7 +100,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);
-                    configFileResource.writeResourcePathAsMessage(target);
+                    graphSchemaProvider.writeResourcePathAsMessage(target);
 
                     System.err.println();
                     System.err.println(stats.formatStats(graphSchema));

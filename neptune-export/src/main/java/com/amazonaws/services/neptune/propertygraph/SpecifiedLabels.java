@@ -87,4 +87,20 @@ public class SpecifiedLabels implements LabelsFilter {
     public LabelsFilter filterFor(Label label) {
         return new SpecifiedLabels(Collections.singletonList(label), labelStrategy);
     }
+
+    @Override
+    public LabelsFilter union(Collection<Label> others) {
+        Collection<Label> results = new ArrayList<>();
+        for (Label label : labels) {
+            if (others.contains(label)){
+                results.add(label);
+            }
+        }
+        return new SpecifiedLabels(results, labelStrategy);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return labels.isEmpty();
+    }
 }

@@ -28,29 +28,30 @@ public class ParamConverter {
     }
 
     public static String singularize(String v) {
-        if (v.endsWith("s")){
+        if (v.endsWith("s")) {
             return v.substring(0, v.length() - 1);
         } else {
             return v;
         }
     }
 
-    public static Args fromJson(String cmd, JsonNode json){
+    public static Args fromJson(String cmd, JsonNode json) {
         Args args = new Args(cmd);
 
         ObjectNode params = (ObjectNode) json;
         Iterator<String> paramNamesIterator = params.fieldNames();
-        while(paramNamesIterator.hasNext()){
+        while (paramNamesIterator.hasNext()) {
             String paramName = paramNamesIterator.next();
             String argName = toCliArg(paramName);
-            if (params.get(paramName).isArray()){
+            JsonNode paramNode = params.get(paramName);
+            if (paramNode.isArray()) {
                 argName = singularize(argName);
-                ArrayNode arrayNode = (ArrayNode) params.get(paramName);
+                ArrayNode arrayNode = (ArrayNode) paramNode;
                 for (JsonNode jsonNode : arrayNode) {
                     addArg(argName, jsonNode, args);
                 }
             } else {
-                addArg(argName, params.get(paramName), args);
+                addArg(argName, paramNode, args);
             }
         }
 
@@ -60,11 +61,12 @@ public class ParamConverter {
     private static void addArg(String argName, JsonNode argValue, Args args) {
         String prefix = argName.startsWith("-") ? "" : "--";
         argName = String.format("%s%s", prefix, argName);
-        String value = argValue.toString();
-        if (argValue.isBoolean()){
+        if (argValue.isBoolean()) {
             args.addFlag(argName);
+        } else if (argValue.isObject()) {
+            args.addOption(argName, String.format("'%s'", argValue.toPrettyString()));
         } else {
-            args.addOption(argName, value);
+            args.addOption(argName, argValue.toString());
         }
     }
 

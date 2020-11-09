@@ -74,4 +74,14 @@ public class AllLabels implements LabelsFilter {
     public LabelsFilter filterFor(Label label) {
         return new SpecifiedLabels(Collections.singletonList(label), labelStrategy);
     }
+
+    @Override
+    public LabelsFilter union(Collection<Label> labels) {
+        return new SpecifiedLabels(labels, labelStrategy);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
 }
