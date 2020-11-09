@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.plugins.dgl.DglNeptuneExportEventHandler;
+import com.amazonaws.services.neptune.plugins.ml4g.Ml4gNeptuneExportEventHandler;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.model.Tag;
@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,10 +117,12 @@ public class NeptuneExportService {
 
         eventHandlerCollection.addHandler(eventHandler);
 
-        if (args.contains("--plugin", "dgl")){
-            DglNeptuneExportEventHandler dglEventHandler = new DglNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
-            eventHandlerCollection.addHandler(dglEventHandler);
+        if (args.contains("--plugin", "ml4g")){
+            Ml4gNeptuneExportEventHandler ml4gEventHandler = new Ml4gNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
+            eventHandlerCollection.addHandler(ml4gEventHandler);
         }
+
+        eventHandlerCollection.onBeforeExport(args);
 
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 

@@ -24,10 +24,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.File;
 import java.io.Reader;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class RewriteAndMergeCsv implements RewriteCommand {
@@ -57,10 +55,30 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
         Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
 
+        Collection<Future<MasterLabelSchema>> futures = new ArrayList<>();
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
+
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.schemas()) {
-            updatedSchemas.put(
-                        masterLabelSchema.labelSchema().label(),
-                        rewriteAndMerge(targetConfig, graphElementType, masterLabelSchema));
+            futures.add(taskExecutor.submit(() -> rewriteAndMerge(targetConfig, graphElementType, masterLabelSchema)));
+        }
+        taskExecutor.shutdown();
+
+        try {
+            taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+
+        for (Future<MasterLabelSchema> future : futures) {
+            if (future.isCancelled()) {
+                throw new IllegalStateException("Unable to complete rewrite because at least one task was cancelled");
+            }
+            if (!future.isDone()) {
+                throw new IllegalStateException("Unable to complete rewrite because at least one task has not completed");
+            }
+            MasterLabelSchema masterLabelSchema = future.get();
+            updatedSchemas.put(masterLabelSchema.labelSchema().label(), masterLabelSchema);
         }
 
         return new MasterLabelSchemas(updatedSchemas, graphElementType);
@@ -70,7 +88,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                                               GraphElementType<?> graphElementType,
                                               MasterLabelSchema masterLabelSchema) throws Exception {
 
-        LabelSchema masterSchema = masterLabelSchema.labelSchema();
+        LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
         masterSchema.initStats();
 
         String filename = Directories.fileName(String.format("%s.%s",

@@ -69,8 +69,8 @@ public class ArgsTest {
 
     @Test
     public void shouldIndicateWhetherArgsContainWithValue(){
-        Args args = new Args("-e endpoint --plugin xyz --plugin dgl -c config -b");
-        assertTrue(args.contains("--plugin", "dgl"));
+        Args args = new Args("-e endpoint --plugin xyz --plugin ml4g -c config -b");
+        assertTrue(args.contains("--plugin", "ml4g"));
         assertFalse(args.contains("-b", "xyz"));
     }
 

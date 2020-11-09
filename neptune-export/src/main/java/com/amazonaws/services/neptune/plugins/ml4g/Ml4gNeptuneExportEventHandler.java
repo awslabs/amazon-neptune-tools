@@ -10,10 +10,11 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.plugins.dgl;
+package com.amazonaws.services.neptune.plugins.ml4g;
 
 import com.amazonaws.services.neptune.export.Args;
-import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
+import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
+import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
@@ -31,19 +32,17 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.function.Function;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.TAGS;
 
-public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
+public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventHandler {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DglNeptuneExportEventHandler.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(Ml4gNeptuneExportEventHandler.class);
 
     private static final String FILE_NAME = "training-job-configuration.json";
 
@@ -52,10 +51,10 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
     private final Args args;
     private final TrainingJobWriterConfig trainingJobWriterConfig;
 
-    public DglNeptuneExportEventHandler(String localOutputPath,
-                                        String outputS3Path,
-                                        ObjectNode additionalParams,
-                                        Args args) {
+    public Ml4gNeptuneExportEventHandler(String localOutputPath,
+                                         String outputS3Path,
+                                         ObjectNode additionalParams,
+                                         Args args) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.args = args;
@@ -63,14 +62,22 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
     }
 
     private TrainingJobWriterConfig createTrainingJobConfig(ObjectNode additionalParams) {
-        JsonNode dglNode = additionalParams.path("dgl");
-        if (dglNode.isMissingNode()){
-            logger.info("No 'dgl' config node in additional params so creating default training config");
+        JsonNode ml4gNode = additionalParams.path("ml4g");
+        if (ml4gNode.isMissingNode()){
+            logger.info("No 'ml4g' config node in additional params so creating default training config");
             return new TrainingJobWriterConfig();
         } else {
-            TrainingJobWriterConfig trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(dglNode);
+            TrainingJobWriterConfig trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(ml4gNode);
             logger.info("Training job writer config: {}", trainingJobWriterConfig);
             return trainingJobWriterConfig;
+        }
+    }
+
+    @Override
+    public void onBeforeExport(Args args) {
+        if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())){
+            args.removeOptions("--edge-label-strategy");
+            args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
     }
 
@@ -114,8 +121,6 @@ public class DglNeptuneExportEventHandler implements NeptuneExportEventHandler {
                                                         S3ObjectInfo outputS3ObjectInfo) throws IOException {
 
         S3ObjectInfo s3ObjectInfo = outputS3ObjectInfo.withNewKeySuffix(FILE_NAME);
-
-        logger.info(FileUtils.readFileToString(trainingJobConfigurationFile, StandardCharsets.UTF_8));
 
         try (InputStream inputStream = new FileInputStream(trainingJobConfigurationFile)) {
 

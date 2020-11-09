@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public enum Scope {
+
     all {
         @Override
         public Collection<ExportSpecification<?>> exportSpecifications(Collection<Label> nodeLabels,

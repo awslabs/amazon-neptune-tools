@@ -129,6 +129,10 @@ public class Label {
         return !fromLabels.isEmpty() && !toLabels.isEmpty();
     }
 
+    public Label createCopy(){
+        return Label.fromJson(toJson());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

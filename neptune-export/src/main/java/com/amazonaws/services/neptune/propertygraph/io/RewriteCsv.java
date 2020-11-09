@@ -13,7 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
-import com.amazonaws.services.neptune.plugins.dgl.DglNeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -21,18 +20,17 @@ import com.amazonaws.services.neptune.util.Timer;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.Reader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class RewriteCsv implements RewriteCommand {
-
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RewriteCsv.class);
 
     private final PropertyGraphTargetConfig targetConfig;
     private final ConcurrencyConfig concurrencyConfig;
@@ -59,12 +57,30 @@ public class RewriteCsv implements RewriteCommand {
 
         Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
 
+        Collection<Future<MasterLabelSchema>> futures = new ArrayList<>();
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
+
         for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.schemas()) {
-            // Use thread pool?
-            Label label = masterLabelSchema.labelSchema().label();
-            updatedSchemas.put(
-                    label,
-                    rewrite(targetConfig, graphElementType, masterLabelSchema));
+            futures.add(taskExecutor.submit(() -> rewrite(targetConfig, graphElementType, masterLabelSchema)));
+        }
+        taskExecutor.shutdown();
+
+        try {
+            taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+
+        for (Future<MasterLabelSchema> future : futures) {
+            if (future.isCancelled()) {
+                throw new IllegalStateException("Unable to complete rewrite because at least one task was cancelled");
+            }
+            if (!future.isDone()) {
+                throw new IllegalStateException("Unable to complete rewrite because at least one task has not completed");
+            }
+            MasterLabelSchema masterLabelSchema = future.get();
+            updatedSchemas.put(masterLabelSchema.labelSchema().label(), masterLabelSchema);
         }
 
         return new MasterLabelSchemas(updatedSchemas, graphElementType);
@@ -74,7 +90,7 @@ public class RewriteCsv implements RewriteCommand {
                                       GraphElementType<?> graphElementType,
                                       MasterLabelSchema masterLabelSchema) throws Exception {
 
-        LabelSchema masterSchema = masterLabelSchema.labelSchema();
+        LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
         masterSchema.initStats();
 
         RenameableFiles renameableFiles = new RenameableFiles();
@@ -85,13 +101,6 @@ public class RewriteCsv implements RewriteCommand {
             Label label = labelSchema.label();
             File sourceCsvFile = new File(fileSpecificLabelSchema.outputId());
 
-            if (labelSchema.isSameAs(masterSchema)) {
-                logger.info("Ignoring rewrite request because schema of file {}/{} conforms to master schema",
-                        sourceCsvFile.getParentFile().getName(),
-                        sourceCsvFile.getName());
-                continue;
-            }
-`
             String[] additionalElementHeaders = label.hasFromAndToLabels() ?
                     new String[]{"~fromLabels", "~toLabels"} :
                     new String[]{};

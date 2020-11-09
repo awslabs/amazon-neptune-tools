@@ -82,9 +82,9 @@ public class LabelSchema {
         return label;
     }
 
-    private LabelSchema createCopy() {
+    public LabelSchema createCopy() {
 
-        LabelSchema result = new LabelSchema(label);
+        LabelSchema result = new LabelSchema(label.createCopy());
 
         for (PropertySchema schema : propertySchemas.values()) {
             Object property = schema.property();

@@ -1,6 +1,6 @@
-package com.amazonaws.services.neptune.plugins.dgl.parsing;
+package com.amazonaws.services.neptune.plugins.ml4g.parsing;
 
-import com.amazonaws.services.neptune.plugins.dgl.TrainingJobWriterConfig;
+import com.amazonaws.services.neptune.plugins.ml4g.TrainingJobWriterConfig;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
