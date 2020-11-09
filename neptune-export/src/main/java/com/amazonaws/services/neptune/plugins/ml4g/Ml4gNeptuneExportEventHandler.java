@@ -55,6 +55,9 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
                                          String outputS3Path,
                                          ObjectNode additionalParams,
                                          Args args) {
+
+        logger.info("Adding ml4g event handler");
+
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.args = args;
@@ -75,6 +78,10 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
 
     @Override
     public void onBeforeExport(Args args) {
+        if (!args.contains("--edge-label-strategy")){
+            args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
+        }
+
         if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())){
             args.removeOptions("--edge-label-strategy");
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());

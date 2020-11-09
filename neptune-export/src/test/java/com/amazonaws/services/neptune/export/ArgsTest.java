@@ -68,8 +68,15 @@ public class ArgsTest {
     }
 
     @Test
-    public void shouldIndicateWhetherArgsContainWithValue(){
+    public void shouldIndicateWhetherArgsContainArgWithValue(){
         Args args = new Args("-e endpoint --plugin xyz --plugin ml4g -c config -b");
+        assertTrue(args.contains("--plugin", "ml4g"));
+        assertFalse(args.contains("-b", "xyz"));
+    }
+
+    @Test
+    public void shouldIndicateWhetherArgsContainArgWithQuotedValue(){
+        Args args = new Args("-e endpoint --plugin xyz --plugin \"ml4g\" -c config -b");
         assertTrue(args.contains("--plugin", "ml4g"));
         assertFalse(args.contains("-b", "xyz"));
     }

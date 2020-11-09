@@ -124,6 +124,8 @@ public class NeptuneExportService {
 
         eventHandlerCollection.onBeforeExport(args);
 
+        logger.info("Args after service init: {}", String.join(" ", args.values()));
+
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 
         return eventHandler.result();
