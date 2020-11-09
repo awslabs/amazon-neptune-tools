@@ -91,4 +91,8 @@ public class Args {
     public String toString() {
         return String.join(" ", args);
     }
+
+    public void addFlag(String flag) {
+        args.add(flag);
+    }
 }
