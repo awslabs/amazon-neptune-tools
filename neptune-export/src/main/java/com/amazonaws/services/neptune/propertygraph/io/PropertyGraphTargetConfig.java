@@ -106,6 +106,6 @@ public class PropertyGraphTargetConfig {
     }
 
     public RewriteCommand createRewriteCommand(ConcurrencyConfig concurrencyConfig) {
-        return format.createRewriteCommand(this, concurrencyConfig);
+        return format.createRewriteCommand(this, concurrencyConfig, inferSchema);
     }
 }

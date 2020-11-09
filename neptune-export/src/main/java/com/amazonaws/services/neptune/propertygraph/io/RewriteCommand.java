@@ -16,7 +16,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.MasterLabelSchemas;
 
 public interface RewriteCommand {
 
-    RewriteCommand NULL_COMMAND = (MasterLabelSchemas masterLabelSchemas) -> masterLabelSchemas;
+    RewriteCommand NULL_COMMAND = masterLabelSchemas -> masterLabelSchemas;
 
     MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception;
 }

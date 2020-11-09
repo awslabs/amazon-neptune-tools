@@ -25,6 +25,9 @@ public class NeptuneClusterMetadata {
 
     public static String clusterIdFromEndpoint(String endpoint) {
         int index = endpoint.indexOf(".");
+        if (index < 0){
+            throw new IllegalArgumentException(String.format("Unable to identify cluster ID from endpoint '%s'. Use the clusterId export parameter instead.", endpoint));
+        }
         return endpoint.substring(0, index);
     }
 

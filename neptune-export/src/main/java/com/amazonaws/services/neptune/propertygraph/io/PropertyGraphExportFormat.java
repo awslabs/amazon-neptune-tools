@@ -47,7 +47,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
             return RewriteCommand.NULL_COMMAND;
         }
     },
@@ -73,11 +73,15 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
             if (targetConfig.mergeFiles()) {
                 return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
             } else {
-                return new RewriteCsv(targetConfig, concurrencyConfig);
+                if (inferSchema){
+                    return new RewriteCsv(targetConfig, concurrencyConfig);
+                } else {
+                    return RewriteCommand.NULL_COMMAND;
+                }
             }
         }
     },
@@ -103,11 +107,15 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
             if (targetConfig.mergeFiles()) {
                 return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
             } else {
-                return new RewriteCsv(targetConfig, concurrencyConfig);
+                if (inferSchema){
+                    return new RewriteCsv(targetConfig, concurrencyConfig);
+                } else {
+                    return RewriteCommand.NULL_COMMAND;
+                }
             }
         }
     },
@@ -134,7 +142,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
             return RewriteCommand.NULL_COMMAND;
         }
     };
@@ -152,5 +160,5 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
     public abstract String description();
 
-    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig);
+    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema);
 }
