@@ -36,6 +36,7 @@ public class NeptuneExportService {
 
     private final String cmd;
     private final String localOutputPath;
+    private final boolean cleanOutputPath;
     private final String outputS3Path;
     private final String configFileS3Path;
     private final String queriesFileS3Path;
@@ -46,6 +47,7 @@ public class NeptuneExportService {
 
     public NeptuneExportService(String cmd,
                                 String localOutputPath,
+                                boolean cleanOutputPath,
                                 String outputS3Path,
                                 String configFileS3Path,
                                 String queriesFileS3Path,
@@ -55,6 +57,7 @@ public class NeptuneExportService {
                                 int maxConcurrency) {
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
+        this.cleanOutputPath = cleanOutputPath;
         this.outputS3Path = outputS3Path;
         this.configFileS3Path = configFileS3Path;
         this.queriesFileS3Path = queriesFileS3Path;
@@ -97,7 +100,9 @@ public class NeptuneExportService {
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 
-            clearTempFiles();
+            if (cleanOutputPath){
+                clearTempFiles();
+            }
 
             if (StringUtils.isNotEmpty(configFileS3Path)) {
                 updateArgs(args, "--config-file", downloadFile(transferManager.get(), configFileS3Path));
@@ -118,7 +123,7 @@ public class NeptuneExportService {
         eventHandlerCollection.addHandler(eventHandler);
 
         if (args.contains("--plugin", "ml4g")){
-            Ml4gNeptuneExportEventHandler ml4gEventHandler = new Ml4gNeptuneExportEventHandler(localOutputPath, outputS3Path, additionalParams, args);
+            Ml4gNeptuneExportEventHandler ml4gEventHandler = new Ml4gNeptuneExportEventHandler(outputS3Path, additionalParams, args);
             eventHandlerCollection.addHandler(ml4gEventHandler);
         }
 

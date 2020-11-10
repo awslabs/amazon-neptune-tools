@@ -19,6 +19,7 @@ import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 
@@ -26,16 +27,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class NeptuneExportLambda implements RequestStreamHandler {
 
-    private static final String TEMP_PATH = "/tmp/neptune";
+    public static final String TEMP_PATH = "/tmp/neptune";
 
     private final String localOutputPath;
+    private final boolean cleanOutputPath;
 
     public NeptuneExportLambda() {
-        this(TEMP_PATH);
+        this(TEMP_PATH, true);
     }
 
-    public NeptuneExportLambda(String localOutputPath) {
+    public NeptuneExportLambda(String localOutputPath, boolean cleanOutputPath) {
         this.localOutputPath = localOutputPath;
+        this.cleanOutputPath = cleanOutputPath;
     }
 
     @Override
@@ -49,7 +52,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         String cmd = json.has("command") ?
                 json.path("command").textValue() :
-                EnvironmentVariableUtils.getMandatoryEnv("COMMAND");
+                EnvironmentVariableUtils.getOptionalEnv("COMMAND", "export-pg");
 
         ObjectNode params = json.has("params") ?
                 (ObjectNode) json.get("params") :
@@ -57,7 +60,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         String outputS3Path = json.has("outputS3Path") ?
                 json.path("outputS3Path").textValue() :
-                EnvironmentVariableUtils.getMandatoryEnv("OUTPUT_S3_PATH");
+                EnvironmentVariableUtils.getOptionalEnv("OUTPUT_S3_PATH", "");
 
         String configFileS3Path = json.has("configFileS3Path") ?
                 json.path("configFileS3Path").textValue() :
@@ -105,6 +108,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         NeptuneExportService neptuneExportService = new NeptuneExportService(
                 cmd,
                 localOutputPath,
+                cleanOutputPath,
                 outputS3Path,
                 configFileS3Path,
                 queriesFileS3Path,
@@ -114,6 +118,10 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 maxConcurrency);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
+
+        if (StringUtils.isEmpty(outputS3Path)){
+            return;
+        }
 
         if (outputS3ObjectInfo != null) {
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {

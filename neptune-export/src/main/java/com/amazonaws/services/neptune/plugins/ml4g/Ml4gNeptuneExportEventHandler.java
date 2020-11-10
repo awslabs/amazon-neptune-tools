@@ -32,6 +32,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -46,19 +47,16 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
 
     private static final String FILE_NAME = "training-job-configuration.json";
 
-    private final String localOutputPath;
     private final String outputS3Path;
     private final Args args;
     private final TrainingJobWriterConfig trainingJobWriterConfig;
 
-    public Ml4gNeptuneExportEventHandler(String localOutputPath,
-                                         String outputS3Path,
+    public Ml4gNeptuneExportEventHandler(String outputS3Path,
                                          ObjectNode additionalParams,
                                          Args args) {
 
         logger.info("Adding ml4g event handler");
 
-        this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.args = args;
         this.trainingJobWriterConfig = createTrainingJobConfig(additionalParams);
@@ -66,7 +64,7 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
 
     private TrainingJobWriterConfig createTrainingJobConfig(ObjectNode additionalParams) {
         JsonNode ml4gNode = additionalParams.path("ml4g");
-        if (ml4gNode.isMissingNode()){
+        if (ml4gNode.isMissingNode()) {
             logger.info("No 'ml4g' config node in additional params so creating default training config");
             return new TrainingJobWriterConfig();
         } else {
@@ -78,11 +76,11 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
 
     @Override
     public void onBeforeExport(Args args) {
-        if (!args.contains("--edge-label-strategy")){
+        if (!args.contains("--edge-label-strategy")) {
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
 
-        if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())){
+        if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
             args.removeOptions("--edge-label-strategy");
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
@@ -102,9 +100,8 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
             File outputDirectory = outputPath.toFile();
-            S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
 
-            File trainingJobConfigurationFile = new File(new File(localOutputPath), FILE_NAME);
+            File trainingJobConfigurationFile = new File(outputPath.toFile(), FILE_NAME);
 
             try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
                 new JobTrainingConfigurationFileWriter(
@@ -114,12 +111,16 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
                         trainingJobWriterConfig).write();
             }
 
-            Timer.timedActivity("uploading training job configuration file to S3", (CheckedActivity.Runnable) () -> {
-                uploadTrainingJobConfigurationFileToS3(
-                        transferManager.get(),
-                        trainingJobConfigurationFile,
-                        outputS3ObjectInfo);
-            });
+            if (StringUtils.isNotEmpty(outputS3Path)) {
+                Timer.timedActivity("uploading training job configuration file to S3",
+                        (CheckedActivity.Runnable) () -> {
+                            S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
+                            uploadTrainingJobConfigurationFileToS3(
+                                    transferManager.get(),
+                                    trainingJobConfigurationFile,
+                                    outputS3ObjectInfo);
+                        });
+            }
         }
     }
 

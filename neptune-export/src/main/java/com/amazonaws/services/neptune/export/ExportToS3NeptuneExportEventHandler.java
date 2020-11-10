@@ -77,6 +77,10 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             // Ignore
         }
 
+        if (StringUtils.isEmpty(outputS3Path)){
+            return;
+        }
+
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 
             File outputDirectory = outputPath.toFile();
