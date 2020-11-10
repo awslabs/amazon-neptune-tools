@@ -35,7 +35,7 @@ public class ParamConverterTest {
     public void shouldConvertParams() throws JsonProcessingException {
         String json = "{\n" +
                 "    \"endpoints\": [\"endpoint1\", \"endpoint2\"],\n" +
-                "    \"plugin\": \"ml4g\",\n" +
+                "    \"profile\": \"neptune_ml\",\n" +
                 "    \"useIamAuth\": true,\n" +
                 "    \"cloneCluster\": true,\n" +
                 "    \"cloneClusterReplicaCount\": 2\n" +
@@ -45,7 +45,7 @@ public class ParamConverterTest {
 
         Args args = ParamConverter.fromJson("export-pg", jsonNode);
 
-        assertEquals("export-pg --endpoint \"endpoint1\" --endpoint \"endpoint2\" --plugin \"ml4g\" --use-iam-auth --clone-cluster --clone-cluster-replica-count 2", args.toString());
+        assertEquals("export-pg --endpoint \"endpoint1\" --endpoint \"endpoint2\" --profile \"neptune_ml\" --use-iam-auth --clone-cluster --clone-cluster-replica-count 2", args.toString());
     }
 
 }

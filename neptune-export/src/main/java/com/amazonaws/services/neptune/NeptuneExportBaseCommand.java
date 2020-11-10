@@ -13,8 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.LabModeModule;
-import com.amazonaws.services.neptune.cli.PluginsModule;
-import com.amazonaws.services.neptune.export.Args;
+import com.amazonaws.services.neptune.cli.ProfilesModule;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -37,7 +36,7 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
     private LabModeModule labModeModule = new LabModeModule();
 
     @Inject
-    private PluginsModule pluginsModule = new PluginsModule();
+    private ProfilesModule profilesModule = new ProfilesModule();
 
     private NeptuneExportEventHandler eventHandler = NeptuneExportEventHandler.NULL_EVENT_HANDLER;
 

@@ -12,18 +12,18 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.plugins.PluginsConfig;
+import com.amazonaws.services.neptune.profiles.ProfilesConfig;
 import com.github.rvesse.airline.annotations.Option;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-public class PluginsModule {
+public class ProfilesModule {
 
-    @Option(name = {"--plugin"}, description = "Name of an export plugin.")
-    private Collection<String> plugins = new HashSet<>();
+    @Option(name = {"--profile"}, description = "Name of an export profile.")
+    private Collection<String> profiles = new HashSet<>();
 
-    public PluginsConfig config() {
-        return new PluginsConfig(plugins);
+    public ProfilesConfig config() {
+        return new ProfilesConfig(profiles);
     }
 }

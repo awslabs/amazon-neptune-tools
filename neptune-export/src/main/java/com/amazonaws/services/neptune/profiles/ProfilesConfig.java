@@ -10,18 +10,18 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.plugins;
+package com.amazonaws.services.neptune.profiles;
 
 import java.util.Collection;
 
-public class PluginsConfig {
-    private final Collection<String> plugins;
+public class ProfilesConfig {
+    private final Collection<String> profiles;
 
-    public PluginsConfig(Collection<String> plugins) {
-        this.plugins = plugins;
+    public ProfilesConfig(Collection<String> profiles) {
+        this.profiles = profiles;
     }
 
-    public boolean containsPlugin(String plugin){
-        return plugins.contains(plugin);
+    public boolean containsProfile(String profile){
+        return profiles.contains(profile);
     }
 }

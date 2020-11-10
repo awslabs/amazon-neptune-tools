@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.plugins.ml4g;
+package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
@@ -41,9 +41,9 @@ import java.util.function.Function;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.TAGS;
 
-public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventHandler {
+public class NeptuneMachineLearningExportEventHandler implements NeptuneExportServiceEventHandler {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(Ml4gNeptuneExportEventHandler.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandler.class);
 
     private static final String FILE_NAME = "training-job-configuration.json";
 
@@ -51,11 +51,11 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
     private final Args args;
     private final TrainingJobWriterConfig trainingJobWriterConfig;
 
-    public Ml4gNeptuneExportEventHandler(String outputS3Path,
-                                         ObjectNode additionalParams,
-                                         Args args) {
+    public NeptuneMachineLearningExportEventHandler(String outputS3Path,
+                                                    ObjectNode additionalParams,
+                                                    Args args) {
 
-        logger.info("Adding ml4g event handler");
+        logger.info("Adding neptune_ml event handler");
 
         this.outputS3Path = outputS3Path;
         this.args = args;
@@ -63,12 +63,12 @@ public class Ml4gNeptuneExportEventHandler implements NeptuneExportServiceEventH
     }
 
     private TrainingJobWriterConfig createTrainingJobConfig(ObjectNode additionalParams) {
-        JsonNode ml4gNode = additionalParams.path("ml4g");
-        if (ml4gNode.isMissingNode()) {
-            logger.info("No 'ml4g' config node in additional params so creating default training config");
+        JsonNode neptuneMlNode = additionalParams.path("neptune_ml");
+        if (neptuneMlNode.isMissingNode()) {
+            logger.info("No 'neptune_ml' config node in additional params so creating default training config");
             return new TrainingJobWriterConfig();
         } else {
-            TrainingJobWriterConfig trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(ml4gNode);
+            TrainingJobWriterConfig trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(neptuneMlNode);
             logger.info("Training job writer config: {}", trainingJobWriterConfig);
             return trainingJobWriterConfig;
         }

@@ -10,25 +10,25 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.plugins.ml4g.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseSlideWindowSize {
+public class ParseBucketCount {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseSlideWindowSize(JsonNode json, String description) {
+    public ParseBucketCount(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public int parseSlideWindowSize() {
-        if (json.has("slide_window_size") && json.path("slide_window_size").isInt()) {
-            return json.path("slide_window_size").asInt();
+    public int parseBucketCount() {
+        if (json.has("bucket_cnt") && json.path("bucket_cnt").isInt()) {
+            return json.path("bucket_cnt").asInt();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'slide_window_size' field: expected an integer value for %s", description));
+            throw new IllegalArgumentException(String.format("Error parsing 'bucket_cnt' field: expected an integer value for %s", description));
         }
     }
 }
