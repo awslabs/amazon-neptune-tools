@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class ParseFeatures {
@@ -29,15 +30,8 @@ public class ParseFeatures {
 
     public void validate() {
         for (JsonNode node : nodes) {
-            if (node.has("feat_type") && node.has("sub_feat_type")) {
-                String featType = node.get("feat_type").textValue();
-                String subFeatType = node.get("sub_feat_type").textValue();
-                String description = String.format("feat_type '%s' and sub_feat_type '%s'", featType, subFeatType);
-                if (!isWord2VecNodeFeature(featType, subFeatType) && !isNumericalBucketFeature(featType, subFeatType)) {
-                    throw new IllegalArgumentException(String.format("Unrecognized field values: %s", description));
-                }
-            } else {
-                throw new IllegalArgumentException("Illegal feature element: expected 'feat_type' and 'sub_feat_type' fields");
+            if (!isWord2VecNodeFeature(node) && !isNumericalBucketFeature(node)) {
+                throw new IllegalArgumentException("Illegal feature element: expected word2vec or numerical bucket feature definitions");
             }
         }
     }
@@ -45,14 +39,12 @@ public class ParseFeatures {
     public Collection<TrainingJobWriterConfig.Word2VecConfig> parseWord2VecNodeFeatures() {
         Collection<TrainingJobWriterConfig.Word2VecConfig> word2VecFeatures = new ArrayList<>();
         for (JsonNode node : nodes) {
-            String featType = node.get("feat_type").textValue();
-            String subFeatType = node.get("sub_feat_type").textValue();
-            String description = String.format("feat_type '%s' and sub_feat_type '%s'", featType, subFeatType);
-            if (isWord2VecNodeFeature(featType, subFeatType)) {
+            if (isWord2VecNodeFeature(node)) {
+                String description = "word2vec feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String col = new ParseCols(node, description).parseSingleColumn();
-                Collection<String> languages = new ParseLanguages(node, description).parseLanguages();
-                TrainingJobWriterConfig.Word2VecConfig config = new TrainingJobWriterConfig.Word2VecConfig(nodeType, col, languages);
+                String property = new ParseProperty(node, description).parseSingleColumn();
+                String language = new ParseLanguage(node).parseLanguage();
+                TrainingJobWriterConfig.Word2VecConfig config = new TrainingJobWriterConfig.Word2VecConfig(nodeType, property, Arrays.asList(language));
                 word2VecFeatures.add(config);
             }
         }
@@ -62,27 +54,25 @@ public class ParseFeatures {
     public Collection<TrainingJobWriterConfig.NumericalBucketFeatureConfig> parseNumericalBucketFeatures() {
         Collection<TrainingJobWriterConfig.NumericalBucketFeatureConfig> numericalBucketFeatures = new ArrayList<>();
         for (JsonNode node : nodes) {
-            String featType = node.get("feat_type").textValue();
-            String subFeatType = node.get("sub_feat_type").textValue();
-            String description = String.format("feat_type '%s' and sub_feat_type '%s'", featType, subFeatType);
-            if (isNumericalBucketFeature(featType, subFeatType)) {
+            if (isNumericalBucketFeature(node)) {
+                String description = "numerical bucket feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String col = new ParseCols(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleColumn();
                 TrainingJobWriterConfig.Range range = new ParseRange(node, description).parseRange();
                 int bucketCount = new ParseBucketCount(node, description).parseBucketCount();
                 int slideWindowSize = new ParseSlideWindowSize(node, description).parseSlideWindowSize();
-                TrainingJobWriterConfig.NumericalBucketFeatureConfig config = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(nodeType, col, range, bucketCount, slideWindowSize);
+                TrainingJobWriterConfig.NumericalBucketFeatureConfig config = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(nodeType, property, range, bucketCount, slideWindowSize);
                 numericalBucketFeatures.add(config);
             }
         }
         return numericalBucketFeatures;
     }
 
-    private boolean isNumericalBucketFeature(String labelType, String subLabelType) {
-        return labelType.equals("node") && subLabelType.equals("bucket_numerical");
+    private boolean isWord2VecNodeFeature(JsonNode node) {
+        return node.has("node") && node.has("type") && node.get("type").textValue().equalsIgnoreCase("word2vec");
     }
 
-    private boolean isWord2VecNodeFeature(String labelType, String subLabelType) {
-        return labelType.equals("node") && subLabelType.equals("word2vec");
+    private boolean isNumericalBucketFeature(JsonNode node) {
+        return node.has("node") && node.has("type") && node.get("type").textValue().equalsIgnoreCase("bucket_numerical");
     }
 }

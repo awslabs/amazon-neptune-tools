@@ -25,10 +25,10 @@ public class ParseBucketCount {
     }
 
     public int parseBucketCount() {
-        if (json.has("bucket_cnt") && json.path("bucket_cnt").isInt()) {
-            return json.path("bucket_cnt").asInt();
+        if (json.has("num_buckets") && json.path("num_buckets").isInt()) {
+            return json.path("num_buckets").asInt();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'bucket_cnt' field: expected an integer value for %s", description));
+            throw new IllegalArgumentException(String.format("Error parsing 'num_buckets' field: expected an integer value for %s", description));
         }
     }
 }

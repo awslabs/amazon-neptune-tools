@@ -156,7 +156,6 @@ public class JobTrainingConfigurationFileWriter {
                     writeNumericalNodeFeatureForInt(label, propertySchema);
                 }
 
-
                 if (propertySchema.dataType() == DataType.String) {
                     writeCategoricalNodeFeatureForString(label, propertySchema);
                 }

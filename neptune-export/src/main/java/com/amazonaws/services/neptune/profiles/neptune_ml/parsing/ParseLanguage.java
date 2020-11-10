@@ -12,24 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
-import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseNodeType {
-
+public class ParseLanguage {
     private final JsonNode json;
-    private final String description;
 
-    public ParseNodeType(JsonNode json, String description) {
+    public ParseLanguage(JsonNode json) {
+
         this.json = json;
-        this.description = description;
     }
 
-    public Label parseNodeType(){
-        if (json.has("node") && json.get("node").isTextual()){
-            return new Label(json.get("node").textValue());
+    public String parseLanguage() {
+        if (json.has("language") && json.get("language").isTextual()) {
+            return json.get("language").textValue();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'node' field: expected a text value for %s", description));
+            return "en_core_web_lg";
         }
     }
 }

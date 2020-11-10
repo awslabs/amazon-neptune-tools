@@ -33,14 +33,12 @@ public class ParseLabels {
     public Map<Label, TrainingJobWriterConfig.LabelConfig> parseNodeClassLabels() {
         Map<Label, TrainingJobWriterConfig.LabelConfig> nodeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
-            String labelType = node.get("label_type").textValue();
-            String subLabelType = node.get("sub_label_type").textValue();
-            String description = String.format("label_type '%s' and sub_label_type '%s'", labelType, subLabelType);
-            if (isNodeClass(labelType, subLabelType)) {
+            if (isNodeClass(node)) {
+                String description = "node class label";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String col = new ParseCols(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleColumn();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
-                nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(col, splitRates));
+                nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(property, splitRates));
             }
         }
         return nodeClassLabels;
@@ -49,14 +47,12 @@ public class ParseLabels {
     public Map<Label, TrainingJobWriterConfig.LabelConfig> parseEdgeClassLabels() {
         Map<Label, TrainingJobWriterConfig.LabelConfig> edgeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
-            String labelType = node.get("label_type").textValue();
-            String subLabelType = node.get("sub_label_type").textValue();
-            String description = String.format("label_type '%s' and sub_label_type '%s'", labelType, subLabelType);
-            if (isEdgeClass(labelType, subLabelType)) {
+            if (isEdgeClass(node)) {
+                String description = "edge class label";
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
-                String col = new ParseCols(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleColumn();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
-                edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(col, splitRates));
+                edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(property, splitRates));
             }
         }
         return edgeClassLabels;
@@ -64,15 +60,8 @@ public class ParseLabels {
 
     public void validate() {
         for (JsonNode node : nodes) {
-            if (node.has("label_type") && node.has("sub_label_type")) {
-                String labelType = node.get("label_type").textValue();
-                String subLabelType = node.get("sub_label_type").textValue();
-                String description = String.format("label_type '%s' and sub_label_type '%s'", labelType, subLabelType);
-                if (!isNodeClass(labelType, subLabelType) && !isEdgeClass(labelType, subLabelType)) {
-                    throw new IllegalArgumentException(String.format("Unrecognized field values: %s", description));
-                }
-            } else {
-                throw new IllegalArgumentException("Illegal label element: expected 'label_type' and 'sub_label_type' fields");
+            if (!isNodeClass(node) && !isEdgeClass(node)){
+                throw new IllegalArgumentException("Illegal label element: expected 'node' or 'edge' field, and a 'property' field");
             }
         }
     }
@@ -83,5 +72,13 @@ public class ParseLabels {
 
     private boolean isNodeClass(String labelType, String subLabelType) {
         return labelType.equals("node") && subLabelType.equals("node_class_label");
+    }
+
+    private boolean isNodeClass(JsonNode node) {
+        return node.has("node") && node.has("property");
+    }
+
+    private boolean isEdgeClass(JsonNode node) {
+        return node.has("edge") && node.has("property");
     }
 }

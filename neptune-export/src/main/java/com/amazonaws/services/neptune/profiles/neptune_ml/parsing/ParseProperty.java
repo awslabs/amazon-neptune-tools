@@ -15,29 +15,21 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.util.ArrayList;
-import java.util.Collection;
+public class ParseProperty {
 
-public class ParseLanguages {
     private final JsonNode json;
     private final String description;
 
-    public ParseLanguages(JsonNode json, String description) {
-
+    public ParseProperty(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public Collection<String> parseLanguages() {
-        if (json.has("language") && json.path("language").isArray()) {
-            Collection<String> languages = new ArrayList<>();
-            ArrayNode language = (ArrayNode) json.path("language");
-            for (JsonNode node : language) {
-                languages.add(node.textValue());
-            }
-            return languages;
+    public String parseSingleColumn() {
+        if (json.has("property") && json.get("property").isTextual()) {
+            return json.get("property").textValue();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'language' field: expected a text array value for %s", description));
+            throw new IllegalArgumentException(String.format("Expected a 'property' field with a string value for %s", description));
         }
     }
 }

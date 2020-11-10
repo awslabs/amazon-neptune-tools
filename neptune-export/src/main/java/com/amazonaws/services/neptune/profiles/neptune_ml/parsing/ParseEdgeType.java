@@ -27,14 +27,14 @@ public class ParseEdgeType {
     }
 
     public Label parseEdgeType() {
-        if (json.has("edge_type") && json.path("edge_type").isArray()){
-            ArrayNode array = (ArrayNode) json;
+        if (json.has("edge") && json.path("edge").isArray()){
+            ArrayNode array = (ArrayNode) json.get("edge");
             if (array.size() != 3){
-                throw new IllegalArgumentException(String.format("Error parsing 'edge_type' field: expected an array with 3 values for %s", description));
+                throw new IllegalArgumentException(String.format("Error parsing 'edge' field: expected an array with 3 values for %s", description));
             }
             return new Label(Label.format(array.get(0).textValue(), array.get(1).textValue(), array.get(2).textValue()));
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'edge_type' field: expected an array with 3 values for %s", description));
+            throw new IllegalArgumentException(String.format("Error parsing 'edge' field: expected an array with 3 values for %s", description));
         }
     }
 }
