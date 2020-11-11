@@ -29,12 +29,12 @@ public class TrainingJobConfigBuilder {
     Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
 
     public TrainingJobConfigBuilder withNodeClassLabel(Label label, String column) {
-        nodeClassLabels.put(label, new TrainingJobWriterConfig.LabelConfig(labelType, column, splitRates));
+        nodeClassLabels.put(label, new TrainingJobWriterConfig.LabelConfig("node_class_label", column, splitRates));
         return this;
     }
 
     public TrainingJobConfigBuilder withEdgeClassLabel(Label label, String column) {
-        edgeClassLabels.put(label, new TrainingJobWriterConfig.LabelConfig(labelType, column, splitRates));
+        edgeClassLabels.put(label, new TrainingJobWriterConfig.LabelConfig("edge_class_label", column, splitRates));
         return this;
     }
 
