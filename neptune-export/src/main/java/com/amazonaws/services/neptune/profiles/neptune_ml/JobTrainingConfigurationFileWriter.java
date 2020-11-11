@@ -87,7 +87,7 @@ public class JobTrainingConfigurationFileWriter {
                 writeFileName(graphElementType, outputId);
                 writeSeparator(",");
                 if (config.hasNodeClassificationSpecificationForNodeType(nodeLabel)) {
-                    writeNodeClassLabel(labelSchema, config.getNodeClassificationColumnForNodeType(nodeLabel));
+                    writeNodeLabel(labelSchema, config.getNodeClassificationColumnForNodeType(nodeLabel));
                 }
                 writeNodeFeatures(nodeLabel, labelSchema.propertySchemas());
                 generator.writeEndObject();
@@ -96,7 +96,7 @@ public class JobTrainingConfigurationFileWriter {
 
     }
 
-    private void writeNodeClassLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
+    private void writeNodeLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
 
         Label label = labelSchema.label();
 
@@ -105,7 +105,7 @@ public class JobTrainingConfigurationFileWriter {
             PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.col());
             generator.writeStartObject();
             generator.writeStringField("label_type", "node");
-            generator.writeStringField("sub_label_type", "node_class_label");
+            generator.writeStringField("sub_label_type", labelConfig.labelType());
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
             generator.writeString(getColumnName.apply(propertySchema));
@@ -295,7 +295,7 @@ public class JobTrainingConfigurationFileWriter {
                 generator.writeEndArray();
 
                 if (config.hasEdgeClassificationSpecificationForEdgeType(edgeLabel)) {
-                    writeEdgeClassLabel(labelSchema, config.getEdgeClassificationColumnForEdgeType(edgeLabel));
+                    writeEdgeLabel(labelSchema, config.getEdgeClassificationColumnForEdgeType(edgeLabel));
                 }
                 writeEdgeFeatures(edgeLabel, labelSchema.propertySchemas());
 
@@ -339,7 +339,7 @@ public class JobTrainingConfigurationFileWriter {
         }
     }
 
-    private void writeEdgeClassLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
+    private void writeEdgeLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
 
         Label label = labelSchema.label();
         if (labelSchema.containsProperty(labelConfig.col())) {
@@ -347,7 +347,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeArrayFieldStart("labels");
             generator.writeStartObject();
             generator.writeStringField("label_type", "edge");
-            generator.writeStringField("sub_label_type", "edge_class_label");
+            generator.writeStringField("sub_label_type", labelConfig.labelType());
             generator.writeArrayFieldStart("cols");
             generator.writeString("~from");
             generator.writeString("~to");

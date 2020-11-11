@@ -34,11 +34,12 @@ public class ParseLabels {
         Map<Label, TrainingJobWriterConfig.LabelConfig> nodeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             if (isNodeClass(node)) {
-                String description = "node class label";
+                String description = "node label";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
                 String property = new ParseProperty(node, description).parseSingleColumn();
+                String labelType = new ParseLabelType("node", node).parseLabel();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
-                nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(property, splitRates));
+                nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(labelType, property, splitRates));
             }
         }
         return nodeClassLabels;
@@ -48,11 +49,12 @@ public class ParseLabels {
         Map<Label, TrainingJobWriterConfig.LabelConfig> edgeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             if (isEdgeClass(node)) {
-                String description = "edge class label";
+                String description = "edge label";
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
                 String property = new ParseProperty(node, description).parseSingleColumn();
+                String labelType = new ParseLabelType("edge", node).parseLabel();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
-                edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(property, splitRates));
+                edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(labelType, property, splitRates));
             }
         }
         return edgeClassLabels;

@@ -187,10 +187,12 @@ public class TrainingJobWriterConfig {
     }
 
     public static class LabelConfig {
+        private final String labelType;
         private final String col;
         private final Collection<Double> splitRates;
 
-        public LabelConfig(String col, Collection<Double> splitRates) {
+        public LabelConfig(String labelType, String col, Collection<Double> splitRates) {
+            this.labelType = labelType;
             this.col = col;
             this.splitRates = splitRates;
 
@@ -211,6 +213,10 @@ public class TrainingJobWriterConfig {
 
         public Collection<Double> splitRates() {
             return splitRates;
+        }
+
+        public String labelType() {
+            return labelType;
         }
     }
 
