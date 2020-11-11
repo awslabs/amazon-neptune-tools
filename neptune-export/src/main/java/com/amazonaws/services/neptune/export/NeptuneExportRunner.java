@@ -47,8 +47,8 @@ public class NeptuneExportRunner {
             System.err.println(e.getMessage());
             System.err.println();
 
-            Runnable cmd = cli.parse("help", args[0]);
-            cmd.run();
+//            Runnable cmd = cli.parse("help", args[0]);
+//            cmd.run();
 
             System.exit(-1);
         }

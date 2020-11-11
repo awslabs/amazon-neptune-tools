@@ -27,7 +27,7 @@ public class CommonConnectionModule {
     @RequireSome(tag = "endpoint or clusterId")
     private Collection<String> endpoints = new HashSet<>();
 
-    @Option(name = {"--cluster-id"}, description = "ID of an Amazon Neptune cluster. If you specify a cluster ID, neptune-export will use all of the instance endpoints in the cluster in addition to any endpoints you have specified using the endpoint options.")
+    @Option(name = {"--cluster-id", "--cluster", "--clusterid"}, description = "ID of an Amazon Neptune cluster. If you specify a cluster ID, neptune-export will use all of the instance endpoints in the cluster in addition to any endpoints you have specified using the endpoint options.")
     @Once
     @RequireSome(tag = "endpoint or clusterId")
     private String clusterId;
