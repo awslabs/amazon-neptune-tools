@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.cluster.CloneCluster;
 import com.amazonaws.services.neptune.cluster.ClusterStrategy;
@@ -22,7 +23,7 @@ import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 
-import java.util.UUID;
+import java.util.function.Supplier;
 
 public class CloneClusterModule {
 
@@ -60,9 +61,21 @@ public class CloneClusterModule {
     @Once
     private String engineVersion;
 
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+
+    public CloneClusterModule(Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+    }
+
     public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
         if (cloneCluster){
-            return new CloneCluster(cloneClusterInstanceType, replicaCount, maxConcurrency, engineVersion).cloneCluster(connectionConfig, concurrencyConfig);
+            CloneCluster command = new CloneCluster(
+                    cloneClusterInstanceType,
+                    replicaCount,
+                    maxConcurrency,
+                    engineVersion,
+                    amazonNeptuneClientSupplier);
+            return command.cloneCluster(connectionConfig, concurrencyConfig);
         } else {
             return new DoNotCloneCluster().cloneCluster(connectionConfig, concurrencyConfig);
         }

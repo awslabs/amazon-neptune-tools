@@ -12,14 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.AwsCliModule;
+import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cluster.RemoveCloneTask;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.Required;
 
+import javax.inject.Inject;
+
 @Command(name = "remove-clone", description = "Remove a cloned Amazon Neptune database cluster.")
 public class RemoveClone implements Runnable {
+
+    @Inject
+    private AwsCliModule awsCli = new AwsCliModule();
 
     @Option(name = {"--clone-cluster-id"}, description = "Cluster ID of the cloned Amazon Neptune database cluster.")
     @Required
@@ -29,7 +36,7 @@ public class RemoveClone implements Runnable {
     @Override
     public void run() {
         try {
-            new RemoveCloneTask(cloneClusterId).execute();
+            new RemoveCloneTask(cloneClusterId, awsCli).execute();
         } catch (Exception e) {
             System.err.println("An error occurred while removing a cloned Amazon Neptune database cluster:");
             e.printStackTrace();

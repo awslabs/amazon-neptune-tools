@@ -13,7 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
-import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
@@ -24,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class AddCloneTask {
 
@@ -32,17 +32,20 @@ public class AddCloneTask {
     private final String cloneClusterInstanceType;
     private final int replicaCount;
     private final String engineVersion;
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
     public AddCloneTask(String sourceClusterId,
                         String targetClusterId,
                         String cloneClusterInstanceType,
                         int replicaCount,
-                        String engineVersion) {
+                        String engineVersion,
+                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
         this.sourceClusterId = sourceClusterId;
         this.targetClusterId = targetClusterId;
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
         this.engineVersion = engineVersion;
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
     public NeptuneClusterMetadata execute() {
@@ -56,7 +59,8 @@ public class AddCloneTask {
         System.err.println("Cloning cluster " + sourceClusterId + "...");
         System.err.println();
 
-        NeptuneClusterMetadata sourceClusterMetadata = NeptuneClusterMetadata.createFromClusterId(sourceClusterId);
+        NeptuneClusterMetadata sourceClusterMetadata =
+                NeptuneClusterMetadata.createFromClusterId(sourceClusterId, amazonNeptuneClientSupplier);
 
         InstanceType instanceType = StringUtils.isEmpty(cloneClusterInstanceType) ?
                 InstanceType.parse(sourceClusterMetadata.instanceMetadataFor(sourceClusterMetadata.primary()).instanceType()) :
@@ -66,7 +70,7 @@ public class AddCloneTask {
         System.err.println(String.format("Target clusterId           : %s", targetClusterId));
         System.err.println(String.format("Target instance type       : %s", instanceType));
 
-        AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
+        AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
 
         DBClusterParameterGroup dbClusterParameterGroup = Timer.timedActivity(
                 "creating DB cluster parameter group",
@@ -99,7 +103,7 @@ public class AddCloneTask {
 
         neptune.shutdown();
 
-        return NeptuneClusterMetadata.createFromClusterId(targetClusterId);
+        return NeptuneClusterMetadata.createFromClusterId(targetClusterId, amazonNeptuneClientSupplier);
     }
 
     private void createReplicas(NeptuneClusterMetadata sourceClusterMetadata,

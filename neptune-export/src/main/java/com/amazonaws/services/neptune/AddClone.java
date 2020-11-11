@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.AwsCliModule;
 import com.amazonaws.services.neptune.cluster.AddCloneTask;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.github.rvesse.airline.annotations.Command;
@@ -21,10 +22,14 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.Required;
 import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 
+import javax.inject.Inject;
 import java.util.UUID;
 
 @Command(name = "add-clone", description = "Clone an Amazon Neptune database cluster.")
 public class AddClone implements Runnable {
+
+    @Inject
+    private AwsCliModule awsCli = new AwsCliModule();
 
     @Option(name = {"--source-cluster-id"}, description = "Cluster ID of the source Amazon Neptune database cluster.")
     @Required
@@ -64,7 +69,7 @@ public class AddClone implements Runnable {
     @Override
     public void run() {
         try {
-            AddCloneTask addCloneTask = new AddCloneTask(sourceClusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion);
+            AddCloneTask addCloneTask = new AddCloneTask(sourceClusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion, awsCli);
             NeptuneClusterMetadata clusterMetadata = addCloneTask.execute();
 
             GetClusterInfo.printClusterDetails(clusterMetadata);

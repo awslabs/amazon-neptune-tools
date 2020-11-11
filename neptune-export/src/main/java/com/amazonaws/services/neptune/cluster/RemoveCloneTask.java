@@ -12,34 +12,40 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class RemoveCloneTask {
 
     private final String clusterId;
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
-    public RemoveCloneTask(String clusterId) {
+    public RemoveCloneTask(String clusterId, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
         this.clusterId = clusterId;
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
     public void execute() {
 
-        AmazonNeptune neptuneClient = AmazonNeptuneClientBuilder.defaultClient();
+        AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
+
         try {
 
             Timer.timedActivity("deleting cloned cluster", false,
-                    (Activity.Runnable) () -> deleteCluster(neptuneClient));
+                    (Activity.Runnable) () -> deleteCluster(neptune));
         } finally {
-            if (neptuneClient != null) {
-                neptuneClient.shutdown();
+            if (neptune != null) {
+                neptune.shutdown();
             }
         }
     }
@@ -48,8 +54,8 @@ public class RemoveCloneTask {
         System.err.println();
         System.err.println("Deleting cloned cluster " + clusterId + "...");
 
-
-        NeptuneClusterMetadata metadata = NeptuneClusterMetadata.createFromClusterId(clusterId);
+        NeptuneClusterMetadata metadata =
+                NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
 
         if (!metadata.isTaggedWithNeptuneExport()) {
             throw new IllegalStateException("Cluster must have an 'application' tag with the value '" +

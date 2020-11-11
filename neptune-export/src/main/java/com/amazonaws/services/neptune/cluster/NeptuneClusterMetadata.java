@@ -12,11 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class NeptuneClusterMetadata {
@@ -31,8 +34,9 @@ public class NeptuneClusterMetadata {
         return endpoint.substring(0, index);
     }
 
-    public static NeptuneClusterMetadata createFromClusterId(String clusterId) {
-        AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
+    public static NeptuneClusterMetadata createFromClusterId(String clusterId, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+
+        AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
 
         DescribeDBClustersResult describeDBClustersResult = neptune
                 .describeDBClusters(new DescribeDBClustersRequest().withDBClusterIdentifier(clusterId));

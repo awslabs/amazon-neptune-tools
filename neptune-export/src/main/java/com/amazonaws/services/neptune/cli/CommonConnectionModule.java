@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.github.rvesse.airline.annotations.Option;
@@ -20,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.function.Supplier;
 
 public class CommonConnectionModule {
 
@@ -64,10 +66,16 @@ public class CommonConnectionModule {
     @Once
     private int loadBalancerPort = 80;
 
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+
+    public CommonConnectionModule(Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+    }
+
     public ConnectionConfig config() {
 
         if (StringUtils.isNotEmpty(clusterId)){
-            NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId);
+            NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
             endpoints.addAll(clusterMetadata.endpoints());
         }
 
@@ -76,6 +84,7 @@ public class CommonConnectionModule {
         }
 
         return new ConnectionConfig(
+                clusterId,
                 endpoints,
                 port,
                 networkLoadBalancerEndpoint,

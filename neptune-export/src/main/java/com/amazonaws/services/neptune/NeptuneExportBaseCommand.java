@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.AwsCliModule;
 import com.amazonaws.services.neptune.cli.LabModeModule;
 import com.amazonaws.services.neptune.cli.ProfilesModule;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
@@ -31,6 +32,9 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
     @Once
     @AllowedValues(allowedValues = {"trace", "debug", "info", "warn", "error"})
     protected String logLevel = "error";
+
+    @Inject
+    protected AwsCliModule awsCli = new AwsCliModule();
 
     @Inject
     private LabModeModule labModeModule = new LabModeModule();

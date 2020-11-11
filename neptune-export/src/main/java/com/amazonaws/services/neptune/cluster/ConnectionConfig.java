@@ -13,12 +13,14 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cluster;
 
 import com.amazonaws.services.neptune.auth.HandshakeRequestConfig;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public class ConnectionConfig {
 
+    private final String clusterId;
     private final Collection<String> neptuneEndpoints;
     private final int neptunePort;
     private final String nlbEndpoint;
@@ -27,13 +29,15 @@ public class ConnectionConfig {
     private final boolean useIamAuth;
     private boolean useSsl;
 
-    public ConnectionConfig(Collection<String> neptuneEndpoints,
+    public ConnectionConfig(String clusterId,
+                            Collection<String> neptuneEndpoints,
                             int neptunePort,
                             String nlbEndpoint,
                             String albEndpoint,
                             int lbPort,
                             boolean useIamAuth,
                             boolean useSsl) {
+        this.clusterId = clusterId;
         this.neptuneEndpoints = neptuneEndpoints;
         this.neptunePort = neptunePort;
         this.nlbEndpoint = nlbEndpoint;
@@ -93,5 +97,11 @@ public class ConnectionConfig {
 
     public int lbPort() {
         return lbPort;
+    }
+
+    public String clusterId() {
+        return StringUtils.isNotEmpty(clusterId ) ?
+                clusterId :
+                NeptuneClusterMetadata.clusterIdFromEndpoint(endpoints().iterator().next());
     }
 }
