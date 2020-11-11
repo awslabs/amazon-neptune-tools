@@ -25,9 +25,9 @@ public class PropertyGraphSerializationModule {
     @Once
     private String serializer = "GRAPHBINARY_V1D0";
 
-    @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 65536).")
+    @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 50000000).")
     @Once
-    private int maxContentLength = 65536;
+    private int maxContentLength = 50000000;
 
     @Option(name = {"-b", "--batch-size"}, description = "Batch size (optional, default 64). Reduce this number if your queries trigger CorruptedFrameExceptions.")
     @Once
