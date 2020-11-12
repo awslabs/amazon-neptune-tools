@@ -78,7 +78,7 @@ public class ParseFeatures {
                 String description = "node feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
                 Collection<String> properties = new ParseProperty(node, description).parseMultipleProperties();
-                String type = new ParseFeatureType(node, description).parseFeatureType();
+                FeatureType type = new ParseFeatureType(node, description).parseFeatureType();
                 Norm norm = new ParseNorm(node).parseNorm();
                 String separator = new ParseSeparator(node).parseSeparator();
                 TrainingJobWriterConfig.FeatureOverrideConfig config = new TrainingJobWriterConfig.FeatureOverrideConfig(nodeType, properties, type, norm, separator);
@@ -95,7 +95,7 @@ public class ParseFeatures {
                 String description = "edge feature";
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
                 Collection<String> properties = new ParseProperty(node, description).parseMultipleProperties();
-                String type = new ParseFeatureType(node, description).parseFeatureType();
+                FeatureType type = new ParseFeatureType(node, description).parseFeatureType();
                 Norm norm = new ParseNorm(node).parseNorm();
                 String separator = new ParseSeparator(node).parseSeparator();
                 featureOverrides.add(new TrainingJobWriterConfig.FeatureOverrideConfig(edgeType, properties, type, norm, separator));

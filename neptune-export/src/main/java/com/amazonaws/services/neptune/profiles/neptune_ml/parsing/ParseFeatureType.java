@@ -24,11 +24,11 @@ public class ParseFeatureType {
         this.description = description;
     }
 
-    public String parseFeatureType() {
+    public FeatureType parseFeatureType() {
         if (json.has("type") && json.get("type").isTextual()) {
             String type = json.get("type").textValue();
             if  ( type.equals("numerical") || type.equals("category")){
-                return type;
+                return FeatureType.valueOf(type);
             }
         }
         throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical', 'numerical_int', 'numerical_float' or 'category' value for %s", description));

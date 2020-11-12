@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.Norm;
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.ParseFeatures;
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.ParseLabels;
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.ParseSplitRate;
+import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -382,11 +379,11 @@ public class TrainingJobWriterConfig {
     public static class FeatureOverrideConfig {
         private final Label label;
         private final Collection<String> properties;
-        private final String featureType;
+        private final FeatureType featureType;
         private final Norm norm;
         private final String separator;
 
-        public FeatureOverrideConfig(Label label, Collection<String> properties, String featureType, Norm norm, String separator) {
+        public FeatureOverrideConfig(Label label, Collection<String> properties, FeatureType featureType, Norm norm, String separator) {
             this.label = label;
             this.properties = properties;
             this.featureType = featureType;
@@ -410,7 +407,7 @@ public class TrainingJobWriterConfig {
             return properties;
         }
 
-        public String featureType() {
+        public FeatureType featureType() {
             return featureType;
         }
 

@@ -164,7 +164,7 @@ public class JobTrainingConfigurationFileWriter {
 
         if (propertySchema.dataType() == DataType.Float ||
                 propertySchema.dataType() == DataType.Double) {
-            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.none);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max);
         }
 
         if (propertySchema.dataType() == DataType.Byte ||
@@ -194,10 +194,10 @@ public class JobTrainingConfigurationFileWriter {
                         label.fullyQualifiedLabel(),
                         featureOverride.firstProperty()));
             } else {
-                String featureType = featureOverride.featureType();
-                if (FeatureType.category.name().equals(featureType)) {
+                FeatureType featureType = featureOverride.featureType();
+                if (FeatureType.category == featureType) {
                     writeCategoricalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.separator());
-                } else if (FeatureType.numerical.name().equals(featureType)) {
+                } else if (FeatureType.numerical == featureType) {
                     writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), featureOverride.separator());
                 }
             }
@@ -213,13 +213,13 @@ public class JobTrainingConfigurationFileWriter {
                                 .map(s -> String.format("'%s'", s))
                                 .collect(Collectors.joining(", "))));
             } else {
-                String featureType = featureOverride.featureType();
+                FeatureType featureType = featureOverride.featureType();
                 List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
                         .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
                         .collect(Collectors.toList());
-                if (FeatureType.category.name().equals(featureType)) {
+                if (FeatureType.category == featureType) {
                     writeCategoricalNodeFeature(label, multiPropertySchemas);
-                } else if (FeatureType.numerical.name().equals(featureType)) {
+                } else if (FeatureType.numerical == featureType) {
                     writeNumericalNodeFeature(label, multiPropertySchemas, featureOverride.norm());
                 }
             }
@@ -414,8 +414,8 @@ public class JobTrainingConfigurationFileWriter {
                         label.fullyQualifiedLabel(),
                         featureOverride.firstProperty()));
             } else {
-                String featureType = featureOverride.featureType();
-                if (FeatureType.numerical.name().equals(featureType)) {
+                FeatureType featureType = featureOverride.featureType();
+                if (FeatureType.numerical == featureType) {
                     writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), featureOverride.separator());
                 }
             }
@@ -431,11 +431,11 @@ public class JobTrainingConfigurationFileWriter {
                                 .map(s -> String.format("'%s'", s))
                                 .collect(Collectors.joining(", "))));
             } else {
-                String featureType = featureOverride.featureType();
+                FeatureType featureType = featureOverride.featureType();
                 List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
                         .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
                         .collect(Collectors.toList());
-                if (FeatureType.numerical.name().equals(featureType)) {
+                if (FeatureType.numerical == featureType) {
                     writeNumericalEdgeFeature(label, multiPropertySchemas, featureOverride.norm());
                 }
             }

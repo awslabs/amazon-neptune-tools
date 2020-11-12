@@ -50,6 +50,16 @@ public class TrainingJobConfigBuilder {
         return this;
     }
 
+    public TrainingJobConfigBuilder withNodeFeatureOverride(TrainingJobWriterConfig.FeatureOverrideConfig override) {
+        nodeFeatureOverrides.add(override);
+        return this;
+    }
+
+    public TrainingJobConfigBuilder withEdgeFeatureOverride(TrainingJobWriterConfig.FeatureOverrideConfig override) {
+        edgeFeatureOverrides.add(override);
+        return this;
+    }
+
     public TrainingJobWriterConfig build() {
         return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures, nodeFeatureOverrides, edgeFeatureOverrides);
     }
