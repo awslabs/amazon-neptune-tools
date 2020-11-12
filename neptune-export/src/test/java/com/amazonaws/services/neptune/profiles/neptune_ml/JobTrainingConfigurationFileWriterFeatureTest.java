@@ -148,6 +148,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         assertEquals("node", feature.path("feat_type").textValue());
         assertEquals("numerical", feature.path("sub_feat_type").textValue());
         assertEquals("Admin;Person", feature.path("node_type").textValue());
+        assertEquals("none", feature.path("norm").textValue());
 
         ArrayNode cols = (ArrayNode) feature.path("cols");
 
@@ -156,7 +157,6 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         assertEquals("~id", cols.get(0).textValue());
         assertEquals("rating", cols.get(1).textValue());
 
-        assertTrue(feature.path("norm").isMissingNode());
         assertTrue(feature.path("separator").isMissingNode());
     }
 
@@ -194,6 +194,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         assertEquals("numerical", feature.path("sub_feat_type").textValue());
         assertEquals("Movie", feature.path("node_type").textValue());
         assertEquals(";", feature.path("separator").textValue());
+        assertEquals("none", feature.path("norm").textValue());
 
         ArrayNode cols = (ArrayNode) feature.path("cols");
 
@@ -202,7 +203,6 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         assertEquals("~id", cols.get(0).textValue());
         assertEquals("encoding", cols.get(1).textValue());
 
-        assertTrue(feature.path("norm").isMissingNode());
     }
 
     @Test

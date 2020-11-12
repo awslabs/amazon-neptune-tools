@@ -22,11 +22,6 @@ public enum Norm {
         public String formattedName() {
             return "none";
         }
-
-        @Override
-        public void addTo(JsonGenerator generator) {
-            // Do nothing
-        }
     }
     ,
     min_max{
@@ -34,27 +29,19 @@ public enum Norm {
         public String formattedName() {
             return "min-max";
         }
-
-        @Override
-        public void addTo(JsonGenerator generator) throws IOException {
-            generator.writeStringField("norm", formattedName());
-        }
     },
     standard{
         @Override
         public String formattedName() {
             return "standard";
         }
-
-        @Override
-        public void addTo(JsonGenerator generator) throws IOException {
-            generator.writeStringField("norm", formattedName());
-        }
     };
 
     public abstract String formattedName();
 
-    public abstract void addTo(JsonGenerator generator) throws IOException;
+    public void addTo(JsonGenerator generator) throws IOException {
+        generator.writeStringField("norm", formattedName());
+    }
 
     @Override
     public String toString() {
