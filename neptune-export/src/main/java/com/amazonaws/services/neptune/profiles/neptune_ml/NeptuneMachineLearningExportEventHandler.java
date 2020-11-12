@@ -76,6 +76,10 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     @Override
     public void onBeforeExport(Args args) {
+        if (!args.contains("--merge-files")) {
+            args.addFlag("--merge-files");
+        }
+
         if (!args.contains("--edge-label-strategy")) {
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
