@@ -45,7 +45,7 @@ public class ParseFeatures {
             if (isWord2VecNodeFeature(node)) {
                 String description = "word2vec feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String property = new ParseProperty(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleProperty();
                 String language = new ParseLanguage(node).parseLanguage();
                 TrainingJobWriterConfig.Word2VecConfig config = new TrainingJobWriterConfig.Word2VecConfig(nodeType, property, Collections.singletonList(language));
                 word2VecFeatures.add(config);
@@ -60,7 +60,7 @@ public class ParseFeatures {
             if (isNumericalBucketFeature(node)) {
                 String description = "bucket_numerical feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String property = new ParseProperty(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleProperty();
                 TrainingJobWriterConfig.Range range = new ParseRange(node, description).parseRange();
                 int bucketCount = new ParseBucketCount(node, description).parseBucketCount();
                 int slideWindowSize = new ParseSlideWindowSize(node, description).parseSlideWindowSize();
@@ -77,11 +77,11 @@ public class ParseFeatures {
             if (isNodeFeatureOverride(node)) {
                 String description = "node feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String property = new ParseProperty(node, description).parseSingleColumn();
+                Collection<String> properties = new ParseProperty(node, description).parseMultipleProperties();
                 String type = new ParseFeatureType(node, description).parseFeatureType();
                 Norm norm = new ParseNorm(node).parseNorm();
                 String separator = new ParseSeparator(node).parseSeparator();
-                TrainingJobWriterConfig.FeatureOverrideConfig config = new TrainingJobWriterConfig.FeatureOverrideConfig(nodeType, property, type, norm, separator);
+                TrainingJobWriterConfig.FeatureOverrideConfig config = new TrainingJobWriterConfig.FeatureOverrideConfig(nodeType, properties, type, norm, separator);
                 featureOverrides.add(config);
             }
         }
@@ -94,11 +94,11 @@ public class ParseFeatures {
             if (isEdgeFeatureOverride(node)) {
                 String description = "edge feature";
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
-                String property = new ParseProperty(node, description).parseSingleColumn();
+                Collection<String> properties = new ParseProperty(node, description).parseMultipleProperties();
                 String type = new ParseFeatureType(node, description).parseFeatureType();
                 Norm norm = new ParseNorm(node).parseNorm();
                 String separator = new ParseSeparator(node).parseSeparator();
-                featureOverrides.add(new TrainingJobWriterConfig.FeatureOverrideConfig(edgeType, property, type, norm, separator));
+                featureOverrides.add(new TrainingJobWriterConfig.FeatureOverrideConfig(edgeType, properties, type, norm, separator));
             }
         }
         return featureOverrides;

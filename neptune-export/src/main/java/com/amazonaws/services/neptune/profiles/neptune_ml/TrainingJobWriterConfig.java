@@ -21,6 +21,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TrainingJobWriterConfig {
 
@@ -164,28 +165,46 @@ public class TrainingJobWriterConfig {
                 .orElse(null);
     }
 
-    public boolean hasNodeFeatureOverrideForNodeProperty(Label nodeType, String property){
-        return getNodeFeatureOverride(nodeType, property) != null;
+    public boolean hasNodeFeatureOverrideForNodeProperty(Label nodeType, String property) {
+        return nodeFeatureOverrides.stream()
+                .anyMatch(override ->
+                        override.label().equals(nodeType) &&
+                                override.properties().contains(property));
     }
 
-    public FeatureOverrideConfig getNodeFeatureOverride(Label nodeType, String property){
+    public Collection<FeatureOverrideConfig> getNodeFeatureOverrides(Label nodeType) {
+        return nodeFeatureOverrides.stream()
+                .filter(c -> c.label().equals(nodeType))
+                .collect(Collectors.toList());
+    }
+
+    public FeatureOverrideConfig getNodeFeatureOverride(Label nodeType, String property) {
         return nodeFeatureOverrides.stream()
                 .filter(config ->
                         config.label().equals(nodeType) &&
-                                config.property().equals(property))
+                                config.properties.contains(property))
                 .findFirst()
                 .orElse(null);
     }
 
-    public boolean hasEdgeFeatureOverrideForEdgeProperty(Label edgeType, String property){
-        return getEdgeFeatureOverride(edgeType, property) != null;
+    public boolean hasEdgeFeatureOverrideForEdgeProperty(Label edgeType, String property) {
+        return edgeFeatureOverrides.stream()
+                .anyMatch(override ->
+                        override.label().equals(edgeType) &&
+                                override.properties().contains(property));
     }
 
-    public FeatureOverrideConfig getEdgeFeatureOverride(Label edgeType, String property){
+    public Collection<FeatureOverrideConfig> getEdgeFeatureOverrides(Label edgeType) {
+        return edgeFeatureOverrides.stream()
+                .filter(c -> c.label().equals(edgeType))
+                .collect(Collectors.toList());
+    }
+
+    public FeatureOverrideConfig getEdgeFeatureOverride(Label edgeType, String property) {
         return edgeFeatureOverrides.stream()
                 .filter(config ->
                         config.label().equals(edgeType) &&
-                                config.property().equals(property))
+                                config.properties.contains(property))
                 .findFirst()
                 .orElse(null);
     }
@@ -362,14 +381,14 @@ public class TrainingJobWriterConfig {
 
     public static class FeatureOverrideConfig {
         private final Label label;
-        private final String property;
+        private final Collection<String> properties;
         private final String featureType;
         private final Norm norm;
         private final String separator;
 
-        public FeatureOverrideConfig(Label label, String property, String featureType, Norm norm, String separator) {
+        public FeatureOverrideConfig(Label label, Collection<String> properties, String featureType, Norm norm, String separator) {
             this.label = label;
-            this.property = property;
+            this.properties = properties;
             this.featureType = featureType;
             this.norm = norm;
             this.separator = separator;
@@ -379,8 +398,16 @@ public class TrainingJobWriterConfig {
             return label;
         }
 
-        public String property() {
-            return property;
+        public boolean isSinglePropertyOverride() {
+            return properties.size() == 1;
+        }
+
+        public String firstProperty(){
+            return properties.iterator().next();
+        }
+
+        public Collection<String> properties() {
+            return properties;
         }
 
         public String featureType() {

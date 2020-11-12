@@ -15,6 +15,11 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 public class ParseProperty {
 
     private final JsonNode json;
@@ -25,11 +30,26 @@ public class ParseProperty {
         this.description = description;
     }
 
-    public String parseSingleColumn() {
+    public String parseSingleProperty() {
         if (json.has("property") && json.get("property").isTextual()) {
             return json.get("property").textValue();
         } else {
             throw new IllegalArgumentException(String.format("Expected a 'property' field with a string value for %s", description));
+        }
+    }
+
+    public Collection<String> parseMultipleProperties() {
+        if (json.has("property") && json.get("property").isTextual()) {
+            return Collections.singletonList(json.get("property").textValue());
+        } if (json.has("properties") && json.get("properties").isArray()){
+            ArrayNode properties = (ArrayNode) json.get("properties");
+            Collection<String> results = new ArrayList<>();
+            for (JsonNode property : properties) {
+                results.add(property.textValue());
+            }
+            return results;
+        } else {
+            throw new IllegalArgumentException(String.format("Expected a 'property' field with a string value, or a 'properties' field with an array value for %s", description));
         }
     }
 }

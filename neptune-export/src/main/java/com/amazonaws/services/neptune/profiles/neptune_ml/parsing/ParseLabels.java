@@ -36,7 +36,7 @@ public class ParseLabels {
             if (isNodeClass(node)) {
                 String description = "node label";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String property = new ParseProperty(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleProperty();
                 String labelType = new ParseLabelType("node", node).parseLabel();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
                 nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(labelType, property, splitRates));
@@ -51,7 +51,7 @@ public class ParseLabels {
             if (isEdgeClass(node)) {
                 String description = "edge label";
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
-                String property = new ParseProperty(node, description).parseSingleColumn();
+                String property = new ParseProperty(node, description).parseSingleProperty();
                 String labelType = new ParseLabelType("edge", node).parseLabel();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
                 edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(labelType, property, splitRates));

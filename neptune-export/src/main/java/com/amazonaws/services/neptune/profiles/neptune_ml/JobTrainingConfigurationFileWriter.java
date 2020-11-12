@@ -21,10 +21,9 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class JobTrainingConfigurationFileWriter {
 
@@ -146,12 +145,14 @@ public class JobTrainingConfigurationFileWriter {
                     generator.writeArrayFieldStart("features");
                     arrayStartHasBeenWritten = true;
                 }
-                if (config.hasNodeFeatureOverrideForNodeProperty(label, column)) {
-                    writeNodeFeatureOverride(label, propertySchema);
-                } else {
+                if (!config.hasNodeFeatureOverrideForNodeProperty(label, column)) {
                     writeNodeFeature(label, propertySchema);
                 }
             }
+        }
+
+        for (TrainingJobWriterConfig.FeatureOverrideConfig featureOverride : config.getNodeFeatureOverrides(label)) {
+            writeNodeFeatureOverride(label, featureOverride, propertySchemas);
         }
 
         if (arrayStartHasBeenWritten) {
@@ -163,47 +164,96 @@ public class JobTrainingConfigurationFileWriter {
 
         if (propertySchema.dataType() == DataType.Float ||
                 propertySchema.dataType() == DataType.Double) {
-            writeNumericalNodeFeature(label, propertySchema, Norm.none);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.none);
         }
 
         if (propertySchema.dataType() == DataType.Byte ||
                 propertySchema.dataType() == DataType.Short ||
                 propertySchema.dataType() == DataType.Integer ||
                 propertySchema.dataType() == DataType.Long) {
-            writeNumericalNodeFeature(label, propertySchema, Norm.min_max);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max);
         }
 
         if (propertySchema.dataType() == DataType.String ||
                 propertySchema.dataType() == DataType.Boolean) {
-            writeCategoricalNodeFeature(label, propertySchema);
+            writeCategoricalNodeFeature(label, Collections.singletonList(propertySchema));
         }
     }
 
-    private void writeNodeFeatureOverride(Label label, PropertySchema propertySchema) throws IOException {
-        TrainingJobWriterConfig.FeatureOverrideConfig featureOverride =
-                config.getNodeFeatureOverride(label, propertySchema.nameWithoutDataType());
-        String featureType = featureOverride.featureType();
-        if (FeatureType.category.name().equals(featureType)) {
-            writeCategoricalNodeFeature(label, propertySchema);
-        } else if (FeatureType.numerical.name().equals(featureType)) {
-            writeNumericalNodeFeature(label, propertySchema, featureOverride.norm(), featureOverride.separator());
+    private void writeNodeFeatureOverride(Label label,
+                                          TrainingJobWriterConfig.FeatureOverrideConfig featureOverride,
+                                          Collection<PropertySchema> propertySchemas) throws IOException {
+
+        if (featureOverride.isSinglePropertyOverride()) {
+            PropertySchema propertySchema = propertySchemas.stream()
+                    .filter(p -> p.nameWithoutDataType().equals(featureOverride.firstProperty()))
+                    .findFirst()
+                    .orElse(null);
+            if (propertySchema == null) {
+                warnings.add(String.format("Unable to add node feature: Node of type '%s' does not contain property '%s'.",
+                        label.fullyQualifiedLabel(),
+                        featureOverride.firstProperty()));
+            } else {
+                String featureType = featureOverride.featureType();
+                if (FeatureType.category.name().equals(featureType)) {
+                    writeCategoricalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.separator());
+                } else if (FeatureType.numerical.name().equals(featureType)) {
+                    writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), featureOverride.separator());
+                }
+            }
+        } else {
+            boolean allPropertiesPresent = featureOverride.properties().stream()
+                    .allMatch(p ->
+                            propertySchemas.stream()
+                                    .anyMatch(s -> s.nameWithoutDataType().equals(p)));
+            if (!allPropertiesPresent) {
+                warnings.add(String.format("Unable to add multi-property node feature: Node of type '%s' does not contain one or more of the following properties: %s.",
+                        label.fullyQualifiedLabel(),
+                        featureOverride.properties().stream()
+                                .map(s -> String.format("'%s'", s))
+                                .collect(Collectors.joining(", "))));
+            } else {
+                String featureType = featureOverride.featureType();
+                List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
+                        .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
+                        .collect(Collectors.toList());
+                if (FeatureType.category.name().equals(featureType)) {
+                    writeCategoricalNodeFeature(label, multiPropertySchemas);
+                } else if (FeatureType.numerical.name().equals(featureType)) {
+                    writeNumericalNodeFeature(label, multiPropertySchemas, featureOverride.norm());
+                }
+            }
         }
+
     }
 
-    private void writeCategoricalNodeFeature(Label label, PropertySchema propertySchema) throws IOException {
+    private void writeCategoricalNodeFeature(Label label, Collection<PropertySchema> propertySchemas) throws IOException {
+        writeCategoricalNodeFeature(label, propertySchemas, null);
+    }
 
-        if (config.hasWord2VecSpecification(label, propertySchema.nameWithoutDataType())) {
-            writeWord2VecFeature(label, propertySchema);
+    private void writeCategoricalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, String separator) throws IOException {
+
+        boolean isSinglePropertyFeature = propertySchemas.size() == 1;
+        PropertySchema firstPropertySchema = propertySchemas.iterator().next();
+
+        if (isSinglePropertyFeature && config.hasWord2VecSpecification(label, firstPropertySchema.nameWithoutDataType())) {
+            writeWord2VecFeature(label, firstPropertySchema);
         } else {
             generator.writeStartObject();
             generator.writeStringField("feat_type", "node");
             generator.writeStringField("sub_feat_type", "category");
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
-            generator.writeString(getColumnName.apply(propertySchema));
+            for (PropertySchema propertySchema : propertySchemas) {
+                generator.writeString(getColumnName.apply(propertySchema));
+            }
             generator.writeEndArray();
-            if (propertySchema.isMultiValue()) {
-                writeSeparator(";");
+            if (isSinglePropertyFeature) {
+                if (firstPropertySchema.isMultiValue()) {
+                    writeSeparator(";");
+                } else if (StringUtils.isNotEmpty(separator)) {
+                    writeSeparator(separator);
+                }
             }
             generator.writeStringField("node_type", label.labelsAsString());
             generator.writeEndObject();
@@ -230,26 +280,34 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeEndObject();
     }
 
-    private void writeNumericalNodeFeature(Label label, PropertySchema propertySchema, Norm norm) throws IOException {
-        writeNumericalNodeFeature(label, propertySchema, norm, null);
+    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm) throws IOException {
+        writeNumericalNodeFeature(label, propertySchemas, norm, null);
     }
 
-    private void writeNumericalNodeFeature(Label label, PropertySchema propertySchema, Norm norm, String separator) throws IOException {
-        if (config.hasNumericalBucketSpecification(label, propertySchema.nameWithoutDataType())) {
-            writeNumericalBucketFeature(label, propertySchema);
+    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, String separator) throws IOException {
+
+        boolean isSinglePropertyFeature = propertySchemas.size() == 1;
+        PropertySchema firstPropertySchema = propertySchemas.iterator().next();
+
+        if (isSinglePropertyFeature && config.hasNumericalBucketSpecification(label, firstPropertySchema.nameWithoutDataType())) {
+            writeNumericalBucketFeature(label, firstPropertySchema);
         } else {
             generator.writeStartObject();
             generator.writeStringField("feat_type", "node");
             FeatureType.numerical.addTo(generator);
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
-            generator.writeString(getColumnName.apply(propertySchema));
+            for (PropertySchema propertySchema : propertySchemas) {
+                generator.writeString(getColumnName.apply(propertySchema));
+            }
             generator.writeEndArray();
             norm.addTo(generator);
-            if (propertySchema.isMultiValue()) {
-                writeSeparator(";");
-            } else if (StringUtils.isNotEmpty(separator)) {
-                writeSeparator(separator);
+            if (isSinglePropertyFeature) {
+                if (firstPropertySchema.isMultiValue()) {
+                    writeSeparator(";");
+                } else if (StringUtils.isNotEmpty(separator)) {
+                    writeSeparator(separator);
+                }
             }
             generator.writeStringField("node_type", label.labelsAsString());
             generator.writeEndObject();
@@ -326,34 +384,73 @@ public class JobTrainingConfigurationFileWriter {
                 }
 
                 if (!propertySchema.isMultiValue()) {
-                    if (config.hasEdgeFeatureOverrideForEdgeProperty(label, propertySchema.nameWithoutDataType())) {
-                        writeEdgeFeatureOverride(label, propertySchema);
-                    } else {
-                        writeNumericalEdgeFeature(label, propertySchema, Norm.min_max);
+                    if (!config.hasEdgeFeatureOverrideForEdgeProperty(label, propertySchema.nameWithoutDataType())) {
+                        writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), Norm.min_max);
                     }
                 }
             }
         }
+
+        for (TrainingJobWriterConfig.FeatureOverrideConfig featureOverride : config.getEdgeFeatureOverrides(label)) {
+            writeEdgeFeatureOverride(label, featureOverride, propertySchemas);
+        }
+
         if (arrayStartHasBeenWritten) {
             generator.writeEndArray();
         }
     }
 
-    private void writeEdgeFeatureOverride(Label label, PropertySchema propertySchema) throws IOException {
+    private void writeEdgeFeatureOverride(Label label,
+                                          TrainingJobWriterConfig.FeatureOverrideConfig featureOverride,
+                                          Collection<PropertySchema> propertySchemas) throws IOException {
 
-        TrainingJobWriterConfig.FeatureOverrideConfig featureOverride =
-                config.getEdgeFeatureOverride(label, propertySchema.nameWithoutDataType());
-        String featureType = featureOverride.featureType();
-        if (FeatureType.numerical.name().equals(featureType)) {
-            writeNumericalEdgeFeature(label, propertySchema, featureOverride.norm(), featureOverride.separator());
+        if (featureOverride.isSinglePropertyOverride()) {
+            PropertySchema propertySchema = propertySchemas.stream()
+                    .filter(p -> p.nameWithoutDataType().equals(featureOverride.firstProperty()))
+                    .findFirst()
+                    .orElse(null);
+            if (propertySchema == null) {
+                warnings.add(String.format("Unable to add edge feature: Edge of type '%s' does not contain property '%s'.",
+                        label.fullyQualifiedLabel(),
+                        featureOverride.firstProperty()));
+            } else {
+                String featureType = featureOverride.featureType();
+                if (FeatureType.numerical.name().equals(featureType)) {
+                    writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), featureOverride.separator());
+                }
+            }
+        } else {
+            boolean allPropertiesPresent = featureOverride.properties().stream()
+                    .allMatch(p ->
+                            propertySchemas.stream()
+                                    .anyMatch(s -> s.nameWithoutDataType().equals(p)));
+            if (!allPropertiesPresent) {
+                warnings.add(String.format("Unable to add multi-property edge feature: Edge of type '%s' does not contain one or more of the following properties: %s.",
+                        label.fullyQualifiedLabel(),
+                        featureOverride.properties().stream()
+                                .map(s -> String.format("'%s'", s))
+                                .collect(Collectors.joining(", "))));
+            } else {
+                String featureType = featureOverride.featureType();
+                List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
+                        .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
+                        .collect(Collectors.toList());
+                if (FeatureType.numerical.name().equals(featureType)) {
+                    writeNumericalEdgeFeature(label, multiPropertySchemas, featureOverride.norm());
+                }
+            }
         }
+
     }
 
-    private void writeNumericalEdgeFeature(Label label, PropertySchema propertySchema, Norm norm) throws IOException {
-        writeNumericalEdgeFeature(label, propertySchema, norm, null);
+    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm) throws IOException {
+        writeNumericalEdgeFeature(label, propertySchemas, norm, null);
     }
 
-    private void writeNumericalEdgeFeature(Label label, PropertySchema propertySchema, Norm norm, String separator) throws IOException {
+    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, String separator) throws IOException {
+
+        boolean isSinglePropertyFeature = propertySchemas.size() == 1;
+        PropertySchema firstPropertySchema = propertySchemas.iterator().next();
 
         generator.writeStartObject();
         generator.writeStringField("feat_type", "edge");
@@ -361,13 +458,17 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeArrayFieldStart("cols");
         generator.writeString("~from");
         generator.writeString("~to");
-        generator.writeString(getColumnName.apply(propertySchema));
+        for (PropertySchema propertySchema : propertySchemas) {
+            generator.writeString(getColumnName.apply(propertySchema));
+        }
         generator.writeEndArray();
         norm.addTo(generator);
-        if (propertySchema.isMultiValue()) {
-            writeSeparator(";");
-        } else if (StringUtils.isNotEmpty(separator)) {
-            writeSeparator(separator);
+        if (isSinglePropertyFeature) {
+            if (firstPropertySchema.isMultiValue()) {
+                writeSeparator(";");
+            } else if (StringUtils.isNotEmpty(separator)) {
+                writeSeparator(separator);
+            }
         }
         writeEdgeType(label);
         generator.writeEndObject();
