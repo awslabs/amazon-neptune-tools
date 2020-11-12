@@ -80,12 +80,11 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
             args.addFlag("--merge-files");
         }
 
-        if (!args.contains("--edge-label-strategy")) {
-            args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
-        }
-
         if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
             args.removeOptions("--edge-label-strategy");
+        }
+
+        if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
     }
