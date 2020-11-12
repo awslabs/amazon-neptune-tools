@@ -26,6 +26,8 @@ public class TrainingJobConfigBuilder {
     Map<Label, TrainingJobWriterConfig.LabelConfig> edgeClassLabels = new HashMap<>();
     Collection<TrainingJobWriterConfig.Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
     Collection<TrainingJobWriterConfig.NumericalBucketFeatureConfig> numericalBucketFeatures = new ArrayList<>();
+    Collection<TrainingJobWriterConfig.FeatureOverrideConfig> nodeFeatureOverrides = new ArrayList<>();
+    Collection<TrainingJobWriterConfig.FeatureOverrideConfig> edgeFeatureOverrides = new ArrayList<>();
     Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
 
     public TrainingJobConfigBuilder withNodeClassLabel(Label label, String column) {
@@ -49,6 +51,6 @@ public class TrainingJobConfigBuilder {
     }
 
     public TrainingJobWriterConfig build() {
-        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures);
+        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures, nodeFeatureOverrides, edgeFeatureOverrides);
     }
 }

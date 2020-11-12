@@ -12,20 +12,26 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonGenerator;
 
-public class ParseLanguage {
-    private final JsonNode json;
+import java.io.IOException;
 
-    public ParseLanguage(JsonNode json) {
-        this.json = json;
+public enum FeatureType {
+    category,
+    numerical,
+    word2vec,
+    bucket_numerical;
+
+    public void addTo(JsonGenerator generator) throws IOException {
+        generator.writeStringField("sub_feat_type", name());
     }
 
-    public String parseLanguage() {
-        if (json.has("language") && json.get("language").isTextual()) {
-            return json.get("language").textValue();
-        } else {
-            return "en_core_web_lg";
+    public static boolean isValid(String s){
+        for (FeatureType value : FeatureType.values()) {
+            if (value.name().equals(s)){
+                return true;
+            }
         }
+        return false;
     }
 }

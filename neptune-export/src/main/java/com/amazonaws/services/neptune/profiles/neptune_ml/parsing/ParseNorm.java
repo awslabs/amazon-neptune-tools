@@ -14,18 +14,21 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseLanguage {
+public class ParseNorm {
     private final JsonNode json;
 
-    public ParseLanguage(JsonNode json) {
+    public ParseNorm(JsonNode json) {
         this.json = json;
     }
 
-    public String parseLanguage() {
-        if (json.has("language") && json.get("language").isTextual()) {
-            return json.get("language").textValue();
-        } else {
-            return "en_core_web_lg";
+    public Norm parseNorm(){
+        if (json.has("norm")){
+            String norm = json.get("norm").textValue();
+            if (Norm.isValid(norm)){
+                return Norm.fromString(norm);
+            }
         }
+
+        return Norm.none;
     }
 }

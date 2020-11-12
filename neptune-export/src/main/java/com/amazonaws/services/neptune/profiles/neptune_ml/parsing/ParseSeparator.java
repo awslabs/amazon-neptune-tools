@@ -14,18 +14,17 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseLanguage {
+public class ParseSeparator {
     private final JsonNode json;
 
-    public ParseLanguage(JsonNode json) {
+    public ParseSeparator(JsonNode json) {
         this.json = json;
     }
 
-    public String parseLanguage() {
-        if (json.has("language") && json.get("language").isTextual()) {
-            return json.get("language").textValue();
-        } else {
-            return "en_core_web_lg";
+    public String parseSeparator(){
+        if (json.has("separator")){
+            return json.get("separator").textValue();
         }
+        return null;
     }
 }

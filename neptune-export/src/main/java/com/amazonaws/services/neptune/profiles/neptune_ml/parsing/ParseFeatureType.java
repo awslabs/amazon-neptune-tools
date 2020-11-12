@@ -14,18 +14,23 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseLanguage {
-    private final JsonNode json;
+public class ParseFeatureType {
 
-    public ParseLanguage(JsonNode json) {
+    private final JsonNode json;
+    private final String description;
+
+    public ParseFeatureType(JsonNode json, String description) {
         this.json = json;
+        this.description = description;
     }
 
-    public String parseLanguage() {
-        if (json.has("language") && json.get("language").isTextual()) {
-            return json.get("language").textValue();
-        } else {
-            return "en_core_web_lg";
+    public String parseFeatureType() {
+        if (json.has("type") && json.get("type").isTextual()) {
+            String type = json.get("type").textValue();
+            if  ( type.equals("numerical") || type.equals("category")){
+                return type;
+            }
         }
+        throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical', 'numerical_int', 'numerical_float' or 'category' value for %s", description));
     }
 }

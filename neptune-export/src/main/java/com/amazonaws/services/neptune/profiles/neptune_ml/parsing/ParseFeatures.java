@@ -17,8 +17,8 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 public class ParseFeatures {
 
@@ -30,8 +30,11 @@ public class ParseFeatures {
 
     public void validate() {
         for (JsonNode node : nodes) {
-            if (!isWord2VecNodeFeature(node) && !isNumericalBucketFeature(node)) {
-                throw new IllegalArgumentException("Illegal feature element: expected word2vec or numerical bucket feature definitions");
+            if (!isWord2VecNodeFeature(node) &&
+                    !isNumericalBucketFeature(node) &&
+                    !isNodeFeatureOverride(node) &&
+                    !isEdgeFeatureOverride(node)) {
+                throw new IllegalArgumentException("Illegal feature element: expected category or numerical feature definitions for nodes and edges, or word2vec or bucket_numerical feature definitions for nodes");
             }
         }
     }
@@ -44,7 +47,7 @@ public class ParseFeatures {
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
                 String property = new ParseProperty(node, description).parseSingleColumn();
                 String language = new ParseLanguage(node).parseLanguage();
-                TrainingJobWriterConfig.Word2VecConfig config = new TrainingJobWriterConfig.Word2VecConfig(nodeType, property, Arrays.asList(language));
+                TrainingJobWriterConfig.Word2VecConfig config = new TrainingJobWriterConfig.Word2VecConfig(nodeType, property, Collections.singletonList(language));
                 word2VecFeatures.add(config);
             }
         }
@@ -55,7 +58,7 @@ public class ParseFeatures {
         Collection<TrainingJobWriterConfig.NumericalBucketFeatureConfig> numericalBucketFeatures = new ArrayList<>();
         for (JsonNode node : nodes) {
             if (isNumericalBucketFeature(node)) {
-                String description = "numerical bucket feature";
+                String description = "bucket_numerical feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
                 String property = new ParseProperty(node, description).parseSingleColumn();
                 TrainingJobWriterConfig.Range range = new ParseRange(node, description).parseRange();
@@ -68,11 +71,86 @@ public class ParseFeatures {
         return numericalBucketFeatures;
     }
 
+    public Collection<TrainingJobWriterConfig.FeatureOverrideConfig> parseNodeFeatureOverrides() {
+        Collection<TrainingJobWriterConfig.FeatureOverrideConfig> featureOverrides = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            if (isNodeFeatureOverride(node)) {
+                String description = "node feature";
+                Label nodeType = new ParseNodeType(node, description).parseNodeType();
+                String property = new ParseProperty(node, description).parseSingleColumn();
+                String type = new ParseFeatureType(node, description).parseFeatureType();
+                Norm norm = new ParseNorm(node).parseNorm();
+                String separator = new ParseSeparator(node).parseSeparator();
+                TrainingJobWriterConfig.FeatureOverrideConfig config = new TrainingJobWriterConfig.FeatureOverrideConfig(nodeType, property, type, norm, separator);
+                featureOverrides.add(config);
+            }
+        }
+        return featureOverrides;
+    }
+
+    public Collection<TrainingJobWriterConfig.FeatureOverrideConfig> parseEdgeFeatureOverrides() {
+        Collection<TrainingJobWriterConfig.FeatureOverrideConfig> featureOverrides = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            if (isEdgeFeatureOverride(node)) {
+                String description = "edge feature";
+                Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
+                String property = new ParseProperty(node, description).parseSingleColumn();
+                String type = new ParseFeatureType(node, description).parseFeatureType();
+                Norm norm = new ParseNorm(node).parseNorm();
+                String separator = new ParseSeparator(node).parseSeparator();
+                featureOverrides.add(new TrainingJobWriterConfig.FeatureOverrideConfig(edgeType, property, type, norm, separator));
+            }
+        }
+        return featureOverrides;
+    }
+
     private boolean isWord2VecNodeFeature(JsonNode node) {
-        return node.has("node") && node.has("type") && node.get("type").textValue().equalsIgnoreCase("word2vec");
+        return isNodeFeature(node) && isWord2VecType(node.get("type").textValue());
     }
 
     private boolean isNumericalBucketFeature(JsonNode node) {
-        return node.has("node") && node.has("type") && node.get("type").textValue().equalsIgnoreCase("bucket_numerical");
+        return isNodeFeature(node) && isBucketNumericalType(node.get("type").textValue());
     }
+
+    private boolean isNodeFeatureOverride(JsonNode node) {
+        if (isNodeFeature(node)) {
+            String type = node.get("type").textValue();
+            return (isNumericalType(type) || isCategoricalType(type));
+        }
+        return false;
+    }
+
+    private boolean isEdgeFeatureOverride(JsonNode node) {
+        if (isEdgeFeature(node)) {
+            String type = node.get("type").textValue();
+            return (isNumericalType(type) || isCategoricalType(type));
+        }
+        return false;
+    }
+
+    private boolean isNodeFeature(JsonNode node) {
+        return node.has("node") && node.has("type");
+    }
+
+    private boolean isEdgeFeature(JsonNode node) {
+        return node.has("edge") && node.has("type");
+    }
+
+    private boolean isWord2VecType(String type){
+        return FeatureType.word2vec.name().equals(type);
+    }
+
+    private boolean isBucketNumericalType(String type){
+        return FeatureType.bucket_numerical.name().equals(type);
+    }
+
+    private boolean isCategoricalType(String type) {
+        return FeatureType.category.name().equals(type);
+    }
+
+    private boolean isNumericalType(String type) {
+        return FeatureType.numerical.name().equals(type);
+    }
+
+
 }
