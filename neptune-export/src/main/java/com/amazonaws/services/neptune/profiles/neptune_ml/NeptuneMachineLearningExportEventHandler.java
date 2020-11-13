@@ -76,6 +76,10 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     @Override
     public void onBeforeExport(Args args) {
+        if (args.contains("export-pg") && !args.contains("--exclude-type-definitions")){
+            args.addFlag("--exclude-type-definitions");
+        }
+
         if (!args.contains("--merge-files")) {
             args.addFlag("--merge-files");
         }
