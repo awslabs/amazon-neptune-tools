@@ -75,13 +75,13 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
                 List<?> values = (List<?>) value;
                 for (Object o : values) {
                     PropertySchema propertySchema = new PropertySchema(key);
-                    propertySchema.accept(o);
+                    propertySchema.accept(o, true);
                     printRecord(id, streamOperation, key, o, propertySchema.dataType());
                 }
 
             } else {
                 PropertySchema propertySchema = new PropertySchema(key);
-                propertySchema.accept(value);
+                propertySchema.accept(value, true);
                 printRecord(id, streamOperation, key, value, propertySchema.dataType());
             }
         }

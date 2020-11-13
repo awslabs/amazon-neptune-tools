@@ -127,7 +127,7 @@ public class GraphElementSchemas {
                 if (!labelSchema.containsProperty(property)) {
                     labelSchema.put(property, new PropertySchema(property));
                 }
-                labelSchema.getPropertySchema(property).accept(entry.getValue());
+                labelSchema.getPropertySchema(property).accept(entry.getValue(), true);
             }
         }
     }

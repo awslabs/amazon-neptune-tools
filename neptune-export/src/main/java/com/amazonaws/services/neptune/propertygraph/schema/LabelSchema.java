@@ -48,21 +48,17 @@ public class LabelSchema {
         return propertySchemas.get(property);
     }
 
-    public void recordObservation(Object property){
-        propertySchemaStats.get(property).recordObservation();
-    }
-
-    public void recordObservation(PropertySchema propertySchema, Object value) {
-        if (propertySchema.isNullable()){
-            if (StringUtils.isNotEmpty(String.valueOf(value))){
-                propertySchemaStats.get(propertySchema.property()).recordObservation();
+    public void recordObservation(PropertySchema propertySchema, Object value, int size) {
+        if (propertySchema.isNullable()) {
+            if (StringUtils.isNotEmpty(String.valueOf(value))) {
+                propertySchemaStats.get(propertySchema.property()).recordObservation(size);
             }
         } else {
-            propertySchemaStats.get(propertySchema.property()).recordObservation();
+            propertySchemaStats.get(propertySchema.property()).recordObservation(size);
         }
     }
 
-    private PropertySchemaStats getPropertySchemaStats(Object property) {
+    public PropertySchemaStats getPropertySchemaStats(Object property) {
         return propertySchemaStats.get(property);
     }
 
@@ -70,7 +66,7 @@ public class LabelSchema {
         return propertySchemas.values();
     }
 
-    public Collection<PropertySchemaStats> propertySchemaStats(){
+    public Collection<PropertySchemaStats> propertySchemaStats() {
         return propertySchemaStats.values();
     }
 
@@ -94,11 +90,12 @@ public class LabelSchema {
         return result;
     }
 
-    public void initStats(){
+    public void initStats() {
         Set<Object> keys = propertySchemaStats.keySet();
 
         for (Object key : keys) {
-            propertySchemaStats.put(key, new PropertySchemaStats(key));
+            PropertySchemaStats oldStats = this.propertySchemaStats.get(key);
+            this.propertySchemaStats.put( key, oldStats.createLockedCopyForFreshObservations());
         }
     }
 
@@ -108,37 +105,38 @@ public class LabelSchema {
 
         for (PropertySchema otherSchema : other.propertySchemas()) {
             Object property = otherSchema.property();
-            if (result.containsProperty(property)){
+            PropertySchemaStats otherSchemaStats = other.getPropertySchemaStats(property);
+            if (result.containsProperty(property)) {
                 PropertySchema oldSchema = result.getPropertySchema(property);
                 PropertySchema newSchema = oldSchema.union(otherSchema);
                 PropertySchemaStats oldStats = result.getPropertySchemaStats(property);
-                PropertySchemaStats newStats = oldStats.union(other.getPropertySchemaStats(property));
+                PropertySchemaStats newStats = oldStats.union(otherSchemaStats);
                 result.put(property, newSchema, newStats);
             } else {
-                result.put(property, otherSchema.createCopy(), other.getPropertySchemaStats(property).createCopy());
+                result.put(property, otherSchema.createCopy(), otherSchemaStats.createCopy());
             }
         }
 
         return result;
     }
 
-    public boolean isSameAs(LabelSchema other){
+    public boolean isSameAs(LabelSchema other) {
 
-        if (!label().equals(other.label())){
+        if (!label().equals(other.label())) {
             return false;
         }
 
-        if (propertySchemas().size() != other.propertySchemas().size()){
+        if (propertySchemas().size() != other.propertySchemas().size()) {
             return false;
         }
 
         Iterator<PropertySchema> thisIterator = propertySchemas().iterator();
         Iterator<PropertySchema> otherIterator = other.propertySchemas().iterator();
 
-        while (thisIterator.hasNext()){
+        while (thisIterator.hasNext()) {
             PropertySchema thisPropertySchema = thisIterator.next();
             PropertySchema otherPropertySchema = otherIterator.next();
-            if (!thisPropertySchema.equals(otherPropertySchema)){
+            if (!thisPropertySchema.equals(otherPropertySchema)) {
                 return false;
             }
         }

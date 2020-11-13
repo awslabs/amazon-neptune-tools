@@ -67,10 +67,8 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
             Object value = properties.get(key);
 
             if (properties.containsKey(key)) {
-                if (allowUpdateSchema) {
-                    propertySchema.accept(value);
-                }
-                labelSchema.recordObservation(key);
+                int size = propertySchema.accept(value, allowUpdateSchema);
+                labelSchema.recordObservation(propertySchema, value, size);
                 printProperty(value, propertySchema);
             } else {
                 if (allowUpdateSchema) {
@@ -90,13 +88,13 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                     Object value = property.getValue();
 
                     PropertySchema propertySchema = new PropertySchema(key);
-                    propertySchema.accept(value);
+                    int size = propertySchema.accept(value, true);
                     if (isNullable) {
                         propertySchema.makeNullable();
                     }
 
                     labelSchema.put(key, propertySchema);
-                    labelSchema.recordObservation(key);
+                    labelSchema.recordObservation(propertySchema, value, size);
 
                     printProperty(value, propertySchema);
                 }
@@ -126,7 +124,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                 }
                 generator.writeEndArray();
             } else {
-                if (!values.isEmpty()){
+                if (!values.isEmpty()) {
                     dataType.printTo(generator, formattedKey, values.get(0));
                 }
             }
@@ -157,10 +155,10 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
         generator.writeStringField("~label", label);
         generator.writeStringField("~from", from);
         generator.writeStringField("~to", to);
-        if (fromLabels != null){
+        if (fromLabels != null) {
             printProperty(fromLabels, DataType.String, "~fromLabels");
         }
-        if (toLabels != null){
+        if (toLabels != null) {
             printProperty(toLabels, DataType.String, "~toLabels");
         }
     }

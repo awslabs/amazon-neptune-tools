@@ -40,20 +40,27 @@ public class PropertySchema {
         return property;
     }
 
-    public void accept(Object value) {
+    public int accept(Object value, boolean updateDataType) {
 
+        int size = 1;
         if (isList(value)) {
             List<?> values = (List<?>) value;
-            int size = values.size();
+            size = values.size();
             if (size > 1) {
                 isMultiValue = true;
             }
-            for (Object v : values) {
-                dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(v.getClass()));
+            if (updateDataType){
+                for (Object v : values) {
+                    dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(v.getClass()));
+                }
             }
         } else {
-            dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
+            if (updateDataType){
+                dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
+            }
         }
+
+        return size;
     }
 
     public void makeNullable(){

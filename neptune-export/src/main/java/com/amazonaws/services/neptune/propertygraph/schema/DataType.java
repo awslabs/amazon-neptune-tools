@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -238,9 +239,12 @@ public enum DataType {
     String {
         @Override
         public String format(Object value) {
-            return java.lang.String.format(
-                    "\"%s\"",
-                    escapeDoubleQuotes(value));
+            java.lang.String escaped = escapeDoubleQuotes(value);
+            if (StringUtils.isNotEmpty(escaped)) {
+                return java.lang.String.format("\"%s\"", escaped);
+            } else {
+                return "";
+            }
         }
 
         public String escapeDoubleQuotes(Object value) {
@@ -251,6 +255,10 @@ public enum DataType {
 
         @Override
         public String formatList(Collection<?> values) {
+            if (values.isEmpty()){
+                return "";
+            }
+
             return java.lang.String.format("\"%s\"",
                     values.stream().
                             map(DataType::escapeSemicolons).

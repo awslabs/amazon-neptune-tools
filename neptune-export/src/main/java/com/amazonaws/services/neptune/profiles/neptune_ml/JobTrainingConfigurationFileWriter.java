@@ -91,7 +91,7 @@ public class JobTrainingConfigurationFileWriter {
                 if (config.hasNodeClassificationSpecificationForNode(nodeLabel)) {
                     writeNodeLabel(labelSchema, config.getNodeClassificationPropertyForNode(nodeLabel));
                 }
-                writeNodeFeatures(nodeLabel, labelSchema.propertySchemas());
+                writeNodeFeatures(nodeLabel, labelSchema.propertySchemas(), labelSchema);
                 generator.writeEndObject();
             }
         }
@@ -135,7 +135,7 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeEndArray();
     }
 
-    private void writeNodeFeatures(Label label, Collection<PropertySchema> propertySchemas) throws IOException {
+    private void writeNodeFeatures(Label label, Collection<PropertySchema> propertySchemas, LabelSchema labelSchema) throws IOException {
         boolean arrayStartHasBeenWritten = false;
 
         for (PropertySchema propertySchema : propertySchemas) {
@@ -146,13 +146,13 @@ public class JobTrainingConfigurationFileWriter {
                     arrayStartHasBeenWritten = true;
                 }
                 if (!config.hasNodeFeatureOverrideForNodeProperty(label, column)) {
-                    writeNodeFeature(label, propertySchema);
+                    writeNodeFeature(label, propertySchema, labelSchema);
                 }
             }
         }
 
         for (TrainingJobWriterConfig.FeatureOverrideConfig featureOverride : config.getNodeFeatureOverrides(label)) {
-            writeNodeFeatureOverride(label, featureOverride, propertySchemas);
+            writeNodeFeatureOverride(label, featureOverride, propertySchemas, labelSchema);
         }
 
         if (arrayStartHasBeenWritten) {
@@ -160,18 +160,18 @@ public class JobTrainingConfigurationFileWriter {
         }
     }
 
-    private void writeNodeFeature(Label label, PropertySchema propertySchema) throws IOException {
+    private void writeNodeFeature(Label label, PropertySchema propertySchema, LabelSchema labelSchema) throws IOException {
 
         if (propertySchema.dataType() == DataType.Float ||
                 propertySchema.dataType() == DataType.Double) {
-            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max, labelSchema);
         }
 
         if (propertySchema.dataType() == DataType.Byte ||
                 propertySchema.dataType() == DataType.Short ||
                 propertySchema.dataType() == DataType.Integer ||
                 propertySchema.dataType() == DataType.Long) {
-            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max, labelSchema);
         }
 
         if (propertySchema.dataType() == DataType.String ||
@@ -182,7 +182,8 @@ public class JobTrainingConfigurationFileWriter {
 
     private void writeNodeFeatureOverride(Label label,
                                           TrainingJobWriterConfig.FeatureOverrideConfig featureOverride,
-                                          Collection<PropertySchema> propertySchemas) throws IOException {
+                                          Collection<PropertySchema> propertySchemas,
+                                          LabelSchema labelSchema) throws IOException {
 
         if (featureOverride.isSinglePropertyOverride()) {
             PropertySchema propertySchema = propertySchemas.stream()
@@ -198,7 +199,7 @@ public class JobTrainingConfigurationFileWriter {
                 if (FeatureType.category == featureType) {
                     writeCategoricalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.separator());
                 } else if (FeatureType.numerical == featureType) {
-                    writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), featureOverride.separator());
+                    writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), labelSchema, featureOverride.separator());
                 }
             }
         } else {
@@ -220,7 +221,7 @@ public class JobTrainingConfigurationFileWriter {
                 if (FeatureType.category == featureType) {
                     writeCategoricalNodeFeature(label, multiPropertySchemas);
                 } else if (FeatureType.numerical == featureType) {
-                    writeNumericalNodeFeature(label, multiPropertySchemas, featureOverride.norm());
+                    writeNumericalNodeFeature(label, multiPropertySchemas, featureOverride.norm(), labelSchema);
                 }
             }
         }
@@ -280,11 +281,11 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeEndObject();
     }
 
-    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm) throws IOException {
-        writeNumericalNodeFeature(label, propertySchemas, norm, null);
+    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema) throws IOException {
+        writeNumericalNodeFeature(label, propertySchemas, norm, labelSchema, null);
     }
 
-    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, String separator) throws IOException {
+    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema, String separator) throws IOException {
 
         boolean isSinglePropertyFeature = propertySchemas.size() == 1;
         PropertySchema firstPropertySchema = propertySchemas.iterator().next();
@@ -292,6 +293,17 @@ public class JobTrainingConfigurationFileWriter {
         if (isSinglePropertyFeature && config.hasNumericalBucketSpecification(label, firstPropertySchema.nameWithoutDataType())) {
             writeNumericalBucketFeature(label, firstPropertySchema);
         } else {
+
+            if (isSinglePropertyFeature){
+                PropertySchemaStats propertySchemaStats = labelSchema.getPropertySchemaStats(firstPropertySchema.property());
+                if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()){
+                    warnings.add(String.format("Unable to add numerical node feature: Node of type '%s' has a multi-value numerical property '%s' with differing numbers of values.",
+                            label.fullyQualifiedLabel(),
+                            firstPropertySchema.property()));
+                    return;
+                }
+            }
+
             generator.writeStartObject();
             generator.writeStringField("feat_type", "node");
             FeatureType.numerical.addTo(generator);
@@ -365,14 +377,14 @@ public class JobTrainingConfigurationFileWriter {
                 if (config.hasEdgeClassificationSpecificationForEdge(edgeLabel)) {
                     writeEdgeLabel(labelSchema, config.getEdgeClassificationPropertyForEdge(edgeLabel));
                 }
-                writeEdgeFeatures(edgeLabel, labelSchema.propertySchemas());
+                writeEdgeFeatures(edgeLabel, labelSchema.propertySchemas(), labelSchema);
 
                 generator.writeEndObject();
             }
         }
     }
 
-    private void writeEdgeFeatures(Label label, Collection<PropertySchema> propertySchemas) throws IOException {
+    private void writeEdgeFeatures(Label label, Collection<PropertySchema> propertySchemas, LabelSchema labelSchema) throws IOException {
         boolean arrayStartHasBeenWritten = false;
 
         for (PropertySchema propertySchema : propertySchemas) {
@@ -385,14 +397,14 @@ public class JobTrainingConfigurationFileWriter {
 
                 if (!propertySchema.isMultiValue()) {
                     if (!config.hasEdgeFeatureOverrideForEdgeProperty(label, propertySchema.nameWithoutDataType())) {
-                        writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), Norm.min_max);
+                        writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), Norm.min_max, labelSchema);
                     }
                 }
             }
         }
 
         for (TrainingJobWriterConfig.FeatureOverrideConfig featureOverride : config.getEdgeFeatureOverrides(label)) {
-            writeEdgeFeatureOverride(label, featureOverride, propertySchemas);
+            writeEdgeFeatureOverride(label, featureOverride, propertySchemas, labelSchema);
         }
 
         if (arrayStartHasBeenWritten) {
@@ -402,7 +414,8 @@ public class JobTrainingConfigurationFileWriter {
 
     private void writeEdgeFeatureOverride(Label label,
                                           TrainingJobWriterConfig.FeatureOverrideConfig featureOverride,
-                                          Collection<PropertySchema> propertySchemas) throws IOException {
+                                          Collection<PropertySchema> propertySchemas,
+                                          LabelSchema labelSchema) throws IOException {
 
         if (featureOverride.isSinglePropertyOverride()) {
             PropertySchema propertySchema = propertySchemas.stream()
@@ -416,7 +429,7 @@ public class JobTrainingConfigurationFileWriter {
             } else {
                 FeatureType featureType = featureOverride.featureType();
                 if (FeatureType.numerical == featureType) {
-                    writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), featureOverride.separator());
+                    writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), labelSchema, featureOverride.separator());
                 }
             }
         } else {
@@ -436,21 +449,31 @@ public class JobTrainingConfigurationFileWriter {
                         .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
                         .collect(Collectors.toList());
                 if (FeatureType.numerical == featureType) {
-                    writeNumericalEdgeFeature(label, multiPropertySchemas, featureOverride.norm());
+                    writeNumericalEdgeFeature(label, multiPropertySchemas, featureOverride.norm(), labelSchema);
                 }
             }
         }
 
     }
 
-    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm) throws IOException {
-        writeNumericalEdgeFeature(label, propertySchemas, norm, null);
+    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema) throws IOException {
+        writeNumericalEdgeFeature(label, propertySchemas, norm, labelSchema, null);
     }
 
-    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, String separator) throws IOException {
+    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema, String separator) throws IOException {
 
         boolean isSinglePropertyFeature = propertySchemas.size() == 1;
         PropertySchema firstPropertySchema = propertySchemas.iterator().next();
+
+        if (isSinglePropertyFeature){
+            PropertySchemaStats propertySchemaStats = labelSchema.getPropertySchemaStats(firstPropertySchema.property());
+            if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()){
+                warnings.add(String.format("Unable to add numerical edge feature: Edge of type '%s' has a multi-value numerical property '%s' with differing numbers of values.",
+                        label.fullyQualifiedLabel(),
+                        firstPropertySchema.property()));
+                return;
+            }
+        }
 
         generator.writeStartObject();
         generator.writeStringField("feat_type", "edge");

@@ -15,32 +15,37 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 public class PropertySchemaStats {
 
     private final Object property;
-    private int minMultiValueSize = 0;
-    private int maxMultiValueSize = 0;
-    private int observationCount = 0;
+    private final boolean lockMultiValueSizes;
+    private int minMultiValueSize;
+    private int maxMultiValueSize;
+    private int observationCount;
 
     public PropertySchemaStats(Object property) {
-        this.property = property;
+        this(property, 0, 0, 0, false);
     }
 
-    public PropertySchemaStats(Object property, int minMultiValueSize, int maxMultiValueSize, int observationCount) {
+    public PropertySchemaStats(Object property, int minMultiValueSize, int maxMultiValueSize, int observationCount, boolean lockMultiValueSizes) {
         this.property = property;
         this.minMultiValueSize = minMultiValueSize;
         this.maxMultiValueSize = maxMultiValueSize;
         this.observationCount = observationCount;
+        this.lockMultiValueSizes = lockMultiValueSizes;
     }
 
-    public void updateMultiValueSize(int size) {
-        if (size > maxMultiValueSize) {
-            maxMultiValueSize = size;
-        }
-        if (minMultiValueSize > 0 && minMultiValueSize > size) {
-            minMultiValueSize = size;
-        }
-    }
-
-    public void recordObservation() {
+    public void recordObservation(int size) {
         observationCount++;
+        if (!lockMultiValueSizes) {
+            if (minMultiValueSize == 0) {
+                minMultiValueSize = size;
+                maxMultiValueSize = size;
+            }
+            if (size > maxMultiValueSize) {
+                maxMultiValueSize = size;
+            }
+            if (size < minMultiValueSize) {
+                minMultiValueSize = size;
+            }
+        }
     }
 
     public Object property() {
@@ -59,15 +64,28 @@ public class PropertySchemaStats {
         return maxMultiValueSize;
     }
 
+    public boolean isUniformMultiValueSize(){
+        return minMultiValueSize == maxMultiValueSize;
+    }
+
     public PropertySchemaStats union(PropertySchemaStats other) {
         int newMinMultiValueSize = Math.min(minMultiValueSize, other.minMultiValueSize());
         int newMaxMultiValueSize = Math.max(maxMultiValueSize, other.maxMultiValueSize());
         int newObservationCount = observationCount + other.observationCount();
-        return new PropertySchemaStats(property, newMinMultiValueSize, newMaxMultiValueSize, newObservationCount);
+        return new PropertySchemaStats(property, newMinMultiValueSize, newMaxMultiValueSize, newObservationCount, false);
     }
 
     public PropertySchemaStats createCopy() {
-        return new PropertySchemaStats(property, minMultiValueSize, maxMultiValueSize, observationCount);
+        return new PropertySchemaStats(property, minMultiValueSize, maxMultiValueSize, observationCount, false);
+    }
+
+    public PropertySchemaStats createLockedCopyForFreshObservations(){
+        return new PropertySchemaStats(
+                property,
+                minMultiValueSize,
+                maxMultiValueSize,
+                0,
+                true);
     }
 
     @Override

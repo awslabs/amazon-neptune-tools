@@ -77,13 +77,13 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
                 Object value = property.getValue();
 
                 PropertySchema propertySchema = new PropertySchema(key);
-                propertySchema.accept(value);
+                int size = propertySchema.accept(value, true);
                 if (isNullable) {
                     propertySchema.makeNullable();
                 }
 
                 labelSchema.put(key, propertySchema);
-                labelSchema.recordObservation(key);
+                labelSchema.recordObservation(propertySchema, value, size);
 
                 csvPropertyGraphPrinter.printProperty(propertySchema.dataType(), value);
             }
