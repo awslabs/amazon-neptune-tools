@@ -58,19 +58,13 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
                 Object value = properties.get(key);
 
-                if (isList(value)) {
+                if (isList(value) || propertyTypeInfo.isMultiValue()) {
                     List<?> values = (List<?>) value;
-                    if (values.size() > 1) {
-                        generator.writeFieldName(formattedKey);
-                        generator.writeStartArray();
-                        for (Object v : values) {
-                            dataType.printTo(generator, v);
-                        }
-                        generator.writeEndArray();
-                    } else {
-                        dataType.printTo(generator, formattedKey, values.get(0));
+                    generator.writeArrayFieldStart(formattedKey);
+                    for (Object v : values) {
+                        dataType.printTo(generator, v);
                     }
-
+                    generator.writeEndArray();
                 } else {
                     dataType.printTo(generator, formattedKey, value);
                 }
