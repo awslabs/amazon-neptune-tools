@@ -35,8 +35,8 @@ public class TrainingJobWriterConfig {
 
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES).parseSplitRates();
 
-        if (json.has("labels")) {
-            JsonNode labels = json.path("labels");
+        if (json.has("targets")) {
+            JsonNode labels = json.path("targets");
             Collection<JsonNode> labelNodes = new ArrayList<>();
             if (labels.isArray()) {
                 labels.forEach(labelNodes::add);

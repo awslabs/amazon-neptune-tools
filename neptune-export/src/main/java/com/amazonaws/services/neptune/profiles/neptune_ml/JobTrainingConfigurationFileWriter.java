@@ -366,18 +366,21 @@ public class JobTrainingConfigurationFileWriter {
                 writeFileName(graphElementType, outputId);
                 writeSeparator(",");
 
-                generator.writeArrayFieldStart("edges");
-                generator.writeStartObject();
-                writeEdgeSpecType();
-                writeCols();
-                writeEdgeType(edgeLabel);
-                generator.writeEndObject();
-                generator.writeEndArray();
+                if (graphElementSchemas.getSchemaFor(edgeLabel).propertyCount() == 0){
 
-                if (config.hasEdgeClassificationSpecificationForEdge(edgeLabel)) {
-                    writeEdgeLabel(labelSchema, config.getEdgeClassificationPropertyForEdge(edgeLabel));
+                    generator.writeArrayFieldStart("edges");
+                    generator.writeStartObject();
+                    writeEdgeSpecType();
+                    writeCols();
+                    writeEdgeType(edgeLabel);
+                    generator.writeEndObject();
+                    generator.writeEndArray();
+                } else {
+                    if (config.hasEdgeClassificationSpecificationForEdge(edgeLabel)) {
+                        writeEdgeLabel(labelSchema, config.getEdgeClassificationPropertyForEdge(edgeLabel));
+                    }
+                    writeEdgeFeatures(edgeLabel, labelSchema.propertySchemas(), labelSchema);
                 }
-                writeEdgeFeatures(edgeLabel, labelSchema.propertySchemas(), labelSchema);
 
                 generator.writeEndObject();
             }
