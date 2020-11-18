@@ -28,9 +28,26 @@ be omitted. Those being (`~id`, `~label`, `~from`, `~to`).
 
 ### Running the tool
 
-The code is written in Python. Generating Gremlin steps from a CSV file is as simple as:
+The code is written in Python and has been tested using version 3.7.6. This tool does not support Python 2. Generating Gremlin steps from a CSV file is as simple as:
 
 ```
 python csv-gremlin.py my-csvfile.csv
 ```
-Where `my-csvfile.csv` is the name of the file to be processed. There are currently no command line options other than the file name.
+Where `my-csvfile.csv` is the name of the file to be processed. There are some command line arguments that can be used to specify the size of the batches used for vertices and for edges. For example to use a batch size of 20 for each you can use the following command.
+```
+ python csv-gremlin.py  -vb 20 -eb 20 test.csv
+```
+The help can always be displayed using the `-h` or `--help` command line arguments.
+```
+$ python csv-gremlin.py  --help
+usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] csvfile
+
+positional arguments:
+  csvfile        the name of the CSV file to process
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --version  display version information
+  -vb VB         set the vertex batch size to use (default 10)
+  -eb EB         set the edge batch size to use (default 10)
+  ```
