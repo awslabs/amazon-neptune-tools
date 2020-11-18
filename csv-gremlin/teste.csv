@@ -1,0 +1,4 @@
+~id,~label,~from,~to,confidence:Double
+e-1,Knows,p-1,p-2,
+e-2,Knows,p-2,p-3,0.5
+e-2,Knows,p-2,p-4,5

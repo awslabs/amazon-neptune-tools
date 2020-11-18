@@ -47,11 +47,12 @@ In this initial version none of the special column headers are allowed to
 be omitted. Those being (~id, ~label, ~from, ~to).
 '''
 import csv
-import sys 
+import sys
+import argparse
 
 class NeptuneCSVReader:
-    VERSION = 0.1
-    VERSION_DATE = '2020-11-07'
+    VERSION = 0.11
+    VERSION_DATE = '2020-11-17'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
 
@@ -156,9 +157,17 @@ class NeptuneCSVReader:
             csvfile.close()
 
 if __name__ == '__main__':
-    ncsv = NeptuneCSVReader(vbatch=10,ebatch=10)
-    if len(sys.argv) > 1:
-        ncsv.process_csv_file(sys.argv[1])
-    else:
-        print(f"\ncsv-gremlin: version {ncsv.VERSION}, {ncsv.VERSION_DATE}")
-        print("\nUsage: csv-gremlin <name_of_csv_file>")
+    ncsv = NeptuneCSVReader()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('csvfile', help='the name of the CSV file to process')
+    parser.add_argument('-v','--version', action='version', 
+                        help='display version information', 
+                        version=f"\ncsv-gremlin: version {ncsv.VERSION}, {ncsv.VERSION_DATE}")
+    parser.add_argument('-vb', type=int, default=10,
+                        help='set the vertex batch size to use (default %(default)s)')
+    parser.add_argument('-eb', type=int, default=10,
+                        help='set the edge batch size to use (default %(default)s)')
+
+    args = parser.parse_args()
+    ncsv.set_batch_sizes(vbatch=args.vb, ebatch=args.eb)
+    ncsv.process_csv_file(args.csvfile)
