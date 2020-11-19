@@ -49,16 +49,19 @@ be omitted. Those being (~id, ~label, ~from, ~to).
 import csv
 import sys
 import argparse
+import datetime
+import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.11
-    VERSION_DATE = '2020-11-17'
+    VERSION = 0.12
+    VERSION_DATE = '2020-11-19'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
 
-    def __init__(self, vbatch=1, ebatch=1):
+    def __init__(self, vbatch=1, ebatch=1, java_dates=False):
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
+        self.use_java_date = java_dates
 
     def get_batch_sizes(self):
         return {'vbatch': self.vertex_batch_size,
@@ -67,6 +70,22 @@ class NeptuneCSVReader:
     def set_batch_sizes(self, vbatch=1, ebatch=1):
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
+
+    def set_java_dates(self,f):
+        self.use_java_date = f
+    
+    def get_java_dates(self):
+        return self.use_java_date
+
+    def process_date(self,row,key):
+        if self.use_java_date:
+            epoch = datetime.datetime.utcfromtimestamp(0)
+            date =  dparser.isoparse(row[key])
+            delta = int((date - epoch).total_seconds() * 1000)
+            val = f'new Date({delta})'
+        else:
+            val = f'datetime(\'{row[key]}\')'
+        return val
 
     def process_vertices(self,reader):
         count = 0
@@ -102,7 +121,7 @@ class NeptuneCSVReader:
             elif kt[1].upper() in self.FLOATS:
                 value = float(row[key])
             elif kt[1].upper() == 'DATE':
-                value = f'datetime(\'{row[key]}\')'
+                value = self.process_date(row,key)
             else:
                 value = f'\'{row[key]}\''
         else:
@@ -167,7 +186,10 @@ if __name__ == '__main__':
                         help='set the vertex batch size to use (default %(default)s)')
     parser.add_argument('-eb', type=int, default=10,
                         help='set the edge batch size to use (default %(default)s)')
+    parser.add_argument('-java_dates', action='store_true',
+                        help='use Java style "new Date()" instead of "datetime()"')
 
     args = parser.parse_args()
     ncsv.set_batch_sizes(vbatch=args.vb, ebatch=args.eb)
+    ncsv.set_java_dates(args.java_dates)
     ncsv.process_csv_file(args.csvfile)
