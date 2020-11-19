@@ -39,8 +39,8 @@ Where `my-csvfile.csv` is the name of the file to be processed. There are some c
 ```
 The help can always be displayed using the `-h` or `--help` command line arguments.
 ```
-$ python csv-gremlin.py  --help
-usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] csvfile
+$ python csv-gremlin.py --help
+usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] csvfile
 
 positional arguments:
   csvfile        the name of the CSV file to process
@@ -50,4 +50,5 @@ optional arguments:
   -v, --version  display version information
   -vb VB         set the vertex batch size to use (default 10)
   -eb EB         set the edge batch size to use (default 10)
+  -java_dates    use Java style "new Date()" instead of "datetime()"
   ```
