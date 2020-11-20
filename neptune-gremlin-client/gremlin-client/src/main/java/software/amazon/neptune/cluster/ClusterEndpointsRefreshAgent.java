@@ -40,8 +40,8 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
         this.clusterEndpointsFetchStrategy = clusterEndpointsFetchStrategy;
     }
 
-    public ClusterEndpointsRefreshAgent(String clusterId, EndpointsSelector... selectors) {
-        this(new GetEndpointsFromNeptuneManagementApi(clusterId, Arrays.asList(selectors)));
+    public ClusterEndpointsRefreshAgent(String clusterId, String region,EndpointsSelector... selectors) {
+        this(new GetEndpointsFromNeptuneManagementApi(clusterId,region, Arrays.asList(selectors)));
     }
 
     public void startPollingNeptuneAPI(OnNewAddresses onNewAddresses,

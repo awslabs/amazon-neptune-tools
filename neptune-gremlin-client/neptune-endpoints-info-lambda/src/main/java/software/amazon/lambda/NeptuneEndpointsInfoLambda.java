@@ -41,7 +41,7 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
         int pollingIntervalSeconds = Integer.parseInt(
                 EnvironmentVariableUtils.getOptionalEnv("pollingIntervalSeconds", "15"));
 
-        refreshAgent = new ClusterEndpointsRefreshAgent(clusterId,
+        refreshAgent = new ClusterEndpointsRefreshAgent(clusterId,System.getenv("AWS_REGION"),
                 EndpointsType.All,
                 EndpointsType.Primary,
                 EndpointsType.ReadReplicas,

@@ -77,7 +77,7 @@ public class RefreshAgentDemo implements Runnable {
             EndpointsSelector endpointsSelector = EndpointsType.ReadReplicas;
 
             ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
-                    clusterId,
+                    clusterId,System.getenv("AWS_REGION"),
                     endpointsSelector);
 
             GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()

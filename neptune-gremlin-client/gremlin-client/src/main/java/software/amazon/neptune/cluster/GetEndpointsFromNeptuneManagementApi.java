@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package software.amazon.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
+import com.amazonaws.services.neptune.AmazonNeptuneClient;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
 import org.slf4j.Logger;
@@ -29,21 +30,21 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
     private static final Map<String, Map<String, String>> instanceTags = new HashMap<>();
 
     private final String clusterId;
+    private final String region;
     private final Collection<EndpointsSelector> selectors;
     private final AtomicReference<Map<EndpointsSelector, Collection<String>>> previousResults = new AtomicReference<>();
 
-    public GetEndpointsFromNeptuneManagementApi(String clusterId, Collection<EndpointsSelector> selectors) {
+    public GetEndpointsFromNeptuneManagementApi(String clusterId ,String region,Collection<EndpointsSelector> selectors) {
         this.clusterId = clusterId;
         this.selectors = selectors;
+        this.region=region;
     }
 
     @Override
     public Map<EndpointsSelector, Collection<String>> getAddresses() {
 
         try {
-
-
-            AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
+            AmazonNeptune neptune = AmazonNeptuneClientBuilder.standard().withRegion(region).build();
 
             DescribeDBClustersResult describeDBClustersResult = neptune
                     .describeDBClusters(new DescribeDBClustersRequest().withDBClusterIdentifier(clusterId));
