@@ -24,11 +24,11 @@ import java.net.URI;
 
 public class ExportPropertyGraphFromConfigModule {
 
-    @Option(name = {"-c", "--config-file"}, description = "Path to JSON schema config file (file path, or 'https' or 's3' URI).")
+    @Option(name = {"-c", "--config-file", "--filter-config-file"}, description = "Path to JSON schema config file (file path, or 'https' or 's3' URI).")
     @RequireOnlyOne(tag = "configFile or config")
     private URI configFile;
 
-    @Option(name = {"--config"}, description = "JSON schema for property graph.")
+    @Option(name = {"--config", "--filter"}, description = "JSON schema for property graph.")
     @RequireOnlyOne(tag = "configFile or config")
     private String configJson;
 

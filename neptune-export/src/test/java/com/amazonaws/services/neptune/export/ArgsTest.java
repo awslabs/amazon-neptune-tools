@@ -81,4 +81,18 @@ public class ArgsTest {
         assertFalse(args.contains("-b", "xyz"));
     }
 
+    @Test
+    public void shouldReplaceArg(){
+        Args args = new Args("export-pg -e endpoint --profile xyz");
+        args.replace("export-pg", "export-pg-from-config");
+        assertEquals("export-pg-from-config -e endpoint --profile xyz", args.toString());
+    }
+
+    @Test
+    public void shouldIndicateWhetherAnyOfTheSuppliedArgsIsPresent(){
+        Args args = new Args("export-pg -e endpoint --profile xyz");
+        assertTrue(args.containsAny("x", "y", "-e", "z"));
+        assertFalse(args.containsAny("x", "y", "z"));
+    }
+
 }

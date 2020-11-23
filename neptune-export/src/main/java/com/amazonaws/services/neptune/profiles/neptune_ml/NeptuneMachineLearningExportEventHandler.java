@@ -80,6 +80,11 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
             args.addFlag("--exclude-type-definitions");
         }
 
+        if (args.contains("export-pg") &&
+                args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")){
+            args.replace("export-pg", "export-pg-from-config");
+        }
+
         if (!args.contains("--merge-files")) {
             args.addFlag("--merge-files");
         }
