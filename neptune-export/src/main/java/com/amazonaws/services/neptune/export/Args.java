@@ -14,10 +14,7 @@ package com.amazonaws.services.neptune.export;
 
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.UnaryOperator;
 
 public class Args {
@@ -114,5 +111,32 @@ public class Args {
             }
         }
         return false;
+    }
+
+    public String getFirstOptionValue(String name) {
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext()){
+                    return iterator.next();
+                }
+            }
+        }
+        return null;
+    }
+
+    public Collection<String> getOptionValues(String name) {
+        Collection<String> values = new ArrayList<>();
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext()){
+                    values.add(iterator.next());
+                }
+            }
+        }
+        return values;
     }
 }

@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.export.Args;
+import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -37,9 +38,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.function.Function;
 
-import static com.amazonaws.services.neptune.export.NeptuneExportService.TAGS;
+import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_EXPORT_TAGS;
 
 public class NeptuneMachineLearningExportEventHandler implements NeptuneExportServiceEventHandler {
 
@@ -50,16 +52,19 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     private final String outputS3Path;
     private final Args args;
     private final TrainingJobWriterConfig trainingJobWriterConfig;
+    private final Collection<String> profiles;
 
     public NeptuneMachineLearningExportEventHandler(String outputS3Path,
                                                     ObjectNode additionalParams,
-                                                    Args args) {
+                                                    Args args,
+                                                    Collection<String> profiles) {
 
         logger.info("Adding neptune_ml event handler");
 
         this.outputS3Path = outputS3Path;
         this.args = args;
         this.trainingJobWriterConfig = createTrainingJobConfig(additionalParams);
+        this.profiles = profiles;
     }
 
     private TrainingJobWriterConfig createTrainingJobConfig(ObjectNode additionalParams) {
@@ -151,7 +156,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
             PutObjectRequest putObjectRequest = new PutObjectRequest(s3ObjectInfo.bucket(),
                     s3ObjectInfo.key(),
                     inputStream,
-                    objectMetadata).withTagging(new ObjectTagging(TAGS));
+                    objectMetadata).withTagging(ExportToS3NeptuneExportEventHandler.createObjectTags(profiles));
 
             Upload upload = transferManager.upload(putObjectRequest);
 

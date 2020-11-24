@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class NeptuneExportService {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneExportService.class);
 
-    public static final List<Tag> TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
+    public static final List<Tag> NEPTUNE_EXPORT_TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
 
     private final String cmd;
     private final String localOutputPath;
@@ -112,18 +113,21 @@ public class NeptuneExportService {
             }
         }
 
+        Collection<String> profiles = args.getOptionValues("--profile");
+
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection();
 
         ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
                 completionFileS3Path,
-                completionFilePayload);
+                completionFilePayload,
+                profiles);
 
         eventHandlerCollection.addHandler(eventHandler);
 
-        if (args.contains("--profile", "neptune_ml")){
-            NeptuneMachineLearningExportEventHandler neptuneMlEventHandler = new NeptuneMachineLearningExportEventHandler(outputS3Path, additionalParams, args);
+        if (profiles.contains("neptune_ml")){
+            NeptuneMachineLearningExportEventHandler neptuneMlEventHandler = new NeptuneMachineLearningExportEventHandler(outputS3Path, additionalParams, args, profiles);
             eventHandlerCollection.addHandler(neptuneMlEventHandler);
         }
 

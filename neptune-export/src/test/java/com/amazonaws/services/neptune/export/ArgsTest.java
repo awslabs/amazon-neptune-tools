@@ -14,6 +14,9 @@ package com.amazonaws.services.neptune.export;
 
 import org.junit.Test;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import static org.junit.Assert.*;
 
 public class ArgsTest {
@@ -93,6 +96,23 @@ public class ArgsTest {
         Args args = new Args("export-pg -e endpoint --profile xyz");
         assertTrue(args.containsAny("x", "y", "-e", "z"));
         assertFalse(args.containsAny("x", "y", "z"));
+    }
+
+    @Test
+    public void shouldGetFirstOptionValue(){
+        Args args = new Args("export-pg -e endpoint --profile xyz --profile abc -e endpoint --use-ssl --profile 123");
+        assertEquals("xyz", args.getFirstOptionValue("--profile"));
+    }
+
+    @Test
+    public void shouldGetAllOptionValues(){
+        Args args = new Args("export-pg -e endpoint --profile xyz --profile abc -e endpoint --use-ssl --profile 123");
+        Collection<String> optionValues = args.getOptionValues("--profile");
+        assertEquals(3, optionValues.size());
+        Iterator<String> iterator = optionValues.iterator();
+        assertEquals("xyz", iterator.next());
+        assertEquals("abc", iterator.next());
+        assertEquals("123", iterator.next());
     }
 
 }

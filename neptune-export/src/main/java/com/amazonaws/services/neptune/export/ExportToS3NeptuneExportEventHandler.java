@@ -21,6 +21,7 @@ import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.transfer.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -29,18 +30,29 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.ivy.osgi.updatesite.xml.EclipseFeature;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.amazonaws.services.neptune.export.NeptuneExportService.TAGS;
+import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_EXPORT_TAGS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHandler {
+
+    public static ObjectTagging createObjectTags(Collection<String> profiles){
+        List<Tag> tags = new ArrayList<>(NEPTUNE_EXPORT_TAGS);
+        if (!profiles.isEmpty()){
+            String profilesTagValue = String.join(":", profiles);
+            tags.add(new Tag("neptune-export:profiles", profilesTagValue));
+        }
+        return new ObjectTagging(tags);
+    }
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ExportToS3NeptuneExportEventHandler.class);
 
@@ -48,16 +60,19 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     private final String outputS3Path;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
+    private final Collection<String> profiles;
     private final AtomicReference<S3ObjectInfo> result = new AtomicReference<>();
 
     public ExportToS3NeptuneExportEventHandler(String localOutputPath,
                                                String outputS3Path,
                                                String completionFileS3Path,
-                                               ObjectNode completionFilePayload) {
+                                               ObjectNode completionFilePayload,
+                                               Collection<String> profiles) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
+        this.profiles = profiles;
     }
 
     @Override
@@ -146,7 +161,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             PutObjectRequest putObjectRequest = new PutObjectRequest(completionFileS3ObjectInfo.bucket(),
                     completionFileS3ObjectInfo.key(),
                     inputStream,
-                    objectMetadata).withTagging(new ObjectTagging(TAGS));
+                    objectMetadata).withTagging(createObjectTags(profiles));
 
             Upload upload = transferManager.upload(putObjectRequest);
 
@@ -172,7 +187,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
                 objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
             };
 
-            ObjectTaggingProvider taggingProvider = uploadContext -> new ObjectTagging(TAGS);
+            ObjectTaggingProvider taggingProvider = uploadContext -> createObjectTags(profiles);
 
             MultipleFileUpload upload = transferManager.uploadDirectory(
                     outputS3ObjectInfo.bucket(),
