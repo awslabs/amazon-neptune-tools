@@ -64,9 +64,11 @@ public class ParamConverter {
         if (argValue.isBoolean()) {
             args.addFlag(argName);
         } else if (argValue.isObject()) {
-            args.addOption(argName, String.format("'%s'", argValue.toPrettyString()));
+            String value = String.format("'%s'", argValue.toPrettyString());
+            args.addOption(argName, value);
         } else {
-            args.addOption(argName, argValue.toString());
+            String value = argValue.toString();
+            args.addOption(argName, value);
         }
     }
 
