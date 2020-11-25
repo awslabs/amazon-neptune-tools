@@ -140,13 +140,12 @@ public class ExportSpecification<T extends Map<?, ?>> {
 
     public Collection<ExportSpecification<T>> splitByLabel() {
 
-        if (labModeFeatures.containsFeature(LabModeFeature.SplitByLabel)) {
-
+        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)) {
+            return Collections.singletonList(this);
+        } else {
             return labelsFilter.split().stream()
                     .map(l -> new ExportSpecification<>(graphElementType, l, tokensOnly, stats, labModeFeatures))
                     .collect(Collectors.toList());
-        } else {
-            return Collections.singletonList(this);
         }
     }
 

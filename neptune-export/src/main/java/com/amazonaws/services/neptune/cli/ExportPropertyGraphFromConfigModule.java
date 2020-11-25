@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.io.CommandWriter;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,13 +44,5 @@ public class ExportPropertyGraphFromConfigModule {
         } else {
             return GraphSchema.fromJson(new ObjectMapper().readTree(configJson));
         }
-    }
-
-    public void writeResourcePathAsMessage(CommandWriter writer) {
-        if (configFile == null) {
-            return;
-        }
-
-        writer.writeMessage("Config file : " + configFile.toString());
     }
 }

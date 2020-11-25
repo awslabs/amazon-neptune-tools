@@ -41,13 +41,7 @@ public class SpecifiedLabels implements LabelsFilter {
                 .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
                 .collect(Collectors.toList());
 
-        if (labModeFeatures.containsFeature(LabModeFeature.SplitByLabel)){
-            for (String label : labelList) {
-                traversal = traversal.hasLabel(label);
-            }
-            return traversal;
-
-        } else {
+        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)){
             String firstLabel = labelList.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
             String[] remainingLabels = labelList.stream()
                     .skip(1)
@@ -55,9 +49,12 @@ public class SpecifiedLabels implements LabelsFilter {
                     .toArray(new String[]{});
 
             return traversal.hasLabel(firstLabel, remainingLabels);
+        } else {
+            for (String label : labelList) {
+                traversal = traversal.hasLabel(label);
+            }
+            return traversal;
         }
-
-
     }
 
     @Override

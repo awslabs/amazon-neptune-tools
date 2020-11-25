@@ -19,6 +19,7 @@ import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -54,7 +55,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(true);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -80,6 +81,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                 try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
                     PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
@@ -97,10 +99,11 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                                 clusterStrategy.concurrencyConfig(),
                                 targetConfig);
                         graphSchema = exportJob.execute();
+                        configFileResource.save(graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);
-                    graphSchemaProvider.writeResourcePathAsMessage(target);
+                    configFileResource.writeResourcePathAsMessage(target);
 
                     System.err.println();
                     System.err.println(stats.formatStats(graphSchema));

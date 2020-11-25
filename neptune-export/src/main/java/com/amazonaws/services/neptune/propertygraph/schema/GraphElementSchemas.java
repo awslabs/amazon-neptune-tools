@@ -33,30 +33,33 @@ public class GraphElementSchemas {
 
             graphElementSchemas.addLabelSchema(new LabelSchema(label));
 
-            ArrayNode propertiesArray = (ArrayNode) node.path("properties");
+            if (node.has("properties")) {
+                ArrayNode propertiesArray = (ArrayNode) node.path("properties");
 
-            for (JsonNode propertyNode : propertiesArray) {
+                for (JsonNode propertyNode : propertiesArray) {
 
-                String key = propertyNode.path("property").textValue();
+                    String key = propertyNode.path("property").textValue();
 
-                DataType dataType = propertyNode.has("dataType") ?
-                        Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue()) :
-                        DataType.String;
-                boolean isMultiValue = propertyNode.has("isMultiValue") ?
-                        propertyNode.path("isMultiValue").booleanValue() :
-                        false;
-                boolean isNullable = propertyNode.has("isNullable") ?
-                        propertyNode.path("isNullable").booleanValue() :
-                        false;
+                    DataType dataType = propertyNode.has("dataType") ?
+                            Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue()) :
+                            DataType.None;
+                    boolean isMultiValue = propertyNode.has("isMultiValue") ?
+                            propertyNode.path("isMultiValue").booleanValue() :
+                            false;
+                    boolean isNullable = propertyNode.has("isNullable") ?
+                            propertyNode.path("isNullable").booleanValue() :
+                            false;
 
-                graphElementSchemas.getSchemaFor(label).put(
-                        key,
-                        new PropertySchema(
-                                key,
-                                isNullable,
-                                dataType,
-                                isMultiValue));
+                    graphElementSchemas.getSchemaFor(label).put(
+                            key,
+                            new PropertySchema(
+                                    key,
+                                    isNullable,
+                                    dataType,
+                                    isMultiValue));
+                }
             }
+
         }
 
         return graphElementSchemas;

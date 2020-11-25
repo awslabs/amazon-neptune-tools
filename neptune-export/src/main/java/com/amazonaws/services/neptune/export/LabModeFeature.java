@@ -13,6 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.export;
 
 public enum LabModeFeature {
-    SplitByLabel,
-    FilterByPropertyKeys
+    FilterByPropertyKeys,
+    LegacyLabelFiltering
 }
