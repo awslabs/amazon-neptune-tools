@@ -74,7 +74,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
     }
 
     public String description() {
-        return graphElementType.name();
+        return labelsFilter.description(graphElementType.name());
     }
 
     public RangeFactory createRangeFactory(GraphTraversalSource g,

@@ -68,14 +68,6 @@ public class ParseLabels {
         }
     }
 
-    private boolean isEdgeClass(String labelType, String subLabelType) {
-        return labelType.equals("edge") && subLabelType.equals("edge_class_label");
-    }
-
-    private boolean isNodeClass(String labelType, String subLabelType) {
-        return labelType.equals("node") && subLabelType.equals("node_class_label");
-    }
-
     private boolean isNodeClass(JsonNode node) {
         return node.has("node") && node.has("property");
     }

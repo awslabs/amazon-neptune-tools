@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -69,37 +70,45 @@ public class ExportPropertyGraphJob {
     private MasterLabelSchemas export(ExportSpecification<?> exportSpecification) throws Exception {
         Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas = new ArrayList<>();
 
-        System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
         for (ExportSpecification<?> labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
             RangeFactory rangeFactory = labelSpecificExportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
             Status status = new Status();
 
-            ExecutorService taskExecutor = Executors.newFixedThreadPool(rangeFactory.concurrency());
+            String description = String.format("writing %s as %s to %s",
+                    labelSpecificExportSpecification.description(),
+                    targetConfig.format().description(),
+                    targetConfig.output().name());
 
-            for (int index = 1; index <= rangeFactory.concurrency(); index++) {
-                ExportPropertyGraphTask<?> exportTask = labelSpecificExportSpecification.createExportTask(
-                        graphSchema,
-                        g,
-                        targetConfig,
-                        rangeFactory,
-                        status,
-                        index
-                );
-                futures.add(taskExecutor.submit(exportTask));
-            }
+            System.err.println("Started " + description);
 
-            taskExecutor.shutdown();
+            Timer.timedActivity(description, (CheckedActivity.Runnable) () -> {
+                ExecutorService taskExecutor = Executors.newFixedThreadPool(rangeFactory.concurrency());
 
-            try {
-                taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
+                for (int index = 1; index <= rangeFactory.concurrency(); index++) {
+                    ExportPropertyGraphTask<?> exportTask = labelSpecificExportSpecification.createExportTask(
+                            graphSchema,
+                            g,
+                            targetConfig,
+                            rangeFactory,
+                            status,
+                            index
+                    );
+                    futures.add(taskExecutor.submit(exportTask));
+                }
 
-            updateFileSpecificLabelSchemas(futures, fileSpecificLabelSchemas);
+                taskExecutor.shutdown();
+
+                try {
+                    taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+
+                updateFileSpecificLabelSchemas(futures, fileSpecificLabelSchemas);
+            });
         }
 
         MasterLabelSchemas masterLabelSchemas = exportSpecification.createMasterLabelSchemas(fileSpecificLabelSchemas);
