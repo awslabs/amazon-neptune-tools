@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.Label;
@@ -52,13 +53,13 @@ public class PropertyGraphScopeModule {
     @AllowedEnumValues(EdgeLabelStrategy.class)
     private EdgeLabelStrategy edgeLabelStrategy = EdgeLabelStrategy.edgeLabelsOnly;
 
-    public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats, Collection<String> labModeFeatures){
+    public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats, LabModeFeatures labModeFeatures){
         return exportSpecifications(new GraphSchema(), stats, labModeFeatures);
     }
 
     public Collection<ExportSpecification<?>> exportSpecifications(GraphSchema graphSchema,
                                                                    ExportStats stats,
-                                                                   Collection<String> labModeFeatures){
+                                                                   LabModeFeatures labModeFeatures){
         return scope.exportSpecifications(
                 graphSchema,
                 Label.forLabels(nodeLabels),

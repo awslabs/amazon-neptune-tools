@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.util.Activity;
@@ -26,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
@@ -38,12 +42,12 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final Collection<String> labModeFeatures;
+    private final LabModeFeatures labModeFeatures;
 
     public NodesClient(GraphTraversalSource g,
                        boolean tokensOnly,
                        ExportStats stats,
-                       Collection<String> labModeFeatures) {
+                       LabModeFeatures labModeFeatures) {
         this.g = g;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
@@ -108,7 +112,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
                                                                       GraphElementSchemas graphElementSchemas) {
-        if (!labModeFeatures.contains("filterByPropertyKeys")) {
+        if (!labModeFeatures.containsFeature(LabModeFeature.FilterByPropertyKeys)) {
             return traversal;
         }
 
@@ -157,7 +161,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<Vertex, Vertex> t = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).V() :
                 g.V();
-        return range.applyRange(labelsFilter.apply(t));
+        return range.applyRange(labelsFilter.apply(t, labModeFeatures));
     }
 
 }

@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.util.Activity;
@@ -26,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
@@ -37,12 +41,12 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final Collection<String> labModeFeatures;
+    private final LabModeFeatures labModeFeatures;
 
     public EdgesClient(GraphTraversalSource g,
                        boolean tokensOnly,
                        ExportStats stats,
-                       Collection<String> labModeFeatures) {
+                       LabModeFeatures labModeFeatures) {
         this.g = g;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
@@ -81,7 +85,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                 g.withSideEffect("x", new HashMap<String, Object>()).E() :
                 g.E();
 
-        GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1));
+        GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1, labModeFeatures));
         GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
@@ -111,7 +115,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
                                                                       GraphElementSchemas graphElementSchemas) {
-        if (!labModeFeatures.contains("filterByPropertyKeys")) {
+        if (!labModeFeatures.containsFeature(LabModeFeature.FilterByPropertyKeys)) {
             return traversal;
         }
 
@@ -156,6 +160,6 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {
-        return range.applyRange(labelsFilter.apply(g.E()));
+        return range.applyRange(labelsFilter.apply(g.E(), labModeFeatures));
     }
 }

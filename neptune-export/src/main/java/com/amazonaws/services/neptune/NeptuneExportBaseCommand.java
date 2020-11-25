@@ -13,13 +13,16 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.AwsCliModule;
+import com.amazonaws.services.neptune.export.LabModeFeature;
 import com.amazonaws.services.neptune.cli.LabModeModule;
 import com.amazonaws.services.neptune.cli.ProfilesModule;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.*;
+import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
+import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 
 import javax.inject.Inject;
@@ -52,16 +55,16 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
         this.eventHandler = eventHandler;
     }
 
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception{
+    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
         eventHandler.onExportComplete(outputPath, stats, graphSchema);
     }
 
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception{
+    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
         eventHandler.onExportComplete(outputPath, stats);
     }
 
-    void handleException(Throwable e){
-        if (e.getCause() != null && RemoteConnectionException.class.isAssignableFrom(e.getCause().getClass())){
+    void handleException(Throwable e) {
+        if (e.getCause() != null && RemoteConnectionException.class.isAssignableFrom(e.getCause().getClass())) {
             e.printStackTrace();
             System.err.println("An error occurred while connecting to Neptune. " +
                     "Ensure you have not disabled SSL if the database requires SSL in transit. " +
@@ -72,7 +75,7 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
         }
     }
 
-    Collection<String> labModeFeatures(){
+    LabModeFeatures labModeFeatures() {
         return labModeModule.labFeatures();
     }
 }

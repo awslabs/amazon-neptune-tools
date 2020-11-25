@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
@@ -29,7 +30,7 @@ public class AllLabels implements LabelsFilter {
     }
 
     @Override
-    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures) {
         return traversal;
     }
 
@@ -88,5 +89,10 @@ public class AllLabels implements LabelsFilter {
     @Override
     public String description(String element) {
         return String.format("all %s", element);
+    }
+
+    @Override
+    public Collection<LabelsFilter> split() {
+        return Collections.singletonList(this);
     }
 }

@@ -67,49 +67,50 @@ public class ExportPropertyGraphJob {
     }
 
     private MasterLabelSchemas export(ExportSpecification<?> exportSpecification) throws Exception {
-
-        Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
+        Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas = new ArrayList<>();
 
         System.err.println("Writing " + exportSpecification.description() + " as " + targetConfig.format().description() + " to " + targetConfig.output().name());
 
-        RangeFactory rangeFactory = exportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
-        Status status = new Status();
+        for (ExportSpecification<?> labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
+            Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
+            RangeFactory rangeFactory = labelSpecificExportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
+            Status status = new Status();
 
-        ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
+            ExecutorService taskExecutor = Executors.newFixedThreadPool(rangeFactory.concurrency());
 
-        for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-            ExportPropertyGraphTask<?> exportTask = exportSpecification.createExportTask(
-                    graphSchema,
-                    g,
-                    targetConfig,
-                    rangeFactory,
-                    status,
-                    index
-            );
-            futures.add(taskExecutor.submit(exportTask));
+            for (int index = 1; index <= rangeFactory.concurrency(); index++) {
+                ExportPropertyGraphTask<?> exportTask = labelSpecificExportSpecification.createExportTask(
+                        graphSchema,
+                        g,
+                        targetConfig,
+                        rangeFactory,
+                        status,
+                        index
+                );
+                futures.add(taskExecutor.submit(exportTask));
+            }
+
+            taskExecutor.shutdown();
+
+            try {
+                taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+
+            updateFileSpecificLabelSchemas(futures, fileSpecificLabelSchemas);
         }
 
-        taskExecutor.shutdown();
-
-        try {
-            taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
-
-        Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas = getFileSpecificLabelSchemas(futures);
         MasterLabelSchemas masterLabelSchemas = exportSpecification.createMasterLabelSchemas(fileSpecificLabelSchemas);
-
         RewriteCommand rewriteCommand = targetConfig.createRewriteCommand(concurrencyConfig);
 
         return rewriteCommand.execute(masterLabelSchemas);
     }
 
-    private Collection<FileSpecificLabelSchemas> getFileSpecificLabelSchemas(
-            Collection<Future<FileSpecificLabelSchemas>> futures) throws Exception {
-
-        Collection<FileSpecificLabelSchemas> allFileSpecificLabelSchemas = new ArrayList<>();
+    private void updateFileSpecificLabelSchemas(
+            Collection<Future<FileSpecificLabelSchemas>> futures,
+            Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas) throws Exception {
 
         for (Future<FileSpecificLabelSchemas> future : futures) {
             if (future.isCancelled()) {
@@ -118,9 +119,7 @@ public class ExportPropertyGraphJob {
             if (!future.isDone()) {
                 throw new IllegalStateException("Unable to complete job because at least one task has not completed");
             }
-            allFileSpecificLabelSchemas.add(future.get());
+            fileSpecificLabelSchemas.add(future.get());
         }
-
-        return allFileSpecificLabelSchemas;
     }
 }

@@ -13,25 +13,30 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.*;
-import com.amazonaws.services.neptune.propertygraph.io.*;
+import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphTask;
+import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExportSpecification<T extends Map<?, ?>> {
     private final GraphElementType<T> graphElementType;
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final Collection<String> labModeFeatures;
+    private final LabModeFeatures labModeFeatures;
 
     public ExportSpecification(GraphElementType<T> graphElementType,
                                LabelsFilter labelsFilter,
                                boolean tokensOnly,
                                ExportStats stats,
-                               Collection<String> labModeFeatures) {
+                               LabModeFeatures labModeFeatures) {
         this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
         this.tokensOnly = tokensOnly;
@@ -131,6 +136,18 @@ public class ExportSpecification<T extends Map<?, ?>> {
         }
 
         return new MasterLabelSchemas(masterLabelSchemas, graphElementType);
+    }
+
+    public Collection<ExportSpecification<T>> splitByLabel() {
+
+        if (labModeFeatures.containsFeature(LabModeFeature.SplitByLabel)) {
+
+            return labelsFilter.split().stream()
+                    .map(l -> new ExportSpecification<>(graphElementType, l, tokensOnly, stats, labModeFeatures))
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.singletonList(this);
+        }
     }
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {

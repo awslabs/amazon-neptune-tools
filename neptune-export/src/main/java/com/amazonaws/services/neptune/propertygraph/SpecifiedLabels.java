@@ -12,12 +12,13 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
-import sun.misc.FDBigInteger;
 
 import java.util.*;
 import java.util.function.Function;
@@ -35,18 +36,28 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures) {
         List<String> labelList = labels.stream()
                 .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
                 .collect(Collectors.toList());
 
-        String firstLabel = labelList.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
-        String[] remainingLabels = labelList.stream()
-                .skip(1)
-                .collect(Collectors.toList())
-                .toArray(new String[]{});
+        if (labModeFeatures.containsFeature(LabModeFeature.SplitByLabel)){
+            for (String label : labelList) {
+                traversal = traversal.hasLabel(label);
+            }
+            return traversal;
 
-        return traversal.hasLabel(firstLabel, remainingLabels);
+        } else {
+            String firstLabel = labelList.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
+            String[] remainingLabels = labelList.stream()
+                    .skip(1)
+                    .collect(Collectors.toList())
+                    .toArray(new String[]{});
+
+            return traversal.hasLabel(firstLabel, remainingLabels);
+        }
+
+
     }
 
     @Override
@@ -108,5 +119,12 @@ public class SpecifiedLabels implements LabelsFilter {
     public String description(String element) {
         String labelList = labels.stream().map(l -> String.format("'%s'", l.labelsAsString())).collect(Collectors.joining(" or "));
         return String.format("%s with label(s) %s", element, labelList);
+    }
+
+    @Override
+    public Collection<LabelsFilter> split() {
+        return labels.stream()
+                .map(l -> new SpecifiedLabels(Collections.singletonList(l), labelStrategy))
+                .collect(Collectors.toList());
     }
 }

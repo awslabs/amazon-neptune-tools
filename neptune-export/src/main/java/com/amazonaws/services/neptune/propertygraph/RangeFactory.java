@@ -29,42 +29,46 @@ public class RangeFactory {
                                       RangeConfig rangeConfig,
                                       ConcurrencyConfig concurrencyConfig) {
 
+        String description = labelsFilter.description(String.format("%ss", graphClient.description()));
+
+        logger.info("Calculating ranges for {}", description);
+
         long estimatedNumberOfItemsInGraph = graphClient.approxCount(labelsFilter, rangeConfig);
+        int effectiveConcurrency =  estimatedNumberOfItemsInGraph < 1000 ?
+                1 :
+                concurrencyConfig.concurrency();
+        long rangeSize = concurrencyConfig.isUnboundedParallelExecution(rangeConfig) ?
+                (estimatedNumberOfItemsInGraph / effectiveConcurrency) + 1:
+                rangeConfig.rangeSize();
 
-        if (concurrencyConfig.isUnboundedParallelExecution(rangeConfig)) {
-            logger.info("Calculating " + graphClient.description() + " ranges");
+        logger.info("Estimated number of {} to export: {}, Range size: {}, Effective concurrency: {}",
+                description,
+                estimatedNumberOfItemsInGraph,
+                rangeSize,
+                effectiveConcurrency);
 
-            long rangeSize = (estimatedNumberOfItemsInGraph / concurrencyConfig.concurrency()) + 1;
-
-            logger.info("Estimated number of items to export: {}, Range size: {}",
-                    estimatedNumberOfItemsInGraph,
-                    rangeSize);
-
-            return new RangeFactory(
-                    rangeSize,
-                    rangeConfig.numberOfItemsToExport(),
-                    rangeConfig.numberOfItemsToSkip(),
-                    estimatedNumberOfItemsInGraph);
-        } else {
-            return new RangeFactory(
-                    rangeConfig.rangeSize(),
-                    rangeConfig.numberOfItemsToExport(),
-                    rangeConfig.numberOfItemsToSkip(),
-                    estimatedNumberOfItemsInGraph);
-        }
+        return new RangeFactory(
+                rangeSize,
+                rangeConfig.numberOfItemsToExport(),
+                rangeConfig.numberOfItemsToSkip(),
+                estimatedNumberOfItemsInGraph,
+                effectiveConcurrency);
     }
 
     private final long rangeSize;
     private final long numberOfItemsToExport;
+    private final int concurrency;
     private final long rangeUpperBound;
     private final AtomicLong currentEnd;
 
     private RangeFactory(long rangeSize,
                          long numberOfItemsToExport,
                          long numberOfItemsToSkip,
-                         long estimatedNumberOfItemsInGraph) {
+                         long estimatedNumberOfItemsInGraph,
+                         int concurrency) {
         this.rangeSize = rangeSize;
         this.numberOfItemsToExport = numberOfItemsToExport;
+        this.concurrency = concurrency;
         this.rangeUpperBound = numberOfItemsToExport == Long.MAX_VALUE ?
                 estimatedNumberOfItemsInGraph :
                 numberOfItemsToExport + numberOfItemsToSkip;
@@ -93,5 +97,9 @@ public class RangeFactory {
     public boolean isExhausted() {
         long end = currentEnd.get();
         return end == -1 || end >= rangeUpperBound;
+    }
+
+    public int concurrency() {
+        return concurrency;
     }
 }

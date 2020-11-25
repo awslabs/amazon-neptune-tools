@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.EdgesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.NodesWriterFactory;
@@ -35,7 +36,7 @@ public class GraphElementTypes {
         }
 
         @Override
-        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures) {
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, LabModeFeatures labModeFeatures) {
             return new NodesClient(g, tokensOnly, stats, labModeFeatures);
         }
 
@@ -57,7 +58,7 @@ public class GraphElementTypes {
         }
 
         @Override
-        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures) {
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, LabModeFeatures labModeFeatures) {
             return new EdgesClient(g, tokensOnly, stats, labModeFeatures);
         }
 

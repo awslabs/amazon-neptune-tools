@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
@@ -21,7 +22,10 @@ import java.util.Collection;
 
 public interface GraphElementType<T> {
     String name();
+
     Collection<String> tokenNames();
-    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, Collection<String> labModeFeatures);
+
+    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, LabModeFeatures labModeFeatures);
+
     WriterFactory<T> writerFactory();
 }

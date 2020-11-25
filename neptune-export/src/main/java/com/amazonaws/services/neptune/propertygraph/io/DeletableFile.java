@@ -35,10 +35,12 @@ class DeletableFile implements AutoCloseable {
 
     @Override
     public void close() {
-        boolean deletedOriginalFile = file.delete();
+        if (file.exists()){
+            boolean deletedOriginalFile = file.delete();
 
-        if (!deletedOriginalFile) {
-            throw new IllegalStateException("Unable to delete file: " + file.getAbsolutePath());
+            if (!deletedOriginalFile) {
+                throw new IllegalStateException("Unable to delete file: " + file.getAbsolutePath());
+            }
         }
     }
 }

@@ -12,13 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementTypes;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public enum Scope {
 
@@ -30,7 +32,7 @@ public enum Scope {
                                                                        TokensOnly tokensOnly,
                                                                        EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
-                                                                       Collection<String> labModeFeatures) {
+                                                                       LabModeFeatures labModeFeatures) {
 
             Collection<ExportSpecification<?>> results = new ArrayList<>();
 
@@ -85,7 +87,7 @@ public enum Scope {
                                                                        TokensOnly tokensOnly,
                                                                        EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
-                                                                       Collection<String> labModeFeatures) {
+                                                                       LabModeFeatures labModeFeatures) {
             if (graphSchema.isEmpty()) {
                 return Collections.singletonList(
                         new ExportSpecification<>(
@@ -125,7 +127,7 @@ public enum Scope {
                                                                        TokensOnly tokensOnly,
                                                                        EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
-                                                                       Collection<String> labModeFeatures) {
+                                                                       LabModeFeatures labModeFeatures) {
             if (graphSchema.isEmpty()) {
                 return Collections.singletonList(
                         new ExportSpecification<>(
@@ -171,6 +173,6 @@ public enum Scope {
             TokensOnly tokensOnly,
             EdgeLabelStrategy edgeLabelStrategy,
             ExportStats stats,
-            Collection<String> labModeFeatures);
+            LabModeFeatures labModeFeatures);
 
 }
