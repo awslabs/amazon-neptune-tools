@@ -84,4 +84,9 @@ public class AllLabels implements LabelsFilter {
     public boolean isEmpty() {
         return false;
     }
+
+    @Override
+    public String description(String element) {
+        return String.format("all %s", element);
+    }
 }

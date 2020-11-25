@@ -103,4 +103,10 @@ public class SpecifiedLabels implements LabelsFilter {
     public boolean isEmpty() {
         return labels.isEmpty();
     }
+
+    @Override
+    public String description(String element) {
+        String labelList = labels.stream().map(l -> String.format("'%s'", l.labelsAsString())).collect(Collectors.joining(" or "));
+        return String.format("%s with label(s) %s", element, labelList);
+    }
 }

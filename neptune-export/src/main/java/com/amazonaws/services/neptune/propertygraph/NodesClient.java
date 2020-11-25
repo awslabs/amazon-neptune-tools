@@ -123,9 +123,10 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
             return rangeConfig.approxNodeCount();
         }
 
-        System.err.println("Counting nodes...");
+        String description = labelsFilter.description("nodes");
+        System.err.println(String.format("Counting %s...", description));
 
-        return Timer.timedActivity("counting nodes", (Activity.Callable<Long>) () ->
+        return Timer.timedActivity(String.format("counting %s", description), (Activity.Callable<Long>) () ->
         {
             GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter).count();
 

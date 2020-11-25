@@ -126,9 +126,10 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
             return rangeConfig.approxEdgeCount();
         }
 
-        System.err.println("Counting edges...");
+        String description = labelsFilter.description("edges");
+        System.err.println(String.format("Counting %s...", description));
 
-        return Timer.timedActivity("counting edges", (Activity.Callable<Long>) () -> {
+        return Timer.timedActivity(String.format("counting %s", description), (Activity.Callable<Long>) () -> {
             GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
             logger.info(GremlinQueryDebugger.queryAsString(t));
 

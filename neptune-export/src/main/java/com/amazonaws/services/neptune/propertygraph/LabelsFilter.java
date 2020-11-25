@@ -39,4 +39,6 @@ public interface LabelsFilter {
     LabelsFilter union(Collection<Label> labels);
 
     boolean isEmpty();
+
+    String description(String element);
 }
