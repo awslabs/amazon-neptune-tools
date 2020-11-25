@@ -38,25 +38,26 @@ public class GraphElementSchemas {
 
                 for (JsonNode propertyNode : propertiesArray) {
 
-                    String key = propertyNode.path("property").textValue();
+                    if (propertyNode.isObject()) {
+                        String key = propertyNode.path("property").textValue();
 
-                    DataType dataType = propertyNode.has("dataType") ?
-                            Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue()) :
-                            DataType.None;
-                    boolean isMultiValue = propertyNode.has("isMultiValue") ?
-                            propertyNode.path("isMultiValue").booleanValue() :
-                            false;
-                    boolean isNullable = propertyNode.has("isNullable") ?
-                            propertyNode.path("isNullable").booleanValue() :
-                            false;
+                        DataType dataType = propertyNode.has("dataType") ?
+                                Enum.valueOf(DataType.class, propertyNode.path("dataType").textValue()) :
+                                DataType.None;
+                        boolean isMultiValue = propertyNode.has("isMultiValue") &&
+                                propertyNode.path("isMultiValue").booleanValue();
+                        boolean isNullable = propertyNode.has("isNullable") &&
+                                propertyNode.path("isNullable").booleanValue();
 
-                    graphElementSchemas.getSchemaFor(label).put(
-                            key,
-                            new PropertySchema(
-                                    key,
-                                    isNullable,
-                                    dataType,
-                                    isMultiValue));
+                        graphElementSchemas.getSchemaFor(label).put(
+                                key,
+                                new PropertySchema(key, isNullable, dataType, isMultiValue));
+                    } else {
+                        String property = propertyNode.textValue();
+                        graphElementSchemas.getSchemaFor(label).put(
+                                property,
+                                new PropertySchema(property, false, DataType.None, false));
+                    }
                 }
             }
 
