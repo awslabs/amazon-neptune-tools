@@ -56,18 +56,20 @@ import dateutil.parser as dparser
 
 class NeptuneCSVReader:
     VERSION = 0.14
-    VERSION_DATE = '2020-11-26'
+    VERSION_DATE = '2020-11-27'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     VERTEX = 1
     EDGE = 2
 
-    def __init__(self, vbatch=1, ebatch=1, java_dates=False, max_rows=sys.maxsize, assume_utc=False):
+    def __init__(self, vbatch=1, ebatch=1, java_dates=False, 
+                 max_rows=sys.maxsize, assume_utc=False, stop_on_error=True):
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
         self.use_java_date = java_dates
         self.row_limit = max_rows
         self.assume_utc = assume_utc
+        self.stop_on_error = stop_on_error
         self.mode = self.VERTEX
         self.current_row = 0
 
@@ -99,6 +101,12 @@ class NeptuneCSVReader:
 
     def print_error(self,msg):
         print(msg, file=sys.stderr)
+
+    def set_stop_on_error(self,stop):
+        self.stop_on_error = stop
+
+    def get_stop_on_error(self,stop):
+        return self.stop_on_error
 
     # If use_java_date is not set, the date string from the CSV file is wrapped
     # as-is inside a datetime(). If use_java_date is set, the ISO date string
@@ -228,11 +236,14 @@ class NeptuneCSVReader:
        
         if seen != 0xF:
             self.print_error(f'Row {self.current_row} : For edge data, values must be provided for ~id,~label,~from and ~to')
-            sys.exit(1)
-
-        edge = f'.addE(\'{elabel}\').property(id,\'{eid}\')' 
-        edge += f'.from(\'{efrom}\').to(\'{eto}\')' 
-        edge += properties 
+            if self.stop_on_error:
+                sys.exit(1)
+            else:
+                edge = ''
+        else:
+            edge = f'.addE(\'{elabel}\').property(id,\'{eid}\')' 
+            edge += f'.from(\'{efrom}\').to(\'{eto}\')' 
+            edge += properties 
         return edge
 
 
@@ -253,9 +264,13 @@ class NeptuneCSVReader:
        
         if seen != 1:
             self.print_error(f'Row {self.current_row} : Values must be provided for ~id')
-            sys.exit(1)
+            if self.stop_on_error:
+                sys.exit(1)
+            else:
+                vertex = ''
+        else:
+            vertex = f'.addV(\'{vlabel}\').property(id,\'{vid}\')' + properties        
 
-        vertex = f'.addV(\'{vlabel}\').property(id,\'{vid}\')' + properties        
         return vertex
         
     # Start processing the file and try to detect if the data describes
@@ -292,6 +307,8 @@ if __name__ == '__main__':
                               java_dates is also specified.')
     parser.add_argument('-rows', type=int,
                         help='Specify the maximum number of rows to process. By default the whole file is processed')
+    parser.add_argument('-all_errors', action='store_true',
+                        help='Show all errors. By default processing stops after any error in the CSV is encountered')
 
     args = parser.parse_args()
     ncsv.set_batch_sizes(vbatch=args.vb, ebatch=args.eb)
@@ -299,4 +316,5 @@ if __name__ == '__main__':
     if args.rows is not None:
         ncsv.set_max_rows(args.rows)
     ncsv.set_assume_utc(args.assume_utc)
+    ncsv.set_stop_on_error(not(args.all_errors))
     ncsv.process_csv_file(args.csvfile)
