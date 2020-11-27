@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3
 # Copyright 2020 Amazon.com, Inc. or its affiliates.
 # All Rights Reserved.
 #
@@ -40,8 +41,8 @@ Gremlin steps that represent the data in the CSV are written to 'stdout'.
 Current Limitations
 -------------------
 Currently the tool does not support the cardinality column header such as
-'age:Int(single)'. Likewise lists of values declared using the '[]' column
-header modifier are not supported.     
+'age:Int(single)'. However, lists of values declared using the '[]' column
+header modifier are supported.     
 
 None of the special column headers are allowed to be omitted except for ~label in the
 case of vertices.  In that case a default label "vertex" will be used. The special
@@ -54,10 +55,12 @@ import datetime
 import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.13
-    VERSION_DATE = '2020-11-20'
+    VERSION = 0.14
+    VERSION_DATE = '2020-11-26'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
+    VERTEX = 1
+    EDGE = 2
 
     def __init__(self, vbatch=1, ebatch=1, java_dates=False, max_rows=sys.maxsize, assume_utc=False):
         self.vertex_batch_size = vbatch
@@ -65,6 +68,8 @@ class NeptuneCSVReader:
         self.use_java_date = java_dates
         self.row_limit = max_rows
         self.assume_utc = assume_utc
+        self.mode = self.VERTEX
+        self.current_row = 0
 
     def get_batch_sizes(self):
         return {'vbatch': self.vertex_batch_size,
@@ -92,6 +97,8 @@ class NeptuneCSVReader:
     def get_assume_utc(self):
         return self.assume_utc
 
+    def print_error(self,msg):
+        print(msg, file=sys.stderr)
 
     # If use_java_date is not set, the date string from the CSV file is wrapped
     # as-is inside a datetime(). If use_java_date is set, the ISO date string
@@ -101,11 +108,12 @@ class NeptuneCSVReader:
     # local TZ when this code is run. However, if assume_utc is set, the date
     # will be treated as UTC instead of local time.
 
-    def process_date(self,row,key):
+    #def process_date(self,row,key):
+    def process_date(self,date_string):
         """Return an ISO 8601 date appropriately converted and wrapped"""
         if self.use_java_date:
             epoch = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
-            date =  dparser.isoparse(row[key])
+            date =  dparser.isoparse(date_string)
             if date.tzinfo is None:
                 if self.assume_utc:
                     date =  date.replace(tzinfo=datetime.timezone.utc)
@@ -114,14 +122,16 @@ class NeptuneCSVReader:
             delta = int((date - epoch).total_seconds() * 1000)
             val = f'new Date({delta})'
         else:
-            val = f'datetime(\'{row[key]}\')'
+            val = f'datetime(\'{date_string}\')'
         return val
 
     def process_vertices(self,reader):
         count = 0
         rows_processed = 0
+        self.mode = self.VERTEX
         batch = "g"
         for row in reader:
+            self.current_row += 1
             batch += self.process_vertex_row(row)
             count += 1
             if count == self.vertex_batch_size:
@@ -137,8 +147,10 @@ class NeptuneCSVReader:
     def process_edges(self,reader):
         count = 0
         rows_processed = 0
+        self.mode = self.EDGE
         batch = 'g'
         for row in reader:
+            self.current_row += 1
             batch += self.process_edge_row(row)
             count += 1
             if count == self.edge_batch_size:
@@ -151,65 +163,111 @@ class NeptuneCSVReader:
         if batch != 'g':        
             print(batch)
 
+    # Process properties taking into account any type information from the CSV
+    # header row. The header may optionally define a type and also a Set '[]'
+    # cardinality. Set cardinality is only supported by vertices. If no type
+    # information is present the values will be treated as strings.  Examples
+    # include:
+    #  name                  value
+    #  name:String           value:Int
+    #  names:String[]        values:Int[]
+
     def process_property(self,row,key):
+        cardinality = ''
+        result = ''
         kt = key.split(':')
         if len(kt) > 1:
-            if kt[1].upper() in self.INTEGERS:
-                value = int(row[key])
-            elif kt[1].upper() in self.FLOATS:
-                value = float(row[key])
-            elif kt[1].upper() == 'DATE':
-                value = self.process_date(row,key)
+            if kt[1].endswith('[]'):
+                if self.mode == self.EDGE:
+                    self.print_error(f'Row {self.current_row}: Only vertices can have Set cardinality properties')
+                    sys.exit(1)
+                else:
+                    kt[1] = kt[1][0:-2]
+                    cardinality = 'set,'
+                    members = row[key].split(';')
             else:
-                value = f'\'{row[key]}\''
-        else:
-            value = f'\'{row[key]}\''
-        return f'.property(\'{kt[0]}\',{value})'  
+                members = [row[key]]
 
+            if kt[1].upper() in self.INTEGERS:
+                values = [int(x) for x in members]
+            elif kt[1].upper() in self.FLOATS:
+                values = [float(x) for x in members]
+            elif kt[1].upper() == 'DATE':
+                values = [self.process_date(x) for x in members]
+            else:
+                values = [f'\'{x}\'' for x in members] 
+            
+            for p in values:
+                result += f'.property({cardinality}\'{kt[0]}\',{p})'
+        else:
+            result = f'.property(\'{kt[0]}\',\'{row[key]}\')'
+        return result
+
+    # Process a row from a file of edge data. A check is made that each of the required
+    # column headers is present and that the row contains a value for each.
     def process_edge_row(self,r):
         properties = ''
+        seen = 0
         for k in r:
             if r[k] == '':
                 pass
             elif k == '~id':
                 eid = r['~id']
+                seen |= 0x1
             elif k == '~label':    
                elabel = r['~label']
+               seen |= 0x2
             elif k == '~from':    
                efrom = r['~from']
+               seen |= 0x4
             elif k == '~to':    
                eto = r['~to']
+               seen |= 0x8
             else:
                 properties += self.process_property(r,k)
        
+        if seen != 0xF:
+            self.print_error(f'Row {self.current_row} : For edge data, values must be provided for ~id,~label,~from and ~to')
+            sys.exit(1)
+
         edge = f'.addE(\'{elabel}\').property(id,\'{eid}\')' 
         edge += f'.from(\'{efrom}\').to(\'{eto}\')' 
-        edge += properties        
+        edge += properties 
         return edge
 
 
     def process_vertex_row(self,r):
         properties = ''
+        seen = 0
         vlabel = 'vertex'
         for k in r:
             if r[k] == '':
                 pass
             elif k == '~id':
                 vid = r['~id']
+                seen = 1
             elif k == '~label':    
                vlabel = r['~label']
             else:
                 properties += self.process_property(r,k)
        
+        if seen != 1:
+            self.print_error(f'Row {self.current_row} : Values must be provided for ~id')
+            sys.exit(1)
+
         vertex = f'.addV(\'{vlabel}\').property(id,\'{vid}\')' + properties        
         return vertex
         
+    # Start processing the file and try to detect if the data describes
+    # edges or vertices. If the file contains edges and one of ~from or
+    # ~to is missing, that will be detected later.
     def process_csv_file(self,fname):
         """Appropriately process the CSV file as either vertices or edges"""
+        self.current_row = 0
         with open(fname, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             
-            if '~from' in reader.fieldnames:
+            if '~from' in reader.fieldnames or '~to' in reader.fieldnames:
                 self.process_edges(reader)
             else:
                 self.process_vertices(reader)
