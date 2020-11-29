@@ -21,9 +21,12 @@ Gremlin steps that represent the data in the CSV are written to `stdout`.
 
 ### Current Limitations
 
-Currently the tool does not support cardinality column headers such as
-`age:Int(single)`. Likewise lists of values declared using the `[]` column
-header modifier are not supported.
+Currently the tool does not support the special cardinality column headers such as
+`age:Int(single)`. However, lists of values declared using the `[]` column
+header modifier are supported and will generate `property` keywords that use
+the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
+in the respective row/column position specify a list of values delimited by semicolons such
+as `1;2;3;4;5`.
 
 ### Running the tool
 
@@ -34,19 +37,38 @@ python csv-gremlin.py my-csvfile.csv
 ```
 Where `my-csvfile.csv` is the name of the file to be processed. There are some command line arguments that can be used to specify the size of the batches used for vertices and for edges. For example to use a batch size of 20 for each you can use the following command.
 ```
- python csv-gremlin.py  -vb 20 -eb 20 test.csv
+ python csv-gremlin.py  -vb 20 -eb 20 vertices.csv
 ```
 
-For columns that contain `Date` values you can choose to have the values used as-is and output in the form `datetime(<the original date string>)` in the Gremlin query or converted to the Java Date form of `new Date(<original date converted to an epoch offset>)`. The `-use_java_dates` argument should be specified if Java format date conversions are required. Further, if dates in the CSV file do not include Time Zone information you can choose to have them treated as local time or as UTC. To specify UTC time as the default use the `assume_utc` argument.
+By default all rows of  the CSV file will be processed. To process less rows you can use the `rows` argument to specify a maximum number of rows to use.
 
-By default all rows of  the CSV file will be processed. To process less rows you can use the `rows` argument to specify a maximum number of rows to process.
+### Date processing
+
+For columns that contain `Date` values you can choose to have the values used as-is and output in the form `datetime(<the original date string>)` or converted to the Java Date form of `new Date(<original date converted to an epoch offset>)`. The `-use_java_dates` argument should be specified if Java format date conversions are required. Further, if dates in the CSV file do not include Time Zone information you can choose to have them treated as local time or as UTC. To specify UTC time as the default use the `assume_utc` argument. 
+
+Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. The dafault behavior is to just take the value present in any `Date` column and copy it to the output. To validate `Date` columns you can run the tool with `-java_dates` enabled to check for any erros and then re-run  it without the option specified if you want to generate `datetime()` style dates in the Gremlin output. 
+
+### Error detection
+
+By default the tool will exit as soon as it finds any error in a CSV file. You can override this and have the tool attempt to find all
+errors using the `-all_errors` argument. This allows `csv-gremlin` to be used as a CSV validator as well as a Gremlin generator. Many of
+the most common errors can  be detected. These include:
+
+- Missing required headers or required values (such as for ~id)
+- Columns without a value for a defined header
+- Rows containing extra columns not declared in the header
+- Invalid dates
+- Invalid numeric values
+- Edge files that attempt to define sets of values using `[]`
+
+There are likely to be other errors that the tool does not detect. Please open an issue if you encounter any of these.
+
+### Getting help
 
 The help can always be displayed using the `-h` or `--help` command line arguments.
 ```
 $ python csv-gremlin.py -h
-usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc]
-                      [-rows ROWS]
-                      csvfile
+usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc] [-rows ROWS] [-all_errors] csvfile
 
 positional arguments:
   csvfile        The name of the CSV file to process
@@ -56,12 +78,10 @@ optional arguments:
   -v, --version  Display version information
   -vb VB         Set the vertex batch size to use (default 10)
   -eb EB         Set the edge batch size to use (default 10)
-  -java_dates    Use Java style "new Date()" instead of "datetime()"
-  -assume_utc    If date fields do not contain timezone information, assume
-                 they are in UTC. By default local time is assumed otherwise.
+  -java_dates    Use Java style "new Date()" instead of "datetime()". This option can also be used to force date validation.
+  -assume_utc    If date fields do not contain timezone information, assume they are in UTC. By default local time is assumed otherwise.
                  This option only applies if java_dates is also specified.
-  -rows ROWS     Specify the maximum number of rows to process. By default the
-                 whole file is processed
-
+  -rows ROWS     Specify the maximum number of rows to process. By default the whole file is processed
+  -all_errors    Show all errors. By default processing stops after any error in the CSV is encountered.
 
   ```
