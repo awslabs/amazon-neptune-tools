@@ -61,6 +61,6 @@ public class TrainingJobConfigBuilder {
     }
 
     public TrainingJobWriterConfig build() {
-        return new TrainingJobWriterConfig(nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures, nodeFeatureOverrides, edgeFeatureOverrides);
+        return new TrainingJobWriterConfig("training-job", nodeClassLabels, edgeClassLabels, word2VecNodeFeatures, numericalBucketFeatures, nodeFeatureOverrides, edgeFeatureOverrides);
     }
 }

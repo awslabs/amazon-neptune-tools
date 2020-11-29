@@ -24,7 +24,6 @@ import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.ObjectTagging;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.Upload;
@@ -40,20 +39,17 @@ import java.io.*;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.function.Function;
-
-import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_EXPORT_TAGS;
 
 public class NeptuneMachineLearningExportEventHandler implements NeptuneExportServiceEventHandler {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandler.class);
 
-    private static final String FILE_NAME = "training-job-configuration.json";
-
     private final String outputS3Path;
     private final Args args;
-    private final TrainingJobWriterConfig trainingJobWriterConfig;
+    private final Collection<TrainingJobWriterConfig> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
 
     public NeptuneMachineLearningExportEventHandler(String outputS3Path,
@@ -65,17 +61,17 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
         this.outputS3Path = outputS3Path;
         this.args = args;
-        this.trainingJobWriterConfig = createTrainingJobConfig(additionalParams);
+        this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
     }
 
-    private TrainingJobWriterConfig createTrainingJobConfig(ObjectNode additionalParams) {
+    private Collection<TrainingJobWriterConfig> createTrainingJobConfigCollection(ObjectNode additionalParams) {
         JsonNode neptuneMlNode = additionalParams.path("neptune_ml");
         if (neptuneMlNode.isMissingNode()) {
             logger.info("No 'neptune_ml' config node in additional params so creating default training config");
-            return new TrainingJobWriterConfig();
+            return Collections.singletonList(new TrainingJobWriterConfig());
         } else {
-            TrainingJobWriterConfig trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(neptuneMlNode);
+            Collection<TrainingJobWriterConfig> trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(neptuneMlNode);
             logger.info("Training job writer config: {}", trainingJobWriterConfig);
             return trainingJobWriterConfig;
         }
@@ -83,12 +79,12 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     @Override
     public void onBeforeExport(Args args) {
-        if (args.contains("export-pg") && !args.contains("--exclude-type-definitions")){
+        if (args.contains("export-pg") && !args.contains("--exclude-type-definitions")) {
             args.addFlag("--exclude-type-definitions");
         }
 
         if (args.contains("export-pg") &&
-                args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")){
+                args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")) {
             args.replace("export-pg", "export-pg-from-config");
         }
 
@@ -104,11 +100,11 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
 
-        if (args.contains("--export-id")){
+        if (args.contains("--export-id")) {
             args.removeOptions("--export-id");
         }
 
-        args.addOption("--export-id", new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date() ));
+        args.addOption("--export-id", new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
     }
 
     @Override
@@ -124,36 +120,49 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITH_DATATYPE;
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
-            File outputDirectory = outputPath.toFile();
-
-            File trainingJobConfigurationFile = new File(outputPath.toFile(), FILE_NAME);
-
-            try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-                new JobTrainingConfigurationFileWriter(
-                        graphSchema,
-                        createJsonGenerator(writer),
-                        getColumnName,
-                        trainingJobWriterConfig).write();
-            }
-
-            if (StringUtils.isNotEmpty(outputS3Path)) {
-                Timer.timedActivity("uploading training job configuration file to S3",
-                        (CheckedActivity.Runnable) () -> {
-                            S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
-                            uploadTrainingJobConfigurationFileToS3(
-                                    transferManager.get(),
-                                    trainingJobConfigurationFile,
-                                    outputS3ObjectInfo);
-                        });
+            for (TrainingJobWriterConfig trainingJobWriterConfig : trainingJobWriterConfigCollection) {
+                createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, getColumnName, transferManager);
             }
         }
     }
 
-    private void uploadTrainingJobConfigurationFileToS3(TransferManager transferManager,
+    private void createTrainingJobConfigurationFile(TrainingJobWriterConfig trainingJobWriterConfig,
+                                                    Path outputPath,
+                                                    GraphSchema graphSchema,
+                                                    Function<PropertySchema, String> getColumnName,
+                                                    TransferManagerWrapper transferManager) throws Exception {
+
+        File outputDirectory = outputPath.toFile();
+        String filename = String.format("%s.json", trainingJobWriterConfig.name());
+        File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
+
+        try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
+            new JobTrainingConfigurationFileWriter(
+                    graphSchema,
+                    createJsonGenerator(writer),
+                    getColumnName,
+                    trainingJobWriterConfig).write();
+        }
+
+        if (StringUtils.isNotEmpty(outputS3Path)) {
+            Timer.timedActivity("uploading training job configuration file to S3",
+                    (CheckedActivity.Runnable) () -> {
+                        S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
+                        uploadTrainingJobConfigurationFileToS3(
+                                filename,
+                                transferManager.get(),
+                                trainingJobConfigurationFile,
+                                outputS3ObjectInfo);
+                    });
+        }
+    }
+
+    private void uploadTrainingJobConfigurationFileToS3(String filename,
+                                                        TransferManager transferManager,
                                                         File trainingJobConfigurationFile,
                                                         S3ObjectInfo outputS3ObjectInfo) throws IOException {
 
-        S3ObjectInfo s3ObjectInfo = outputS3ObjectInfo.withNewKeySuffix(FILE_NAME);
+        S3ObjectInfo s3ObjectInfo = outputS3ObjectInfo.withNewKeySuffix(filename);
 
         try (InputStream inputStream = new FileInputStream(trainingJobConfigurationFile)) {
 

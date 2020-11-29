@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,9 +24,32 @@ import java.util.stream.Collectors;
 public class TrainingJobWriterConfig {
 
     public static final Collection<Double> DEFAULT_SPLIT_RATES = Arrays.asList(0.7, 0.1, 0.2);
+    private static final String DEFAULT_NAME = "training-job-configuration";
 
-    public static TrainingJobWriterConfig fromJson(JsonNode json) {
+    public static Collection<TrainingJobWriterConfig> fromJson(JsonNode json) {
 
+        Collection<TrainingJobWriterConfig> results = new ArrayList<>();
+
+        if (json.isArray()) {
+            ArrayNode configNodes = (ArrayNode) json;
+            int index = 1;
+            for (JsonNode configNode : configNodes) {
+                results.add(getTrainingJobWriterConfig(configNode, index++));
+            }
+        } else {
+            results.add(getTrainingJobWriterConfig(json, 1));
+        }
+
+        Set<String> names = results.stream().map(TrainingJobWriterConfig::name).collect(Collectors.toSet());
+
+        if (names.size() < results.size()) {
+            throw new IllegalStateException(String.format("Training job configuration names must be unique: %s", names));
+        }
+
+        return results;
+    }
+
+    private static TrainingJobWriterConfig getTrainingJobWriterConfig(JsonNode json, int index) {
         Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
         Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
@@ -34,6 +58,10 @@ public class TrainingJobWriterConfig {
         Collection<FeatureOverrideConfig> edgeFeatureOverrides = new ArrayList<>();
 
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES).parseSplitRates();
+
+        String name = json.has("name") ?
+                json.get("name").textValue() :
+                index > 1 ? String.format("%s-%s", DEFAULT_NAME, index) : DEFAULT_NAME;
 
         if (json.has("targets")) {
             JsonNode labels = json.path("targets");
@@ -66,6 +94,7 @@ public class TrainingJobWriterConfig {
         }
 
         return new TrainingJobWriterConfig(
+                name,
                 nodeClassLabels,
                 edgeClassLabels,
                 word2VecNodeFeatures,
@@ -74,6 +103,7 @@ public class TrainingJobWriterConfig {
                 edgeFeatureOverrides);
     }
 
+    private final String name;
     private final Map<Label, LabelConfig> nodeClassLabels;
     private final Map<Label, LabelConfig> edgeClassLabels;
     private final Collection<Word2VecConfig> word2VecNodeFeatures;
@@ -82,7 +112,8 @@ public class TrainingJobWriterConfig {
     private final Collection<FeatureOverrideConfig> edgeFeatureOverrides;
 
     public TrainingJobWriterConfig() {
-        this(Collections.emptyMap(),
+        this(DEFAULT_NAME,
+                Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -90,12 +121,13 @@ public class TrainingJobWriterConfig {
                 Collections.emptyList());
     }
 
-    public TrainingJobWriterConfig(Map<Label, LabelConfig> nodeClassLabels,
+    public TrainingJobWriterConfig(String name, Map<Label, LabelConfig> nodeClassLabels,
                                    Map<Label, LabelConfig> edgeClassLabels,
                                    Collection<Word2VecConfig> word2VecNodeFeatures,
                                    Collection<NumericalBucketFeatureConfig> numericalBucketFeatures,
                                    Collection<FeatureOverrideConfig> nodeFeatureOverrides,
                                    Collection<FeatureOverrideConfig> edgeFeatureOverrides) {
+        this.name = name;
         this.nodeClassLabels = nodeClassLabels;
         this.edgeClassLabels = edgeClassLabels;
         this.word2VecNodeFeatures = word2VecNodeFeatures;
@@ -216,6 +248,10 @@ public class TrainingJobWriterConfig {
                 ", nodeFeatureOverrides=" + nodeFeatureOverrides +
                 ", edgeFeatureOverrides=" + edgeFeatureOverrides +
                 '}';
+    }
+
+    public String name() {
+        return name;
     }
 
     public static class Word2VecConfig {
@@ -399,7 +435,7 @@ public class TrainingJobWriterConfig {
             return properties.size() == 1;
         }
 
-        public String firstProperty(){
+        public String firstProperty() {
             return properties.iterator().next();
         }
 
