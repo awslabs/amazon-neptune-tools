@@ -56,7 +56,7 @@ import dateutil.parser as dparser
 
 class NeptuneCSVReader:
     VERSION = 0.14
-    VERSION_DATE = '2020-11-27'
+    VERSION_DATE = '2020-11-29'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     VERTEX = 1
@@ -99,14 +99,17 @@ class NeptuneCSVReader:
     def get_assume_utc(self):
         return self.assume_utc
 
-    def print_error(self,msg):
-        print(msg, file=sys.stderr)
-
     def set_stop_on_error(self,stop):
         self.stop_on_error = stop
 
     def get_stop_on_error(self,stop):
         return self.stop_on_error
+
+    def print_error(self,msg):
+        txt = f'Row {self.current_row}: {msg}'
+        print(txt, file=sys.stderr)
+        if self.stop_on_error:
+            sys.exit(1)
 
     # If use_java_date is not set, the date string from the CSV file is wrapped
     # as-is inside a datetime(). If use_java_date is set, the ISO date string
@@ -116,9 +119,11 @@ class NeptuneCSVReader:
     # local TZ when this code is run. However, if assume_utc is set, the date
     # will be treated as UTC instead of local time.
 
-    #def process_date(self,row,key):
     def process_date(self,date_string):
         """Return an ISO 8601 date appropriately converted and wrapped"""
+        if date_string is None:
+            return None
+
         if self.use_java_date:
             epoch = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
             date =  dparser.isoparse(date_string)
@@ -179,15 +184,26 @@ class NeptuneCSVReader:
     #  name                  value
     #  name:String           value:Int
     #  names:String[]        values:Int[]
+    #
+    # This method attempts to catch errors in the CSV file such as invalid dates
+    # and numbers, and missing required values for a column. When print_error is
+    # called it will check to see if processing is allowed to continue. If it is
+    # not it will exit. An exception is made in the case of an edge file that is
+    # attempting to specify set cardinality properties. If that is detected, 
+    # processing is stopped immediately.
 
     def process_property(self,row,key):
         cardinality = ''
         result = ''
+        if key is None:
+            self.print_error('Unexpected column with no header.')
+            return ''
+
         kt = key.split(':')
         if len(kt) > 1:
             if kt[1].endswith('[]'):
                 if self.mode == self.EDGE:
-                    self.print_error(f'Row {self.current_row}: Only vertices can have Set cardinality properties')
+                    self.print_error('Only vertices can have Set cardinality properties')
                     sys.exit(1)
                 else:
                     kt[1] = kt[1][0:-2]
@@ -196,19 +212,43 @@ class NeptuneCSVReader:
             else:
                 members = [row[key]]
 
-            if kt[1].upper() in self.INTEGERS:
-                values = [int(x) for x in members]
-            elif kt[1].upper() in self.FLOATS:
-                values = [float(x) for x in members]
-            elif kt[1].upper() == 'DATE':
-                values = [self.process_date(x) for x in members]
-            else:
-                values = [f'\'{x}\'' for x in members] 
-            
-            for p in values:
-                result += f'.property({cardinality}\'{kt[0]}\',{p})'
+            try:
+                if kt[1].upper() in self.INTEGERS:
+                    values = [int(x) for x in members]
+                elif kt[1].upper() in self.FLOATS:
+                    values = [float(x) for x in members]
+                elif kt[1].upper() == 'DATE':
+                    values = [self.process_date(x) for x in members]
+                else:
+                    values = [f'\'{x}\'' for x in members] 
+
+            except TypeError as te:
+                result = ''
+                msg = f'For column [{kt[0]}] {str(te)}'
+                self.print_error(msg)
+            except ValueError as ve:
+                result = ''
+                msg = f'For column [{kt[0]}] {str(ve)}'
+                self.print_error(msg)
+            except Exception as ex:
+                result = ''
+                msg = f'For column [{kt[0]}] {str(ex)}'
+                self.print_error(msg)
+            else:    
+                if None in values:
+                    msg = f'For column [{kt[0]}] a value is required'
+                    self.print_error(msg)
+                    result = ''
+                else:
+                    for p in values:
+                        result += f'.property({cardinality}\'{kt[0]}\',{p})'
         else:
-            result = f'.property(\'{kt[0]}\',\'{row[key]}\')'
+            if row[key] is None:
+                result = ''
+                msg = f'For column [{kt[0]}] a value is required.'
+                self.print_error(msg)
+            else:
+                result = f'.property(\'{kt[0]}\',\'{row[key]}\')'
         return result
 
     # Process a row from a file of edge data. A check is made that each of the required
@@ -235,11 +275,8 @@ class NeptuneCSVReader:
                 properties += self.process_property(r,k)
        
         if seen != 0xF:
-            self.print_error(f'Row {self.current_row} : For edge data, values must be provided for ~id,~label,~from and ~to')
-            if self.stop_on_error:
-                sys.exit(1)
-            else:
-                edge = ''
+            self.print_error('For edge data, values must be provided for ~id,~label,~from and ~to')
+            edge = ''
         else:
             edge = f'.addE(\'{elabel}\').property(id,\'{eid}\')' 
             edge += f'.from(\'{efrom}\').to(\'{eto}\')' 
@@ -263,11 +300,8 @@ class NeptuneCSVReader:
                 properties += self.process_property(r,k)
        
         if seen != 1:
-            self.print_error(f'Row {self.current_row} : Values must be provided for ~id')
-            if self.stop_on_error:
-                sys.exit(1)
-            else:
-                vertex = ''
+            self.print_error('Values must be provided for ~id')
+            vertex = ''
         else:
             vertex = f'.addV(\'{vlabel}\').property(id,\'{vid}\')' + properties        
 
@@ -300,7 +334,8 @@ if __name__ == '__main__':
     parser.add_argument('-eb', type=int, default=10,
                         help='Set the edge batch size to use (default %(default)s)')
     parser.add_argument('-java_dates', action='store_true',
-                        help='Use Java style "new Date()" instead of "datetime()"')
+                        help='Use Java style "new Date()" instead of "datetime()".\
+                              This option can also be used to force date validation.')
     parser.add_argument('-assume_utc', action='store_true',
                         help='If date fields do not contain timezone information, assume they are in UTC.\
                               By default local time is assumed otherwise. This option only applies if\
@@ -308,7 +343,7 @@ if __name__ == '__main__':
     parser.add_argument('-rows', type=int,
                         help='Specify the maximum number of rows to process. By default the whole file is processed')
     parser.add_argument('-all_errors', action='store_true',
-                        help='Show all errors. By default processing stops after any error in the CSV is encountered')
+                        help='Show all errors. By default processing stops after any error in the CSV is encountered.')
 
     args = parser.parse_args()
     ncsv.set_batch_sizes(vbatch=args.vb, ebatch=args.eb)
