@@ -38,7 +38,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.function.Function;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_EXPORT_TAGS;
@@ -101,6 +103,12 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
         if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
             args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
+
+        if (args.contains("--export-id")){
+            args.removeOptions("--export-id");
+        }
+
+        args.addOption("--export-id", new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date() ));
     }
 
     @Override

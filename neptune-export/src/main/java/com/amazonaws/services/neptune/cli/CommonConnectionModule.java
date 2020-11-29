@@ -15,10 +15,12 @@ package com.amazonaws.services.neptune.cli;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
+import com.amazonaws.services.neptune.export.EndpointValidator;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.function.Supplier;
@@ -85,7 +87,7 @@ public class CommonConnectionModule {
 
         return new ConnectionConfig(
                 clusterId,
-                endpoints,
+                EndpointValidator.validate(endpoints),
                 port,
                 networkLoadBalancerEndpoint,
                 applicationLoadBalancerEndpoint,
