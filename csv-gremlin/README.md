@@ -51,7 +51,7 @@ Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. Th
 ### Error detection
 
 By default the tool will exit as soon as it finds any error in a CSV file. You can override this and have the tool attempt to find all
-errors using the `-all_errors` argument. This allows `csv-gremlin` to be used as a CSV validator as well as a Gremlin generator. Many of
+errors using the `-all_errors` argument. This allows `csv-gremlin` to be used as a Neptune CSV validator as well as a Gremlin generator. Many of
 the most common errors can  be detected. These include:
 
 - Missing required headers or required values (such as for ~id)
@@ -61,7 +61,12 @@ the most common errors can  be detected. These include:
 - Invalid numeric values
 - Edge files that attempt to define sets of values using `[]`
 
-There are likely to be other errors that the tool does not detect. Please open an issue if you encounter any of these.
+There is one case where the `-all_errors` argument is ignored. If an edge file includes any set identifiers `[]` in the header row, processing will stop immediately. There are likely to be other errors that the tool currently does not detect. Please open an issue if you encounter any of these.
+
+To find as many errors as possible in the file `my-file.csv`, including checking dates for validity, use the following arguments:
+```
+  python csv-gremlin -java_dates -all_errors my-file.csv
+```
 
 ### Getting help
 
