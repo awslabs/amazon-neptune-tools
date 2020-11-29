@@ -71,7 +71,7 @@ class NeptuneCSVReader:
         self.assume_utc = assume_utc
         self.stop_on_error = stop_on_error
         self.mode = self.VERTEX
-        self.current_row = 0
+        self.current_row = 1
 
     def get_batch_sizes(self):
         return {'vbatch': self.vertex_batch_size,
@@ -196,7 +196,7 @@ class NeptuneCSVReader:
         cardinality = ''
         result = ''
         if key is None:
-            self.print_error('Unexpected column with no header.')
+            self.print_error('Unexpected column(s) with no header.')
             return ''
 
         kt = key.split(':')
@@ -312,7 +312,7 @@ class NeptuneCSVReader:
     # ~to is missing, that will be detected later.
     def process_csv_file(self,fname):
         """Appropriately process the CSV file as either vertices or edges"""
-        self.current_row = 0
+        self.current_row = 1
         with open(fname, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             
