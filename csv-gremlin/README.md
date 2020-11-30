@@ -4,29 +4,24 @@ Convert Amazon Neptune format CSV files into Gremlin steps that can be used to l
 
 ### Overview
 
-This folder contains the code defining a `NeptuneCSVReader` class. The class is used to create a tool able to read CSV files that use the Amazon Neptune formatting
-rules and generate Gremlin steps from that data.  Those Gremlin steps can then be used to load the data into any TinkerPop compliant graph that allows for user defined Vertex and Edge IDs.
+This folder contains the code defining a `NeptuneCSVReader` class and an application that allows the class to be invoked along with various optional arguments. The tool can be used to read CSV files that use the Amazon Neptune formatting rules and generate Gremlin steps from that data.  Those Gremlin steps can then be used to load the data into any TinkerPop compliant graph that allows for user defined Vertex and Edge IDs. Errors in the CSV files can also be detected.
 
-The tool can detect and handle both the vertex and edge CSV file formats. It
+The tool can detect and handle both the vertex and edge CSV file formats. This is done by inspecting the CSV file header row. The tool also
 recognizes the Neptune type specifiers, such as `age:Int` and `birthday:Date`. If no type mofier is specified in the column header, a type of `String`
-is assumed.  It also handles rows containing sparse data such as `,,,`.
+is assumed as in `firstName`.  Rows containing sparse data such as `,,,` are handled appropriately.
 
-The tool also allows you to specify the batch size for vertices and edges. The
-default is set to 10 for each currently. Batching allows multiple vertices or
+Options are provided that allow you to specify the batch size for vertices and edges. The default for each is 10. Batching allows multiple vertices or
 edges, along with their properties, to be added in a single Gremlin query. This is often more efficient than loading them one at a time.
 
-For CSV files containing vertices, the special column headers `~id` and `~label` and their respective values are expected to be present. However, if `~label` is not present a default vertex lable of 'vertex' will be used. For CSV files containing edges all of the following special columns are expected to be present:  `~id`, `~label`, `~from`, `~to` and a value is expected for each in every row.
+For CSV files containing vertices, the special column headers `~id` and `~label` and their respective values are expected to be present. However, if `~label` is not present a default vertex lable of 'vertex' will be used. For CSV files containing edges all of the following special columns are expected to be present:  `~id`, `~label`, `~from`, `~to` and a value is expected for each in every row. In all cases, if `~id` is not present in the header row, an error will be generated.
 
-Gremlin steps that represent the data in the CSV are written to `stdout`.
+Gremlin steps that represent the data in the CSV are written to `stdout` errors are written to `stderr`. 
 
 ### Current Limitations
 
-Currently the tool does not support the special cardinality column headers such as
-`age:Int(single)`. However, lists of values declared using the `[]` column
-header modifier are supported and will generate `property` keywords that use
-the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
-in the respective row/column position specify a list of values delimited by semicolons such
-as `1;2;3;4;5`.
+Currently the tool does not support the special cardinality column headers such as `age:Int(single)`. However, lists of values declared using the `[]` column
+header modifier are supported and will generate `property` steps that use the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
+in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`.
 
 ### Running the tool
 
@@ -40,7 +35,7 @@ Where `my-csvfile.csv` is the name of the file to be processed. There are some c
  python csv-gremlin.py  -vb 20  vertices.csv
 ```
 
-By default all rows of  the CSV file will be processed. To process less rows you can use the `rows` argument to specify a maximum number of rows to use.
+By default all rows of  the CSV file will be processed. To process less rows you can use the `rows` argument to specify a maximum number of rows to use. The tool uses the CSV header to try and identify if the file contains vertex data or edge data. If either of `~from` or `~to` is present the file will be treated as if it contains edge data. In all other cases the tool will assume the CSV file contains vertex data. Note that if one but not both of `~from` and `~to` is present the tool will generate an error as both are required for files of edge data.
 
 ### Date processing
 
@@ -61,7 +56,9 @@ the most common errors can  be detected. These include:
 - Invalid numeric values
 - Edge files that attempt to define sets of values using `[]`
 
-There is one case where the `-all_errors` argument is ignored. If an edge file includes any set identifiers `[]` in the header row, processing will stop immediately. There are likely to be other errors that the tool currently does not detect. Please open an issue if you encounter any of these.
+There are a few cases where the `-all_errors` argument is ignored. They are all related to issues with the header row of a CSV file. If an edge file includes any set identifiers `[]` in the header row, processing will stop immediately. Likewise processing is aborted if the `~id` column is missing in the header of any CSV file. Finally processing will stop if any of `~label`, `~from`, `~to` are missing in what appears to be a file of edge definitions.
+
+There are likely to be other errors that the tool currently does not detect. Please open an issue if you encounter any of these.
 
 To find as many errors as possible in the file `my-file.csv`, including checking dates for validity, use the following arguments:
 ```
