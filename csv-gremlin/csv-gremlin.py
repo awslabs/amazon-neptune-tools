@@ -63,13 +63,15 @@ class NeptuneCSVReader:
     EDGE = 2
 
     def __init__(self, vbatch=1, ebatch=1, java_dates=False, 
-                 max_rows=sys.maxsize, assume_utc=False, stop_on_error=True):
+                 max_rows=sys.maxsize, assume_utc=False, 
+                 stop_on_error=True, silent_mode=False):
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
         self.use_java_date = java_dates
         self.row_limit = max_rows
         self.assume_utc = assume_utc
         self.stop_on_error = stop_on_error
+        self.silent_mode = silent_mode
         self.mode = self.VERTEX
         self.current_row = 1
 
@@ -102,8 +104,18 @@ class NeptuneCSVReader:
     def set_stop_on_error(self,stop):
         self.stop_on_error = stop
 
-    def get_stop_on_error(self,stop):
+    def get_stop_on_error(self):
         return self.stop_on_error
+
+    def set_silent_mode(self,silent):
+        self.silent_mode = silent
+
+    def get_silent_mode(self):
+        return self.silent_mode
+
+    def print_normal(self,msg):
+        if not self.silent_mode:
+            print(msg)
 
     def print_error(self,msg):
         txt = f'Row {self.current_row}: {msg}'
@@ -117,7 +129,9 @@ class NeptuneCSVReader:
     # epoch time. As Python cannot subtract a TZ aware date and a naiive date,
     # if no TZ offset is present in the CSV date, it is treated as being in
     # local TZ when this code is run. However, if assume_utc is set, the date
-    # will be treated as UTC instead of local time.
+    # will be treated as UTC instead of local time. If date_string is not a valid
+    # ISO 8601 date, isoparse will throw an exception. That exception needs to be
+    # handled by methods that call process_date.
 
     def process_date(self,date_string):
         """Return an ISO 8601 date appropriately converted and wrapped"""
@@ -149,13 +163,13 @@ class NeptuneCSVReader:
             count += 1
             if count == self.vertex_batch_size:
                 count = 0
-                print(batch)
+                self.print_normal(batch)
                 batch = 'g'
             rows_processed += 1
             if rows_processed == self.row_limit:
                 break
         if batch != 'g':        
-            print(batch)
+            self.print_normal(batch)
 
     def process_edges(self,reader):
         count = 0
@@ -168,13 +182,13 @@ class NeptuneCSVReader:
             count += 1
             if count == self.edge_batch_size:
                 count = 0
-                print(batch)
+                self.print_normal(batch)
                 batch = 'g'
             rows_processed += 1
             if rows_processed == self.row_limit:
                 break
         if batch != 'g':        
-            print(batch)
+            self.print_normal(batch)
 
     # Process properties taking into account any type information from the CSV
     # header row. The header may optionally define a type and also a Set '[]'
@@ -344,6 +358,8 @@ if __name__ == '__main__':
                         help='Specify the maximum number of rows to process. By default the whole file is processed')
     parser.add_argument('-all_errors', action='store_true',
                         help='Show all errors. By default processing stops after any error in the CSV is encountered.')
+    parser.add_argument('-silent', action='store_true',
+                        help='Enable silent mode. Only errors are reported. No Gremlin is generated.')
 
     args = parser.parse_args()
     ncsv.set_batch_sizes(vbatch=args.vb, ebatch=args.eb)
@@ -352,4 +368,5 @@ if __name__ == '__main__':
         ncsv.set_max_rows(args.rows)
     ncsv.set_assume_utc(args.assume_utc)
     ncsv.set_stop_on_error(not(args.all_errors))
+    ncsv.set_silent_mode(args.silent)
     ncsv.process_csv_file(args.csvfile)
