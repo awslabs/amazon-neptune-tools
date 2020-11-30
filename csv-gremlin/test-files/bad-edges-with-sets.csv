@@ -1,0 +1,2 @@
+~id,~label,~from,~to,my-set:Int[]
+ms-001,SetTest,p1,p2,1;2;3;4;5;6
