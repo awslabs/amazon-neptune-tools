@@ -7,7 +7,7 @@ Convert Amazon Neptune format CSV files into Gremlin steps that can be used to l
 This folder contains the code defining a `NeptuneCSVReader` class and an application that allows the class to be invoked along with various optional arguments. The tool can be used to read CSV files that use the Amazon Neptune formatting rules and generate Gremlin steps from that data.  Those Gremlin steps can then be used to load the data into any TinkerPop compliant graph that allows for user defined Vertex and Edge IDs. Errors in the CSV files can also be detected.
 
 The tool can detect and handle both the vertex and edge CSV file formats. This is done by inspecting the CSV file header row. The tool also
-recognizes the Neptune type specifiers, such as `age:Int` and `birthday:Date`. If no type mofier is specified in the column header, a type of `String`
+recognizes the Neptune type specifiers, such as `age:Int` and `birthday:Date`. If no type modifier is specified in the column header, a type of `String`
 is assumed as in `firstName`.  Rows containing sparse data such as `,,,` are handled appropriately.
 
 Options are provided that allow you to specify the batch size for vertices and edges. The default for each is 10. Batching allows multiple vertices or
