@@ -19,6 +19,7 @@
 @license:    Apache2
 @contact:    @krlawrence
 @deffield    created:  2020-11-17
+@deffield    lastUpdated:  2020-11-30
 
 Overview
 --------
@@ -56,7 +57,7 @@ import dateutil.parser as dparser
 
 class NeptuneCSVReader:
     VERSION = 0.14
-    VERSION_DATE = '2020-11-29'
+    VERSION_DATE = '2020-11-30'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     BOOLS = ('BOOL','BOOLEAN')
@@ -123,7 +124,10 @@ class NeptuneCSVReader:
         print(txt, file=sys.stderr)
         if self.stop_on_error:
             sys.exit(1)
-
+    
+    # The Amazon Neptune CSV format documentation states that any value other than
+    # 'true' in a column tagged as containing a Boolean value should be treated
+    # as 'false'
     def process_boolean(self,val):
         if val == 'true':
             result = 'true'
