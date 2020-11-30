@@ -25,6 +25,8 @@ Currently the tool does not support the special cardinality column headers such 
 header modifier are supported and will generate `property` steps that use the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
 in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`.
 
+The Neptune bulk loader allows the same ID to appear on multiple rows of a vertex CSV file. In such cases the first time the ID appears the vertex will be created and for subsequent rows the properties will be updated appropriately rather than a new vertex created. This technique is sometimes used to build up a property containing a set of values or to add new properties to a vertex using multiple CSV rows. Currently the tool does not try to recognize this repeating ID pattern. If an ID appears multiple times, Gremlin steps to add that vertex will be generated each time. An error will be thrown if that Gremlin is executed as an ID cannot be reused in that way from a Gremlin traversal.
+
 ### Running the tool
 
 The code is written in Python and has been tested using version 3.7.6. This tool does not support Python 2. Generating Gremlin steps from a CSV file is as simple as:
