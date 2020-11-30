@@ -67,13 +67,17 @@ To find as many errors as possible in the file `my-file.csv`, including checking
 ```
   python csv-gremlin -java_dates -all_errors my-file.csv
 ```
+To only see error messages and prevent any Gremlin steps from being generated the `-silent` argument can be used. This is useful if you want to check a large CSV file for errors before starting to generate Gremlin queries.
+```
+  python csv-gremlin -java_dates -all_errors -silent my-file.csv
+```
 
 ### Getting help
 
 The help can always be displayed using the `-h` or `--help` command line arguments.
 ```
 $ python csv-gremlin.py -h
-usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc] [-rows ROWS] [-all_errors] csvfile
+usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc] [-rows ROWS] [-all_errors] [-silent] csvfile
 
 positional arguments:
   csvfile        The name of the CSV file to process
@@ -84,9 +88,10 @@ optional arguments:
   -vb VB         Set the vertex batch size to use (default 10)
   -eb EB         Set the edge batch size to use (default 10)
   -java_dates    Use Java style "new Date()" instead of "datetime()". This option can also be used to force date validation.
-  -assume_utc    If date fields do not contain timezone information, assume they are in UTC. By default local time is assumed otherwise.
-                 This option only applies if java_dates is also specified.
+  -assume_utc    If date fields do not contain timezone information, assume they are in UTC. By default local time is assumed
+                 otherwise. This option only applies if java_dates is also specified.
   -rows ROWS     Specify the maximum number of rows to process. By default the whole file is processed
   -all_errors    Show all errors. By default processing stops after any error in the CSV is encountered.
+  -silent        Enable silent mode. Only errors are reported. No Gremlin is generated.
 
   ```
