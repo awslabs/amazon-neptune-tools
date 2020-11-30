@@ -35,9 +35,9 @@ The code is written in Python and has been tested using version 3.7.6. This tool
 ```
 python csv-gremlin.py my-csvfile.csv
 ```
-Where `my-csvfile.csv` is the name of the file to be processed. There are some command line arguments that can be used to specify the size of the batches used for vertices and for edges. For example to use a batch size of 20 for each you can use the following command.
+Where `my-csvfile.csv` is the name of the file to be processed. There are some command line arguments that can be used to specify the size of the batches used for vertices and for edges. For example to use a batch size of 20 for a file of vertices you can use the following command.
 ```
- python csv-gremlin.py  -vb 20 -eb 20 vertices.csv
+ python csv-gremlin.py  -vb 20  vertices.csv
 ```
 
 By default all rows of  the CSV file will be processed. To process less rows you can use the `rows` argument to specify a maximum number of rows to use.
