@@ -2,6 +2,8 @@
 
 Convert Amazon Neptune format CSV files into Gremlin steps that can be used to load the data.
 
+The Amazon Neptune CSV format is defined at https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html
+
 ### Overview
 
 This folder contains the code defining a `NeptuneCSVReader` class and an application that allows the class to be invoked along with various optional arguments. The tool can be used to read CSV files that use the Amazon Neptune formatting rules and generate Gremlin steps from that data.  Those Gremlin steps can then be used to load the data into any TinkerPop compliant graph that allows for user defined Vertex and Edge IDs. Errors in the CSV files can also be detected.
