@@ -45,6 +45,8 @@ import java.util.function.Function;
 
 public class NeptuneMachineLearningExportEventHandler implements NeptuneExportServiceEventHandler {
 
+    public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
+
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandler.class);
 
     private final String outputS3Path;
@@ -66,7 +68,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     }
 
     private Collection<TrainingJobWriterConfig> createTrainingJobConfigCollection(ObjectNode additionalParams) {
-        JsonNode neptuneMlNode = additionalParams.path("neptune_ml");
+        JsonNode neptuneMlNode = additionalParams.path(NEPTUNE_ML_PROFILE_NAME);
         if (neptuneMlNode.isMissingNode()) {
             logger.info("No 'neptune_ml' config node in additional params so creating default training config");
             return Collections.singletonList(new TrainingJobWriterConfig());

@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandler.NEPTUNE_ML_PROFILE_NAME;
+
 public class NeptuneExportService {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneExportService.class);
@@ -113,6 +115,10 @@ public class NeptuneExportService {
             }
         }
 
+        if (additionalParams.has(NEPTUNE_ML_PROFILE_NAME) && (!args.contains("--profile", NEPTUNE_ML_PROFILE_NAME))){
+            args.addOption("--profile", NEPTUNE_ML_PROFILE_NAME);
+        }
+
         Collection<String> profiles = args.getOptionValues("--profile");
 
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection();
@@ -126,7 +132,7 @@ public class NeptuneExportService {
 
         eventHandlerCollection.addHandler(eventHandler);
 
-        if (profiles.contains("neptune_ml")){
+        if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)){
             NeptuneMachineLearningExportEventHandler neptuneMlEventHandler = new NeptuneMachineLearningExportEventHandler(outputS3Path, additionalParams, args, profiles);
             eventHandlerCollection.addHandler(neptuneMlEventHandler);
         }
