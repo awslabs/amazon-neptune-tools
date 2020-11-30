@@ -59,6 +59,7 @@ class NeptuneCSVReader:
     VERSION_DATE = '2020-11-29'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
+    BOOLS = ('BOOL','BOOLEAN')
     VERTEX = 1
     EDGE = 2
 
@@ -122,6 +123,13 @@ class NeptuneCSVReader:
         print(txt, file=sys.stderr)
         if self.stop_on_error:
             sys.exit(1)
+
+    def process_boolean(self,val):
+        if val == 'true':
+            result = 'true'
+        else:
+            result = 'false'
+        return result
 
     # If use_java_date is not set, the date string from the CSV file is wrapped
     # as-is inside a datetime(). If use_java_date is set, the ISO date string
@@ -244,6 +252,8 @@ class NeptuneCSVReader:
                     values = [int(x) for x in members]
                 elif kt[1].upper() in self.FLOATS:
                     values = [float(x) for x in members]
+                elif kt[1].upper() in self.BOOLS:
+                    values = [self.process_boolean(x) for x in members]
                 elif kt[1].upper() == 'DATE':
                     values = [self.process_date(x) for x in members]
                 else:
