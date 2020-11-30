@@ -176,6 +176,19 @@ class NeptuneCSVReader:
         rows_processed = 0
         self.mode = self.EDGE
         batch = 'g'
+        errors = False
+
+        if not '~label' in reader.fieldnames:
+            self.print_error('For edges, the header row must include a ~label column')
+            errors = True
+
+        if not '~from' in reader.fieldnames or not '~to' in reader.fieldnames:
+            self.print_error('For edges, the header row must include both ~from and ~to columns')
+            errors = True
+
+        if errors:
+            sys.exit(1)
+
         for row in reader:
             self.current_row += 1
             batch += self.process_edge_row(row)
@@ -210,7 +223,7 @@ class NeptuneCSVReader:
         cardinality = ''
         result = ''
         if key is None:
-            self.print_error('Unexpected column(s) with no header.')
+            self.print_error('Unexpected additional column(s) with no header.')
             return ''
 
         kt = key.split(':')
@@ -265,8 +278,9 @@ class NeptuneCSVReader:
                 result = f'.property(\'{kt[0]}\',\'{row[key]}\')'
         return result
 
-    # Process a row from a file of edge data. A check is made that each of the required
-    # column headers is present and that the row contains a value for each.
+    # Process a row from a file of edge data. A check is made that a value for each 
+    # of the required column headers is provided. The header row itself will have 
+    # already been validated before we get here by process_edges.
     def process_edge_row(self,r):
         properties = ''
         seen = 0
@@ -329,6 +343,10 @@ class NeptuneCSVReader:
         self.current_row = 1
         with open(fname, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
+
+            if not '~id' in reader.fieldnames:
+                self.print_error('The header row must include an ~id column')
+                sys.exit(1)
             
             if '~from' in reader.fieldnames or '~to' in reader.fieldnames:
                 self.process_edges(reader)
