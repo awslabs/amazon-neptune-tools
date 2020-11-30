@@ -126,10 +126,10 @@ class NeptuneCSVReader:
             sys.exit(1)
     
     # The Amazon Neptune CSV format documentation states that any value other than
-    # 'true' in a column tagged as containing a Boolean value should be treated
-    # as 'false'
+    # 'true' (in any combination of upper and lowercase letters) in a column tagged 
+    # as containing a Boolean value should be treated as 'false'
     def process_boolean(self,val):
-        if val == 'true':
+        if val.upper() == 'TRUE':
             result = 'true'
         else:
             result = 'false'
