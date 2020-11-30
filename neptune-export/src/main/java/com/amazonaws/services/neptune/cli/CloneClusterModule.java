@@ -45,7 +45,19 @@ public class CloneClusterModule {
             "db.r5.4xlarge",
             "db.r5.8xlarge",
             "db.r5.12xlarge",
-            "db.t3.medium"})
+            "db.t3.medium",
+            "r4.large",
+            "r4.xlarge",
+            "r4.2xlarge",
+            "r4.4xlarge",
+            "r4.8xlarge",
+            "r5.large",
+            "r5.xlarge",
+            "r5.2xlarge",
+            "r5.4xlarge",
+            "r5.8xlarge",
+            "r5.12xlarge",
+            "t3.medium"})
     private String cloneClusterInstanceType;
 
     @Option(name = {"--clone-cluster-replica-count"}, description = "Number of read replicas to add to the cloned cluster (default, 0).")

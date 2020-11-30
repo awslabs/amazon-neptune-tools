@@ -147,13 +147,19 @@ public enum InstanceType {
     };
 
     public static InstanceType parse(String value){
-        String typeName = value.toLowerCase().replace(".", "_");
+
+        String typeName = value.startsWith("db.") ?
+                value :
+                String.format("db.%s", value);
+
+        typeName = typeName.toLowerCase().replace(".", "_");
+
         try
         {
             return InstanceType.valueOf(typeName);
 
         } catch (IllegalArgumentException e){
-            return db_r4_2xlarge;
+            return db_r5_2xlarge;
         }
     }
 
