@@ -161,7 +161,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
     }
 
     @Test
-    public void multiValueFloatFeatureForVertex() throws IOException {
+    public void shouldNotIncludeFeatureForMultiValueFloatFeatureForVertex() throws IOException {
 
         DataType dataType = DataType.Float;
         boolean isNullable = false;
@@ -186,23 +186,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         ArrayNode array = (ArrayNode) graph;
         ArrayNode features = (ArrayNode) array.get(0).path("features");
 
-        assertEquals(1, features.size());
-
-        JsonNode feature = features.get(0);
-
-        assertEquals("node", feature.path("feat_type").textValue());
-        assertEquals("numerical", feature.path("sub_feat_type").textValue());
-        assertEquals("Movie", feature.path("node_type").textValue());
-        assertEquals(";", feature.path("separator").textValue());
-        assertEquals("min-max", feature.path("norm").textValue());
-
-        ArrayNode cols = (ArrayNode) feature.path("cols");
-
-        assertEquals(2, cols.size());
-
-        assertEquals("~id", cols.get(0).textValue());
-        assertEquals("encoding", cols.get(1).textValue());
-
+        assertEquals(0, features.size());
     }
 
     @Test

@@ -294,15 +294,27 @@ public class JobTrainingConfigurationFileWriter {
             writeNumericalBucketFeature(label, firstPropertySchema);
         } else {
 
-            if (isSinglePropertyFeature){
-                PropertySchemaStats propertySchemaStats = labelSchema.getPropertySchemaStats(firstPropertySchema.property());
-                if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()){
-                    warnings.add(String.format("Unable to add numerical node feature: Node of type '%s' has a multi-value numerical property '%s' with differing numbers of values.",
-                            label.fullyQualifiedLabel(),
-                            firstPropertySchema.property()));
-                    return;
-                }
+            List<String> multiValueProperties = propertySchemas.stream()
+                    .filter(PropertySchema::isMultiValue)
+                    .map(PropertySchema::nameWithoutDataType)
+                    .collect(Collectors.toList());
+
+            if (!multiValueProperties.isEmpty()){
+                warnings.add(String.format("Unable to add numerical node feature: Node of type '%s' has one or more multi-value numerical properties: %s.",
+                        label.fullyQualifiedLabel(),
+                        multiValueProperties));
+                return;
             }
+
+//            if (isSinglePropertyFeature){
+//                PropertySchemaStats propertySchemaStats = labelSchema.getPropertySchemaStats(firstPropertySchema.property());
+//                if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()){
+//                    warnings.add(String.format("Unable to add numerical node feature: Node of type '%s' has a multi-value numerical property '%s' with differing numbers of values.",
+//                            label.fullyQualifiedLabel(),
+//                            firstPropertySchema.property()));
+//                    return;
+//                }
+//            }
 
             generator.writeStartObject();
             generator.writeStringField("feat_type", "node");
@@ -314,13 +326,13 @@ public class JobTrainingConfigurationFileWriter {
             }
             generator.writeEndArray();
             norm.addTo(generator);
-            if (isSinglePropertyFeature) {
-                if (firstPropertySchema.isMultiValue()) {
-                    writeSeparator(";");
-                } else if (StringUtils.isNotEmpty(separator)) {
-                    writeSeparator(separator);
-                }
-            }
+//            if (isSinglePropertyFeature) {
+//                if (firstPropertySchema.isMultiValue()) {
+//                    writeSeparator(";");
+//                } else if (StringUtils.isNotEmpty(separator)) {
+//                    writeSeparator(separator);
+//                }
+//            }
             generator.writeStringField("node_type", label.labelsAsString());
             generator.writeEndObject();
         }

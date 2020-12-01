@@ -31,6 +31,6 @@ public class ParseFeatureType {
                 return FeatureType.valueOf(type);
             }
         }
-        throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical', 'numerical_int', 'numerical_float' or 'category' value for %s", description));
+        throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical' or 'category' value for %s", description));
     }
 }

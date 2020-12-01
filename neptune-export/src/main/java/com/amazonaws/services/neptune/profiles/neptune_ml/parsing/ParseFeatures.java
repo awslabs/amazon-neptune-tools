@@ -60,6 +60,7 @@ public class ParseFeatures {
             if (isNumericalBucketFeature(node)) {
                 String description = "bucket_numerical feature";
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
+                FeatureType.bucket_numerical.validateHint(node, description, nodeType);
                 String property = new ParseProperty(node, description).parseSingleProperty();
                 TrainingJobWriterConfig.Range range = new ParseRange(node, description).parseRange();
                 int bucketCount = new ParseBucketCount(node, description).parseBucketCount();
@@ -79,6 +80,7 @@ public class ParseFeatures {
                 Label nodeType = new ParseNodeType(node, description).parseNodeType();
                 Collection<String> properties = new ParseProperty(node, description).parseMultipleProperties();
                 FeatureType type = new ParseFeatureType(node, description).parseFeatureType();
+                type.validateHint(node, description, nodeType);
                 Norm norm = new ParseNorm(node).parseNorm();
                 String separator = new ParseSeparator(node).parseSeparator();
                 TrainingJobWriterConfig.FeatureOverrideConfig config = new TrainingJobWriterConfig.FeatureOverrideConfig(nodeType, properties, type, norm, separator);
@@ -96,6 +98,7 @@ public class ParseFeatures {
                 Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
                 Collection<String> properties = new ParseProperty(node, description).parseMultipleProperties();
                 FeatureType type = new ParseFeatureType(node, description).parseFeatureType();
+                type.validateHint(node, description, edgeType);
                 Norm norm = new ParseNorm(node).parseNorm();
                 String separator = new ParseSeparator(node).parseSeparator();
                 featureOverrides.add(new TrainingJobWriterConfig.FeatureOverrideConfig(edgeType, properties, type, norm, separator));

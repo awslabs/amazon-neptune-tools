@@ -12,26 +12,45 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 
 public enum FeatureType {
-    category,
-    numerical,
-    word2vec,
-    bucket_numerical;
+    category{
+        @Override
+        void validateHint(JsonNode node, String description, Label label) {
+            // Do nothing
+        }
+    },
+    numerical{
+        @Override
+        void validateHint(JsonNode node, String description, Label label) {
+            if (node.has("separator")){
+                throw new IllegalArgumentException(String.format("Invalid 'separator' field for %s for '%s': numerical feature properties cannot contain multiple values.", description, label.fullyQualifiedLabel()));
+            }
+        }
+    },
+    word2vec{
+        @Override
+        void validateHint(JsonNode node, String description, Label label) {
+            // Do nothing
+        }
+    },
+    bucket_numerical{
+        @Override
+        void validateHint(JsonNode node, String description, Label label) {
+            if (node.has("separator")){
+                throw new IllegalArgumentException(String.format("Invalid 'separator' field for %s for '%s': numerical feature properties cannot contain multiple values.", description, label.fullyQualifiedLabel()));
+            }
+        }
+    };
 
     public void addTo(JsonGenerator generator) throws IOException {
         generator.writeStringField("sub_feat_type", name());
     }
 
-    public static boolean isValid(String s){
-        for (FeatureType value : FeatureType.values()) {
-            if (value.name().equals(s)){
-                return true;
-            }
-        }
-        return false;
-    }
+    abstract void validateHint(JsonNode node, String description, Label label);
 }
