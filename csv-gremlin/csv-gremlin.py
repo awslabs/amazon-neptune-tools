@@ -66,7 +66,7 @@ class NeptuneCSVReader:
 
     def __init__(self, vbatch=1, ebatch=1, java_dates=False, 
                  max_rows=sys.maxsize, assume_utc=False, 
-                 stop_on_error=True, silent_mode=False):
+                 stop_on_error=True, silent_mode=False,escape_dollar=False):
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
         self.use_java_date = java_dates
@@ -74,6 +74,7 @@ class NeptuneCSVReader:
         self.assume_utc = assume_utc
         self.stop_on_error = stop_on_error
         self.silent_mode = silent_mode
+        self.escape_dollar=escape_dollar
         self.mode = self.VERTEX
         self.current_row = 1
 
@@ -114,6 +115,12 @@ class NeptuneCSVReader:
 
     def get_silent_mode(self):
         return self.silent_mode
+
+    def set_escape_dollar(self,dollar):
+        self.escape_dollar = dollar
+
+    def get_escape_dollar(self):
+        return self.escape_dollar
 
     def print_normal(self,msg):
         if not self.silent_mode:
@@ -326,7 +333,8 @@ class NeptuneCSVReader:
             edge = f'.addE(\"{elabel}\").property(id,\"{eid}\")' 
             edge += f'.from(V(\"{efrom}\")).to(V(\"{eto}\"))' 
             edge += properties 
-            edge = edge.replace("$","\\$")
+            if self.escape_dollar:
+                edge = edge.replace("$","\\$")
         return edge
 
     # Process one row of a CSV file that has been determined to contain vertex data.
@@ -354,7 +362,9 @@ class NeptuneCSVReader:
             vertex = ''
         else:
             vertex = f'.addV(\"{vlabel}\").property(id,\"{vid}\")' + properties        
-            vertex = vertex.replace("$","\\$")
+            
+            if self.escape_dollar:
+                vertex = vertex.replace("$","\\$")
         return vertex
         
     # Start processing the file and try to detect if the data describes
@@ -400,6 +410,12 @@ if __name__ == '__main__':
                         help='Show all errors. By default processing stops after any error in the CSV is encountered.')
     parser.add_argument('-silent', action='store_true',
                         help='Enable silent mode. Only errors are reported. No Gremlin is generated.')
+    parser.add_argument('-escape_dollar', action='store_true',
+                        help='For any dollar signs found convert them to an escaped\
+                        form \$. This is needed if you are going to load the\
+                        generated Gremlin using a Groovy processor such as used by\
+                        the Gremlin Console. In Groovy strings, the $ sign is used\
+                        for interpolation')
 
     args = parser.parse_args()
     ncsv.set_batch_sizes(vbatch=args.vb, ebatch=args.eb)
@@ -409,4 +425,5 @@ if __name__ == '__main__':
     ncsv.set_assume_utc(args.assume_utc)
     ncsv.set_stop_on_error(not(args.all_errors))
     ncsv.set_silent_mode(args.silent)
+    ncsv.set_escape_dollar(args.escape_dollar)
     ncsv.process_csv_file(args.csvfile)
