@@ -19,7 +19,7 @@
 @license:    Apache2
 @contact:    @krlawrence
 @deffield    created:  2020-11-17
-@deffield    lastUpdated:  2020-11-30
+@deffield    lastUpdated:  2020-12-01
 
 Overview
 --------
@@ -56,8 +56,8 @@ import datetime
 import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.14
-    VERSION_DATE = '2020-11-30'
+    VERSION = 0.15
+    VERSION_DATE = '2020-12-01'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     BOOLS = ('BOOL','BOOLEAN')
@@ -121,6 +121,10 @@ class NeptuneCSVReader:
 
     def get_escape_dollar(self):
         return self.escape_dollar
+
+    def escape(self,string):
+        escaped = string.replace('"','\\"')
+        return escaped
 
     def print_normal(self,msg):
         if not self.silent_mode:
@@ -237,7 +241,6 @@ class NeptuneCSVReader:
     # not it will exit. An exception is made in the case of an edge file that is
     # attempting to specify set cardinality properties. If that is detected, 
     # processing is stopped immediately.
-
     def process_property(self,row,key):
         cardinality = ''
         result = ''
@@ -268,7 +271,7 @@ class NeptuneCSVReader:
                 elif kt[1].upper() == 'DATE':
                     values = [self.process_date(x) for x in members]
                 else:
-                    values = [f'"{x}"' for x in members] 
+                    values = [f'"{self.escape(x)}"' for x in members] 
 
             except TypeError as te:
                 result = ''
@@ -296,7 +299,7 @@ class NeptuneCSVReader:
                 msg = f'For column [{kt[0]}] a value is required.'
                 self.print_error(msg)
             else:
-                result = f'.property("{kt[0]}","{row[key]}")'
+                result = f'.property("{kt[0]}","{self.escape(row[key])}")'
         return result
 
     # Process a row from a file of edge data. A check is made that a value for each 
@@ -374,7 +377,7 @@ class NeptuneCSVReader:
         """Appropriately process the CSV file as either vertices or edges"""
         self.current_row = 1
         with open(fname, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
+            reader = csv.DictReader(csvfile,escapechar="\\")
 
             if not '~id' in reader.fieldnames:
                 self.print_error('The header row must include an ~id column')

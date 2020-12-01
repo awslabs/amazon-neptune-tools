@@ -1,7 +1,10 @@
-~id,text
-No quotes,No quotes
-'Single quotes','Single quotes'
-"Double quotes","Double quotes"
-Apostrophe',Apostrophe'
-Dollar$,Dollar$
-Escaped,The \"near\" future
+~id,text,moreText:String
+No quotes,No quotes,No quotes
+'Single quotes','Single quotes','Single quotes'
+"Double quotes","Double quotes","Double quotes"
+Apostrophe',Apostrophe',Apostrophe'
+"Apostrophe2'","Apostrophe2'","Apostrophe2'"
+Dollar$,Dollar$,Dollar$
+"Dollar2$","Dollar$","Dollar$"
+Escaped,The \"near\" future,The \"near\" future
+Escaped2,"The \"near\" future","The \"near\" future"
