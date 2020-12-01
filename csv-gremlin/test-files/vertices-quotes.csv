@@ -1,0 +1,7 @@
+~id,text
+No quotes,No quotes
+'Single quotes','Single quotes'
+"Double quotes","Double quotes"
+Apostrophe',Apostrophe'
+Dollar$,Dollar$
+Escaped,The \"near\" future
