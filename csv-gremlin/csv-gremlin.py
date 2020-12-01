@@ -261,7 +261,7 @@ class NeptuneCSVReader:
                 elif kt[1].upper() == 'DATE':
                     values = [self.process_date(x) for x in members]
                 else:
-                    values = [f'\'{x}\'' for x in members] 
+                    values = [f'"{x}"' for x in members] 
 
             except TypeError as te:
                 result = ''
@@ -282,19 +282,22 @@ class NeptuneCSVReader:
                     result = ''
                 else:
                     for p in values:
-                        result += f'.property({cardinality}\'{kt[0]}\',{p})'
+                        result += f'.property({cardinality}\"{kt[0]}\",{p})'
         else:
             if row[key] is None:
                 result = ''
                 msg = f'For column [{kt[0]}] a value is required.'
                 self.print_error(msg)
             else:
-                result = f'.property(\'{kt[0]}\',\'{row[key]}\')'
+                result = f'.property("{kt[0]}","{row[key]}")'
         return result
 
     # Process a row from a file of edge data. A check is made that a value for each 
     # of the required column headers is provided. The header row itself will have 
-    # already been validated before we get here by process_edges.
+    # already been validated before we get here by process_edges.  Any dollar
+    # signs ($) are replaced with their escaped version as in Groovy Strings the $ has
+    # a special meaning and causes the compiler to attempt interpolation. This becomes
+    # an issue once the Gremlin scripts that this tool generates are executed in some cases.
     def process_edge_row(self,r):
         properties = ''
         seen = 0
@@ -320,12 +323,17 @@ class NeptuneCSVReader:
             self.print_error('For edge data, values must be provided for ~id,~label,~from and ~to')
             edge = ''
         else:
-            edge = f'.addE(\'{elabel}\').property(id,\'{eid}\')' 
-            edge += f'.from(\'{efrom}\').to(\'{eto}\')' 
+            edge = f'.addE(\"{elabel}\").property(id,\"{eid}\")' 
+            edge += f'.from(V(\"{efrom}\")).to(V(\"{eto}\"))' 
             edge += properties 
+            edge = edge.replace("$","\\$")
         return edge
 
-
+    # Process one row of a CSV file that has been determined to contain vertex data.
+    # A check is made that a value has been seen (provided) for ~id. Any dollar
+    # signs ($) are replaced with their escaped version as in Groovy Strings the $ has
+    # a special meaning and causes the compiler to attempt interpolation. This becomes
+    # an issue once the Gremlin scripts that this tool generates are executed in some cases.
     def process_vertex_row(self,r):
         properties = ''
         seen = 0
@@ -345,8 +353,8 @@ class NeptuneCSVReader:
             self.print_error('Values must be provided for ~id')
             vertex = ''
         else:
-            vertex = f'.addV(\'{vlabel}\').property(id,\'{vid}\')' + properties        
-
+            vertex = f'.addV(\"{vlabel}\").property(id,\"{vid}\")' + properties        
+            vertex = vertex.replace("$","\\$")
         return vertex
         
     # Start processing the file and try to detect if the data describes
