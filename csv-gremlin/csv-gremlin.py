@@ -19,7 +19,7 @@
 @license:    Apache2
 @contact:    @krlawrence
 @deffield    created:  2020-11-17
-@deffield    lastUpdated:  2020-12-01
+@deffield    lastUpdated:  2020-12-02
 
 Overview
 --------
@@ -56,8 +56,8 @@ import datetime
 import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.15
-    VERSION_DATE = '2020-12-01'
+    VERSION = 0.16
+    VERSION_DATE = '2020-12-02'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     BOOLS = ('BOOL','BOOLEAN')
@@ -376,18 +376,21 @@ class NeptuneCSVReader:
     def process_csv_file(self,fname):
         """Appropriately process the CSV file as either vertices or edges"""
         self.current_row = 1
-        with open(fname, newline='') as csvfile:
-            reader = csv.DictReader(csvfile,escapechar="\\")
+        try:
+            with open(fname, newline='') as csvfile:
+                reader = csv.DictReader(csvfile,escapechar="\\")
 
-            if not '~id' in reader.fieldnames:
-                self.print_error('The header row must include an ~id column')
-                sys.exit(1)
-            
-            if '~from' in reader.fieldnames or '~to' in reader.fieldnames:
-                self.process_edges(reader)
-            else:
-                self.process_vertices(reader)
-            csvfile.close()
+                if not '~id' in reader.fieldnames:
+                    self.print_error('The header row must include an ~id column')
+                    sys.exit(1)
+                
+                if '~from' in reader.fieldnames or '~to' in reader.fieldnames:
+                    self.process_edges(reader)
+                else:
+                    self.process_vertices(reader)
+                csvfile.close()
+        except Exception as ex:
+            print(f'Unable to load the CSV file: {str(ex)}')
 
 if __name__ == '__main__':
     ncsv = NeptuneCSVReader()
