@@ -53,15 +53,17 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     private final Args args;
     private final Collection<TrainingJobWriterConfig> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
+    private final boolean createExportSubdirectory;
 
     public NeptuneMachineLearningExportEventHandler(String outputS3Path,
+                                                    boolean createExportSubdirectory,
                                                     ObjectNode additionalParams,
                                                     Args args,
                                                     Collection<String> profiles) {
-
         logger.info("Adding neptune_ml event handler");
 
         this.outputS3Path = outputS3Path;
+        this.createExportSubdirectory = createExportSubdirectory;
         this.args = args;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
@@ -189,7 +191,11 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     private S3ObjectInfo calculateOutputS3Path(File outputDirectory) {
         S3ObjectInfo outputBaseS3ObjectInfo = new S3ObjectInfo(outputS3Path);
-        return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
+        if (createExportSubdirectory){
+            return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
+        } else {
+            return outputBaseS3ObjectInfo;
+        }
     }
 
     private JsonGenerator createJsonGenerator(Writer writer) throws IOException {

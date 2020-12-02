@@ -15,6 +15,10 @@ package com.amazonaws.services.neptune.export;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandler;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
@@ -41,6 +45,8 @@ public class NeptuneExportService {
     private final String localOutputPath;
     private final boolean cleanOutputPath;
     private final String outputS3Path;
+    private final boolean createExportSubdirectory;
+    private final boolean overwriteExisting;
     private final String configFileS3Path;
     private final String queriesFileS3Path;
     private final String completionFileS3Path;
@@ -52,6 +58,8 @@ public class NeptuneExportService {
                                 String localOutputPath,
                                 boolean cleanOutputPath,
                                 String outputS3Path,
+                                boolean createExportSubdirectory,
+                                boolean overwriteExisting,
                                 String configFileS3Path,
                                 String queriesFileS3Path,
                                 String completionFileS3Path,
@@ -62,6 +70,8 @@ public class NeptuneExportService {
         this.localOutputPath = localOutputPath;
         this.cleanOutputPath = cleanOutputPath;
         this.outputS3Path = outputS3Path;
+        this.createExportSubdirectory = createExportSubdirectory;
+        this.overwriteExisting = overwriteExisting;
         this.configFileS3Path = configFileS3Path;
         this.queriesFileS3Path = queriesFileS3Path;
         this.completionFileS3Path = completionFileS3Path;
@@ -121,11 +131,16 @@ public class NeptuneExportService {
 
         Collection<String> profiles = args.getOptionValues("--profile");
 
+        if (!createExportSubdirectory && !overwriteExisting){
+            checkS3OutputIsEmpty();
+        }
+
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection();
 
         ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
+                createExportSubdirectory,
                 completionFileS3Path,
                 completionFilePayload,
                 profiles);
@@ -133,7 +148,13 @@ public class NeptuneExportService {
         eventHandlerCollection.addHandler(eventHandler);
 
         if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)){
-            NeptuneMachineLearningExportEventHandler neptuneMlEventHandler = new NeptuneMachineLearningExportEventHandler(outputS3Path, additionalParams, args, profiles);
+            NeptuneMachineLearningExportEventHandler neptuneMlEventHandler =
+                    new NeptuneMachineLearningExportEventHandler(
+                            outputS3Path,
+                            createExportSubdirectory,
+                            additionalParams,
+                            args,
+                            profiles);
             eventHandlerCollection.addHandler(neptuneMlEventHandler);
         }
 
@@ -144,6 +165,21 @@ public class NeptuneExportService {
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 
         return eventHandler.result();
+    }
+
+    private void checkS3OutputIsEmpty() {
+        AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(outputS3Path);
+        ObjectListing listing = s3.listObjects(
+                new ListObjectsRequest(
+                        s3ObjectInfo.bucket(),
+                        s3ObjectInfo.key(),
+                        null,
+                        null,
+                        1));
+        if (!listing.getObjectSummaries().isEmpty()){
+            throw new IllegalStateException(String.format("S3 destination contains existing objects: %s. Set 'overwriteExisting' parameter to 'true' to allow overwriting existing objects.", outputS3Path));
+        }
     }
 
     private void clearTempFiles() throws IOException {

@@ -58,6 +58,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     private final String localOutputPath;
     private final String outputS3Path;
+    private final boolean createExportSubdirectory;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
     private final Collection<String> profiles;
@@ -65,11 +66,13 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     public ExportToS3NeptuneExportEventHandler(String localOutputPath,
                                                String outputS3Path,
+                                               boolean createExportSubdirectory,
                                                String completionFileS3Path,
                                                ObjectNode completionFilePayload,
                                                Collection<String> profiles) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
+        this.createExportSubdirectory = createExportSubdirectory;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
         this.profiles = profiles;
@@ -116,7 +119,11 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     private S3ObjectInfo calculateOutputS3Path(File outputDirectory) {
         S3ObjectInfo outputBaseS3ObjectInfo = new S3ObjectInfo(outputS3Path);
-        return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
+        if (createExportSubdirectory){
+            return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
+        } else {
+            return outputBaseS3ObjectInfo;
+        }
     }
 
     private void uploadCompletionFileToS3(TransferManager transferManager,

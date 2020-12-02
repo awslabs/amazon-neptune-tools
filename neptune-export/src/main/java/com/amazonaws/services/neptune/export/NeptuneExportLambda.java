@@ -62,6 +62,16 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 json.path("outputS3Path").textValue() :
                 EnvironmentVariableUtils.getOptionalEnv("OUTPUT_S3_PATH", "");
 
+        boolean createExportSubdirectory = Boolean.parseBoolean(
+                json.has("createExportSubdirectory") ?
+                        json.path("createExportSubdirectory").toString() :
+                        EnvironmentVariableUtils.getOptionalEnv("CREATE_EXPORT_SUBDIRECTORY", "true"));
+
+        boolean overwriteExisting = Boolean.parseBoolean(
+                json.has("overwriteExisting") ?
+                        json.path("overwriteExisting").toString():
+                        EnvironmentVariableUtils.getOptionalEnv("OVERWRITE_EXISTING", "false"));
+
         String configFileS3Path = json.has("configFileS3Path") ?
                 json.path("configFileS3Path").textValue() :
                 EnvironmentVariableUtils.getOptionalEnv("CONFIG_FILE_S3_PATH", "");
@@ -90,16 +100,18 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 JobSize.parse(json.path("jobSize").textValue()).maxConcurrency() :
                 -1;
 
-        logger.log("cmd                   : " + cmd);
-        logger.log("params                : " + params.toPrettyString());
-        logger.log("outputS3Path          : " + outputS3Path);
-        logger.log("configFileS3Path      : " + configFileS3Path);
-        logger.log("queriesFileS3Path     : " + queriesFileS3Path);
-        logger.log("completionFileS3Path  : " + completionFileS3Path);
-        logger.log("completionFilePayload : " + completionFilePayload.toPrettyString());
-        logger.log("additionalParams      : " + additionalParams.toPrettyString());
+        logger.log("cmd                       : " + cmd);
+        logger.log("params                    : " + params.toPrettyString());
+        logger.log("outputS3Path              : " + outputS3Path);
+        logger.log("createExportSubdirectory  : " + createExportSubdirectory);
+        logger.log("overwriteExisting         : " + overwriteExisting);
+        logger.log("configFileS3Path          : " + configFileS3Path);
+        logger.log("queriesFileS3Path         : " + queriesFileS3Path);
+        logger.log("completionFileS3Path      : " + completionFileS3Path);
+        logger.log("completionFilePayload     : " + completionFilePayload.toPrettyString());
+        logger.log("additionalParams          : " + additionalParams.toPrettyString());
 
-        if (!cmd.contains(" ") && !params.isEmpty()){
+        if (!cmd.contains(" ") && !params.isEmpty()) {
             cmd = ParamConverter.fromJson(cmd, params).toString();
         }
 
@@ -110,6 +122,8 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 localOutputPath,
                 cleanOutputPath,
                 outputS3Path,
+                createExportSubdirectory,
+                overwriteExisting,
                 configFileS3Path,
                 queriesFileS3Path,
                 completionFileS3Path,
@@ -119,7 +133,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 
-        if (StringUtils.isEmpty(outputS3Path)){
+        if (StringUtils.isEmpty(outputS3Path)) {
             return;
         }
 
