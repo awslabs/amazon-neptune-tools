@@ -119,13 +119,13 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
-        Function<PropertySchema, String> getColumnName = args.contains("--exclude-type-definitions") ?
+        PropertyName propertyName = args.contains("--exclude-type-definitions") ?
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE :
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITH_DATATYPE;
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
             for (TrainingJobWriterConfig trainingJobWriterConfig : trainingJobWriterConfigCollection) {
-                createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, getColumnName, transferManager);
+                createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
             }
         }
     }
@@ -133,7 +133,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     private void createTrainingJobConfigurationFile(TrainingJobWriterConfig trainingJobWriterConfig,
                                                     Path outputPath,
                                                     GraphSchema graphSchema,
-                                                    Function<PropertySchema, String> getColumnName,
+                                                    PropertyName propertyName,
                                                     TransferManagerWrapper transferManager) throws Exception {
 
         File outputDirectory = outputPath.toFile();
@@ -144,7 +144,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
             new JobTrainingConfigurationFileWriter(
                     graphSchema,
                     createJsonGenerator(writer),
-                    getColumnName,
+                    propertyName,
                     trainingJobWriterConfig).write();
         }
 

@@ -28,7 +28,7 @@ public class ParseSlideWindowSize {
         if (json.has("slide_window_size") && json.path("slide_window_size").isInt()) {
             return json.path("slide_window_size").asInt();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'slide_window_size' field: expected an integer value for %s", description));
+            return 0;
         }
     }
 }

@@ -83,17 +83,25 @@ public class PropertySchema {
         return isNullable;
     }
 
-    public String nameWithDataType() {
+    public String nameWithDataType(boolean escapeCharacters) {
         return isMultiValue ?
-                String.format("%s%s[]", propertyName(property), dataType.typeDescription()) :
-                String.format("%s%s", propertyName(property), dataType.typeDescription());
+                String.format("%s%s[]", propertyName(property, escapeCharacters), dataType.typeDescription()) :
+                String.format("%s%s", propertyName(property, escapeCharacters), dataType.typeDescription());
+    }
+
+    public String nameWithoutDataType(boolean escapeCharacters) {
+        return propertyName(property, escapeCharacters);
+    }
+
+    public String nameWithDataType() {
+        return nameWithDataType(false);
     }
 
     public String nameWithoutDataType() {
-        return propertyName(property);
+        return nameWithoutDataType(false);
     }
 
-    private String propertyName(Object key) {
+    private String propertyName(Object key, boolean escapeCharacters) {
         if (key.equals(org.apache.tinkerpop.gremlin.structure.T.label)) {
             return "~label";
         }
@@ -106,7 +114,11 @@ public class PropertySchema {
         if (key.equals(org.apache.tinkerpop.gremlin.structure.T.value)) {
             return "~value";
         }
-        return String.valueOf(key);
+        if (escapeCharacters){
+            return String.valueOf(key).replace(":", "\\:");
+        } else {
+            return String.valueOf(key);
+        }
     }
 
     @Override

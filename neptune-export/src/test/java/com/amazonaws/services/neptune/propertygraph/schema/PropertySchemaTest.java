@@ -35,4 +35,14 @@ public class PropertySchemaTest {
         assertTrue(schema1.union(schema2).isNullable());
         assertTrue(schema2.union(schema1).isNullable());
     }
+
+    @Test
+    public void shouldEscapePropertyNameContainingColons(){
+        PropertySchema schema = new PropertySchema("p1:a:b:c", false, DataType.Integer, false);
+        assertEquals("p1\\:a\\:b\\:c:int", schema.nameWithDataType(true));
+        assertEquals("p1\\:a\\:b\\:c", schema.nameWithoutDataType(true));
+
+        assertEquals("p1:a:b:c:int", schema.nameWithDataType());
+        assertEquals("p1:a:b:c", schema.nameWithoutDataType());
+    }
 }

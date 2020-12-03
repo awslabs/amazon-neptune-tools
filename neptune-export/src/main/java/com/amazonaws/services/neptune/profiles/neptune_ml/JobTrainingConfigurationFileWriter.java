@@ -27,28 +27,49 @@ import java.util.stream.Collectors;
 
 public class JobTrainingConfigurationFileWriter {
 
-    public static Function<PropertySchema, String> COLUMN_NAME_WITH_DATATYPE = PropertySchema::nameWithDataType;
-    public static Function<PropertySchema, String> COLUMN_NAME_WITHOUT_DATATYPE = PropertySchema::nameWithoutDataType;
+    public static final PropertyName COLUMN_NAME_WITH_DATATYPE = new PropertyName() {
+        @Override
+        public String escaped(PropertySchema propertySchema) {
+            return propertySchema.nameWithDataType(true);
+        }
+
+        @Override
+        public String unescaped(PropertySchema propertySchema) {
+            return propertySchema.nameWithDataType(false);
+        }
+    };
+
+    public static final PropertyName COLUMN_NAME_WITHOUT_DATATYPE = new PropertyName() {
+        @Override
+        public String escaped(PropertySchema propertySchema) {
+            return propertySchema.nameWithoutDataType(true);
+        }
+
+        @Override
+        public String unescaped(PropertySchema propertySchema) {
+            return propertySchema.nameWithoutDataType(false);
+        }
+    };
 
     private final GraphSchema graphSchema;
     private final JsonGenerator generator;
-    private final Function<PropertySchema, String> getColumnName;
+    private final PropertyName propertyName;
     private final TrainingJobWriterConfig config;
     private final Collection<String> warnings = new ArrayList<>();
 
     public JobTrainingConfigurationFileWriter(GraphSchema graphSchema,
                                               JsonGenerator generator,
-                                              Function<PropertySchema, String> getColumnName) {
-        this(graphSchema, generator, getColumnName, new TrainingJobWriterConfig());
+                                              PropertyName propertyName) {
+        this(graphSchema, generator, propertyName, new TrainingJobWriterConfig());
     }
 
     public JobTrainingConfigurationFileWriter(GraphSchema graphSchema,
                                               JsonGenerator generator,
-                                              Function<PropertySchema, String> getColumnName,
+                                              PropertyName propertyName,
                                               TrainingJobWriterConfig config) {
         this.graphSchema = graphSchema;
         this.generator = generator;
-        this.getColumnName = getColumnName;
+        this.propertyName = propertyName;
         this.config = config;
     }
 
@@ -110,7 +131,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeStringField("sub_label_type", labelConfig.labelType());
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
-            generator.writeString(getColumnName.apply(propertySchema));
+            generator.writeString(propertyName.escaped(propertySchema));
             generator.writeEndArray();
             writeSplitRates(labelConfig);
             if (propertySchema.isMultiValue()) {
@@ -246,7 +267,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
             for (PropertySchema propertySchema : propertySchemas) {
-                generator.writeString(getColumnName.apply(propertySchema));
+                generator.writeString(propertyName.escaped(propertySchema));
             }
             generator.writeEndArray();
             if (isSinglePropertyFeature) {
@@ -270,7 +291,7 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeStringField("sub_feat_type", "word2vec");
         generator.writeArrayFieldStart("cols");
         generator.writeString("~id");
-        generator.writeString(getColumnName.apply(propertySchema));
+        generator.writeString(propertyName.escaped(propertySchema));
         generator.writeEndArray();
         generator.writeArrayFieldStart("language");
         for (String language : word2VecConfig.languages()) {
@@ -322,7 +343,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
             for (PropertySchema propertySchema : propertySchemas) {
-                generator.writeString(getColumnName.apply(propertySchema));
+                generator.writeString(propertyName.escaped(propertySchema));
             }
             generator.writeEndArray();
             norm.addTo(generator);
@@ -353,7 +374,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeStringField("sub_feat_type", "bucket_numerical");
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
-            generator.writeString(getColumnName.apply(propertySchema));
+            generator.writeString(propertyName.escaped(propertySchema));
             generator.writeEndArray();
             generator.writeArrayFieldStart("range");
             generator.writeObject(featureConfig.range().low());
@@ -497,7 +518,7 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeString("~from");
         generator.writeString("~to");
         for (PropertySchema propertySchema : propertySchemas) {
-            generator.writeString(getColumnName.apply(propertySchema));
+            generator.writeString(propertyName.escaped(propertySchema));
         }
         generator.writeEndArray();
         norm.addTo(generator);
@@ -525,7 +546,7 @@ public class JobTrainingConfigurationFileWriter {
             generator.writeArrayFieldStart("cols");
             generator.writeString("~from");
             generator.writeString("~to");
-            generator.writeString(getColumnName.apply(propertySchema));
+            generator.writeString(propertyName.escaped(propertySchema));
             generator.writeEndArray();
             writeSplitRates(labelConfig);
             if (propertySchema.isMultiValue()) {

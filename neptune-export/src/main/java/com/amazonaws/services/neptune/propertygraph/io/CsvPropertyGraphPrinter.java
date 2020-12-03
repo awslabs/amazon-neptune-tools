@@ -72,9 +72,9 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
             for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
                 if (includeTypeDefinitions) {
-                    writer.print(property.nameWithDataType());
+                    writer.print(property.nameWithDataType(true));
                 } else {
-                    writer.print(property.nameWithoutDataType());
+                    writer.print(property.nameWithoutDataType(true));
                 }
             }
             writer.print(System.lineSeparator());
