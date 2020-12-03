@@ -79,7 +79,8 @@ The help can always be displayed using the `-h` or `--help` command line argumen
 ```
 $ python csv-gremlin.py -h
 usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc]
-                      [-rows ROWS] [-all_errors] [-silent] [-escape_dollar]
+                      [-rows ROWS] [-all_errors] [-silent] [-no_summary]
+                      [-escape_dollar]
                       csvfile
 
 positional arguments:
@@ -101,11 +102,11 @@ optional arguments:
                   in the CSV is encountered.
   -silent         Enable silent mode. Only errors are reported. No Gremlin is
                   generated.
+  -no_summary     Do not show a summary report after processing.
   -escape_dollar  For any dollar signs found convert them to an escaped form
                   \$. This is needed if you are going to load the generated
                   Gremlin using a Groovy processor such as used by the Gremlin
                   Console. In Groovy strings, the $ sign is used for
                   interpolation
-
 
   ```
