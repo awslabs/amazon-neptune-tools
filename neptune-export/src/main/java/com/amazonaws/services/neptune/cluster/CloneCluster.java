@@ -75,12 +75,13 @@ public class CloneCluster implements CloneClusterStrategy {
         return new ClonedClusterStrategy(
                 targetClusterId,
                 new ConnectionConfig(
-                        clusterId, targetClusterMetadata.endpoints(),
+                        clusterId,
+                        targetClusterMetadata.endpoints(),
                         connectionConfig.port(),
                         connectionConfig.nlbEndpoint(),
                         connectionConfig.albEndpoint(),
                         connectionConfig.lbPort(),
-                        connectionConfig.useIamAuth(),
+                        targetClusterMetadata.isIAMDatabaseAuthenticationEnabled(),
                         true
                 ),
                 new ConcurrencyConfig(newConcurrency),
