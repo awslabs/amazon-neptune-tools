@@ -43,6 +43,10 @@ A [command-line utility](neo4j-to-neptune/readme.md) for migrating data to Neptu
 
 If you're interested in converting Neptune's CSV format to RDF, see [amazon-neptune-csv-to-rdf-converter](https://github.com/aws/amazon-neptune-csv-to-rdf-converter).
 
+### Neptune CSV to Gremlin
+
+[csv-gremlin](csv-gremlin/README.md) is a tool that can turn Amazon Neptune format CSV files into Gremlin steps allowing them to be loaded into different Apache TinkerPop compliant stores (including Amazon Neptune) using Gremlin queries. The tool also tries to validate that the CSV files do not contain errors and can be use to inspect CSV files prior to starting a bulk load.
+
 ## License
 
 This library is licensed under the Apache 2.0 License. 
