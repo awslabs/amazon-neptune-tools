@@ -32,7 +32,7 @@ public class ParseEdgeType {
             if (array.size() != 3){
                 throw new IllegalArgumentException(String.format("Error parsing 'edge' field: expected an array with 3 values for %s", description));
             }
-            return new Label(Label.format(array.get(0).textValue(), array.get(1).textValue(), array.get(2).textValue()));
+            return new Label(array.get(1).textValue(), array.get(0).textValue(), array.get(2).textValue());
         } else {
             throw new IllegalArgumentException(String.format("Error parsing 'edge' field: expected an array with 3 values for %s", description));
         }

@@ -46,5 +46,4 @@ public class DataTypeTest {
         Object converted = dataType.convert(nowString);
         assertEquals(now, converted);
     }
-
 }

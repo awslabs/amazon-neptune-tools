@@ -81,10 +81,10 @@ public enum EdgeLabelStrategy implements LabelStrategy {
         public Label getLabelFor(Map<String, Object> input) {
             @SuppressWarnings("unchecked")
             Collection<String> fromLabels = (Collection<String>) input.get("~fromLabels");
-            Collection<String> labels = Collections.singletonList( String.valueOf(input.get("~label")));
+            String label = String.valueOf(input.get("~label"));
             @SuppressWarnings("unchecked")
             Collection<String> toLabels = (Collection<String>) input.get("~toLabels");
-            return new Label(labels, fromLabels, toLabels);
+            return new Label(label, fromLabels, toLabels);
         }
 
         @Override

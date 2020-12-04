@@ -27,7 +27,9 @@ public class ParseNodeType {
 
     public Label parseNodeType(){
         if (json.has("node") && json.get("node").isTextual()){
-            return new Label(json.get("node").textValue());
+            String labelString = json.get("node").textValue();
+
+            return new Label(labelString);
         } else {
             throw new IllegalArgumentException(String.format("Error parsing 'node' field: expected a text value for %s", description));
         }

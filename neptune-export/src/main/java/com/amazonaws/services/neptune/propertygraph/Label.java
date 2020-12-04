@@ -23,8 +23,10 @@ import java.util.stream.Collectors;
 
 public class Label {
 
-    public static String format(String fromLabels, String label, String toLabels){
-        return String.format("(%s)-%s-(%s)", fromLabels, label, toLabels);
+    private static final String SEMICOLON_SEPARATOR = "(?<!\\\\);";
+
+    public static Collection<String> split(String s){
+        return Arrays.asList(s.split(SEMICOLON_SEPARATOR));
     }
 
     public static List<String> fixLabelsIssue(List<String> list) {
@@ -77,14 +79,22 @@ public class Label {
     private final String fullyQualifiedLabel;
 
     public Label(String label) {
-        this(Collections.singletonList(label));
+        this(split(label));
     }
 
     public Label(Collection<String> labels) {
         this(labels, Collections.emptyList(), Collections.emptyList());
     }
 
-    public Label(Collection<String> labels, Collection<String> fromLabels, Collection<String> toLabels) {
+    public Label(String label, String fromLabels, String toLabels) {
+        this(label, split(fromLabels), split(toLabels));
+    }
+
+    public Label(String label, Collection<String> fromLabels, Collection<String> toLabels) {
+        this(Collections.singletonList(label), fromLabels, toLabels);
+    }
+
+    private Label(Collection<String> labels, Collection<String> fromLabels, Collection<String> toLabels) {
         this.labels = labelList(labels);
         this.fromLabels = labelList(fromLabels);
         this.toLabels = labelList(toLabels);
@@ -92,6 +102,10 @@ public class Label {
         this.fullyQualifiedLabel = hasFromAndToLabels() ?
                 format(fromLabelsAsString(), labelsAsString(), toLabelsAsString()):
                 labelsAsString() ;
+    }
+
+    private String format(String fromLabels, String label, String toLabels){
+        return String.format("(%s)-%s-(%s)", fromLabels, label, toLabels);
     }
 
     private List<String> escapeSemicolons(List<String> list){

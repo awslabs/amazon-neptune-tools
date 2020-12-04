@@ -99,6 +99,10 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
             args.addFlag("--merge-files");
         }
 
+        if (!args.contains("--tokens-only")){
+            args.addOption("--tokens-only", "edges");
+        }
+
         if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
             args.removeOptions("--edge-label-strategy");
         }

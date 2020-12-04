@@ -82,7 +82,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
         edgeSchemas.addLabelSchema(new LabelSchema(
                         new Label(
-                                Collections.singletonList("follows"),
+                                "follows",
                                 Arrays.asList("Person", "Admin"),
                                 Arrays.asList("Person", "Temp"))),
                 Collections.singletonList("follows-1.csv"));
@@ -552,7 +552,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
             GraphSchema graphSchema = new GraphSchema();
             GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
 
-            LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("knows"), Collections.singletonList("Person"), Collections.singletonList("Person")));
+            LabelSchema labelSchema = new LabelSchema(new Label("knows", Collections.singletonList("Person"), Collections.singletonList("Person")));
             labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue));
 
             edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));

@@ -175,7 +175,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
     @Test
     public void shouldAddEdgeClassLabelIfSpecifiedInConfig() throws IOException {
 
-        Label knowsLabel = new Label(Collections.singletonList("knows"),
+        Label knowsLabel = new Label("knows",
                 Collections.singletonList("Person"),
                 Collections.singletonList("Person"));
 
@@ -245,7 +245,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
     @Test
     public void shouldAddWarningIfColumnDoesNotExistForEdgeClassLabel() throws IOException {
 
-        Label knowsLabel = new Label(Collections.singletonList("knows"),
+        Label knowsLabel = new Label("knows",
                 Collections.singletonList("Person"),
                 Collections.singletonList("Person"));
 
@@ -289,7 +289,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
     @Test
     public void shouldAddSeparatorIfEdgeClassLabelIsMultiValued() throws IOException {
 
-        Label knowsLabel = new Label(Collections.singletonList("knows"),
+        Label knowsLabel = new Label("knows",
                 Collections.singletonList("Person"),
                 Collections.singletonList("Person"));
 
