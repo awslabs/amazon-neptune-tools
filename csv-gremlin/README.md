@@ -46,7 +46,7 @@ For columns that contain `Date` values you can choose to have the values used as
 Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. The dafault behavior is to just take the value present in any `Date` column and copy it to the output. To validate `Date` columns you can run the tool with `-java_dates` enabled to check for any erros and then re-run  it without the option specified if you want to generate `datetime()` style dates in the Gremlin output. 
 
 <a name="rid"></a>
-### Repeating IDs>
+### Repeating IDs
 
 The Neptune bulk loader allows the same ID to appear on multiple rows of a vertex CSV file. In such cases the first time the ID appears the vertex will be created and for subsequent rows the properties will be updated appropriately rather than a new vertex created. This technique is sometimes used to build up a property containing a set of values or to add new properties to a vertex using multiple CSV rows. The `csv-gremlin` tool supports this pattern also. 
 
