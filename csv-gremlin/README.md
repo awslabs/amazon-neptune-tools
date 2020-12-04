@@ -23,7 +23,7 @@ Gremlin steps that represent the data in the CSV are written to `stdout` errors 
 
 Currently the tool does not support the special cardinality column headers such as `age:Int(single)`. However, lists of values declared using the `[]` column
 header modifier are supported and will generate `property` steps that use the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
-in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`. For CSV files that define vertices, ID values may appear on more than one row and will be handled appropriately (see [Repeating IDs](#Repeating IDs) but as the cardinality column headers are not recognized, properties with Set cardinality will be created whenever a vertex ID appears more than once.
+in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`. For CSV files that define vertices, ID values may appear on more than one row and will be handled appropriately. See [Repeating IDs](#rid). As the cardinality column headers are not recognized, properties with Set cardinality will be created whenever a vertex ID appears more than once.
 
 ### Running the tool
 
@@ -45,7 +45,8 @@ For columns that contain `Date` values you can choose to have the values used as
 
 Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. The dafault behavior is to just take the value present in any `Date` column and copy it to the output. To validate `Date` columns you can run the tool with `-java_dates` enabled to check for any erros and then re-run  it without the option specified if you want to generate `datetime()` style dates in the Gremlin output. 
 
-### Repeating IDs
+<a name="rid"></a>
+### Repeating IDs>
 
 The Neptune bulk loader allows the same ID to appear on multiple rows of a vertex CSV file. In such cases the first time the ID appears the vertex will be created and for subsequent rows the properties will be updated appropriately rather than a new vertex created. This technique is sometimes used to build up a property containing a set of values or to add new properties to a vertex using multiple CSV rows. The `csv-gremlin` tool supports this pattern also. 
 
