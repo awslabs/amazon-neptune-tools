@@ -81,6 +81,14 @@ To only see error messages and prevent any Gremlin steps from being generated th
 ### Processing summary
 At the end of processing a summary report will be printed. It is written to `stderr` so that if the Gremlin steps are being redirected to a file, the summary report will not get appended to that file. To turn off the summary report the `-no_summary` argument can be used.
 
+```
+$ python csv-gremlin.py test-files/vertices-with-repeat-ids.csv -silent -all_errors
+
+Processing Summary
+------------------
+Rows=13, IDs=5, Duplicate IDs=7, Vertices=5, Edges=0, Properties=17, Errors=0
+```
+
 ### Getting help
 
 The help can always be displayed using the `-h` or `--help` command line arguments.
