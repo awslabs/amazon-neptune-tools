@@ -19,36 +19,44 @@
 @license:    Apache2
 @contact:    @krlawrence
 @deffield    created:  2020-11-17
-@deffield    lastUpdated:  2020-12-02
+@deffield    lastUpdated:  2020-12-03
 
 Overview
 --------
-This file contains the definition for a NeptuneCSVReader class. Its purpose is
-to provide a tool able to read CSV files that use the Amazon Neptune formatting
-rules and generate Gremlin steps from that data.  Those Gremlin steps can then
-be used to load the data into any TinkerPop compliant graph that allows for user
-defined Vertex and Edge IDs. 
+This file contains the definition for a NeptuneCSVReader class. Its purpose is to
+provide a tool able to read CSV files that use the Amazon Neptune formatting rules
+and generate Gremlin steps from that data.  Those Gremlin steps can then be used to
+load the data into any TinkerPop compliant graph that allows for user defined Vertex
+and Edge IDs. 
 
 The tool can detect and handle both the vertex and edge CSV file formats. It
-recognizes the Neptune type specifiers, such as 'age:Int' and defaults to String
-if none is provided in a column header.  It also handles sparse rows ',,,' etc.
+recognizes the Neptune type specifiers, such as 'age:Int' and defaults to String if
+none is provided in a column header.  It also handles sparse rows ',,,' etc.
 
 The tool also allows you to specify the batch size for vertices and edges. The
-default is set to 10 for each currently. Batching allows multiple vertices or
-edges, along with their properties, to be added in a single Gremlin query.
+default is set to 10 for each currently. Batching allows multiple vertices or edges,
+along with their properties, to be added in a single Gremlin query. Many other
+options are provided. The tool also tries to detect and report any errors in the CSV
+files it processes.
 
-Gremlin steps that represent the data in the CSV are written to 'stdout'. 
+Gremlin steps that represent the data in the CSV are written to 'stdout'. Errors and
+statistics are written to 'stderr' so that Gremlin output can be redirected to a file
+without also capturing other information.
+
+None of the special column headers are allowed to be omitted except for ~label in the
+case of vertices.  In that case a default label "vertex" will be used. The special
+headers are ~id, ~label, ~from and ~to.
+
+For files containing vertex data, the same ID may appear on multiple rows allowing
+properties containing sets of values to be built up on multiple rows if desired.
 
 Current Limitations
 -------------------
 Currently the tool does not support the cardinality column header such as
 'age:Int(single)'. However, lists of values declared using the '[]' column
 header modifier are supported.     
-
-None of the special column headers are allowed to be omitted except for ~label in the
-case of vertices.  In that case a default label "vertex" will be used. The special
-headers are ~id, ~label, ~from and ~to.
 '''
+
 import csv
 import sys
 import argparse
@@ -56,17 +64,18 @@ import datetime
 import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.16
-    VERSION_DATE = '2020-12-02'
+    VERSION = 0.17
+    VERSION_DATE = '2020-12-03'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     BOOLS = ('BOOL','BOOLEAN')
     VERTEX = 1
     EDGE = 2
 
-    def __init__(self, vbatch=1, ebatch=1, java_dates=False, 
-                 max_rows=sys.maxsize, assume_utc=False, 
-                 stop_on_error=True, silent_mode=False,escape_dollar=False):
+    def __init__(self, vbatch=1, ebatch=1, java_dates=False, max_rows=sys.maxsize,
+                 assume_utc=False, stop_on_error=True, silent_mode=False,
+                 escape_dollar=False, show_summary=True):
+        
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
         self.use_java_date = java_dates
@@ -75,8 +84,17 @@ class NeptuneCSVReader:
         self.stop_on_error = stop_on_error
         self.silent_mode = silent_mode
         self.escape_dollar=escape_dollar
+        self.show_summary = show_summary
         self.mode = self.VERTEX
         self.current_row = 1
+        self.id_store = {}
+        self.id_count = 0
+        self.duplicate_id_count = 0
+        self.errors = 0
+        self.vertex_count = 0
+        self.edge_count = 0
+        self.property_count = 0
+        self.verbose_summary = False
 
     def get_batch_sizes(self):
         return {'vbatch': self.vertex_batch_size,
@@ -122,6 +140,12 @@ class NeptuneCSVReader:
     def get_escape_dollar(self):
         return self.escape_dollar
 
+    def set_show_summary(self, summary):
+        self.show_summary = summary
+
+    def get_show_summary(self):
+        return self.show_summary
+
     def escape(self,string):
         escaped = string.replace('"','\\"')
         return escaped
@@ -133,6 +157,7 @@ class NeptuneCSVReader:
     def print_error(self,msg):
         txt = f'Row {self.current_row}: {msg}'
         print(txt, file=sys.stderr)
+        self.errors += 1
         if self.stop_on_error:
             sys.exit(1)
     
@@ -175,6 +200,7 @@ class NeptuneCSVReader:
             val = f'datetime(\'{date_string}\')'
         return val
 
+    # Start processing each row assuming they represent vertices.
     def process_vertices(self,reader):
         count = 0
         rows_processed = 0
@@ -186,7 +212,8 @@ class NeptuneCSVReader:
             count += 1
             if count == self.vertex_batch_size:
                 count = 0
-                self.print_normal(batch)
+                if batch != 'g':
+                    self.print_normal(batch)
                 batch = 'g'
             rows_processed += 1
             if rows_processed == self.row_limit:
@@ -194,6 +221,7 @@ class NeptuneCSVReader:
         if batch != 'g':        
             self.print_normal(batch)
 
+    # Start processing each row assuming they represent edges.
     def process_edges(self,reader):
         count = 0
         rows_processed = 0
@@ -218,7 +246,8 @@ class NeptuneCSVReader:
             count += 1
             if count == self.edge_batch_size:
                 count = 0
-                self.print_normal(batch)
+                if batch != 'g':
+                    self.print_normal(batch)
                 batch = 'g'
             rows_processed += 1
             if rows_processed == self.row_limit:
@@ -292,6 +321,7 @@ class NeptuneCSVReader:
                     result = ''
                 else:
                     for p in values:
+                        self.property_count += 1
                         result += f'.property({cardinality}\"{kt[0]}\",{p})'
         else:
             if row[key] is None:
@@ -299,6 +329,7 @@ class NeptuneCSVReader:
                 msg = f'For column [{kt[0]}] a value is required.'
                 self.print_error(msg)
             else:
+                self.property_count += 1
                 result = f'.property("{kt[0]}","{self.escape(row[key])}")'
         return result
 
@@ -310,6 +341,7 @@ class NeptuneCSVReader:
     # an issue once the Gremlin scripts that this tool generates are executed in some cases.
     def process_edge_row(self,r):
         properties = ''
+        error = False
         seen = 0
         for k in r:
             if r[k] == '':
@@ -333,11 +365,23 @@ class NeptuneCSVReader:
             self.print_error('For edge data, values must be provided for ~id,~label,~from and ~to')
             edge = ''
         else:
-            edge = f'.addE(\"{elabel}\").property(id,\"{eid}\")' 
-            edge += f'.from(V(\"{efrom}\")).to(V(\"{eto}\"))' 
-            edge += properties 
-            if self.escape_dollar:
-                edge = edge.replace("$","\\$")
+            if eid in self.id_store:
+                self.duplicate_id_count += 1
+                self.id_store[eid] += 1
+                error = True
+                edge = ''
+                self.print_error(f'Duplicate edge ID {eid}')
+            else:
+                self.edge_count += 1
+                self.id_count += 1
+                self.id_store[eid] = 1
+            
+            if not error:
+                edge = f'.addE(\"{elabel}\").property(id,\"{eid}\")' 
+                edge += f'.from(V(\"{efrom}\")).to(V(\"{eto}\"))' 
+                edge += properties 
+                if self.escape_dollar:
+                    edge = edge.replace("$","\\$")
         return edge
 
     # Process one row of a CSV file that has been determined to contain vertex data.
@@ -364,8 +408,19 @@ class NeptuneCSVReader:
             self.print_error('Values must be provided for ~id')
             vertex = ''
         else:
-            vertex = f'.addV(\"{vlabel}\").property(id,\"{vid}\")' + properties        
-            
+            if vid in self.id_store:
+                self.duplicate_id_count += 1
+                self.id_store[vid] += 1
+                prefix = f'.V("{vid}")'
+                properties = properties.replace('property("','property(set,"')
+            else:
+                self.vertex_count += 1
+                self.id_count += 1
+                self.id_store[vid] = 1
+                prefix = f'.addV(\"{vlabel}\").property(id,\"{vid}\")'        
+
+            vertex = prefix + properties
+
             if self.escape_dollar:
                 vertex = vertex.replace("$","\\$")
         return vertex
@@ -376,6 +431,13 @@ class NeptuneCSVReader:
     def process_csv_file(self,fname):
         """Appropriately process the CSV file as either vertices or edges"""
         self.current_row = 1
+        self.id_store = {}
+        self.id_count = 0
+        self.duplicate_id_count = 0
+        self.errors = 0
+        self.vertex_count = 0
+        self.edge_count = 0
+        self.property_count = 0
         try:
             with open(fname, newline='') as csvfile:
                 reader = csv.DictReader(csvfile,escapechar="\\")
@@ -391,6 +453,20 @@ class NeptuneCSVReader:
                 csvfile.close()
         except Exception as ex:
             print(f'Unable to load the CSV file: {str(ex)}')
+        
+        if self.show_summary:
+            if self.verbose_summary:
+                print(self.id_store, file=sys.stderr)
+                
+            print('\nProcessing Summary',file=sys.stderr)
+            print('------------------',file=sys.stderr)
+            stats =  f'Rows={self.current_row}, IDs={self.id_count}, '
+            stats += f'Duplicate IDs={self.duplicate_id_count}, '
+            stats += f'Vertices={self.vertex_count}, '
+            stats += f'Edges={self.edge_count}, '
+            stats += f'Properties={self.property_count}, '
+            stats += f'Errors={self.errors}'
+            print(stats, file=sys.stderr)
 
 if __name__ == '__main__':
     ncsv = NeptuneCSVReader()
@@ -416,6 +492,8 @@ if __name__ == '__main__':
                         help='Show all errors. By default processing stops after any error in the CSV is encountered.')
     parser.add_argument('-silent', action='store_true',
                         help='Enable silent mode. Only errors are reported. No Gremlin is generated.')
+    parser.add_argument('-no_summary', action='store_true',
+                        help='Do not show a summary report after processing.')
     parser.add_argument('-escape_dollar', action='store_true',
                         help='For any dollar signs found convert them to an escaped\
                         form \$. This is needed if you are going to load the\
@@ -432,4 +510,5 @@ if __name__ == '__main__':
     ncsv.set_stop_on_error(not(args.all_errors))
     ncsv.set_silent_mode(args.silent)
     ncsv.set_escape_dollar(args.escape_dollar)
+    ncsv.set_show_summary(not args.no_summary)
     ncsv.process_csv_file(args.csvfile)

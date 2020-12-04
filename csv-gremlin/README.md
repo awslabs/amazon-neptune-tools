@@ -23,9 +23,7 @@ Gremlin steps that represent the data in the CSV are written to `stdout` errors 
 
 Currently the tool does not support the special cardinality column headers such as `age:Int(single)`. However, lists of values declared using the `[]` column
 header modifier are supported and will generate `property` steps that use the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
-in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`.
-
-The Neptune bulk loader allows the same ID to appear on multiple rows of a vertex CSV file. In such cases the first time the ID appears the vertex will be created and for subsequent rows the properties will be updated appropriately rather than a new vertex created. This technique is sometimes used to build up a property containing a set of values or to add new properties to a vertex using multiple CSV rows. Currently the tool does not try to recognize this repeating ID pattern. If an ID appears multiple times, Gremlin steps to add that vertex will be generated each time. An error will be thrown if that Gremlin is executed as an ID cannot be reused in that way from a Gremlin traversal.
+in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`. For CSV files that define vertices, ID values may appear on more than one row and will be handled appropriately (see Repeating IDs below) but as the cardinality column headers are not recognized, properties with Set cardinality will be created whenever a vertex ID appears more than once.
 
 ### Running the tool
 
@@ -47,6 +45,12 @@ For columns that contain `Date` values you can choose to have the values used as
 
 Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. The dafault behavior is to just take the value present in any `Date` column and copy it to the output. To validate `Date` columns you can run the tool with `-java_dates` enabled to check for any erros and then re-run  it without the option specified if you want to generate `datetime()` style dates in the Gremlin output. 
 
+### Repeating IDs
+
+The Neptune bulk loader allows the same ID to appear on multiple rows of a vertex CSV file. In such cases the first time the ID appears the vertex will be created and for subsequent rows the properties will be updated appropriately rather than a new vertex created. This technique is sometimes used to build up a property containing a set of values or to add new properties to a vertex using multiple CSV rows. The `csv-gremlin` tool supports this pattern also. 
+
+For CSV files that define vertices, if the same ID appears on more than one row, Gremlin `property` steps will be created with Set cardinality each time an ID is repeatedly  seen. For edge files, where Set cardinality is not supported, if an ID appears more than once, the tool will generate an error. 
+
 ### Error detection
 
 By default the tool will exit as soon as it finds any error in a CSV file. You can override this and have the tool attempt to find all
@@ -59,6 +63,7 @@ the most common errors can  be detected. These include:
 - Invalid dates
 - Invalid numeric values
 - Edge files that attempt to define sets of values using `[]`
+- Edge files with repeating ID values on multiple rows
 
 There are a few cases where the `-all_errors` argument is ignored. They are all related to issues with the header row of a CSV file. If an edge file includes any set identifiers `[]` in the header row, processing will stop immediately. Likewise processing is aborted if the `~id` column is missing in the header of any CSV file. Finally processing will stop if any of `~label`, `~from`, `~to` are missing in what appears to be a file of edge definitions.
 
@@ -72,6 +77,8 @@ To only see error messages and prevent any Gremlin steps from being generated th
 ```
   python csv-gremlin -java_dates -all_errors -silent my-file.csv
 ```
+### Processing summary
+At the end of processing a summary report will be printed. It is written to `stderr` so that if the Gremlin steps are being redirected to a file, the summary report will not get appended to that file. To turn off the summary report the `-no_summary` argument can be used.
 
 ### Getting help
 
@@ -79,7 +86,8 @@ The help can always be displayed using the `-h` or `--help` command line argumen
 ```
 $ python csv-gremlin.py -h
 usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc]
-                      [-rows ROWS] [-all_errors] [-silent] [-escape_dollar]
+                      [-rows ROWS] [-all_errors] [-silent] [-no_summary]
+                      [-escape_dollar]
                       csvfile
 
 positional arguments:
@@ -101,11 +109,11 @@ optional arguments:
                   in the CSV is encountered.
   -silent         Enable silent mode. Only errors are reported. No Gremlin is
                   generated.
+  -no_summary     Do not show a summary report after processing.
   -escape_dollar  For any dollar signs found convert them to an escaped form
                   \$. This is needed if you are going to load the generated
                   Gremlin using a Groovy processor such as used by the Gremlin
                   Console. In Groovy strings, the $ sign is used for
                   interpolation
-
 
   ```
