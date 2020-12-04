@@ -250,17 +250,27 @@ public class AddCloneTask {
                                         .withValue(NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG)
                         ));
 
-        neptune.modifyDBClusterParameterGroup(new ModifyDBClusterParameterGroupRequest()
-                .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName())
-                .withParameters(
-                        new Parameter()
-                                .withParameterName("neptune_enforce_ssl")
-                                .withParameterValue("1")
-                                .withApplyMethod(ApplyMethod.PendingReboot),
-                        new Parameter()
-                                .withParameterName("neptune_query_timeout")
-                                .withParameterValue("2147483647")
-                                .withApplyMethod(ApplyMethod.PendingReboot)));
+        try {
+            neptune.modifyDBClusterParameterGroup(new ModifyDBClusterParameterGroupRequest()
+                    .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName())
+                    .withParameters(
+                            new Parameter()
+                                    .withParameterName("neptune_enforce_ssl")
+                                    .withParameterValue("1")
+                                    .withApplyMethod(ApplyMethod.PendingReboot),
+                            new Parameter()
+                                    .withParameterName("neptune_query_timeout")
+                                    .withParameterValue("2147483647")
+                                    .withApplyMethod(ApplyMethod.PendingReboot)));
+        } catch (AmazonNeptuneException e){
+            neptune.modifyDBClusterParameterGroup(new ModifyDBClusterParameterGroupRequest()
+                    .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName())
+                    .withParameters(
+                            new Parameter()
+                                    .withParameterName("neptune_query_timeout")
+                                    .withParameterValue("2147483647")
+                                    .withApplyMethod(ApplyMethod.PendingReboot)));
+        }
 
         List<Parameter> dbClusterParameters = neptune.describeDBClusterParameters(
                 new DescribeDBClusterParametersRequest()
