@@ -62,7 +62,9 @@ public class ParamConverter {
         String prefix = argName.startsWith("-") ? "" : "--";
         argName = String.format("%s%s", prefix, argName);
         if (argValue.isBoolean()) {
-            args.addFlag(argName);
+            if (argValue.asBoolean()){
+                args.addFlag(argName);
+            }
         } else if (argValue.isObject()) {
             String value = String.format("'%s'", argValue.toPrettyString());
             args.addOption(argName, value);

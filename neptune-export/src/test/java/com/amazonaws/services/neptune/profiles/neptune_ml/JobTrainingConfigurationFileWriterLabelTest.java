@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,7 +48,9 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -107,7 +110,9 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "does-not-exist")
                         .build())
                 .write();
@@ -146,7 +151,9 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -189,7 +196,9 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                         .withEdgeClassLabel(knowsLabel, "contact")
                         .build())
                 .write();
@@ -257,7 +266,9 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                 .withEdgeClassLabel(knowsLabel, "does-not-exist")
                 .build())
                 .write();
@@ -299,7 +310,9 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                 .withEdgeClassLabel(knowsLabel, "contact")
                 .build())
                 .write();

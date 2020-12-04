@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -54,6 +55,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     private final Collection<TrainingJobWriterConfig> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
+    private final PrinterOptions printerOptions;
 
     public NeptuneMachineLearningExportEventHandler(String outputS3Path,
                                                     boolean createExportSubdirectory,
@@ -67,6 +69,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
         this.args = args;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
+        this.printerOptions = new PrinterOptions(false, args.contains("--escape-csv-headers"), true);
     }
 
     private Collection<TrainingJobWriterConfig> createTrainingJobConfigCollection(ObjectNode additionalParams) {
@@ -145,6 +148,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
                     graphSchema,
                     createJsonGenerator(writer),
                     propertyName,
+                    printerOptions,
                     trainingJobWriterConfig).write();
         }
 

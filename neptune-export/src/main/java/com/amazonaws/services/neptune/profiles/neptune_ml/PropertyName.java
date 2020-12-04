@@ -12,10 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 
 public interface PropertyName {
 
-    String escaped(PropertySchema propertySchema);
+    String escaped(PropertySchema propertySchema, PrinterOptions printerOptions);
     String unescaped(PropertySchema propertySchema);
 }

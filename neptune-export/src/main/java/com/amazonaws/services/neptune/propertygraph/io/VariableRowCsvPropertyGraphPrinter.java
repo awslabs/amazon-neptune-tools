@@ -28,14 +28,14 @@ public class VariableRowCsvPropertyGraphPrinter implements PropertyGraphPrinter 
     private final LabelSchema labelSchema;
     private boolean isNullable = false;
 
-    public VariableRowCsvPropertyGraphPrinter(OutputWriter writer, LabelSchema labelSchema) {
+    public VariableRowCsvPropertyGraphPrinter(OutputWriter writer,
+                                              LabelSchema labelSchema) {
         this.writer = writer;
         this.labelSchema = labelSchema;
         this.csvPropertyGraphPrinter = new CsvPropertyGraphPrinter(
                 writer,
                 labelSchema,
-                false,
-                false,
+                new PrinterOptions(false, false, false),
                 true);
     }
 

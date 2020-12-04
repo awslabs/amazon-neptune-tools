@@ -26,28 +26,25 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final LabelSchema labelSchema;
-    private final CommaPrinter commaPrinter;
-    private final boolean includeHeaders;
-    private final boolean includeTypeDefinitions;
+    private final PrinterOptions printerOptions;
     private final boolean allowUpdateSchema;
+    private final CommaPrinter commaPrinter;
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    LabelSchema labelSchema,
-                                   boolean includeHeaders,
-                                   boolean includeTypeDefinitions) {
-        this(writer, labelSchema, includeHeaders, includeTypeDefinitions, false);
+                                   PrinterOptions printerOptions)
+    {
+        this(writer, labelSchema, printerOptions, false);
     }
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    LabelSchema labelSchema,
-                                   boolean includeHeaders,
-                                   boolean includeTypeDefinitions,
+                                   PrinterOptions printerOptions,
                                    boolean allowUpdateSchema) {
         this.writer = writer;
         this.labelSchema = labelSchema;
+        this.printerOptions = printerOptions;
         this.commaPrinter = new CommaPrinter(writer);
-        this.includeHeaders = includeHeaders;
-        this.includeTypeDefinitions = includeTypeDefinitions;
         this.allowUpdateSchema = allowUpdateSchema;
     }
 
@@ -58,7 +55,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
-        if (includeHeaders) {
+        if (printerOptions.includeHeaders()) {
             for (String column : columns) {
                 commaPrinter.printComma();
                 writer.print(column);
@@ -68,13 +65,13 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
-        if (includeHeaders) {
+        if (printerOptions.includeHeaders()) {
             for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
-                if (includeTypeDefinitions) {
-                    writer.print(property.nameWithDataType(true));
+                if (printerOptions.includeTypeDefinitions()) {
+                    writer.print(property.nameWithDataType(printerOptions.escapeCsvHeaders()));
                 } else {
-                    writer.print(property.nameWithoutDataType(true));
+                    writer.print(property.nameWithoutDataType(printerOptions.escapeCsvHeaders()));
                 }
             }
             writer.print(System.lineSeparator());

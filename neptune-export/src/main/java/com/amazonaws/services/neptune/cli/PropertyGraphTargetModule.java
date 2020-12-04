@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.io.*;
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
@@ -70,9 +71,9 @@ public class PropertyGraphTargetModule implements CommandWriter {
         return Directories.createFor(directoryStructure, directory, exportId, tag );
     }
 
-    public PropertyGraphTargetConfig config(Directories directories, boolean includeTypeDefinitions){
+    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, includeTypeDefinitions, format, output, inferSchema, mergeFiles);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, inferSchema, mergeFiles);
     }
 
     public String description(){

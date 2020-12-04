@@ -69,9 +69,8 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     @Inject
     private ExportPropertyGraphFromConfigModule graphSchemaProvider = new ExportPropertyGraphFromConfigModule();
 
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false')")
-    @Once
-    private boolean excludeTypeDefinitions = false;
+    @Inject
+    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
 
     @Override
     public void run() {
@@ -82,7 +81,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
 

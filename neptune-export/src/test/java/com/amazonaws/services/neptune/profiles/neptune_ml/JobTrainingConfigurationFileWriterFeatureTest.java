@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -39,7 +40,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -63,7 +64,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -88,7 +89,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -132,7 +133,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -177,7 +178,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -206,7 +207,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -252,7 +253,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -297,7 +298,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+        new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
         JsonNode graph = output.graph();
 
@@ -345,12 +346,14 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
-                .withWord2VecNodeFeature(
-                        movieLabel,
-                        "genre",
-                        "en_core_web_lg", "fr_core_news_lg")
-                .build())
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
+                        .withWord2VecNodeFeature(
+                                movieLabel,
+                                "genre",
+                                "en_core_web_lg", "fr_core_news_lg")
+                        .build())
                 .write();
 
         JsonNode graph = output.graph();
@@ -406,7 +409,9 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                 .withNumericalBucketFeature(movieLabel, "score", new TrainingJobWriterConfig.Range(1, 100), 10, 2)
                 .build())
                 .write();
@@ -468,7 +473,9 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
             new JobTrainingConfigurationFileWriter(
                     graphSchema,
                     output.generator(),
-                    JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                    JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                    PrinterOptions.NO_HEADERS,
+                    TrainingJobConfigBuilder.builder()
                     .withNumericalBucketFeature(movieLabel, "score", new TrainingJobWriterConfig.Range(1, 100), 10, 2)
                     .build())
                     .write();
@@ -509,7 +516,8 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
         new JobTrainingConfigurationFileWriter(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, TrainingJobConfigBuilder.builder()
+                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS,
+                TrainingJobConfigBuilder.builder()
                 .withNumericalBucketFeature(movieLabel, "score", new TrainingJobWriterConfig.Range(1, 100), 10, 2)
                 .build())
                 .write();
@@ -551,7 +559,7 @@ public class JobTrainingConfigurationFileWriterFeatureTest {
 
             Output output = new Output();
 
-            new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE).write();
+            new JobTrainingConfigurationFileWriter(graphSchema, output.generator(), JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NO_HEADERS).write();
 
             JsonNode graph = output.graph();
 

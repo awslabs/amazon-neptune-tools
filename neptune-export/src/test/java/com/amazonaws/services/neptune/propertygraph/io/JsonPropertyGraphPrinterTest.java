@@ -37,7 +37,7 @@ public class JsonPropertyGraphPrinterTest {
         try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(
                 new PrintOutputWriter("test", stringWriter),
                 new LabelSchema(new Label("my-label")),
-                true)) {
+                PrinterOptions.NO_HEADERS)) {
 
             propertyGraphPrinter.printStartRow();
             propertyGraphPrinter.printEdge("edge-id", "edge-label", "from-id", "to-id");
@@ -60,7 +60,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                true);
+                PrinterOptions.NO_HEADERS);
 
         print(printer,
                 map(entry("fname", "fname1")),
@@ -89,7 +89,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                true);
+                PrinterOptions.NO_HEADERS);
 
         print(printer,
                 map(entry("age", 10)),
@@ -110,7 +110,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                true);
+                PrinterOptions.NO_HEADERS);
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),
@@ -133,7 +133,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                true);
+                PrinterOptions.NO_HEADERS);
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),

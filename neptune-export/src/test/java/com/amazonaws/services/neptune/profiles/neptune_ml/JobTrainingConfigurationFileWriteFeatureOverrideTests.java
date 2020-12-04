@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.FeatureType;
 import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -49,6 +50,7 @@ public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeFeatureOverride(
                                 new TrainingJobWriterConfig.FeatureOverrideConfig(
@@ -105,6 +107,7 @@ public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                PrinterOptions.NO_HEADERS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeFeatureOverride(
                                 new TrainingJobWriterConfig.FeatureOverrideConfig(

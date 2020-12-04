@@ -29,6 +29,10 @@ public class ParseLabelType {
             String type = json.get("type").textValue();
             if  ( type.equals("regression")){
                 return regressionLabel();
+            } else if (type.equals("classification")){
+                return classLabel();
+            } else {
+                throw new IllegalArgumentException(String.format("Invalid value for 'type' field: '%s'. Valid values are 'classification' and 'regression'.", type));
             }
         }
 

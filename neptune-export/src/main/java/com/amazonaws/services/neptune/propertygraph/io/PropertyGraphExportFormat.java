@@ -30,13 +30,13 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
             return new JsonPropertyGraphPrinter(writer, generator, labelSchema);
         }
 
         @Override
-        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
             return new JsonPropertyGraphPrinter(writer, generator, labelSchema, true);
         }
@@ -58,12 +58,12 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, labelSchema, true, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) {
+            return new CsvPropertyGraphPrinter(writer, labelSchema, printerOptions.withIncludeHeaders(true));
         }
 
         @Override
-        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
         }
 
@@ -77,7 +77,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
             if (targetConfig.mergeFiles()) {
                 return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
             } else {
-                if (inferSchema){
+                if (inferSchema) {
                     return new RewriteCsv(targetConfig, concurrencyConfig);
                 } else {
                     return RewriteCommand.NULL_COMMAND;
@@ -92,12 +92,12 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, labelSchema, false, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) {
+            return new CsvPropertyGraphPrinter(writer, labelSchema, printerOptions.withIncludeHeaders(false));
         }
 
         @Override
-        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
         }
 
@@ -111,7 +111,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
             if (targetConfig.mergeFiles()) {
                 return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
             } else {
-                if (inferSchema){
+                if (inferSchema) {
                     return new RewriteCsv(targetConfig, concurrencyConfig);
                 } else {
                     return RewriteCommand.NULL_COMMAND;
@@ -126,14 +126,14 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             JsonGenerator generator = createJsonGenerator(writer, "");
             return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator);
         }
 
         @Override
-        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException {
-            return createPrinter(writer, labelSchema, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            return createPrinter(writer, labelSchema, printerOptions);
         }
 
         @Override
@@ -154,9 +154,9 @@ public enum PropertyGraphExportFormat implements FileExtension {
         return generator;
     }
 
-    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException;
+    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException;
 
-    abstract PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, boolean includeTypeDefinitions) throws IOException;
+    abstract PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException;
 
     public abstract String description();
 

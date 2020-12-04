@@ -37,7 +37,8 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                labelSchema);
+                labelSchema
+        );
 
         print(printer,
                 map(entry("fname", "fname1")),
@@ -65,7 +66,8 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                labelSchema);
+                labelSchema
+        );
 
         print(printer,
                 map(entry("age", 10)),
@@ -86,7 +88,8 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                labelSchema);
+                labelSchema
+        );
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),
@@ -108,7 +111,8 @@ public class VariableRowCsvPropertyGraphPrinterTest {
 
         VariableRowCsvPropertyGraphPrinter printer = new VariableRowCsvPropertyGraphPrinter(
                 new PrintOutputWriter("test", stringWriter),
-                labelSchema);
+                labelSchema
+        );
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),
