@@ -23,7 +23,7 @@ Gremlin steps that represent the data in the CSV are written to `stdout` errors 
 
 Currently the tool does not support the special cardinality column headers such as `age:Int(single)`. However, lists of values declared using the `[]` column
 header modifier are supported and will generate `property` steps that use the `set` cardinality keyword. So you can specifiy a header such as `score:Int[]` and
-in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`. For CSV files that define vertices, ID values may appear on more than one row and will be handled appropriately (see Repeating IDs below) but as the cardinality column headers are not recognized, properties with Set cardinality will be created whenever a vertex ID appears more than once.
+in the respective row/column position specify a list of values delimited by semicolons such as `1;2;3;4;5`. For CSV files that define vertices, ID values may appear on more than one row and will be handled appropriately (see [Repeating IDs](#Repeating IDs) but as the cardinality column headers are not recognized, properties with Set cardinality will be created whenever a vertex ID appears more than once.
 
 ### Running the tool
 
