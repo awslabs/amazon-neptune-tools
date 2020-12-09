@@ -12,22 +12,16 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import org.joda.time.DateTime;
 import org.junit.Test;
 
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class EndpointValidatorTest {
     @Test
-    public void shouldRemoveProtocol(){
+    public void shouldRemoveProtocol() {
         Collection<String> endpoints = Arrays.asList("my-endpoint", "ws://my-endpoint", "wss://my-endpoint", "http://my-endpoint", "https://my-endpoint");
         for (String endpoint : endpoints) {
             assertEquals("my-endpoint", EndpointValidator.validate(endpoint));
@@ -35,7 +29,7 @@ public class EndpointValidatorTest {
     }
 
     @Test
-    public void shouldRemovePort(){
+    public void shouldRemovePort() {
         Collection<String> endpoints = Arrays.asList("my-endpoint", "my-endpoint:8182");
         for (String endpoint : endpoints) {
             assertEquals("my-endpoint", EndpointValidator.validate(endpoint));
@@ -43,7 +37,7 @@ public class EndpointValidatorTest {
     }
 
     @Test
-    public void shouldRemoveProtocolAndPort(){
+    public void shouldRemoveProtocolAndPort() {
         Collection<String> endpoints = Arrays.asList("my-endpoint", "https://my-endpoint:8182");
         for (String endpoint : endpoints) {
             assertEquals("my-endpoint", EndpointValidator.validate(endpoint));
