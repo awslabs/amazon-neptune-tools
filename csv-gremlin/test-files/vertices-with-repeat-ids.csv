@@ -1,0 +1,13 @@
+~id,~label,score:Int[],extra
+p1,Player,55,XYZ
+p1,Player,58,DEF
+p1,Player,43,
+p2,Player,43,
+p3,Player,67,
+p1,Player,88,HIJ
+p1,Player,31,
+p1,Player,90;12,
+p2,Player,55,
+p3,Player,18,
+p4,Player,81,ABC
+p5,Player,6,

@@ -1,0 +1,2 @@
+~id,~label,simple,single:String,my-set:Int[],dates:Date[],oneInt:Int,oneFloat:Double,flag:Bool
+ms-001,SetTest,Hello,World,1;2;3;4;5;6,2020-11-17;2020-11-18,25,50,true

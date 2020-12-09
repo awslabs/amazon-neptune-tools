@@ -1,0 +1,4 @@
+~id,~label,b1:Bool,b2:Bool,b3:Bool,b4:Bool,b5:Bool,b6:Boolean,b7:Bool
+pid-001,Person,true,True,TRUE,false,abc,123,tRuE
+pid-002,Person,true,True,TRUE,false,abc,456,TRue
+pid-003,Person,1,0,1,0,1,0,1    
