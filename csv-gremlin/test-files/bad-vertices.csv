@@ -1,0 +1,7 @@
+~id,~label,value:Int,date:Date,score:Double,str
+p1,Person,1,2020-13-25,X
+p2,Person,A,,
+,Person,2,,
+,Person,2,
+p5,Person,2,X,1.0
+p6,Person,1,2020-02-30,5,Hello

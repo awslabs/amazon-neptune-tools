@@ -1,0 +1,8 @@
+~id,~label,~from,~to,since:Date,weight:Float
+1,test,p1,p3,2020-11-25,5,
+1,test,p2,p4,3.2
+1,test,p2,p4
+1,test,p2,p4
+1,test,,p4
+1,test,p2,
+1,test,p2,p4
