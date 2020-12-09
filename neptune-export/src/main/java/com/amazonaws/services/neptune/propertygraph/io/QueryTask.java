@@ -12,14 +12,18 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
-import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,6 +31,9 @@ import java.util.Map;
 import java.util.Queue;
 
 public class QueryTask implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryTask.class);
+
     private final Queue<NamedQuery> queries;
     private final NeptuneGremlinClient.QueryClient queryClient;
     private final PropertyGraphTargetConfig targetConfig;
@@ -56,7 +63,7 @@ public class QueryTask implements Runnable {
     public void run() {
 
         QueriesWriterFactory writerFactory = new QueriesWriterFactory();
-        Map<String, GraphElementHandler<Map<?, ?>>> labelWriters = new HashMap<>();
+        Map<Label, LabelWriter<Map<?, ?>>> labelWriters = new HashMap<>();
 
         try {
 
@@ -65,63 +72,77 @@ public class QueryTask implements Runnable {
                 try {
 
                     NamedQuery namedQuery = queries.poll();
+
                     if (!(namedQuery == null)) {
 
-                        PropertiesMetadata propertiesMetadata = new PropertiesMetadata();
-
-                        ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
+                        final GraphElementSchemas graphElementSchemas = new GraphElementSchemas();
 
                         if (twoPassAnalysis) {
-                            // First pass
-                            results.stream().
-                                    map(r -> castToMap(r.getObject())).
-                                    forEach(r -> {
-                                        propertiesMetadata.update(namedQuery.name(), r, true);
-                                    });
-
-                            // Re-run query for second pass
-                            results = queryClient.submit(namedQuery.query(), timeoutMillis);
+                            Timer.timedActivity(String.format("generating schema for query [%s]", namedQuery.query()),
+                                    (Activity.Runnable) () -> updateSchema(namedQuery, graphElementSchemas));
                         }
 
-                        try (Timer timer = new Timer(String.format("query [%s]", namedQuery.query()))) {
-
-                            ResultsHandler resultsHandler = new ResultsHandler(
-                                    namedQuery.name(), labelWriters, writerFactory, propertiesMetadata);
-                            StatusHandler handler = new StatusHandler(resultsHandler, status);
-
-                            results.stream().
-                                    map(r -> castToMap(r.getObject())).
-                                    forEach(r -> {
-                                        try {
-                                            handler.handle(r, true);
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    });
-                        }
+                        Timer.timedActivity(String.format("executing query [%s]", namedQuery.query()),
+                                (Activity.Runnable) () ->
+                                        executeQuery(namedQuery, writerFactory, labelWriters, graphElementSchemas));
 
                     } else {
                         status.halt();
                     }
 
                 } catch (IllegalStateException e) {
-                    System.err.printf("%nWARNING: Unexpected result value. %s. Proceeding with next query.%n", e.getMessage());
+                    logger.warn("Unexpected result value. {}. Proceeding with next query.", e.getMessage());
                 }
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                for (GraphElementHandler<Map<?, ?>> labelWriter : labelWriters.values()) {
+            for (LabelWriter<Map<?, ?>> labelWriter : labelWriters.values()) {
+                try {
                     labelWriter.close();
+                } catch (Exception e) {
+                    logger.warn("Error closing label writer: {}.", e.getMessage());
                 }
-            } catch (Exception e) {
-                System.err.printf("%nWARNING: Error closing writer: %s%n", e.getMessage());
             }
         }
 
+    }
+
+    private void updateSchema(NamedQuery namedQuery, GraphElementSchemas graphElementSchemas) {
+        ResultSet firstPassResults = queryClient.submit(namedQuery.query(), timeoutMillis);
+
+        firstPassResults.stream().
+                map(r -> castToMap(r.getObject())).
+                forEach(r -> {
+                    graphElementSchemas.update(new Label(namedQuery.name()), r, true);
+                });
+    }
+
+    private void executeQuery(NamedQuery namedQuery,
+                              QueriesWriterFactory writerFactory,
+                              Map<Label, LabelWriter<Map<?, ?>>> labelWriters,
+                              GraphElementSchemas graphElementSchemas) {
+
+        ResultSet results = queryClient.submit(namedQuery.query(), timeoutMillis);
+
+        ResultsHandler resultsHandler = new ResultsHandler(
+                new Label(namedQuery.name()),
+                labelWriters,
+                writerFactory,
+                graphElementSchemas);
+
+        StatusHandler handler = new StatusHandler(resultsHandler, status);
+
+        results.stream().
+                map(r -> castToMap(r.getObject())).
+                forEach(r -> {
+                    try {
+                        handler.handle(r, true);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
     private HashMap<?, ?> castToMap(Object o) {
@@ -134,35 +155,34 @@ public class QueryTask implements Runnable {
 
     private class ResultsHandler implements GraphElementHandler<Map<?, ?>> {
 
-        private final String name;
-        private final Map<String, GraphElementHandler<Map<?, ?>>> labelWriters;
+        private final Label label;
+        private final Map<Label, LabelWriter<Map<?, ?>>> labelWriters;
         private final QueriesWriterFactory writerFactory;
-        private final PropertiesMetadata propertiesMetadata;
+        private final GraphElementSchemas graphElementSchemas;
 
-        private ResultsHandler(String name,
-                               Map<String, GraphElementHandler<Map<?, ?>>> labelWriters,
+        private ResultsHandler(Label label,
+                               Map<Label, LabelWriter<Map<?, ?>>> labelWriters,
                                QueriesWriterFactory writerFactory,
-                               PropertiesMetadata propertiesMetadata) {
-            this.name = name;
+                               GraphElementSchemas graphElementSchemas) {
+            this.label = label;
             this.labelWriters = labelWriters;
             this.writerFactory = writerFactory;
 
-            this.propertiesMetadata = propertiesMetadata;
+            this.graphElementSchemas = graphElementSchemas;
         }
 
         private void createWriter(Map<?, ?> properties, boolean allowStructuralElements) {
             try {
 
-                if (!propertiesMetadata.hasMetadataFor(name)) {
-                    propertiesMetadata.update(name, properties, allowStructuralElements);
+                if (!graphElementSchemas.hasSchemaFor(label)) {
+                    graphElementSchemas.update(label, properties, allowStructuralElements);
                 }
 
-                Map<Object, PropertyTypeInfo> propertyMetadata = propertiesMetadata.propertyMetadataFor(name);
-                PropertyGraphPrinter propertyGraphPrinter = writerFactory.createPrinter(name, index, propertyMetadata, targetConfig);
+                LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
+                PropertyGraphPrinter propertyGraphPrinter =
+                        writerFactory.createPrinter(Directories.fileName(label.fullyQualifiedLabel(), index), labelSchema, targetConfig);
 
-                propertyGraphPrinter.printHeaderRemainingColumns(propertyMetadata.values());
-
-                labelWriters.put(name, writerFactory.createLabelWriter(propertyGraphPrinter));
+                labelWriters.put(label, writerFactory.createLabelWriter(propertyGraphPrinter, label));
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -172,11 +192,11 @@ public class QueryTask implements Runnable {
         @Override
         public void handle(Map<?, ?> properties, boolean allowTokens) throws IOException {
 
-            if (!labelWriters.containsKey(name)) {
+            if (!labelWriters.containsKey(label)) {
                 createWriter(properties, allowTokens);
             }
 
-            labelWriters.get(name).handle(properties, allowTokens);
+            labelWriters.get(label).handle(properties, allowTokens);
         }
 
         @Override
@@ -185,7 +205,7 @@ public class QueryTask implements Runnable {
         }
     }
 
-    private class StatusHandler implements GraphElementHandler<Map<?, ?>> {
+    private static class StatusHandler implements GraphElementHandler<Map<?, ?>> {
 
         private final GraphElementHandler<Map<?, ?>> parent;
         private final Status status;

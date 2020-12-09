@@ -12,9 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
-import org.apache.tinkerpop.gremlin.driver.Tokens;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -25,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
@@ -37,12 +42,12 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final Collection<String> labModeFeatures;
+    private final LabModeFeatures labModeFeatures;
 
     public NodesClient(GraphTraversalSource g,
                        boolean tokensOnly,
                        ExportStats stats,
-                       Collection<String> labModeFeatures) {
+                       LabModeFeatures labModeFeatures) {
         this.g = g;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
@@ -55,7 +60,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
 
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
                 createTraversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
@@ -76,24 +81,26 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
                                Range range,
                                LabelsFilter labelsFilter,
-                               PropertiesMetadata propertiesMetadata) {
+                               GraphElementSchemas graphElementSchemas) {
 
-        GraphTraversal<? extends Element, ?> traversal = createTraversal(range, labelsFilter);
+        GraphTraversal<? extends Element, ?> t1 = createTraversal(range, labelsFilter);
 
-        traversal = filterByPropertyKeys(traversal, labelsFilter, propertiesMetadata);
+        GraphTraversal<? extends Element, ?> t2 = filterByPropertyKeys(t1, labelsFilter, graphElementSchemas);
 
-        GraphTraversal<? extends Element, Map<String, Object>> t = traversal.
-                project("id", "label", "properties").
+        GraphTraversal<? extends Element, Map<String, Object>> t3 = t2.
+                project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties")).
                 by(T.id).
                 by(label().fold()).
                 by(tokensOnly ?
                         select("x") :
-                        valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
+                        valueMap(labelsFilter.getPropertiesForLabels(graphElementSchemas))
                 );
 
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t3);
 
-        t.forEachRemaining(m -> {
+        logger.info(GremlinQueryDebugger.queryAsString(traversal));
+
+        traversal.forEachRemaining(m -> {
             try {
                 handler.handle(m, false);
             } catch (IOException e) {
@@ -104,56 +111,49 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
-                                                                      PropertiesMetadata propertiesMetadata) {
-        if (!labModeFeatures.contains("filterByPropertyKeys")) {
+                                                                      GraphElementSchemas graphElementSchemas) {
+        if (!labModeFeatures.containsFeature(LabModeFeature.FilterByPropertyKeys)) {
             return traversal;
         }
 
         return traversal.where(
-                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(propertiesMetadata))));
+                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(graphElementSchemas))));
     }
 
     @Override
     public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
+
         if (rangeConfig.approxNodeCount() > 0) {
             return rangeConfig.approxNodeCount();
         }
 
-        GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter).count();
+        String description = labelsFilter.description("nodes");
+        System.err.println(String.format("Counting %s...", description));
 
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        return Timer.timedActivity(String.format("counting %s", description), (Activity.Callable<Long>) () ->
+        {
+            GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter).count();
 
-        Long count = t.next();
-        stats.setNodeCount(count);
-        return count;
+            logger.info(GremlinQueryDebugger.queryAsString(t));
+
+            Long count = t.next();
+            stats.setNodeCount(count);
+            return count;
+        });
     }
 
     @Override
-    public Collection<String> labels() {
-        // Using dedup can cause MemoryLimitExceededException on large datasets, so do the dedup in the set
-
-        GraphTraversal<Vertex, String> traversal = g.V().label();
-
-        logger.info(GremlinQueryDebugger.queryAsString(traversal));
-
-        Set<String> labels = new HashSet<>();
-        traversal.forEachRemaining(labels::add);
-        return labels;
+    public Collection<Label> labels(LabelStrategy labelStrategy) {
+        return labelStrategy.getLabels(g);
     }
 
     @Override
-    public String getLabelsAsStringToken(Map<String, Object> input) {
-
-        List<String> labels = (List<String>) input.get("label");
-        if (labels.size() > 1) {
-            return labels.toString();
-        } else {
-            return labels.get(0);
-        }
+    public Label getLabelFor(Map<String, Object> input, LabelsFilter labelsFilter) {
+        return labelsFilter.getLabelFor(input);
     }
 
     @Override
-    public void updateStats(String label) {
+    public void updateStats(Label label) {
         stats.incrementNodeStats(label);
     }
 
@@ -161,7 +161,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<Vertex, Vertex> t = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).V() :
                 g.V();
-        return range.applyRange(labelsFilter.apply(t));
+        return range.applyRange(labelsFilter.apply(t, labModeFeatures));
     }
 
 }

@@ -12,7 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.services.neptune.AmazonNeptune;
+import org.apache.commons.lang.StringUtils;
+
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public class CloneCluster implements CloneClusterStrategy {
 
@@ -20,12 +24,18 @@ public class CloneCluster implements CloneClusterStrategy {
     private final int replicaCount;
     private final int maxConcurrency;
     private final String engineVersion;
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
-    public CloneCluster(String cloneClusterInstanceType, int replicaCount, int maxConcurrency, String engineVersion) {
+    public CloneCluster(String cloneClusterInstanceType,
+                        int replicaCount,
+                        int maxConcurrency,
+                        String engineVersion,
+                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
         this.maxConcurrency = maxConcurrency;
         this.engineVersion = engineVersion;
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
     @Override
@@ -35,10 +45,17 @@ public class CloneCluster implements CloneClusterStrategy {
             throw new IllegalStateException("neptune-export does not support cloning a Neptune cluster accessed via a load balancer");
         }
 
-        String clusterId = NeptuneClusterMetadata.clusterIdFromEndpoint(connectionConfig.endpoints().iterator().next());
+        String clusterId = connectionConfig.clusterId();
         String targetClusterId = String.format("neptune-export-cluster-%s", UUID.randomUUID().toString().substring(0, 5));
 
-        AddCloneTask addCloneTask = new AddCloneTask(clusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion);
+        AddCloneTask addCloneTask = new AddCloneTask(
+                clusterId,
+                targetClusterId,
+                cloneClusterInstanceType,
+                replicaCount,
+                engineVersion,
+                amazonNeptuneClientSupplier);
+
         NeptuneClusterMetadata targetClusterMetadata = addCloneTask.execute();
 
         InstanceType instanceType =  InstanceType.parse(
@@ -58,15 +75,17 @@ public class CloneCluster implements CloneClusterStrategy {
         return new ClonedClusterStrategy(
                 targetClusterId,
                 new ConnectionConfig(
+                        clusterId,
                         targetClusterMetadata.endpoints(),
                         connectionConfig.port(),
                         connectionConfig.nlbEndpoint(),
                         connectionConfig.albEndpoint(),
                         connectionConfig.lbPort(),
-                        connectionConfig.useIamAuth(),
+                        targetClusterMetadata.isIAMDatabaseAuthenticationEnabled(),
                         true
                 ),
-                new ConcurrencyConfig(newConcurrency));
+                new ConcurrencyConfig(newConcurrency),
+                amazonNeptuneClientSupplier);
     }
 
     private static class ClonedClusterStrategy implements ClusterStrategy {
@@ -74,13 +93,16 @@ public class CloneCluster implements CloneClusterStrategy {
         private final String clusterId;
         private final ConnectionConfig connectionConfig;
         private final ConcurrencyConfig concurrencyConfig;
+        private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
         private ClonedClusterStrategy(String clusterId,
                                       ConnectionConfig connectionConfig,
-                                      ConcurrencyConfig concurrencyConfig) {
+                                      ConcurrencyConfig concurrencyConfig,
+                                      Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
             this.clusterId = clusterId;
             this.connectionConfig = connectionConfig;
             this.concurrencyConfig = concurrencyConfig;
+            this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
         }
 
         @Override
@@ -96,7 +118,10 @@ public class CloneCluster implements CloneClusterStrategy {
         @Override
         public void close() throws Exception {
 
-            RemoveCloneTask removeCloneTask = new RemoveCloneTask(clusterId);
+            RemoveCloneTask removeCloneTask = new RemoveCloneTask(
+                    clusterId,
+                    amazonNeptuneClientSupplier);
+
             removeCloneTask.execute();
         }
     }

@@ -12,8 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -24,7 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
@@ -35,12 +41,12 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final Collection<String> labModeFeatures;
+    private final LabModeFeatures labModeFeatures;
 
     public EdgesClient(GraphTraversalSource g,
                        boolean tokensOnly,
                        ExportStats stats,
-                       Collection<String> labModeFeatures) {
+                       LabModeFeatures labModeFeatures) {
         this.g = g;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
@@ -53,14 +59,14 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
-        GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
+    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+        GraphTraversal<? extends Element, Map<Object, Object>> t1 = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);
 
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        logger.info(GremlinQueryDebugger.queryAsString(t1));
 
-        t.forEachRemaining(m -> {
+        t1.forEachRemaining(m -> {
             try {
                 handler.handle(m, false);
             } catch (IOException e) {
@@ -73,27 +79,29 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
                                Range range,
                                LabelsFilter labelsFilter,
-                               PropertiesMetadata propertiesMetadata) {
+                               GraphElementSchemas graphElementSchemas) {
 
         GraphTraversal<Edge, Edge> t1 = tokensOnly ?
-                g.withSideEffect("x", new HashMap<String, Object>()).E():
+                g.withSideEffect("x", new HashMap<String, Object>()).E() :
                 g.E();
 
-        GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1));
-        GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, propertiesMetadata);
+        GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1, labModeFeatures));
+        GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
-        GraphTraversal<? extends Element, Map<String, Object>> traversal = t3.
-                        project("id", "label", "properties", "from", "to").
-                        by(T.id).
-                        by(T.label).
-                        by(tokensOnly ?
-                                select("x"):
-                                valueMap(labelsFilter.getPropertiesForLabels(propertiesMetadata))
-                        ).
-                        by(outV().id()).
-                        by(inV().id());
+        GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
+                project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties", "~from", "~to")).
+                by(T.id).
+                by(T.label).
+                by(tokensOnly ?
+                        select("x") :
+                        valueMap(labelsFilter.getPropertiesForLabels(graphElementSchemas))
+                ).
+                by(outV().id()).
+                by(inV().id());
 
-        logger.info(GremlinQueryDebugger.queryAsString(t1));
+        GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t4);
+
+        logger.info(GremlinQueryDebugger.queryAsString(traversal));
 
         traversal.forEachRemaining(p -> {
             try {
@@ -106,55 +114,52 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
 
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
-                                                                      PropertiesMetadata propertiesMetadata) {
-        if (!labModeFeatures.contains("filterByPropertyKeys")) {
+                                                                      GraphElementSchemas graphElementSchemas) {
+        if (!labModeFeatures.containsFeature(LabModeFeature.FilterByPropertyKeys)) {
             return traversal;
         }
 
         return traversal.where(
-                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(propertiesMetadata))));
+                properties().key().is(P.within(labelsFilter.getPropertiesForLabels(graphElementSchemas))));
     }
 
     @Override
     public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
 
-        if (rangeConfig.approxEdgeCount() > 0){
+        if (rangeConfig.approxEdgeCount() > 0) {
             return rangeConfig.approxEdgeCount();
         }
 
-        GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
-        logger.info(GremlinQueryDebugger.queryAsString(t));
+        String description = labelsFilter.description("edges");
+        System.err.println(String.format("Counting %s...", description));
 
-        Long count = t.next();
+        return Timer.timedActivity(String.format("counting %s", description), (Activity.Callable<Long>) () -> {
+            GraphTraversal<? extends Element, Long> t = traversal(Range.ALL, labelsFilter).count();
+            logger.info(GremlinQueryDebugger.queryAsString(t));
 
-        stats.setEdgeCount(count);
-        return count;
+            Long count = t.next();
+
+            stats.setEdgeCount(count);
+            return count;
+        });
     }
 
     @Override
-    public Collection<String> labels() {
-        // Using dedup can cause MemoryLimitExceededException on large datasets, so do the dedup in the set
-
-        GraphTraversal<Edge, String> traversal = g.E().label();
-
-        logger.info(GremlinQueryDebugger.queryAsString(traversal));
-
-        Set<String> labels = new HashSet<>();
-        traversal.forEachRemaining(labels::add);
-        return labels;
+    public Collection<Label> labels(LabelStrategy labelStrategy) {
+        return labelStrategy.getLabels(g);
     }
 
     @Override
-    public String getLabelsAsStringToken(Map<String, Object> input) {
-        return (String) input.get("label");
+    public Label getLabelFor(Map<String, Object> input, LabelsFilter labelsFilter) {
+        return labelsFilter.getLabelFor(input);
     }
 
     @Override
-    public void updateStats(String label) {
+    public void updateStats(Label label) {
         stats.incrementEdgeStats(label);
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {
-        return range.applyRange(labelsFilter.apply(g.E()));
+        return range.applyRange(labelsFilter.apply(g.E(), labModeFeatures));
     }
 }

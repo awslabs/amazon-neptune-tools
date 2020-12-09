@@ -12,15 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.KinesisConfig;
-import com.amazonaws.services.neptune.io.Target;
-import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.io.*;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.function.Supplier;
 
 public class PropertyGraphTargetConfig {
@@ -28,53 +25,96 @@ public class PropertyGraphTargetConfig {
     private final Directories directories;
     private final PropertyGraphExportFormat format;
     private final Target output;
-    private final boolean includeTypeDefinitions;
+    private final PrinterOptions printerOptions;
     private final KinesisConfig kinesisConfig;
+    private final boolean inferSchema;
+    private final boolean mergeFiles;
+    private final boolean useTempFiles;
 
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
-                                     boolean includeTypeDefinitions,
+                                     PrinterOptions printerOptions,
                                      PropertyGraphExportFormat format,
-                                     Target output) {
+                                     Target output,
+                                     boolean inferSchema,
+                                     boolean mergeFiles) {
+        this(directories, kinesisConfig, printerOptions, format, output, inferSchema, mergeFiles, false);
+    }
+
+    private PropertyGraphTargetConfig(Directories directories,
+                                      KinesisConfig kinesisConfig,
+                                      PrinterOptions printerOptions,
+                                      PropertyGraphExportFormat format,
+                                      Target output,
+                                      boolean inferSchema,
+                                      boolean mergeFiles,
+                                      boolean useTempFiles) {
         this.directories = directories;
         this.format = format;
         this.output = output;
-        this.includeTypeDefinitions = includeTypeDefinitions;
+        this.printerOptions = printerOptions;
         this.kinesisConfig = kinesisConfig;
+        this.inferSchema = inferSchema;
+        this.mergeFiles = mergeFiles;
+        this.useTempFiles = useTempFiles;
     }
 
-    public String formatDescription() {
-        return format.description();
+    public Target output() {
+        return output;
     }
 
-    public String outputDescription() {
-        return output.name();
+    public PropertyGraphExportFormat format() {
+        return format;
     }
 
-    public PropertyGraphPrinter createPrinterForQueries(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
-
-        OutputWriter outputWriter = output.createOutputWriter(
-                () -> directories.createQueryResultsFilePath(name, index, format),
-                kinesisConfig);
-
-        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
+    public boolean mergeFiles() {
+        return mergeFiles;
     }
 
-    public PropertyGraphPrinter createPrinterForEdges(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
-
-        OutputWriter outputWriter = output.createOutputWriter(
-                () -> directories.createEdgesFilePath(name, index, format),
-                kinesisConfig);
-
-        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
+    public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema) throws IOException {
+        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(useTempFiles)), labelSchema);
     }
 
-    public PropertyGraphPrinter createPrinterForNodes(String name, int index, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    private PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+        OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
+        return createPrinter(labelSchema, outputWriter);
+    }
 
-        OutputWriter outputWriter = output.createOutputWriter(
-                () -> directories.createNodesFilePath(name, index, format),
-                kinesisConfig);
+    public PropertyGraphPrinter createPrinterForEdges(String name, LabelSchema labelSchema) throws IOException {
+        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, fileExtension(useTempFiles)), labelSchema);
+    }
 
-        return format.createPrinter(outputWriter, metadata, includeTypeDefinitions);
+    private PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+        OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
+        return createPrinter(labelSchema, outputWriter);
+    }
+
+    public PropertyGraphPrinter createPrinterForNodes(String name, LabelSchema labelSchema) throws IOException {
+        return createPrinterForNodes(() -> directories.createNodesFilePath(name, fileExtension(useTempFiles)), labelSchema);
+    }
+
+    private PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
+        OutputWriter outputWriter = output.createOutputWriter(pathSupplier, kinesisConfig);
+        return createPrinter(labelSchema, outputWriter);
+    }
+
+    public PropertyGraphTargetConfig forFileConsolidation() {
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, false, mergeFiles, true);
+    }
+
+    private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {
+        if (inferSchema) {
+            return format.createPrinterForInferredSchema(outputWriter, labelSchema, printerOptions);
+        } else {
+            return format.createPrinter(outputWriter, labelSchema, printerOptions);
+        }
+    }
+
+    private FileExtension fileExtension(boolean tempFile) {
+        return tempFile ? FileExtension.TEMP_FILE : format;
+    }
+
+    public RewriteCommand createRewriteCommand(ConcurrencyConfig concurrencyConfig) {
+        return format.createRewriteCommand(this, concurrencyConfig, inferSchema);
     }
 }

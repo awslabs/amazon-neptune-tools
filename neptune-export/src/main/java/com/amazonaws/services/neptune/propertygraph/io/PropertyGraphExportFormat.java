@@ -12,111 +12,153 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.cli.RequiresMetadata;
+import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-import com.github.rvesse.airline.annotations.Command;
 
 import java.io.IOException;
-import java.util.Map;
 
-public enum PropertyGraphExportFormat implements FileExtension, RequiresMetadata {
+public enum PropertyGraphExportFormat implements FileExtension {
     json {
-        @Override
-        public boolean requiresMetadata() {
-            return true;
-        }
-
         @Override
         public String suffix() {
             return "json";
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
-            generator.setPrettyPrinter(new MinimalPrettyPrinter(System.lineSeparator()));
-            generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
-            return new JsonPropertyGraphPrinter(writer, generator, metadata);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
+            return new JsonPropertyGraphPrinter(writer, generator, labelSchema);
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
+            return new JsonPropertyGraphPrinter(writer, generator, labelSchema, true);
         }
 
         @Override
         public String description() {
             return "JSON";
         }
+
+        @Override
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+            return RewriteCommand.NULL_COMMAND;
+        }
     },
     csv {
-        @Override
-        public boolean requiresMetadata() {
-            return true;
-        }
-
         @Override
         public String suffix() {
             return "csv";
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, metadata, true, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) {
+            return new CsvPropertyGraphPrinter(writer, labelSchema, printerOptions.withIncludeHeaders(true));
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
         }
 
         @Override
         public String description() {
             return "CSV";
         }
+
+        @Override
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+            if (targetConfig.mergeFiles()) {
+                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
+            } else {
+                if (inferSchema) {
+                    return new RewriteCsv(targetConfig, concurrencyConfig);
+                } else {
+                    return RewriteCommand.NULL_COMMAND;
+                }
+            }
+        }
     },
     csvNoHeaders {
-        @Override
-        public boolean requiresMetadata() {
-            return true;
-        }
-
         @Override
         public String suffix() {
             return "csv";
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) {
-            return new CsvPropertyGraphPrinter(writer, metadata, false, includeTypeDefinitions);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) {
+            return new CsvPropertyGraphPrinter(writer, labelSchema, printerOptions.withIncludeHeaders(false));
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
         }
 
         @Override
         public String description() {
             return "CSV (no headers)";
         }
-    },
-    neptuneStreamsJson{
-        @Override
-        public boolean requiresMetadata() {
-            return false;
-        }
 
+        @Override
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+            if (targetConfig.mergeFiles()) {
+                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
+            } else {
+                if (inferSchema) {
+                    return new RewriteCsv(targetConfig, concurrencyConfig);
+                } else {
+                    return RewriteCommand.NULL_COMMAND;
+                }
+            }
+        }
+    },
+    neptuneStreamsJson {
         @Override
         public String suffix() {
             return "json";
         }
 
         @Override
-        PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException {
-            JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
-            generator.setPrettyPrinter(new MinimalPrettyPrinter(""));
-            generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            JsonGenerator generator = createJsonGenerator(writer, "");
             return new NeptuneStreamsJsonPropertyGraphPrinter(writer, generator);
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            return createPrinter(writer, labelSchema, printerOptions);
         }
 
         @Override
         public String description() {
             return "JSON (Neptune Streams format)";
         }
+
+        @Override
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+            return RewriteCommand.NULL_COMMAND;
+        }
     };
 
-    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, Map<Object, PropertyTypeInfo> metadata, boolean includeTypeDefinitions) throws IOException;
+    private static JsonGenerator createJsonGenerator(OutputWriter writer, String s) throws IOException {
+        JsonGenerator generator = new JsonFactory().createGenerator(writer.writer());
+        generator.setPrettyPrinter(new MinimalPrettyPrinter(s));
+        generator.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+        return generator;
+    }
+
+    abstract PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException;
+
+    abstract PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException;
 
     public abstract String description();
+
+    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema);
 }

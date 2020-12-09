@@ -12,27 +12,48 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import java.io.IOException;
-import java.util.Map;
+import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.LabelsFilter;
 
-public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
+import java.io.IOException;
+import java.util.*;
+
+public class EdgeWriter implements LabelWriter<Map<String, Object>> {
 
     private final PropertyGraphPrinter propertyGraphPrinter;
+    private final boolean hasFromAndToLabels;
 
-    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter) {
+    public EdgeWriter(PropertyGraphPrinter propertyGraphPrinter, Label label) {
         this.propertyGraphPrinter = propertyGraphPrinter;
+        this.hasFromAndToLabels = label.hasFromAndToLabels();
     }
 
     @Override
     public void handle(Map<String, Object> map, boolean allowTokens) throws IOException {
-        String from = String.valueOf(map.get("from"));
-        String to = String.valueOf(map.get("to"));
+        String from = String.valueOf(map.get("~from"));
+        String to = String.valueOf(map.get("~to"));
+        @SuppressWarnings("unchecked")
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
-        String id = (String) map.get("id");
-        String label = (String) map.get("label");
+        String id = (String) map.get("~id");
+        String label = (String) map.get("~label");
 
         propertyGraphPrinter.printStartRow();
-        propertyGraphPrinter.printEdge(id, label, from, to);
+
+        if (hasFromAndToLabels){
+            @SuppressWarnings("unchecked")
+            List<String> fromLabels = (List<String>) map.get("~fromLabels");
+            @SuppressWarnings("unchecked")
+            List<String> toLabels = (List<String>) map.get("~toLabels");
+
+            // Temp fix for concatenated label issue
+            fromLabels = Label.fixLabelsIssue(fromLabels);
+            toLabels = Label.fixLabelsIssue(toLabels);
+
+            propertyGraphPrinter.printEdge(id, label, from, to, fromLabels, toLabels);
+        } else {
+            propertyGraphPrinter.printEdge(id, label, from, to);
+        }
+
         propertyGraphPrinter.printProperties(id, "ep", properties);
         propertyGraphPrinter.printEndRow();
     }
@@ -40,5 +61,10 @@ public class EdgeWriter implements GraphElementHandler<Map<String, Object>> {
     @Override
     public void close() throws Exception {
         propertyGraphPrinter.close();
+    }
+
+    @Override
+    public String outputId() {
+        return propertyGraphPrinter.outputId();
     }
 }

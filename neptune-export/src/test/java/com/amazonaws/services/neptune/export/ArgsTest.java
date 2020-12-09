@@ -14,6 +14,9 @@ package com.amazonaws.services.neptune.export;
 
 import org.junit.Test;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import static org.junit.Assert.*;
 
 public class ArgsTest {
@@ -58,6 +61,58 @@ public class ArgsTest {
     public void shouldFormatAsString() throws Exception {
         Args args = new Args("-e endpoint -c config");
         assertEquals("-e endpoint -c config", args.toString());
+    }
+
+    @Test
+    public void shouldIndicateWhetherArgsContainArg(){
+        Args args = new Args("-e endpoint -c config");
+        assertTrue(args.contains("-c"));
+        assertFalse(args.contains("-x"));
+    }
+
+    @Test
+    public void shouldIndicateWhetherArgsContainArgWithValue(){
+        Args args = new Args("-e endpoint --profile xyz --profile neptune_ml -c config -b");
+        assertTrue(args.contains("--profile", "neptune_ml"));
+        assertFalse(args.contains("-b", "xyz"));
+    }
+
+    @Test
+    public void shouldIndicateWhetherArgsContainArgWithQuotedValue(){
+        Args args = new Args("-e endpoint --profile xyz --profile \"neptune_ml\" -c config -b");
+        assertTrue(args.contains("--profile", "neptune_ml"));
+        assertFalse(args.contains("-b", "xyz"));
+    }
+
+    @Test
+    public void shouldReplaceArg(){
+        Args args = new Args("export-pg -e endpoint --profile xyz");
+        args.replace("export-pg", "export-pg-from-config");
+        assertEquals("export-pg-from-config -e endpoint --profile xyz", args.toString());
+    }
+
+    @Test
+    public void shouldIndicateWhetherAnyOfTheSuppliedArgsIsPresent(){
+        Args args = new Args("export-pg -e endpoint --profile xyz");
+        assertTrue(args.containsAny("x", "y", "-e", "z"));
+        assertFalse(args.containsAny("x", "y", "z"));
+    }
+
+    @Test
+    public void shouldGetFirstOptionValue(){
+        Args args = new Args("export-pg -e endpoint --profile xyz --profile abc -e endpoint --use-ssl --profile 123");
+        assertEquals("xyz", args.getFirstOptionValue("--profile"));
+    }
+
+    @Test
+    public void shouldGetAllOptionValues(){
+        Args args = new Args("export-pg -e endpoint --profile xyz --profile abc -e endpoint --use-ssl --profile 123");
+        Collection<String> optionValues = args.getOptionValues("--profile");
+        assertEquals(3, optionValues.size());
+        Iterator<String> iterator = optionValues.iterator();
+        assertEquals("xyz", iterator.next());
+        assertEquals("abc", iterator.next());
+        assertEquals("123", iterator.next());
     }
 
 }

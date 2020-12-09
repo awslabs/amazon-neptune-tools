@@ -12,99 +12,109 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
+import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class RemoveCloneTask {
 
     private final String clusterId;
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
-    public RemoveCloneTask(String clusterId) {
+    public RemoveCloneTask(String clusterId, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
         this.clusterId = clusterId;
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
     public void execute() {
 
-        AmazonNeptune neptuneClient = AmazonNeptuneClientBuilder.defaultClient();
+        AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
 
-        try (Timer timer = new Timer("deleting cloned cluster", false)) {
+        try {
 
-            System.err.println();
-            System.err.println("Deleting cloned cluster " + clusterId + "...");
-
-
-            NeptuneClusterMetadata metadata = NeptuneClusterMetadata.createFromClusterId(clusterId);
-
-            if (!metadata.isTaggedWithNeptuneExport()) {
-                throw new IllegalStateException("Cluster must have an 'application' tag with the value '" +
-                        NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG + "' before it can be deleted");
+            Timer.timedActivity("deleting cloned cluster", false,
+                    (Activity.Runnable) () -> deleteCluster(neptune));
+        } finally {
+            if (neptune != null) {
+                neptune.shutdown();
             }
+        }
+    }
 
-            ExecutorService taskExecutor = Executors.newFixedThreadPool(1 + metadata.replicas().size());
+    private void deleteCluster(AmazonNeptune neptuneClient) {
+        System.err.println();
+        System.err.println("Deleting cloned cluster " + clusterId + "...");
 
-            taskExecutor.execute(() -> deleteInstance(neptuneClient, metadata.primary()));
+        NeptuneClusterMetadata metadata =
+                NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
 
-            for (String replicaId : metadata.replicas()) {
-                taskExecutor.execute(() -> deleteInstance(neptuneClient, replicaId));
-            }
+        if (!metadata.isTaggedWithNeptuneExport()) {
+            throw new IllegalStateException("Cluster must have an 'application' tag with the value '" +
+                    NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG + "' before it can be deleted");
+        }
 
-            taskExecutor.shutdown();
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(1 + metadata.replicas().size());
 
-            try {
-                taskExecutor.awaitTermination(30, TimeUnit.MINUTES);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
+        taskExecutor.execute(() -> deleteInstance(neptuneClient, metadata.primary()));
 
-            System.err.println("Deleting cluster...");
+        for (String replicaId : metadata.replicas()) {
+            taskExecutor.execute(() -> deleteInstance(neptuneClient, replicaId));
+        }
 
-            neptuneClient.deleteDBCluster(new DeleteDBClusterRequest()
-                    .withDBClusterIdentifier(metadata.clusterId())
-                    .withSkipFinalSnapshot(true));
+        taskExecutor.shutdown();
 
-            try {
+        try {
+            taskExecutor.awaitTermination(30, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
 
-                boolean clusterIsBeingDeleted = neptuneClient.describeDBClusters(
+        System.err.println("Deleting cluster...");
+
+        neptuneClient.deleteDBCluster(new DeleteDBClusterRequest()
+                .withDBClusterIdentifier(metadata.clusterId())
+                .withSkipFinalSnapshot(true));
+
+        try {
+
+            boolean clusterIsBeingDeleted = neptuneClient.describeDBClusters(
+                    new DescribeDBClustersRequest().withDBClusterIdentifier(metadata.clusterId()))
+                    .getDBClusters()
+                    .size() > 0;
+
+            while (clusterIsBeingDeleted) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                clusterIsBeingDeleted = neptuneClient.describeDBClusters(
                         new DescribeDBClustersRequest().withDBClusterIdentifier(metadata.clusterId()))
                         .getDBClusters()
                         .size() > 0;
-
-                while (clusterIsBeingDeleted) {
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    clusterIsBeingDeleted = neptuneClient.describeDBClusters(
-                            new DescribeDBClustersRequest().withDBClusterIdentifier(metadata.clusterId()))
-                            .getDBClusters()
-                            .size() > 0;
-                }
-            } catch (DBClusterNotFoundException e) {
-                // Do nothing
             }
-
-            System.err.println("Deleting parameter groups...");
-
-            neptuneClient.deleteDBClusterParameterGroup(new DeleteDBClusterParameterGroupRequest()
-                    .withDBClusterParameterGroupName(metadata.dbClusterParameterGroupName()));
-
-            neptuneClient.deleteDBParameterGroup(new DeleteDBParameterGroupRequest()
-                    .withDBParameterGroupName(
-                            metadata.instanceMetadataFor(metadata.primary()).dbParameterGroupName()));
-
-        } finally {
-            if (neptuneClient != null) {
-                neptuneClient.shutdown();
-            }
+        } catch (DBClusterNotFoundException e) {
+            // Do nothing
         }
+
+        System.err.println("Deleting parameter groups...");
+
+        neptuneClient.deleteDBClusterParameterGroup(new DeleteDBClusterParameterGroupRequest()
+                .withDBClusterParameterGroupName(metadata.dbClusterParameterGroupName()));
+
+        neptuneClient.deleteDBParameterGroup(new DeleteDBParameterGroupRequest()
+                .withDBParameterGroupName(
+                        metadata.instanceMetadataFor(metadata.primary()).dbParameterGroupName()));
     }
 
     private void deleteInstance(AmazonNeptune neptune, String instanceId) {

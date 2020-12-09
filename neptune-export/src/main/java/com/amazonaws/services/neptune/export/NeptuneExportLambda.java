@@ -19,6 +19,7 @@ import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 
@@ -26,16 +27,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class NeptuneExportLambda implements RequestStreamHandler {
 
-    private static final String TEMP_PATH = "/tmp/neptune";
+    public static final String TEMP_PATH = "/tmp/neptune";
 
     private final String localOutputPath;
+    private final boolean cleanOutputPath;
 
-    public NeptuneExportLambda(){
-        this(TEMP_PATH);
+    public NeptuneExportLambda() {
+        this(TEMP_PATH, true);
     }
 
-    public NeptuneExportLambda(String localOutputPath) {
+    public NeptuneExportLambda(String localOutputPath, boolean cleanOutputPath) {
         this.localOutputPath = localOutputPath;
+        this.cleanOutputPath = cleanOutputPath;
     }
 
     @Override
@@ -43,15 +46,31 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         Logger logger = s -> context.getLogger().log(s);
 
-        JsonNode json = new ObjectMapper().readTree(inputStream);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JsonNode json = objectMapper.readTree(inputStream);
 
         String cmd = json.has("command") ?
                 json.path("command").textValue() :
-                EnvironmentVariableUtils.getMandatoryEnv("COMMAND");
+                EnvironmentVariableUtils.getOptionalEnv("COMMAND", "export-pg");
+
+        ObjectNode params = json.has("params") ?
+                (ObjectNode) json.get("params") :
+                objectMapper.readTree("{}").deepCopy();
 
         String outputS3Path = json.has("outputS3Path") ?
                 json.path("outputS3Path").textValue() :
-                EnvironmentVariableUtils.getMandatoryEnv("OUTPUT_S3_PATH");
+                EnvironmentVariableUtils.getOptionalEnv("OUTPUT_S3_PATH", "");
+
+        boolean createExportSubdirectory = Boolean.parseBoolean(
+                json.has("createExportSubdirectory") ?
+                        json.path("createExportSubdirectory").toString() :
+                        EnvironmentVariableUtils.getOptionalEnv("CREATE_EXPORT_SUBDIRECTORY", "true"));
+
+        boolean overwriteExisting = Boolean.parseBoolean(
+                json.has("overwriteExisting") ?
+                        json.path("overwriteExisting").toString():
+                        EnvironmentVariableUtils.getOptionalEnv("OVERWRITE_EXISTING", "false"));
 
         String configFileS3Path = json.has("configFileS3Path") ?
                 json.path("configFileS3Path").textValue() :
@@ -67,38 +86,63 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         ObjectNode completionFilePayload = json.has("completionFilePayload") ?
                 json.path("completionFilePayload").deepCopy() :
-                new ObjectMapper().readTree(
+                objectMapper.readTree(
                         EnvironmentVariableUtils.getOptionalEnv(
                                 "COMPLETION_FILE_PAYLOAD",
                                 "{}")).
                         deepCopy();
 
+        ObjectNode additionalParams = json.has("additionalParams") ?
+                json.path("additionalParams").deepCopy() :
+                objectMapper.readTree("{}").deepCopy();
+
         int maxConcurrency = json.has("jobSize") ?
                 JobSize.parse(json.path("jobSize").textValue()).maxConcurrency() :
                 -1;
 
-        logger.log("cmd                   : " + cmd);
-        logger.log("outputS3Path          : " + outputS3Path);
-        logger.log("configFileS3Path      : " + configFileS3Path);
-        logger.log("queriesFileS3Path     : " + queriesFileS3Path);
-        logger.log("completionFileS3Path  : " + completionFileS3Path);
-        logger.log("completionFilePayload : " + completionFilePayload.toString());
+        logger.log("cmd                       : " + cmd);
+        logger.log("params                    : " + params.toPrettyString());
+        logger.log("outputS3Path              : " + outputS3Path);
+        logger.log("createExportSubdirectory  : " + createExportSubdirectory);
+        logger.log("overwriteExisting         : " + overwriteExisting);
+        logger.log("configFileS3Path          : " + configFileS3Path);
+        logger.log("queriesFileS3Path         : " + queriesFileS3Path);
+        logger.log("completionFileS3Path      : " + completionFileS3Path);
+        logger.log("completionFilePayload     : " + completionFilePayload.toPrettyString());
+        logger.log("additionalParams          : " + additionalParams.toPrettyString());
+
+        if (!cmd.contains(" ") && !params.isEmpty()) {
+            cmd = ParamConverter.fromJson(cmd, params).toString();
+        }
+
+        logger.log("revised cmd           : " + cmd);
 
         NeptuneExportService neptuneExportService = new NeptuneExportService(
-                logger,
                 cmd,
                 localOutputPath,
+                cleanOutputPath,
                 outputS3Path,
+                createExportSubdirectory,
+                overwriteExisting,
                 configFileS3Path,
                 queriesFileS3Path,
                 completionFileS3Path,
                 completionFilePayload,
+                additionalParams,
                 maxConcurrency);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
-            writer.write(outputS3ObjectInfo.toString());
+        if (StringUtils.isEmpty(outputS3Path)) {
+            return;
+        }
+
+        if (outputS3ObjectInfo != null) {
+            try (Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, UTF_8))) {
+                writer.write(outputS3ObjectInfo.toString());
+            }
+        } else {
+            System.exit(-1);
         }
     }
 }

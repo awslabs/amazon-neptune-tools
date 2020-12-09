@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
+import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 
 import java.util.Collection;
@@ -48,33 +49,36 @@ public class QueryJob {
     }
 
     public void execute() throws Exception {
-        try (Timer timer = new Timer("exporting results from queries")) {
-            System.err.println("Writing query results to " + targetConfig.outputDescription() + " as " + targetConfig.formatDescription());
+        Timer.timedActivity("exporting results from queries", (Activity.Runnable) this::export);
+    }
 
-            Status status = new Status();
+    private void export() {
 
-            ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
+        System.err.println("Writing query results to " + targetConfig.output().name() + " as " + targetConfig.format().description());
 
-            for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
-                QueryTask queryTask = new QueryTask(
-                        queries,
-                        queryClient,
-                        targetConfig,
-                        twoPassAnalysis,
-                        timeoutMillis,
-                        status,
-                        index);
-                taskExecutor.execute(queryTask);
-            }
+        Status status = new Status();
 
-            taskExecutor.shutdown();
+        ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
 
-            try {
-                taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException(e);
-            }
+        for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
+            QueryTask queryTask = new QueryTask(
+                    queries,
+                    queryClient,
+                    targetConfig,
+                    twoPassAnalysis,
+                    timeoutMillis,
+                    status,
+                    index);
+            taskExecutor.execute(queryTask);
+        }
+
+        taskExecutor.shutdown();
+
+        try {
+            taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
     }
 }

@@ -9,14 +9,6 @@ You may also be interested in the [Neptune Samples github repository](https://gi
 ### GraphML 2 CSV
 This is a [utility](graphml2csv/README.md) to convert graphml files into the Neptune CSV format.
 
-### Neptune Gremlin Client
-
-[neptune-gremlin-client](neptune-gremlin-client/) is a Java Gremlin client for Amazon Neptune that allows you to change the endpoints used by the client as it is running. Includes an agent that can query the Amazon Neptune API for cluster details, and update the client on a periodic basis. You can supply your own custom endpoint selectors to configure the client for a subset of instances in your cluster based on tags, instance types, instance IDs, AZs, etc.
-
-The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
-
-![Rotating Endpoints](neptune-gremlin-client/rotating-endpoints.png)
-
 ### Neptune Export
 Exports Amazon Neptune data to CSV for Property Graph or Turtle for RDF graphs.
 

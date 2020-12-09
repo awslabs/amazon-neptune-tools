@@ -12,15 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.Label;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.IOException;
-import java.util.Map;
 
 public interface WriterFactory<T> {
 
-    PropertyGraphPrinter createPrinter(String name, int index, Map<Object, PropertyTypeInfo> metadata, PropertyGraphTargetConfig targetConfig) throws IOException;
+    PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException;
 
-    GraphElementHandler<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter);
+    LabelWriter<T> createLabelWriter(PropertyGraphPrinter propertyGraphPrinter, Label label);
 
 }

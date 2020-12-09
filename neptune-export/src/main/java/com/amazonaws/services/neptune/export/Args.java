@@ -14,9 +14,8 @@ package com.amazonaws.services.neptune.export;
 
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.UnaryOperator;
 
 public class Args {
 
@@ -69,6 +68,19 @@ public class Args {
         return false;
     }
 
+    public boolean contains(String name, String value){
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext() && iterator.next().equals(value)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public String[] values() {
         return args.toArray(new String[]{});
     }
@@ -76,5 +88,55 @@ public class Args {
     @Override
     public String toString() {
         return String.join(" ", args);
+    }
+
+    public void addFlag(String flag) {
+        args.add(flag);
+    }
+
+    public void replace(String original, String replacement) {
+        args.replaceAll(s -> {
+            if (s.equals(original)){
+                return replacement;
+            } else {
+                return s;
+            }
+        });
+    }
+
+    public boolean containsAny(String... values) {
+        for (String value : values) {
+            if (args.contains(value)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getFirstOptionValue(String name) {
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext()){
+                    return iterator.next();
+                }
+            }
+        }
+        return null;
+    }
+
+    public Collection<String> getOptionValues(String name) {
+        Collection<String> values = new ArrayList<>();
+        Iterator<String> iterator = args.iterator();
+        while(iterator.hasNext()){
+            String arg = iterator.next();
+            if (arg.equals(name)){
+                if (iterator.hasNext()){
+                    values.add(iterator.next());
+                }
+            }
+        }
+        return values;
     }
 }

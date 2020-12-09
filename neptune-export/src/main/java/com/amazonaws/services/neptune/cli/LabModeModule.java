@@ -12,7 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
 import com.github.rvesse.airline.annotations.Option;
+import com.github.rvesse.airline.annotations.restrictions.AllowedEnumValues;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,9 +23,10 @@ import java.util.HashSet;
 public class LabModeModule {
 
     @Option(name = {"--lab-feature"}, description = "Name of a lab feature to enable.", hidden = true)
-    private Collection<String> labFeatures = new HashSet<>();
+    @AllowedEnumValues(LabModeFeature.class)
+    private Collection<LabModeFeature> labFeatures = new HashSet<>();
 
-    public Collection<String> labFeatures() {
-        return labFeatures;
+    public LabModeFeatures labFeatures() {
+        return new LabModeFeatures(labFeatures);
     }
 }

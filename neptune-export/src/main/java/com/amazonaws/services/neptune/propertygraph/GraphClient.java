@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 
 import java.util.Collection;
 import java.util.Map;
@@ -21,15 +21,15 @@ import java.util.Map;
 public interface GraphClient<T> {
     String description();
 
-    void queryForMetadata(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter);
+    void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter);
 
-    void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter, PropertiesMetadata propertiesMetadata);
+    void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter, GraphElementSchemas graphElementSchemas);
 
     long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig);
 
-    Collection<String> labels();
+    Collection<Label> labels(LabelStrategy labelStrategy);
 
-    String getLabelsAsStringToken(T input);
+    Label getLabelFor(T input, LabelsFilter labelsFilter);
 
-    void updateStats(String label);
+    void updateStats(Label label);
 }

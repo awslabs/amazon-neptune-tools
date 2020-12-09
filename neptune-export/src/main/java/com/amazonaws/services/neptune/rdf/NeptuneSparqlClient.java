@@ -57,7 +57,7 @@ public class NeptuneSparqlClient implements AutoCloseable {
             return new NeptuneSparqlClient(
                     config.endpoints().stream().map(e -> {
                         try {
-                            return updateParser(new NeptuneSparqlRepository(sparqlEndpount(e, config.port()), credentialsProvider, serviceRegion));
+                            return updateParser(new NeptuneSparqlRepository(sparqlEndpointForIam(e, config.port()), credentialsProvider, serviceRegion));
                         } catch (NeptuneSigV4SignerException e1) {
                             throw new RuntimeException(e1);
                         }
@@ -68,7 +68,7 @@ public class NeptuneSparqlClient implements AutoCloseable {
 
             return new NeptuneSparqlClient(
                     config.endpoints().stream().map(e ->
-                            updateParser(new SPARQLRepository(sparqlEndpount(e, config.port())))).
+                            updateParser(new SPARQLRepository(sparqlEndpoint(e, config.port())))).
                             peek(AbstractRepository::init).
                             collect(Collectors.toList()));
         }
@@ -103,8 +103,12 @@ public class NeptuneSparqlClient implements AutoCloseable {
         return repository;
     }
 
-    private static String sparqlEndpount(String endpoint, int port) {
+    private static String sparqlEndpoint(String endpoint, int port) {
         return String.format("https://%s:%s/sparql", endpoint, port);
+    }
+
+    private static String sparqlEndpointForIam(String endpoint, int port) {
+        return String.format("https://%s:%s", endpoint, port);
     }
 
     private final List<SPARQLRepository> repositories;
@@ -170,7 +174,7 @@ public class NeptuneSparqlClient implements AutoCloseable {
     private IRI getNonDefaultNamedGraph(Value g, ValueFactory factory) {
         String s = g.stringValue();
 
-        if (StringUtils.isEmpty(s) || s.equalsIgnoreCase("http://aws.amazon.com/neptune/vocab/v01/DefaultNamedGraph")){
+        if (StringUtils.isEmpty(s) || s.equalsIgnoreCase("http://aws.amazon.com/neptune/vocab/v01/DefaultNamedGraph")) {
             return null;
         }
 

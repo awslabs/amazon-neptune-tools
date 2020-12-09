@@ -13,8 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
@@ -39,18 +39,28 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     @Override
+    public String outputId() {
+        return writer.outputId();
+    }
+
+    @Override
     public void printHeaderMandatoryColumns(String... columns) {
         // Do nothing
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         // Do nothing
     }
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
         throw new RuntimeException("Neptune Streams JSON is not supported for this command");
+    }
+
+    @Override
+    public void printProperties(Map<?, ?> properties, boolean applyFormatting) throws IOException {
+        printProperties(properties);
     }
 
     @Override
@@ -64,21 +74,26 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
 
                 List<?> values = (List<?>) value;
                 for (Object o : values) {
-                    PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
-                    propertyTypeInfo.accept(o);
-                    printRecord(id, streamOperation, key, o, propertyTypeInfo.dataType());
+                    PropertySchema propertySchema = new PropertySchema(key);
+                    propertySchema.accept(o, true);
+                    printRecord(id, streamOperation, key, o, propertySchema.dataType());
                 }
 
             } else {
-                PropertyTypeInfo propertyTypeInfo = new PropertyTypeInfo(key);
-                propertyTypeInfo.accept(value);
-                printRecord(id, streamOperation, key, value, propertyTypeInfo.dataType());
+                PropertySchema propertySchema = new PropertySchema(key);
+                propertySchema.accept(value, true);
+                printRecord(id, streamOperation, key, value, propertySchema.dataType());
             }
         }
     }
 
     @Override
     public void printEdge(String id, String label, String from, String to) throws IOException {
+        printEdge(id, label, from, to, null, null);
+    }
+
+    @Override
+    public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
         printRecord(id, "e", "label", label, DataType.String, from, to);
     }
 

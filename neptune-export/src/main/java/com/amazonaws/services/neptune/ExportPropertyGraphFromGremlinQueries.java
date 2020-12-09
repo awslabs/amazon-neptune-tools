@@ -22,8 +22,10 @@ import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
+import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -49,13 +51,13 @@ import java.util.List;
 public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
 
     @Inject
-    private CommonConnectionModule connection = new CommonConnectionModule();
+    private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -87,45 +89,46 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("export-pg-from-queries");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
-            JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?
-                    new JsonResource<>("Queries file", queriesFile, NamedQueriesCollection.class) :
-                    directories.queriesResource();
+                    Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
+                    JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?
+                            new JsonResource<>("Queries file", queriesFile, NamedQueriesCollection.class) :
+                            directories.queriesResource();
 
-            PropertyGraphTargetConfig targetConfig = target.config(directories, includeTypeDefinitions);
-            NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(includeTypeDefinitions, false));
+                    NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
 
-            directories.createResultsSubdirectories(namedQueries.names());
+                    directories.createResultsSubdirectories(namedQueries.names());
 
-            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
+                        QueryJob queryJob = new QueryJob(
+                                namedQueries.flatten(),
+                                queryClient,
+                                clusterStrategy.concurrencyConfig(),
+                                targetConfig,
+                                twoPassAnalysis,
+                                timeoutMillis);
+                        queryJob.execute();
 
-                QueryJob queryJob = new QueryJob(
-                        namedQueries.flatten(),
-                        queryClient,
-                        clusterStrategy.concurrencyConfig(),
-                        targetConfig,
-                        twoPassAnalysis,
-                        timeoutMillis);
-                queryJob.execute();
+                    }
 
-            }
+                    directories.writeResultsDirectoryPathAsMessage(target.description(), target);
 
-            directories.writeResultsDirectoryPathAsMessage(target.description(), target);
+                    queriesResource.writeResourcePathAsMessage(target);
 
-            queriesResource.writeResourcePathAsMessage(target);
+                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(outputPath, new ExportStats());
 
-            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-            onExportComplete(outputPath, new ExportStats());
-
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }
-
     }
 
     private NamedQueriesCollection getNamedQueriesCollection(List<NamedQueries> queries,

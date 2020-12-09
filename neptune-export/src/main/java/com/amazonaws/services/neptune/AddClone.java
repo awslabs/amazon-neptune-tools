@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.AwsCliModule;
 import com.amazonaws.services.neptune.cluster.AddCloneTask;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.github.rvesse.airline.annotations.Command;
@@ -21,10 +22,14 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.Required;
 import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
 
+import javax.inject.Inject;
 import java.util.UUID;
 
 @Command(name = "add-clone", description = "Clone an Amazon Neptune database cluster.")
 public class AddClone implements Runnable {
+
+    @Inject
+    private AwsCliModule awsCli = new AwsCliModule();
 
     @Option(name = {"--source-cluster-id"}, description = "Cluster ID of the source Amazon Neptune database cluster.")
     @Required
@@ -49,7 +54,19 @@ public class AddClone implements Runnable {
             "db.r5.4xlarge",
             "db.r5.8xlarge",
             "db.r5.12xlarge",
-            "db.t3.medium"})
+            "db.t3.medium",
+            "r4.large",
+            "r4.xlarge",
+            "r4.2xlarge",
+            "r4.4xlarge",
+            "r4.8xlarge",
+            "r5.large",
+            "r5.xlarge",
+            "r5.2xlarge",
+            "r5.4xlarge",
+            "r5.8xlarge",
+            "r5.12xlarge",
+            "t3.medium"})
     private String cloneClusterInstanceType;
 
     @Option(name = {"--clone-cluster-replica-count"}, description = "Number of read replicas to add to the cloned cluster (default, 0).")
@@ -64,7 +81,7 @@ public class AddClone implements Runnable {
     @Override
     public void run() {
         try {
-            AddCloneTask addCloneTask = new AddCloneTask(sourceClusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion);
+            AddCloneTask addCloneTask = new AddCloneTask(sourceClusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion, awsCli);
             NeptuneClusterMetadata clusterMetadata = addCloneTask.execute();
 
             GetClusterInfo.printClusterDetails(clusterMetadata);

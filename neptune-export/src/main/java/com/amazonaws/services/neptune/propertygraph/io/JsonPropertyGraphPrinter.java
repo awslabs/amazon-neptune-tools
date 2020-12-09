@@ -13,8 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
-import com.amazonaws.services.neptune.propertygraph.metadata.DataType;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
@@ -26,12 +27,24 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
-    private final Map<Object, PropertyTypeInfo> metadata;
+    private final LabelSchema labelSchema;
+    private final boolean allowUpdateSchema;
+    private boolean isNullable = false;
 
-    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, Map<Object, PropertyTypeInfo> metadata) throws IOException {
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema) throws IOException {
+        this(writer, generator, labelSchema, false);
+    }
+
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema, boolean allowUpdateSchema) throws IOException {
         this.writer = writer;
         this.generator = generator;
-        this.metadata = metadata;
+        this.labelSchema = labelSchema;
+        this.allowUpdateSchema = allowUpdateSchema;
+    }
+
+    @Override
+    public String outputId() {
+        return writer.outputId();
     }
 
     @Override
@@ -40,43 +53,90 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     @Override
-    public void printHeaderRemainingColumns(Collection<PropertyTypeInfo> remainingColumns) {
+    public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
         // Do nothing
     }
 
     @Override
     public void printProperties(Map<?, ?> properties) throws IOException {
-        for (Map.Entry<Object, PropertyTypeInfo> entry : metadata.entrySet()) {
 
-            Object key = entry.getKey();
-            PropertyTypeInfo propertyTypeInfo = entry.getValue();
+        // print known properties
+        for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
-            DataType dataType = propertyTypeInfo.dataType();
-            String formattedKey = propertyTypeInfo.nameWithoutDataType();
+            Object key = propertySchema.property();
+            Object value = properties.get(key);
 
             if (properties.containsKey(key)) {
-
-                Object value = properties.get(key);
-
-                if (isList(value)) {
-                    List<?> values = (List<?>) value;
-                    if (values.size() > 1) {
-                        generator.writeFieldName(formattedKey);
-                        generator.writeStartArray();
-                        for (Object v : values) {
-                            dataType.printTo(generator, v);
-                        }
-                        generator.writeEndArray();
-                    } else {
-                        dataType.printTo(generator, formattedKey, values.get(0));
-                    }
-
-                } else {
-                    dataType.printTo(generator, formattedKey, value);
+                int size = propertySchema.accept(value, allowUpdateSchema);
+                labelSchema.recordObservation(propertySchema, value, size);
+                printProperty(value, propertySchema);
+            } else {
+                if (allowUpdateSchema) {
+                    propertySchema.makeNullable();
                 }
             }
         }
 
+        // Print unknown properties
+        if (allowUpdateSchema) {
+            for (Map.Entry<?, ?> property : properties.entrySet()) {
+
+                Object key = property.getKey();
+
+                if (!labelSchema.containsProperty(key)) {
+
+                    Object value = property.getValue();
+
+                    PropertySchema propertySchema = new PropertySchema(key);
+                    int size = propertySchema.accept(value, true);
+                    if (isNullable) {
+                        propertySchema.makeNullable();
+                    }
+
+                    labelSchema.put(key, propertySchema);
+                    labelSchema.recordObservation(propertySchema, value, size);
+
+                    printProperty(value, propertySchema);
+                }
+            }
+        }
+
+        isNullable = true;
+
+    }
+
+    private void printProperty(Object value, PropertySchema propertySchema) throws IOException {
+
+        DataType dataType = propertySchema.dataType();
+        String formattedKey = propertySchema.nameWithoutDataType();
+
+        printProperty(value, dataType, formattedKey);
+    }
+
+    private void printProperty(Object value, DataType dataType, String formattedKey) throws IOException {
+        if (isList(value)) {
+            List<?> values = (List<?>) value;
+            if (values.size() > 1) {
+                generator.writeFieldName(formattedKey);
+                generator.writeStartArray();
+                for (Object v : values) {
+                    dataType.printTo(generator, v);
+                }
+                generator.writeEndArray();
+            } else {
+                if (!values.isEmpty()) {
+                    dataType.printTo(generator, formattedKey, values.get(0));
+                }
+            }
+
+        } else {
+            dataType.printTo(generator, formattedKey, value);
+        }
+    }
+
+    @Override
+    public void printProperties(Map<?, ?> properties, boolean applyFormatting) throws IOException {
+        printProperties(properties);
     }
 
     @Override
@@ -86,16 +146,27 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printEdge(String id, String label, String from, String to) throws IOException {
+        printEdge(id, label, from, to, null, null);
+    }
+
+    @Override
+    public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
         generator.writeStringField("~id", id);
         generator.writeStringField("~label", label);
         generator.writeStringField("~from", from);
         generator.writeStringField("~to", to);
+        if (fromLabels != null) {
+            printProperty(fromLabels, DataType.String, "~fromLabels");
+        }
+        if (toLabels != null) {
+            printProperty(toLabels, DataType.String, "~toLabels");
+        }
     }
 
     @Override
     public void printNode(String id, List<String> labels) throws IOException {
         generator.writeStringField("~id", id);
-        generator.writeStringField("~label", String.join("::", labels));
+        printProperty(labels, DataType.String, "~label");
     }
 
     @Override
@@ -118,6 +189,6 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     private boolean isList(Object value) {
-        return value.getClass().isAssignableFrom(java.util.ArrayList.class);
+        return List.class.isAssignableFrom(value.getClass());
     }
 }

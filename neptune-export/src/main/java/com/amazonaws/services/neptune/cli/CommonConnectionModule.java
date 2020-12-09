@@ -1,25 +1,20 @@
-/*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License").
-You may not use this file except in compliance with the License.
-A copy of the License is located at
-    http://www.apache.org/licenses/LICENSE-2.0
-or in the "license" file accompanying this file. This file is distributed
-on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-express or implied. See the License for the specific language governing
-permissions and limitations under the License.
-*/
+
+
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
+import com.amazonaws.services.neptune.export.EndpointValidator;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.function.Supplier;
 
 public class CommonConnectionModule {
 
@@ -27,7 +22,7 @@ public class CommonConnectionModule {
     @RequireSome(tag = "endpoint or clusterId")
     private Collection<String> endpoints = new HashSet<>();
 
-    @Option(name = {"--cluster-id"}, description = "ID of an Amazon Neptune cluster. If you specify a cluster ID, neptune-export will use all of the instance endpoints in the cluster in addition to any endpoints you have specified using the endpoint options.")
+    @Option(name = {"--cluster-id", "--cluster", "--clusterid"}, description = "ID of an Amazon Neptune cluster. If you specify a cluster ID, neptune-export will use all of the instance endpoints in the cluster in addition to any endpoints you have specified using the endpoint options.")
     @Once
     @RequireSome(tag = "endpoint or clusterId")
     private String clusterId;
@@ -41,9 +36,13 @@ public class CommonConnectionModule {
     @Once
     private boolean useIamAuth = false;
 
-    @Option(name = {"--use-ssl"}, description = "Enables connectivity over SSL")
+    @Option(name = {"--use-ssl"}, description = "Enables connectivity over SSL. This option is deprecated: neptune-export will always connect via SSL unless you use --disable-ssl to explicitly disable connectivity over SSL.")
     @Once
-    private boolean useSsl = false;
+    private boolean useSsl = true;
+
+    @Option(name = {"--disable-ssl"}, description = "Disables connectivity over SSL.")
+    @Once
+    private boolean disableSsl = false;
 
     @Option(name = {"--nlb-endpoint"}, description = "Network load balancer endpoint (optional: use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer).")
     @Once
@@ -60,10 +59,16 @@ public class CommonConnectionModule {
     @Once
     private int loadBalancerPort = 80;
 
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+
+    public CommonConnectionModule(Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+    }
+
     public ConnectionConfig config() {
 
         if (StringUtils.isNotEmpty(clusterId)){
-            NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId);
+            NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
             endpoints.addAll(clusterMetadata.endpoints());
         }
 
@@ -72,12 +77,13 @@ public class CommonConnectionModule {
         }
 
         return new ConnectionConfig(
-                endpoints,
+                clusterId,
+                EndpointValidator.validate(endpoints),
                 port,
                 networkLoadBalancerEndpoint,
                 applicationLoadBalancerEndpoint,
                 loadBalancerPort,
                 useIamAuth,
-                useSsl);
+                !disableSsl);
     }
 }

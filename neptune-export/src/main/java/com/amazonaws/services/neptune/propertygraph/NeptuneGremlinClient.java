@@ -20,14 +20,22 @@ import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NeptuneGremlinClient implements AutoCloseable {
 
     public static final int DEFAULT_BATCH_SIZE = 64;
 
+    private static final Logger logger = LoggerFactory.getLogger(NeptuneGremlinClient.class);
+
     public static NeptuneGremlinClient create(ClusterStrategy clusterStrategy, SerializationConfig serializationConfig) {
         ConnectionConfig connectionConfig = clusterStrategy.connectionConfig();
         ConcurrencyConfig concurrencyConfig = clusterStrategy.concurrencyConfig();
+
+        if (!connectionConfig.useSsl()){
+            logger.warn("SSL has been disabled");
+        }
 
         Cluster.Builder builder = Cluster.build()
                 .port(connectionConfig.port())

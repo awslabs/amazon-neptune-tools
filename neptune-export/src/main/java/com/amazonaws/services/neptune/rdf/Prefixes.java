@@ -12,18 +12,18 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.rdf;
 
-import com.amazonaws.services.neptune.io.OutputWriter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
-import org.eclipse.rdf4j.model.util.URIUtil;
 import org.eclipse.rdf4j.rio.RDFWriter;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class Prefixes {
 

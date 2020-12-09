@@ -21,8 +21,9 @@ import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.metadata.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadataCollection;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -53,16 +54,16 @@ import java.util.Collection;
 public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
 
     @Inject
-    private CommonConnectionModule connection = new CommonConnectionModule();
+    private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(true);
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -71,58 +72,55 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(target);
-
-    @Inject
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
-    @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from column headers (optional, default 'false').")
-    @Once
-    private boolean excludeTypeDefinitions = false;
+    @Inject
+    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
+
 
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("export-pg");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
-            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
+                    Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
-            PropertyGraphTargetConfig targetConfig = target.config(directories, !excludeTypeDefinitions);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
-            ExportStats stats = new ExportStats();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    GraphSchema graphSchema = new GraphSchema();
+                    ExportStats stats = new ExportStats();
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
 
-            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 GraphTraversalSource g = client.newTraversalSource()) {
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         GraphTraversalSource g = client.newTraversalSource()) {
 
-                PropertiesMetadataCollection metadataCollection =
-                        sampling.createMetadataCommand(exportSpecifications, g).execute();
 
-                stats.prepare(metadataCollection);
+                        ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                                exportSpecifications,
+                                graphSchema,
+                                g,
+                                range.config(),
+                                clusterStrategy.concurrencyConfig(),
+                                targetConfig);
+                        graphSchema = exportJob.execute();
 
-                configFileResource.save(metadataCollection);
+                        configFileResource.save(graphSchema);
+                    }
 
-                ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
-                        exportSpecifications,
-                        metadataCollection,
-                        g,
-                        range.config(),
-                        clusterStrategy.concurrencyConfig(),
-                        targetConfig);
-                exportJob.execute();
-            }
+                    directories.writeRootDirectoryPathAsMessage(target.description(), target);
+                    configFileResource.writeResourcePathAsMessage(target);
 
-            directories.writeRootDirectoryPathAsMessage(target.description(), target);
-            configFileResource.writeResourcePathAsMessage(target);
+                    System.err.println();
+                    System.err.println(stats.formatStats(graphSchema));
 
-            System.err.println();
-            System.err.println(stats.toString());
+                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(outputPath, stats, graphSchema);
 
-            Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-            onExportComplete(outputPath, stats);
-
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }

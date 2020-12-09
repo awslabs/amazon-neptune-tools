@@ -23,6 +23,7 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -35,7 +36,11 @@ public class RunNeptuneExportSvc implements Runnable {
 
     @Option(name = {"--root-path"}, description = "Root directory path", hidden = true)
     @Once
-    private String rootPath = "/neptune/tmp";
+    private String rootPath = new File("exports").getAbsolutePath();
+
+    @Option(name = {"--clean"}, description = "Clean output path before beginning an export.", hidden = true)
+    @Once
+    private boolean cleanRootPath = false;
 
     @Override
     public void run() {
@@ -43,7 +48,7 @@ public class RunNeptuneExportSvc implements Runnable {
         InputStream input = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
 
         try {
-            new NeptuneExportLambda(rootPath).handleRequest(input, System.out, new Context() {
+            new NeptuneExportLambda(rootPath, cleanRootPath).handleRequest(input, System.out, new Context() {
                 @Override
                 public String getAwsRequestId() {
                     throw new NotImplementedException();
@@ -110,8 +115,8 @@ public class RunNeptuneExportSvc implements Runnable {
                 }
             });
         } catch (Exception e) {
-            System.err.println("An error occurred while exporting from Neptune:");
             e.printStackTrace();
+            System.err.println("An error occurred while exporting from Neptune: " + e.getMessage());
             System.exit(-1);
         }
 

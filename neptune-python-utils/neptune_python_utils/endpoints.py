@@ -162,8 +162,10 @@ class Endpoint:
                 credential_scope, 
                 signed_headers, 
                 signature)
+
             headers['x-amz-date'] = amzdate
             headers['Authorization'] = authorization_header
+
             if session_token:
                 headers['x-amz-security-token'] = session_token
             

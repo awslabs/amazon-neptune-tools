@@ -12,14 +12,20 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
+import com.amazonaws.services.neptune.cli.AwsCliModule;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.commons.lang.StringUtils;
 
+import javax.inject.Inject;
+
 @Command(name = "nei", description = "neptune-export cluster info", hidden = true)
 public class GetClusterInfo implements Runnable {
+
+    @Inject
+    private AwsCliModule awsCli = new AwsCliModule();
 
     @Option(name = {"-e", "--endpoint"}, description = "Neptune endpoint.", title = "endpoint")
     @Once
@@ -38,8 +44,9 @@ public class GetClusterInfo implements Runnable {
             }
 
             NeptuneClusterMetadata metadata = StringUtils.isNotEmpty(clusterId) ?
-                    NeptuneClusterMetadata.createFromClusterId(clusterId) :
-                    NeptuneClusterMetadata.createFromClusterId(NeptuneClusterMetadata.clusterIdFromEndpoint(endpoint));
+                    NeptuneClusterMetadata.createFromClusterId(clusterId, awsCli) :
+                    NeptuneClusterMetadata.createFromClusterId(
+                            NeptuneClusterMetadata.clusterIdFromEndpoint(endpoint), awsCli);
 
             printClusterDetails(metadata);
 
@@ -49,7 +56,7 @@ public class GetClusterInfo implements Runnable {
         }
     }
 
-    public static void printClusterDetails(NeptuneClusterMetadata metadata){
+    public static void printClusterDetails(NeptuneClusterMetadata metadata) {
         System.err.println();
 
         System.err.println("Cluster ID              : " + metadata.clusterId());

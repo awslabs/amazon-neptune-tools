@@ -17,7 +17,8 @@ import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.neptune.propertygraph.metadata.*;
+import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
@@ -33,21 +34,21 @@ import java.util.Collection;
         "bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output --sample --sample-size 100",
         "bin/neptune-export.sh create-pg-config -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output -nl User -el FOLLOWS"
 }, descriptions = {
-        "Create metadata config file for all node and edge labels and save it to /home/ec2-user/output",
-        "Create metadata config file for all node and edge labels, sampling 100 nodes and edges for each label",
-        "Create config file containing metadata for User nodes and FOLLOWS edges"
+        "Create schema config file for all node and edge labels and save it to /home/ec2-user/output",
+        "Create schema config file for all node and edge labels, sampling 100 nodes and edges for each label",
+        "Create config file containing schema for User nodes and FOLLOWS edges"
 })
-@Command(name = "create-pg-config", description = "Create a property graph export metadata config file.")
+@Command(name = "create-pg-config", description = "Create a property graph schema config file.")
 public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule();
+    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
 
     @Inject
-    private CommonConnectionModule connection = new CommonConnectionModule();
+    private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
@@ -59,32 +60,35 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
     @Inject
-    private PropertyGraphMetadataSamplingModule sampling = new PropertyGraphMetadataSamplingModule(() -> true);
+    private PropertyGraphSchemaSamplingModule sampling = new PropertyGraphSchemaSamplingModule();
 
     @Override
     public void run() {
 
-        try (Timer timer = new Timer("create-pg-config");
-             ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+        try {
+            Timer.timedActivity("creating property graph config", (CheckedActivity.Runnable) () -> {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
 
-            ExportStats stats = new ExportStats();
-            Directories directories = target.createDirectories(DirectoryStructure.Config);
-            JsonResource<PropertiesMetadataCollection> configFileResource = directories.configFileResource();
-            Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    ExportStats stats = new ExportStats();
+                    Directories directories = target.createDirectories(DirectoryStructure.Config);
+                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
 
-            try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
-                 GraphTraversalSource g = client.newTraversalSource()) {
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                         GraphTraversalSource g = client.newTraversalSource()) {
 
-                MetadataCommand metadataCommand = sampling.createMetadataCommand(exportSpecifications, g);
-                PropertiesMetadataCollection metadataCollection = metadataCommand.execute();
+                        CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
+                        GraphSchema graphSchema = createGraphSchemaCommand.execute();
 
-                configFileResource.save(metadataCollection);
-                configFileResource.writeResourcePathAsMessage(target);
-            }
+                        configFileResource.save(graphSchema);
+                        configFileResource.writeResourcePathAsMessage(target);
+                    }
 
-            Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
-            onExportComplete(outputPath, stats);
+                    Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
+                    onExportComplete(outputPath, stats);
 
+                }
+            });
         } catch (Exception e) {
             handleException(e);
         }

@@ -12,52 +12,116 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertiesMetadata;
-import com.amazonaws.services.neptune.propertygraph.metadata.PropertyTypeInfo;
+import com.amazonaws.services.neptune.export.LabModeFeature;
+import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SpecifiedLabels implements LabelsFilter {
 
-    public static LabelsFilter forLabels(String... labels){
-        Set<String> set = new HashSet<>();
-        Collections.addAll(set, labels);
-        return new SpecifiedLabels(set);
-    }
+    private final Collection<Label> labels;
+    private final LabelStrategy labelStrategy;
 
-    private final Set<String> labels;
-
-    public SpecifiedLabels(Set<String> labels) {
+    public SpecifiedLabels(Collection<Label> labels, LabelStrategy labelStrategy) {
         this.labels = labels;
+        this.labelStrategy = labelStrategy;
     }
 
     @Override
-    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal) {
-        String firstLabel = labels.stream().findFirst().orElse(null);
-        String[] remainingLabels = labels.stream().skip(1).collect(Collectors.toList()).toArray(new String[]{});
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures) {
+        List<String> labelList = labels.stream()
+                .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
+                .collect(Collectors.toList());
 
-        return traversal.hasLabel(firstLabel, remainingLabels);
+        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)){
+            String firstLabel = labelList.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
+            String[] remainingLabels = labelList.stream()
+                    .skip(1)
+                    .collect(Collectors.toList())
+                    .toArray(new String[]{});
+
+            return traversal.hasLabel(firstLabel, remainingLabels);
+        } else {
+            for (String label : labelList) {
+                traversal = traversal.hasLabel(label);
+            }
+            return traversal;
+        }
     }
 
     @Override
-    public Collection<String> resolveLabels(GraphClient<?> graphClient) {
+    public Collection<Label> getLabelsUsing(GraphClient<?> graphClient) {
         return labels;
     }
 
     @Override
-    public String[] getPropertiesForLabels(PropertiesMetadata propertiesMetadata) {
+    public String[] getPropertiesForLabels(GraphElementSchemas graphElementSchemas) {
         Set<String> properties = new HashSet<>();
 
-        for (String label : labels) {
-            Map<Object, PropertyTypeInfo> metadata = propertiesMetadata.propertyMetadataFor(label);
-            for (PropertyTypeInfo propertyTypeInfo : metadata.values()) {
-                properties.add(propertyTypeInfo.nameWithoutDataType());
+        for (Label label : labels) {
+            LabelSchema labelSchema = graphElementSchemas.getSchemaFor(label);
+            for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
+                properties.add(propertySchema.nameWithoutDataType());
             }
         }
 
         return properties.toArray(new String[]{});
+    }
+
+    @Override
+    public Label getLabelFor(Map<String, Object> input) {
+        return labelStrategy.getLabelFor(input);
+    }
+
+    @Override
+    public String[] addAdditionalColumnNames(String... columns) {
+        return labelStrategy.additionalColumns(columns);
+    }
+
+    @Override
+    public <T> GraphTraversal<? extends Element, T> addAdditionalColumns(GraphTraversal<? extends Element, T> t) {
+        return labelStrategy.addAdditionalColumns(t);
+    }
+
+    @Override
+    public LabelsFilter filterFor(Label label) {
+        return new SpecifiedLabels(Collections.singletonList(label), labelStrategy);
+    }
+
+    @Override
+    public LabelsFilter union(Collection<Label> others) {
+        Collection<Label> results = new ArrayList<>();
+        for (Label label : labels) {
+            if (others.contains(label)){
+                results.add(label);
+            }
+        }
+        return new SpecifiedLabels(results, labelStrategy);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return labels.isEmpty();
+    }
+
+    @Override
+    public String description(String element) {
+        String labelList = labels.stream().map(l -> String.format("'%s'", l.labelsAsString())).collect(Collectors.joining(" or "));
+        return String.format("%s with label(s) %s", element, labelList);
+    }
+
+    @Override
+    public Collection<LabelsFilter> split() {
+        return labels.stream()
+                .map(l -> new SpecifiedLabels(Collections.singletonList(l), labelStrategy))
+                .collect(Collectors.toList());
     }
 }
