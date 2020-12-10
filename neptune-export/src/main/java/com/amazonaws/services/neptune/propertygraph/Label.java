@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,12 +26,16 @@ public class Label {
 
     private static final String SEMICOLON_SEPARATOR = "(?<!\\\\);";
 
-    public static Collection<String> split(String s){
+    public static Collection<String> split(String s) {
+        if (StringUtils.isEmpty(s)) {
+            return Collections.emptyList();
+        }
         return Arrays.asList(s.split(SEMICOLON_SEPARATOR));
     }
 
-    public static List<String> fixLabelsIssue(List<String> list) {
-        if (list.size() == 1 && list.get(0).contains("::")){
+    public static List<String>
+    fixLabelsIssue(List<String> list) {
+        if (list.size() == 1 && list.get(0).contains("::")) {
             List<String> newResults = Arrays.asList(list.get(0).split("::"));
             newResults.sort(String::compareTo);
             return newResults;
@@ -41,25 +46,40 @@ public class Label {
     public static Label fromJson(JsonNode jsonNode) {
         if (jsonNode.isObject()) {
 
-            ArrayNode fromLabelsArrays = (ArrayNode) jsonNode.path("~fromLabels");
-            String label =  jsonNode.path("~label").textValue();
-            ArrayNode toLabelsArray = (ArrayNode) jsonNode.path("~toLabels");
+            String label = jsonNode.path("~label").textValue();
 
             Collection<String> fromLabels = new ArrayList<>();
-            fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
-
             Collection<String> toLabels = new ArrayList<>();
-            toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
+
+            if (jsonNode.has("~fromLabels")) {
+                JsonNode fromLabelsNode = jsonNode.path("~fromLabels");
+                if (fromLabelsNode.isArray()){
+                    ArrayNode fromLabelsArrays = (ArrayNode) fromLabelsNode;
+                    fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
+                } else {
+                    fromLabels.add(fromLabelsNode.textValue());
+                }
+            }
+
+            if (jsonNode.has("~toLabels")) {
+                JsonNode toLabelsNode = jsonNode.path("~toLabels");
+                if (toLabelsNode.isArray()){
+                    ArrayNode toLabelsArray = (ArrayNode) toLabelsNode;
+                    toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
+                } else {
+                    toLabels.add(toLabelsNode.textValue());
+                }
+            }
 
             return new Label(Collections.singletonList(label), fromLabels, toLabels);
         } else {
-            if (jsonNode.isArray()){
+            if (jsonNode.isArray()) {
                 ArrayNode labelsNode = (ArrayNode) jsonNode;
                 Collection<String> labels = new ArrayList<>();
                 labelsNode.forEach(l -> labels.add(l.textValue()));
                 return new Label(labels);
             } else {
-                return new Label(Collections.singletonList(jsonNode.textValue()));
+                return new Label(jsonNode.textValue());
             }
 
         }
@@ -99,20 +119,20 @@ public class Label {
         this.fromLabels = labelList(fromLabels);
         this.toLabels = labelList(toLabels);
 
-        this.fullyQualifiedLabel = hasFromAndToLabels() ?
-                format(fromLabelsAsString(), labelsAsString(), toLabelsAsString()):
-                labelsAsString() ;
+        this.fullyQualifiedLabel = hasFromLabels() || hasToLabels() ?
+                format(fromLabelsAsString(), labelsAsString(), toLabelsAsString()) :
+                labelsAsString();
     }
 
-    private String format(String fromLabels, String label, String toLabels){
+    private String format(String fromLabels, String label, String toLabels) {
         return String.format("(%s)-%s-(%s)", fromLabels, label, toLabels);
     }
 
-    private List<String> escapeSemicolons(List<String> list){
+    private List<String> escapeSemicolons(List<String> list) {
         return list.stream().map(DataType::escapeSemicolons).collect(Collectors.toList());
     }
 
-    private List<String> labelList(Collection<String> col){
+    private List<String> labelList(Collection<String> col) {
         List<String> results = new ArrayList<>(col);
         results = fixLabelsIssue(results);
         results.sort(String::compareTo);
@@ -123,15 +143,29 @@ public class Label {
         return labels;
     }
 
-    public String fromLabelsAsString(){
+    public Label fromLabels() {
+        return new Label(fromLabels);
+    }
+
+    public Label toLabels() {
+        return new Label(toLabels);
+    }
+
+    public String fromLabelsAsString() {
+        if (fromLabels.isEmpty()){
+            return "_";
+        }
         return String.join(";", escapeSemicolons(fromLabels));
     }
 
-    public String toLabelsAsString(){
+    public String toLabelsAsString() {
+        if (toLabels.isEmpty()){
+            return "_";
+        }
         return String.join(";", escapeSemicolons(toLabels));
     }
 
-    public String labelsAsString(){
+    public String labelsAsString() {
         return String.join(";", escapeSemicolons(labels));
     }
 
@@ -143,7 +177,15 @@ public class Label {
         return !fromLabels.isEmpty() && !toLabels.isEmpty();
     }
 
-    public Label createCopy(){
+    public boolean hasFromLabels() {
+        return !fromLabels.isEmpty();
+    }
+
+    public boolean hasToLabels() {
+        return !toLabels.isEmpty();
+    }
+
+    public Label createCopy() {
         return Label.fromJson(toJson());
     }
 
@@ -163,7 +205,7 @@ public class Label {
     public JsonNode toJson() {
 
         if (!hasFromAndToLabels()) {
-            if (labels.size() > 1){
+            if (labels.size() > 1) {
                 ArrayNode labelsArray = JsonNodeFactory.instance.arrayNode();
                 for (String label : labels) {
                     labelsArray.add(label);

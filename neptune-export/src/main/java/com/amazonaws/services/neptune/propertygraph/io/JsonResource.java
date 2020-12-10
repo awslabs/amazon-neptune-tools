@@ -88,26 +88,44 @@ public class JsonResource<T extends Jsonizable> {
     }
 
     private JsonNode readJson() throws IOException {
-        switch (resourcePath.getScheme()) {
-            case "https":
-                return new ObjectMapper().readTree(resourcePath.toURL());
-            case "s3":
-                S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(resourcePath.toString());
-                AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
-                try (InputStream stream  = s3.getObject(s3ObjectInfo.bucket(), s3ObjectInfo.key()).getObjectContent()){
-                    return new ObjectMapper().readTree(stream);
-                }
-            default:
-                File resourceFile = new File(resourcePath.toString());
-                if (!resourceFile.exists()) {
-                    throw new IllegalStateException(String.format("%s does not exist", resourceFile));
-                }
-                if (resourceFile.isDirectory()) {
-                    throw new IllegalStateException(String.format("Expected a file, but found a directory: %s", resourceFile));
-                }
-                return new ObjectMapper().readTree(resourceFile);
+        String scheme = resourcePath.getScheme();
+
+        if (scheme == null){
+            return getFromFile();
         }
 
+        switch (scheme) {
+            case "https":
+                return getFromHttps();
+            case "s3":
+                return getFromS3();
+            default:
+                return getFromFile();
+        }
+    }
+
+    private JsonNode getFromFile() throws IOException {
+        String pathname = resourcePath.toString();
+        File resourceFile = pathname.startsWith("file://") ? new File(pathname.substring(7)) : new File(pathname);
+        if (!resourceFile.exists()) {
+            throw new IllegalStateException(String.format("%s does not exist", resourceFile));
+        }
+        if (resourceFile.isDirectory()) {
+            throw new IllegalStateException(String.format("Expected a file, but found a directory: %s", resourceFile));
+        }
+        return new ObjectMapper().readTree(resourceFile);
+    }
+
+    private JsonNode getFromS3() throws IOException {
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(resourcePath.toString());
+        AmazonS3 s3 = AmazonS3ClientBuilder.defaultClient();
+        try (InputStream stream  = s3.getObject(s3ObjectInfo.bucket(), s3ObjectInfo.key()).getObjectContent()){
+            return new ObjectMapper().readTree(stream);
+        }
+    }
+
+    private JsonNode getFromHttps() throws IOException {
+        return new ObjectMapper().readTree(resourcePath.toURL());
     }
 
 }
