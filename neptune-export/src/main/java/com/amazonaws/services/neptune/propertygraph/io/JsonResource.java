@@ -105,7 +105,8 @@ public class JsonResource<T extends Jsonizable> {
     }
 
     private JsonNode getFromFile() throws IOException {
-        File resourceFile = new File(resourcePath.toString());
+        String pathname = resourcePath.toString();
+        File resourceFile = pathname.startsWith("file://") ? new File(pathname.substring(7)) : new File(pathname);
         if (!resourceFile.exists()) {
             throw new IllegalStateException(String.format("%s does not exist", resourceFile));
         }
