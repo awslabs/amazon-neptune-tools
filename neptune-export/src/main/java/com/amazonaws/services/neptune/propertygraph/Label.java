@@ -27,7 +27,7 @@ public class Label {
     private static final String SEMICOLON_SEPARATOR = "(?<!\\\\);";
 
     public static Collection<String> split(String s) {
-        if (StringUtils.isEmpty(s)){
+        if (StringUtils.isEmpty(s)) {
             return Collections.emptyList();
         }
         return Arrays.asList(s.split(SEMICOLON_SEPARATOR));
@@ -46,15 +46,30 @@ public class Label {
     public static Label fromJson(JsonNode jsonNode) {
         if (jsonNode.isObject()) {
 
-            ArrayNode fromLabelsArrays = (ArrayNode) jsonNode.path("~fromLabels");
             String label = jsonNode.path("~label").textValue();
-            ArrayNode toLabelsArray = (ArrayNode) jsonNode.path("~toLabels");
 
             Collection<String> fromLabels = new ArrayList<>();
-            fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
-
             Collection<String> toLabels = new ArrayList<>();
-            toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
+
+            if (jsonNode.has("~fromLabels")) {
+                JsonNode fromLabelsNode = jsonNode.path("~fromLabels");
+                if (fromLabelsNode.isArray()){
+                    ArrayNode fromLabelsArrays = (ArrayNode) fromLabelsNode;
+                    fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
+                } else {
+                    fromLabels.add(fromLabelsNode.textValue());
+                }
+            }
+
+            if (jsonNode.has("~toLabels")) {
+                JsonNode toLabelsNode = jsonNode.path("~toLabels");
+                if (toLabelsNode.isArray()){
+                    ArrayNode toLabelsArray = (ArrayNode) toLabelsNode;
+                    toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
+                } else {
+                    toLabels.add(toLabelsNode.textValue());
+                }
+            }
 
             return new Label(Collections.singletonList(label), fromLabels, toLabels);
         } else {
@@ -64,7 +79,7 @@ public class Label {
                 labelsNode.forEach(l -> labels.add(l.textValue()));
                 return new Label(labels);
             } else {
-                return new Label(Collections.singletonList(jsonNode.textValue()));
+                return new Label(jsonNode.textValue());
             }
 
         }
@@ -104,7 +119,7 @@ public class Label {
         this.fromLabels = labelList(fromLabels);
         this.toLabels = labelList(toLabels);
 
-        this.fullyQualifiedLabel = hasFromAndToLabels() ?
+        this.fullyQualifiedLabel = hasFromLabels() || hasToLabels() ?
                 format(fromLabelsAsString(), labelsAsString(), toLabelsAsString()) :
                 labelsAsString();
     }
@@ -137,10 +152,16 @@ public class Label {
     }
 
     public String fromLabelsAsString() {
+        if (fromLabels.isEmpty()){
+            return "_";
+        }
         return String.join(";", escapeSemicolons(fromLabels));
     }
 
     public String toLabelsAsString() {
+        if (toLabels.isEmpty()){
+            return "_";
+        }
         return String.join(";", escapeSemicolons(toLabels));
     }
 
