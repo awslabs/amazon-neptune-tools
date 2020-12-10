@@ -14,9 +14,10 @@ package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.export.LabModeFeature;
 import com.amazonaws.services.neptune.export.LabModeFeatures;
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
+import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
@@ -24,6 +25,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;
 
 public class SpecifiedLabels implements LabelsFilter {
 
@@ -37,12 +40,15 @@ public class SpecifiedLabels implements LabelsFilter {
 
     @Override
     public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures) {
-        List<String> labelList = labels.stream()
-                .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
-                .collect(Collectors.toList());
 
-        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)){
-            String firstLabel = labelList.stream().findFirst().orElseThrow(()->new IllegalStateException("No labels specified"));
+
+        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)) {
+
+            List<String> labelList = labels.stream()
+                    .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
+                    .collect(Collectors.toList());
+
+            String firstLabel = labelList.stream().findFirst().orElseThrow(() -> new IllegalStateException("No labels specified"));
             String[] remainingLabels = labelList.stream()
                     .skip(1)
                     .collect(Collectors.toList())
@@ -50,11 +56,64 @@ public class SpecifiedLabels implements LabelsFilter {
 
             return traversal.hasLabel(firstLabel, remainingLabels);
         } else {
-            for (String label : labelList) {
-                traversal = traversal.hasLabel(label);
+
+            if (labels.size() > 1) {
+
+                List<Traversal<?, ?>> traversals = new ArrayList<>();
+                for (Label label : labels) {
+                    traversals.add(createFilterForLabel(label, null));
+                }
+                traversal = traversal.or(traversals.toArray(new Traversal<?, ?>[]{}));
+
+
+            } else {
+
+                Label label = labels.iterator().next();
+                traversal = createFilterForLabel(label, traversal);
+
             }
+
             return traversal;
         }
+    }
+
+    private GraphTraversal<? extends Element, ?> createFilterForLabel(Label label, GraphTraversal<? extends Element, ?> t) {
+
+
+        for (String labelValue : label.label()) {
+            if (t == null) {
+                t = hasLabel(labelValue);
+            } else {
+                t = t.hasLabel(labelValue);
+            }
+        }
+
+        if (labelStrategy == EdgeLabelStrategy.edgeAndVertexLabels) {
+            if (label.hasFromAndToLabels()) {
+                List<Traversal<?, ?>> traversals = new ArrayList<>();
+
+                GraphTraversal<? extends Element, ?> startVertex = outV();
+                startVertex = createFilterForLabel(label.fromLabels(), startVertex);
+                traversals.add(startVertex);
+
+                GraphTraversal<? extends Element, ?> endVertex = inV();
+                endVertex = createFilterForLabel(label.toLabels(), endVertex);
+                traversals.add(endVertex);
+
+                t = t.where(and(traversals.toArray(new Traversal<?, ?>[]{})));
+            } else if (label.hasFromLabels()) {
+                GraphTraversal<? extends Element, ?> startVertex = outV();
+                startVertex = createFilterForLabel(label.fromLabels(), startVertex);
+                t = t.where(startVertex);
+            } else if (label.hasToLabels()) {
+                GraphTraversal<? extends Element, ?> endVertex = inV();
+                endVertex = createFilterForLabel(label.toLabels(), endVertex);
+                t = t.where(endVertex);
+            }
+        }
+
+
+        return t;
     }
 
     @Override
@@ -100,7 +159,7 @@ public class SpecifiedLabels implements LabelsFilter {
     public LabelsFilter union(Collection<Label> others) {
         Collection<Label> results = new ArrayList<>();
         for (Label label : labels) {
-            if (others.contains(label)){
+            if (others.contains(label)) {
                 results.add(label);
             }
         }
