@@ -50,7 +50,7 @@ public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeFeatureOverride(
                                 new TrainingJobWriterConfig.FeatureOverrideConfig(
@@ -107,7 +107,7 @@ public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeFeatureOverride(
                                 new TrainingJobWriterConfig.FeatureOverrideConfig(

@@ -26,9 +26,11 @@ public class CsvPrinterOptionsModule {
     @Once
     private boolean escapeCsvHeaders = false;
 
+    @Option(name = {"--strict-cardinality"}, description = "Format all set and list cardinality properties as arrays in JSON, including properties with a single value (optional, default 'false').")
+    @Once
+    private boolean strictCardinality = false;
+
     public PrinterOptions config(){
-        return new PrinterOptions(!excludeTypeDefinitions, escapeCsvHeaders);
+        return new PrinterOptions(!excludeTypeDefinitions, escapeCsvHeaders, strictCardinality);
     }
-
-
 }

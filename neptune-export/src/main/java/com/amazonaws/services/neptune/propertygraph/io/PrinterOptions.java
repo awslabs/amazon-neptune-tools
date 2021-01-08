@@ -14,21 +14,23 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 public class PrinterOptions {
 
-    public static final PrinterOptions NO_HEADERS = new PrinterOptions(false, false, false);
+    public static final PrinterOptions NULL_OPTIONS = new PrinterOptions(false, false, false, false);
 
     private final boolean includeTypeDefinitions;
     private final boolean escapeCsvHeaders;
     private final boolean includeHeaders;
+    private final boolean strictCardinality;
 
-    public PrinterOptions(boolean includeTypeDefinitions, boolean escapeCsvHeaders){
-        this(includeTypeDefinitions, escapeCsvHeaders, false);
+    public PrinterOptions(boolean includeTypeDefinitions, boolean escapeCsvHeaders, boolean strictCardinality){
+        this(includeTypeDefinitions, escapeCsvHeaders, strictCardinality, false);
     }
 
-    public PrinterOptions(boolean includeTypeDefinitions, boolean escapeCsvHeaders, boolean includeHeaders) {
+    public PrinterOptions(boolean includeTypeDefinitions, boolean escapeCsvHeaders, boolean strictCardinality, boolean includeHeaders) {
 
         this.includeTypeDefinitions = includeTypeDefinitions;
         this.escapeCsvHeaders = escapeCsvHeaders;
         this.includeHeaders = includeHeaders;
+        this.strictCardinality = strictCardinality;
     }
 
     public boolean includeTypeDefinitions() {
@@ -43,7 +45,13 @@ public class PrinterOptions {
         return includeHeaders;
     }
 
-    public PrinterOptions withIncludeHeaders(boolean includeHeaders){
-        return new PrinterOptions(includeTypeDefinitions, escapeCsvHeaders, includeHeaders);
+    public boolean strictCardinality() {
+        return strictCardinality;
     }
+
+    public PrinterOptions withIncludeHeaders(boolean includeHeaders){
+        return new PrinterOptions(includeTypeDefinitions, escapeCsvHeaders, strictCardinality, includeHeaders);
+    }
+
+
 }

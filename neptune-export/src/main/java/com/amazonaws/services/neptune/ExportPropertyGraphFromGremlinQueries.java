@@ -98,7 +98,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
                             new JsonResource<>("Queries file", queriesFile, NamedQueriesCollection.class) :
                             directories.queriesResource();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(includeTypeDefinitions, false));
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(includeTypeDefinitions, false, true));
                     NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
 
                     directories.createResultsSubdirectories(namedQueries.names());

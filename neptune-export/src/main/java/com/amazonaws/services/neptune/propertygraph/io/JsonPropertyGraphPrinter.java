@@ -30,17 +30,20 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     private final JsonGenerator generator;
     private final LabelSchema labelSchema;
     private final boolean allowUpdateSchema;
+    private final PrinterOptions printerOptions;
     private boolean isNullable = false;
 
-    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema) throws IOException {
-        this(writer, generator, labelSchema, false);
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+        this(writer, generator, labelSchema, printerOptions, false);
+
     }
 
-    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema, boolean allowUpdateSchema) throws IOException {
+    public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema, PrinterOptions printerOptions, boolean allowUpdateSchema) throws IOException {
         this.writer = writer;
         this.generator = generator;
         this.labelSchema = labelSchema;
         this.allowUpdateSchema = allowUpdateSchema;
+        this.printerOptions = printerOptions;
     }
 
     @Override
@@ -131,7 +134,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
         } else {
             if (isList(value)) {
                 List<?> values = (List<?>) value;
-                if (values.size() != 1) {
+                if (values.size() != 1 || printerOptions.strictCardinality()) {
                     generator.writeFieldName(formattedKey);
                     generator.writeStartArray();
                     for (Object v : values) {
