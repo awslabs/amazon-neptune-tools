@@ -46,7 +46,7 @@ public class PropertySchema {
         if (isList(value)) {
             List<?> values = (List<?>) value;
             size = values.size();
-            if (size > 1) {
+            if (size != 1) {
                 isMultiValue = true;
             }
             if (updateDataType){
