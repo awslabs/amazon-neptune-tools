@@ -75,8 +75,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
     @Inject
-    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
+    private GraphSchemaProviderModule graphSchemaProvider = new GraphSchemaProviderModule(false);
 
+    @Inject
+    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
 
     @Override
     public void run() {
@@ -90,13 +92,13 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
-                    GraphSchema graphSchema = new GraphSchema();
+                    GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
+
                     Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
-
 
                         ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                                 exportSpecifications,
@@ -105,6 +107,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                                 range.config(),
                                 clusterStrategy.concurrencyConfig(),
                                 targetConfig);
+
                         graphSchema = exportJob.execute();
 
                         configFileResource.save(graphSchema);

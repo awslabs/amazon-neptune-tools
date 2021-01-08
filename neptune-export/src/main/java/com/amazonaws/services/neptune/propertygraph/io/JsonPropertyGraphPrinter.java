@@ -115,35 +115,36 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
         printProperty(value, dataType, formattedKey, isMultiValue);
     }
 
-    private void printProperty(Object value,
-                               DataType dataType,
-                               String formattedKey,
-                               boolean isMultiValue) throws IOException {
+    private void printProperty(Object value, DataType dataType, String formattedKey, boolean forceMultiValue) throws IOException {
 
-        if (isMultiValue) {
+        if (forceMultiValue) {
+
             List<?> values = isList(value) ? (List<?>) value : Collections.singletonList(value);
-            printArray(dataType, formattedKey, values);
+
+            generator.writeFieldName(formattedKey);
+            generator.writeStartArray();
+            for (Object v : values) {
+                dataType.printTo(generator, v);
+            }
+            generator.writeEndArray();
+
         } else {
-            if (isList(value)){
+            if (isList(value)) {
                 List<?> values = (List<?>) value;
-                if (values.size() != 1){
-                    printArray(dataType, formattedKey, values);
+                if (values.size() != 1) {
+                    generator.writeFieldName(formattedKey);
+                    generator.writeStartArray();
+                    for (Object v : values) {
+                        dataType.printTo(generator, v);
+                    }
+                    generator.writeEndArray();
                 } else {
-                    dataType.printTo(generator, formattedKey, values.iterator().next());
+                    dataType.printTo(generator, formattedKey, values.get(0));
                 }
             } else {
                 dataType.printTo(generator, formattedKey, value);
             }
         }
-    }
-
-    private void printArray(DataType dataType, String formattedKey, List<?> values) throws IOException {
-        generator.writeFieldName(formattedKey);
-        generator.writeStartArray();
-        for (Object v : values) {
-            dataType.printTo(generator, v);
-        }
-        generator.writeEndArray();
     }
 
     @Override
