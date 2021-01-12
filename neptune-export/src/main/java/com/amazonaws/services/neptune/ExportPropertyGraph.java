@@ -26,9 +26,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
-import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
@@ -78,7 +76,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private GraphSchemaProviderModule graphSchemaProvider = new GraphSchemaProviderModule(false);
 
     @Inject
-    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
+    private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
     @Override
     public void run() {

@@ -164,7 +164,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
     }
 
     private boolean isList(Object value) {
-        return value.getClass().isAssignableFrom(java.util.ArrayList.class);
+        return value instanceof List<?>;
     }
 }
 

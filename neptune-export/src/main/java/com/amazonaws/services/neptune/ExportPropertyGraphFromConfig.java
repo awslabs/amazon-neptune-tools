@@ -68,7 +68,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     private GraphSchemaProviderModule graphSchemaProvider = new GraphSchemaProviderModule(true);
 
     @Inject
-    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
+    private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
     @Override
     public void run() {

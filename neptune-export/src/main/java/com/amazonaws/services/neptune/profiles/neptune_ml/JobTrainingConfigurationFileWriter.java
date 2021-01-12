@@ -30,7 +30,7 @@ public class JobTrainingConfigurationFileWriter {
     public static final PropertyName COLUMN_NAME_WITH_DATATYPE = new PropertyName() {
         @Override
         public String escaped(PropertySchema propertySchema, PrinterOptions printerOptions) {
-            return propertySchema.nameWithDataType(printerOptions.escapeCsvHeaders());
+            return propertySchema.nameWithDataType(printerOptions.csv().escapeCsvHeaders());
         }
 
         @Override
@@ -42,7 +42,7 @@ public class JobTrainingConfigurationFileWriter {
     public static final PropertyName COLUMN_NAME_WITHOUT_DATATYPE = new PropertyName() {
         @Override
         public String escaped(PropertySchema propertySchema, PrinterOptions printerOptions) {
-            return propertySchema.nameWithoutDataType(printerOptions.escapeCsvHeaders());
+            return propertySchema.nameWithoutDataType(printerOptions.csv().escapeCsvHeaders());
         }
 
         @Override

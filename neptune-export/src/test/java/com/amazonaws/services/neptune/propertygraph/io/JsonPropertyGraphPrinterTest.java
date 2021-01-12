@@ -113,7 +113,7 @@ public class JsonPropertyGraphPrinterTest {
             put("tags", Collections.singletonList("tag1"));
         }};
 
-        PrinterOptions printerOptions = new PrinterOptions(false, false, true);
+        PrinterOptions printerOptions = new PrinterOptions(JsonPrinterOptions.builder().setStrictCardinality(true).build());
 
         try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, printerOptions)) {
             propertyGraphPrinter.printStartRow();

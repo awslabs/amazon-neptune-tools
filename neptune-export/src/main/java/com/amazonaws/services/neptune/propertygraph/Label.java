@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
+import com.amazonaws.services.neptune.util.SemicolonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -36,6 +37,7 @@ public class Label {
     public static List<String>
     fixLabelsIssue(List<String> list) {
         if (list.size() == 1 && list.get(0).contains("::")) {
+
             List<String> newResults = Arrays.asList(list.get(0).split("::"));
             newResults.sort(String::compareTo);
             return newResults;
@@ -99,7 +101,7 @@ public class Label {
     private final String fullyQualifiedLabel;
 
     public Label(String label) {
-        this(split(label));
+        this(SemicolonUtils.split(label));
     }
 
     public Label(Collection<String> labels) {
@@ -107,7 +109,7 @@ public class Label {
     }
 
     public Label(String label, String fromLabels, String toLabels) {
-        this(label, split(fromLabels), split(toLabels));
+        this(label, SemicolonUtils.split(fromLabels), SemicolonUtils.split(toLabels));
     }
 
     public Label(String label, Collection<String> fromLabels, Collection<String> toLabels) {
@@ -128,8 +130,9 @@ public class Label {
         return String.format("(%s)-%s-(%s)", fromLabels, label, toLabels);
     }
 
-    private List<String> escapeSemicolons(List<String> list) {
-        return list.stream().map(DataType::escapeSemicolons).collect(Collectors.toList());
+
+    private List<String> escapeSemicolons(List<String> list){
+        return list.stream().map(v -> DataType.escapeSeparators(v, ";")).collect(Collectors.toList());
     }
 
     private List<String> labelList(Collection<String> col) {

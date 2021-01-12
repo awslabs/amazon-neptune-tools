@@ -134,7 +134,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
         } else {
             if (isList(value)) {
                 List<?> values = (List<?>) value;
-                if (values.size() != 1 || printerOptions.strictCardinality()) {
+                if (values.size() != 1 || printerOptions.json().strictCardinality()) {
                     generator.writeFieldName(formattedKey);
                     generator.writeStartArray();
                     for (Object v : values) {
@@ -205,6 +205,6 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     private boolean isList(Object value) {
-        return List.class.isAssignableFrom(value.getClass());
+        return value instanceof List<?>;
     }
 }
