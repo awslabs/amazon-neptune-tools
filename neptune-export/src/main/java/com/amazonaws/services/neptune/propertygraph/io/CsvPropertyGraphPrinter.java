@@ -33,8 +33,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    LabelSchema labelSchema,
-                                   PrinterOptions printerOptions)
-    {
+                                   PrinterOptions printerOptions) {
         this(writer, labelSchema, printerOptions, false);
     }
 
@@ -108,7 +107,6 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     private void printProperty(PropertySchema schema, Object value, boolean applyFormatting) {
 
         DataType dataType = schema.dataType();
-        boolean isMultiValue = schema.isMultiValue();
 
         commaPrinter.printComma();
 
@@ -119,7 +117,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
             writer.print(formattedValue);
         } else {
             if (dataType == DataType.String) {
-                if (!isMultiValue && printerOptions.csv().multiValueSeparator().equalsIgnoreCase(";")){
+                if (isSingleValueStringColumnWithHeaderAndSemicolonSeparator(schema)) {
                     writer.print(DataType.String.format(SemicolonUtils.unescapeSingleValue(value.toString())));
                 } else {
                     writer.print(DataType.String.format(value));
@@ -128,6 +126,15 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
                 writer.print(String.valueOf(value));
             }
         }
+    }
+
+    private boolean isSingleValueStringColumnWithHeaderAndSemicolonSeparator(PropertySchema schema) {
+        CsvPrinterOptions options = printerOptions.csv();
+
+        return schema.isMultiValue()
+                && options.includeHeaders()
+                && options.includeTypeDefinitions()
+                && options.isSemicolonSeparator();
     }
 
     @Override

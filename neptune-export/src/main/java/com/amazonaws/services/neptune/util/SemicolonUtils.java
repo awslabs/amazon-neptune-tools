@@ -14,22 +14,27 @@ package com.amazonaws.services.neptune.util;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 public class SemicolonUtils {
 
     private static final String SEMICOLON_SEPARATOR = "(?<!\\\\);";
+    private static final Pattern regexPattern = Pattern.compile(SEMICOLON_SEPARATOR);
 
-    public static Collection<String> split(String s){
-        return Arrays.asList(s.split(SEMICOLON_SEPARATOR));
+    public static Collection<String> split(String s) {
+        return Arrays.asList(regexPattern.split(s, 0));
     }
 
-    public static String unescapeSingleValue(String s){
-        Collection<String> values = split(s);
-        if (values.size() == 1){
-           return values.iterator().next().replace("\\;", ";");
+    public static String unescapeSingleValue(String s) {
+        if (s.contains(";")){
+            String[] strings = regexPattern.split(s, 0);
+            if (strings.length == 1) {
+                return strings[0].replace("\\;", ";");
+            } else {
+                return s;
+            }
         } else {
             return s;
         }
     }
-
 }

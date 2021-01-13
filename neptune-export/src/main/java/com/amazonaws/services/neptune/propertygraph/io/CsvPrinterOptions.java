@@ -22,12 +22,14 @@ public class CsvPrinterOptions {
     private final boolean includeTypeDefinitions;
     private final boolean escapeCsvHeaders;
     private final boolean includeHeaders;
+    private final boolean isSemicolonSeparator;
 
     private CsvPrinterOptions(String multiValueSeparator, boolean includeTypeDefinitions, boolean escapeCsvHeaders, boolean includeHeaders) {
         this.multiValueSeparator = multiValueSeparator;
         this.includeTypeDefinitions = includeTypeDefinitions;
         this.escapeCsvHeaders = escapeCsvHeaders;
         this.includeHeaders = includeHeaders;
+        this.isSemicolonSeparator = multiValueSeparator.equalsIgnoreCase(";");
     }
 
     public String multiValueSeparator() {
@@ -44,6 +46,10 @@ public class CsvPrinterOptions {
 
     public boolean includeHeaders() {
         return includeHeaders;
+    }
+
+    public boolean isSemicolonSeparator() {
+        return isSemicolonSeparator;
     }
 
     public Builder copy(){
