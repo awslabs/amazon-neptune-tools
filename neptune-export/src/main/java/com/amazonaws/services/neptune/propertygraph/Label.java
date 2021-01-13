@@ -18,26 +18,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Label {
 
-    private static final String SEMICOLON_SEPARATOR = "(?<!\\\\);";
-
-    public static Collection<String> split(String s) {
-        if (StringUtils.isEmpty(s)) {
-            return Collections.emptyList();
-        }
-        return Arrays.asList(s.split(SEMICOLON_SEPARATOR));
-    }
-
-    public static List<String>
-    fixLabelsIssue(List<String> list) {
+    public static List<String> fixLabelsIssue(List<String> list) {
         if (list.size() == 1 && list.get(0).contains("::")) {
-
             List<String> newResults = Arrays.asList(list.get(0).split("::"));
             newResults.sort(String::compareTo);
             return newResults;
@@ -55,7 +43,8 @@ public class Label {
 
             if (jsonNode.has("~fromLabels")) {
                 JsonNode fromLabelsNode = jsonNode.path("~fromLabels");
-                if (fromLabelsNode.isArray()){
+
+                if (fromLabelsNode.isArray()) {
                     ArrayNode fromLabelsArrays = (ArrayNode) fromLabelsNode;
                     fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
                 } else {
@@ -65,7 +54,8 @@ public class Label {
 
             if (jsonNode.has("~toLabels")) {
                 JsonNode toLabelsNode = jsonNode.path("~toLabels");
-                if (toLabelsNode.isArray()){
+
+                if (toLabelsNode.isArray()) {
                     ArrayNode toLabelsArray = (ArrayNode) toLabelsNode;
                     toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
                 } else {
@@ -131,8 +121,9 @@ public class Label {
     }
 
 
-    private List<String> escapeSemicolons(List<String> list){
+    private List<String> escapeSemicolons(List<String> list) {
         return list.stream().map(v -> DataType.escapeSeparators(v, ";")).collect(Collectors.toList());
+
     }
 
     private List<String> labelList(Collection<String> col) {
@@ -155,14 +146,14 @@ public class Label {
     }
 
     public String fromLabelsAsString() {
-        if (fromLabels.isEmpty()){
+        if (fromLabels.isEmpty()) {
             return "_";
         }
         return String.join(";", escapeSemicolons(fromLabels));
     }
 
     public String toLabelsAsString() {
-        if (toLabels.isEmpty()){
+        if (toLabels.isEmpty()) {
             return "_";
         }
         return String.join(";", escapeSemicolons(toLabels));

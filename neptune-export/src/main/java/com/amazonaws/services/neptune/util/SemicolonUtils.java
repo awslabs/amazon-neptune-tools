@@ -12,8 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.util;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.regex.Pattern;
 
 public class SemicolonUtils {
@@ -22,6 +25,9 @@ public class SemicolonUtils {
     private static final Pattern regexPattern = Pattern.compile(SEMICOLON_SEPARATOR);
 
     public static Collection<String> split(String s) {
+        if (StringUtils.isEmpty(s)){
+            return Collections.emptyList();
+        }
         return Arrays.asList(regexPattern.split(s, 0));
     }
 

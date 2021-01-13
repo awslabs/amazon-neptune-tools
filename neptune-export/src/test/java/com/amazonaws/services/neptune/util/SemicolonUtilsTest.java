@@ -54,4 +54,10 @@ public class SemicolonUtilsTest {
        assertEquals("d;ef",  SemicolonUtils.unescape("d\\;ef"));
     }
 
+    @Test
+    public void shouldReturnEmptyCollectionForEmptyString(){
+        Collection<String> collection = SemicolonUtils.split("");
+        assertEquals(0, collection.size());
+    }
+
 }
