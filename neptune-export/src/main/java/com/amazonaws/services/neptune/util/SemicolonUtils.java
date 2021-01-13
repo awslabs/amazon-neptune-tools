@@ -25,14 +25,15 @@ public class SemicolonUtils {
         return Arrays.asList(regexPattern.split(s, 0));
     }
 
-    public static String unescapeSingleValue(String s) {
+    public static String unescape(String s) {
         if (s.contains(";")){
-            String[] strings = regexPattern.split(s, 0);
-            if (strings.length == 1) {
-                return strings[0].replace("\\;", ";");
-            } else {
-                return s;
-            }
+//            String[] strings = regexPattern.split(s, 0);
+//            if (strings.length == 1) {
+//                return strings[0].replace("\\;", ";");
+//            } else {
+//                return s;
+//            }
+            return s.replace("\\;", ";");
         } else {
             return s;
         }

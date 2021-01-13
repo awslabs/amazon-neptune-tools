@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.util;
 
-import org.apache.jena.base.Sys;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -52,11 +51,7 @@ public class SemicolonUtilsTest {
 
     @Test
     public void shouldUnescapeEscapedSemicolonIfThereAreNoUnescapedSemicolonsInString(){
-       assertEquals("d;ef",  SemicolonUtils.unescapeSingleValue("d\\;ef"));
+       assertEquals("d;ef",  SemicolonUtils.unescape("d\\;ef"));
     }
 
-    @Test
-    public void shouldNotUnescapeEscapedSemicolonIfThereAreUnescapedSemicolonsInString(){
-        assertEquals("abc;d\\;ef;ghi",  SemicolonUtils.unescapeSingleValue("abc;d\\;ef;ghi"));
-    }
 }
