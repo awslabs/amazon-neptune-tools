@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.apache.commons.lang.StringUtils;
 
@@ -252,18 +253,17 @@ public enum DataType {
             return temp.replace("\"", "\"\"");
         }
 
-
         @Override
-        public String formatList(Collection<?> values) {
+        public String formatList(Collection<?> values, CsvPrinterOptions options) {
             if (values.isEmpty()){
                 return "";
             }
 
             return java.lang.String.format("\"%s\"",
                     values.stream().
-                            map(DataType::escapeSemicolons).
+                            map(v-> DataType.escapeSeparators(v, options.multiValueSeparator())).
                             map(this::escapeDoubleQuotes).
-                            collect(Collectors.joining(";")));
+                            collect(Collectors.joining(options.multiValueSeparator())));
         }
 
         @Override
@@ -350,9 +350,12 @@ public enum DataType {
         }
     }
 
-    public static String escapeSemicolons(Object value) {
-        String temp = value.toString().replace("\\;", ";");
-        return temp.replace(";", "\\;");
+    public static String escapeSeparators(Object value, String separator) {
+        if (separator.isEmpty()){
+            return value.toString();
+        }
+        String temp = value.toString().replace("\\" + separator, separator);
+        return temp.replace(separator, "\\" + separator);
     }
 
     public String typeDescription() {
@@ -371,8 +374,8 @@ public enum DataType {
         generator.writeStringField(key, value.toString());
     }
 
-    public String formatList(Collection<?> values) {
-        return values.stream().map(this::format).collect(Collectors.joining(";"));
+    public String formatList(Collection<?> values, CsvPrinterOptions options) {
+        return values.stream().map(this::format).collect(Collectors.joining(options.multiValueSeparator()));
     }
 
     public abstract boolean isNumeric();

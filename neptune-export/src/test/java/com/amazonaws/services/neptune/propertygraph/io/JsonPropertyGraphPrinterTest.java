@@ -16,11 +16,12 @@ import com.amazonaws.services.neptune.io.PrintOutputWriter;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Map;
+import java.util.*;
 
 import static com.amazonaws.services.neptune.util.MapUtils.entry;
 import static com.amazonaws.services.neptune.util.MapUtils.map;
@@ -37,7 +38,7 @@ public class JsonPropertyGraphPrinterTest {
         try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(
                 new PrintOutputWriter("test", stringWriter),
                 new LabelSchema(new Label("my-label")),
-                PrinterOptions.NO_HEADERS)) {
+                PrinterOptions.NULL_OPTIONS)) {
 
             propertyGraphPrinter.printStartRow();
             propertyGraphPrinter.printEdge("edge-id", "edge-label", "from-id", "to-id");
@@ -51,6 +52,131 @@ public class JsonPropertyGraphPrinterTest {
     }
 
     @Test
+    public void shouldPrintEmptyListAsListIrrespectiveOfWhetherMultiValueIsTrue() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
+        PropertySchema propertySchema2 = new PropertySchema("property2", false, DataType.String, false);
+
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("property1", propertySchema1);
+        labelSchema.put("property2", propertySchema2);
+
+        HashMap<String, List<String>> props = new HashMap<String, List<String>>() {{
+            put("property1", new ArrayList<>());
+            put("property2", new ArrayList<>());
+        }};
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, PrinterOptions.NULL_OPTIONS)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"property1\":[],\"property2\":[]}",
+                stringWriter.toString());
+    }
+
+    @Test
+    public void shouldPrintSingleValueListAsSingleValueWhenIsMultiValueIsFalse() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, false);
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("tags", propertySchema);
+
+        HashMap<String, List<String>> props = new HashMap<String, List<String>>() {{
+            put("tags", Collections.singletonList("tag1"));
+        }};
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, PrinterOptions.NULL_OPTIONS)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"tags\":\"tag1\"}",
+                stringWriter.toString());
+    }
+
+    @Test
+    public void shouldPrintSingleValueListAsSingleValueWhenIsMultiValueIsFalseButStrictCardinalityIsEnforced() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, false);
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("tags", propertySchema);
+
+        HashMap<String, List<String>> props = new HashMap<String, List<String>>() {{
+            put("tags", Collections.singletonList("tag1"));
+        }};
+
+        PrinterOptions printerOptions = new PrinterOptions(JsonPrinterOptions.builder().setStrictCardinality(true).build());
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, printerOptions)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"tags\":[\"tag1\"]}",
+                stringWriter.toString());
+    }
+
+    @Test
+    public void shouldPrintSingleValueListAsArrayWhenIsMultiValueIsTrue() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, true);
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("tags", propertySchema);
+
+        HashMap<String, List<String>> props = new HashMap<String, List<String>>() {{
+            put("tags", Collections.singletonList("tag1"));
+        }};
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, PrinterOptions.NULL_OPTIONS)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"tags\":[\"tag1\"]}",
+                stringWriter.toString());
+    }
+
+    @Test
+    public void shouldPrintMultiValueListAsArrayIrrespectiveOfWhetherMultiValueIsTrue() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
+        PropertySchema propertySchema2 = new PropertySchema("property2", false, DataType.String, false);
+
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("property1", propertySchema1);
+        labelSchema.put("property2", propertySchema2);
+
+        HashMap<String, List<String>> props = new HashMap<String, List<String>>() {{
+            put("property1", Arrays.asList("tag1", "tag2"));
+            put("property2", Arrays.asList("tag1", "tag2"));
+        }};
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, PrinterOptions.NULL_OPTIONS)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"property1\":[\"tag1\",\"tag2\"],\"property2\":[\"tag1\",\"tag2\"]}",
+                stringWriter.toString());
+    }
+
+    @Test
     public void appendsPreviouslyUnseenValuesToObjectWhenInferringSchema() throws IOException {
 
         StringWriter stringWriter = new StringWriter();
@@ -60,7 +186,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                PrinterOptions.NO_HEADERS);
+                PrinterOptions.NULL_OPTIONS);
 
         print(printer,
                 map(entry("fname", "fname1")),
@@ -89,7 +215,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                PrinterOptions.NO_HEADERS);
+                PrinterOptions.NULL_OPTIONS);
 
         print(printer,
                 map(entry("age", 10)),
@@ -110,7 +236,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                PrinterOptions.NO_HEADERS);
+                PrinterOptions.NULL_OPTIONS);
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),
@@ -133,7 +259,7 @@ public class JsonPropertyGraphPrinterTest {
         PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
                 new PrintOutputWriter("test", stringWriter),
                 labelSchema,
-                PrinterOptions.NO_HEADERS);
+                PrinterOptions.NULL_OPTIONS);
 
         print(printer,
                 map(entry("p-1", 10), entry("p-2", 20)),

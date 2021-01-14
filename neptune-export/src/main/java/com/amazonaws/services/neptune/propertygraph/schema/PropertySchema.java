@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,7 +47,7 @@ public class PropertySchema {
         if (isList(value)) {
             List<?> values = (List<?>) value;
             size = values.size();
-            if (size > 1) {
+            if (size != 1) {
                 isMultiValue = true;
             }
             if (updateDataType){
@@ -68,7 +69,7 @@ public class PropertySchema {
     }
 
     private boolean isList(Object value) {
-        return value.getClass().isAssignableFrom(java.util.ArrayList.class);
+        return value instanceof List<?>;
     }
 
     public DataType dataType() {

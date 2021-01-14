@@ -16,20 +16,27 @@ import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.RequireOnlyOne;
+import com.github.rvesse.airline.annotations.restrictions.MutuallyExclusiveWith;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.URI;
 
-public class ExportPropertyGraphFromConfigModule {
+public class GraphSchemaProviderModule {
 
     @Option(name = {"-c", "--config-file", "--filter-config-file"}, description = "Path to JSON schema config file (file path, or 'https' or 's3' URI).")
-    @RequireOnlyOne(tag = "configFile or config")
+    @MutuallyExclusiveWith(tag = "configFile or config")
     private URI configFile;
 
     @Option(name = {"--config", "--filter"}, description = "JSON schema for property graph.")
-    @RequireOnlyOne(tag = "configFile or config")
+    @MutuallyExclusiveWith(tag = "configFile or config")
     private String configJson;
+
+    private final boolean configIsMandatory;
+
+    public GraphSchemaProviderModule(boolean configIsMandatory) {
+        this.configIsMandatory = configIsMandatory;
+    }
 
     public GraphSchema graphSchema() throws IOException {
 
@@ -41,7 +48,16 @@ public class ExportPropertyGraphFromConfigModule {
                     GraphSchema.class);
 
             return configFileResource.get();
+
         } else {
+
+            if (StringUtils.isEmpty(configJson)){
+                if (configIsMandatory){
+                    throw new IllegalStateException("You must supply either a configuration file URI or inline configuration JSON");
+                }
+                return new GraphSchema();
+            }
+
             return GraphSchema.fromJson(new ObjectMapper().readTree(configJson));
         }
     }

@@ -26,9 +26,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
-import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
@@ -75,8 +73,10 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
     @Inject
-    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
+    private GraphSchemaProviderModule graphSchemaProvider = new GraphSchemaProviderModule(false);
 
+    @Inject
+    private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
     @Override
     public void run() {
@@ -90,13 +90,13 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
-                    GraphSchema graphSchema = new GraphSchema();
+                    GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
+
                     Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
-
 
                         ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
                                 exportSpecifications,
@@ -105,6 +105,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                                 range.config(),
                                 clusterStrategy.concurrencyConfig(),
                                 targetConfig);
+
                         graphSchema = exportJob.execute();
 
                         configFileResource.save(graphSchema);

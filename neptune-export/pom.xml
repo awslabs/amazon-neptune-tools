@@ -19,13 +19,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javac.target>1.8</javac.target>
         <uberjar.name>neptune-export</uberjar.name>
-        <aws.sdk.version>1.11.908</aws.sdk.version>
-        <gremlin.version>3.4.3</gremlin.version>
-        <sig4.signer.version>2.0.2</sig4.signer.version>
+        <aws.sdk.version>1.11.932</aws.sdk.version>
+        <gremlin.version>3.4.8</gremlin.version>
+        <slf4j.version>1.8.0-beta2</slf4j.version>
+        <rdf4j.version>3.5.0</rdf4j.version>
+        <amazon.neptune.sigv4.signer.version>2.1.1</amazon.neptune.sigv4.signer.version>
+        <amazon.neptune.gremlin.java.sigv4.version>2.1.1</amazon.neptune.gremlin.java.sigv4.version>
+        <amazon.neptune.sparql.java.sigv4.version>2.1.1</amazon.neptune.sparql.java.sigv4.version>
+        <netty.version>4.1.52.Final</netty.version>
+        <kinesis.producer.version>0.14.0</kinesis.producer.version>
     </properties>
 
     <dependencies>
-
 
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -72,31 +77,31 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-producer</artifactId>
-            <version>0.14.0</version>
+            <version>${kinesis.producer.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
-            <version>1.2.0</version>
+            <version>1.2.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-neptune-sigv4-signer</artifactId>
-            <version>${sig4.signer.version}</version>
+            <version>${amazon.neptune.sigv4.signer.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-neptune-gremlin-java-sigv4</artifactId>
-            <version>${sig4.signer.version}</version>
+            <version>${amazon.neptune.gremlin.java.sigv4.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-neptune-sparql-java-sigv4</artifactId>
-            <version>${sig4.signer.version}</version>
+            <version>${amazon.neptune.sparql.java.sigv4.version}</version>
         </dependency>
 
         <dependency>
@@ -146,43 +151,43 @@
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-repository-sparql</artifactId>
-            <version>3.3.0</version>
+            <version>${rdf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-turtle</artifactId>
-            <version>3.3.0</version>
+            <version>${rdf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-nquads</artifactId>
-            <version>3.3.0</version>
+            <version>${rdf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.8.0-beta2</version>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.8.0-beta2</version>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.8.0-beta2</version>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.42.Final</version>
+            <version>${netty.version}</version>
         </dependency>
 
 

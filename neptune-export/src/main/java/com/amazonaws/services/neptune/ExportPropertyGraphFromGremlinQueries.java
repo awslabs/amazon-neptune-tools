@@ -21,10 +21,7 @@ import com.amazonaws.services.neptune.propertygraph.NamedQueries;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.airline.NameQueriesTypeConverter;
-import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
-import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
-import com.amazonaws.services.neptune.propertygraph.io.QueryJob;
+import com.amazonaws.services.neptune.propertygraph.io.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
@@ -98,7 +95,10 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseComm
                             new JsonResource<>("Queries file", queriesFile, NamedQueriesCollection.class) :
                             directories.queriesResource();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(includeTypeDefinitions, false));
+                    CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder().setIncludeTypeDefinitions(includeTypeDefinitions).build();
+                    JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder().setStrictCardinality(true).build();
+
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(csvPrinterOptions, jsonPrinterOptions));
                     NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
 
                     directories.createResultsSubdirectories(namedQueries.names());

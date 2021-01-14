@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
+import com.amazonaws.services.neptune.util.SemicolonUtils;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -32,8 +33,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     public CsvPropertyGraphPrinter(OutputWriter writer,
                                    LabelSchema labelSchema,
-                                   PrinterOptions printerOptions)
-    {
+                                   PrinterOptions printerOptions) {
         this(writer, labelSchema, printerOptions, false);
     }
 
@@ -55,7 +55,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
-        if (printerOptions.includeHeaders()) {
+        if (printerOptions.csv().includeHeaders()) {
             for (String column : columns) {
                 commaPrinter.printComma();
                 writer.print(column);
@@ -65,13 +65,13 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
-        if (printerOptions.includeHeaders()) {
+        if (printerOptions.csv().includeHeaders()) {
             for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
-                if (printerOptions.includeTypeDefinitions()) {
-                    writer.print(property.nameWithDataType(printerOptions.escapeCsvHeaders()));
+                if (printerOptions.csv().includeTypeDefinitions()) {
+                    writer.print(property.nameWithDataType(printerOptions.csv().escapeCsvHeaders()));
                 } else {
-                    writer.print(property.nameWithoutDataType(printerOptions.escapeCsvHeaders()));
+                    writer.print(property.nameWithoutDataType(printerOptions.csv().escapeCsvHeaders()));
                 }
             }
             writer.print(System.lineSeparator());
@@ -93,32 +93,43 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
                 Object value = properties.get(property);
                 int size = propertySchema.accept(value, allowUpdateSchema);
                 labelSchema.recordObservation(propertySchema, value, size);
-                printProperty(propertySchema.dataType(), value, applyFormatting);
+                printProperty(propertySchema, value, applyFormatting);
             } else {
                 commaPrinter.printComma();
             }
         }
     }
 
-    public void printProperty(DataType dataType, Object value) {
-        printProperty(dataType, value, true);
+    public void printProperty(PropertySchema schema, Object value) {
+        printProperty(schema, value, true);
     }
 
-    private void printProperty(DataType dataType, Object value, boolean applyFormatting) {
+    private void printProperty(PropertySchema schema, Object value, boolean applyFormatting) {
+
+        DataType dataType = schema.dataType();
+
         commaPrinter.printComma();
 
         if (applyFormatting) {
             String formattedValue = isList(value) ?
-                    formatList(value, dataType) :
+                    formatList(value, dataType, printerOptions.csv()) :
                     dataType.format(value);
             writer.print(formattedValue);
         } else {
             if (dataType == DataType.String) {
-                writer.print(DataType.String.format(value));
+                if (isSingleValueColumnWithSemicolonSeparator(schema)) {
+                    writer.print(DataType.String.format(SemicolonUtils.unescape(value.toString())));
+                } else {
+                    writer.print(DataType.String.format(value));
+                }
             } else {
                 writer.print(String.valueOf(value));
             }
         }
+    }
+
+    private boolean isSingleValueColumnWithSemicolonSeparator(PropertySchema schema) {
+        return !schema.isMultiValue() && printerOptions.csv().isSemicolonSeparator();
     }
 
     @Override
@@ -143,11 +154,11 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         writer.print(DataType.String.format(to));
         if (fromLabels != null) {
             commaPrinter.printComma();
-            writer.print(DataType.String.formatList(fromLabels));
+            writer.print(DataType.String.formatList(fromLabels, printerOptions.csv()));
         }
         if (toLabels != null) {
             commaPrinter.printComma();
-            writer.print(DataType.String.formatList(toLabels));
+            writer.print(DataType.String.formatList(toLabels, printerOptions.csv()));
         }
     }
 
@@ -156,7 +167,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         commaPrinter.printComma();
         writer.print(DataType.String.format(id));
         commaPrinter.printComma();
-        writer.print(DataType.String.formatList(labels));
+        writer.print(DataType.String.formatList(labels, printerOptions.csv()));
     }
 
     @Override
@@ -171,13 +182,13 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
         writer.endCommit();
     }
 
-    private String formatList(Object value, DataType dataType) {
+    private String formatList(Object value, DataType dataType, CsvPrinterOptions options) {
         List<?> values = (List<?>) value;
-        return dataType.formatList(values);
+        return dataType.formatList(values, options);
     }
 
     private boolean isList(Object value) {
-        return value.getClass().isAssignableFrom(java.util.ArrayList.class);
+        return value instanceof List<?>;
     }
 
     @Override

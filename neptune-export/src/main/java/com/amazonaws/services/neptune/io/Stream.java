@@ -16,10 +16,10 @@ import com.amazonaws.services.kinesis.producer.Attempt;
 import com.amazonaws.services.kinesis.producer.KinesisProducer;
 import com.amazonaws.services.kinesis.producer.UserRecordFailedException;
 import com.amazonaws.services.kinesis.producer.UserRecordResult;
-import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Stream {
@@ -49,12 +48,17 @@ public class Stream {
 
             try {
                 if (kinesisProducer.getOutstandingRecordsCount() > (10000)) {
-                    Thread.sleep(1);
+                    long start = System.currentTimeMillis();
+                    while (kinesisProducer.getOutstandingRecordsCount() > (10000)) {
+                        Thread.sleep(1);
+                    }
+                    long end = System.currentTimeMillis();
+                    logger.trace("Paused adding records to stream for {} millis", end - start);
                 }
                 ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
 
                 ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKey.getAndIncrement()), data);
-                Futures.addCallback(future, CALLBACK);
+                Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
             } catch (InterruptedException e) {
                 logger.error(e.getMessage());
                 Thread.currentThread().interrupt();

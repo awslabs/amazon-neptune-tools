@@ -17,9 +17,10 @@ import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
+import com.amazonaws.services.neptune.propertygraph.io.JsonPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
-import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
@@ -42,7 +43,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.function.Function;
 
 public class NeptuneMachineLearningExportEventHandler implements NeptuneExportServiceEventHandler {
 
@@ -64,12 +64,20 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
                                                     Collection<String> profiles) {
         logger.info("Adding neptune_ml event handler");
 
+        CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder()
+                .setMultiValueSeparator(";")
+                .setEscapeCsvHeaders(args.contains("--escape-csv-headers"))
+                .build();
+        JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder()
+                .setStrictCardinality(true)
+                .build();
+
         this.outputS3Path = outputS3Path;
         this.createExportSubdirectory = createExportSubdirectory;
         this.args = args;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
-        this.printerOptions = new PrinterOptions(false, args.contains("--escape-csv-headers"), true);
+        this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
     }
 
     private Collection<TrainingJobWriterConfig> createTrainingJobConfigCollection(ObjectNode additionalParams) {
@@ -86,7 +94,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     @Override
     public void onBeforeExport(Args args) {
-        if (args.contains("export-pg") && !args.contains("--exclude-type-definitions")) {
+        if (!args.contains("--exclude-type-definitions")) {
             args.addFlag("--exclude-type-definitions");
         }
 

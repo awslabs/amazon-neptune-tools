@@ -21,7 +21,7 @@ public class PropertySchemaStats {
     private int observationCount;
 
     public PropertySchemaStats(Object property) {
-        this(property, 0, 0, 0, false);
+        this(property, -1, -1, 0, false);
     }
 
     public PropertySchemaStats(Object property, int minMultiValueSize, int maxMultiValueSize, int observationCount, boolean lockMultiValueSizes) {
@@ -35,7 +35,7 @@ public class PropertySchemaStats {
     public void recordObservation(int size) {
         observationCount++;
         if (!lockMultiValueSizes) {
-            if (minMultiValueSize == 0) {
+            if (minMultiValueSize < 0) {
                 minMultiValueSize = size;
                 maxMultiValueSize = size;
             }

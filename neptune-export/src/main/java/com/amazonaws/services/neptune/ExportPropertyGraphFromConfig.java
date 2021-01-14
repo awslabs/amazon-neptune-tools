@@ -26,9 +26,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
-import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.help.Examples;
-import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
@@ -67,10 +65,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
     private PropertyGraphRangeModule range = new PropertyGraphRangeModule();
 
     @Inject
-    private ExportPropertyGraphFromConfigModule graphSchemaProvider = new ExportPropertyGraphFromConfigModule();
+    private GraphSchemaProviderModule graphSchemaProvider = new GraphSchemaProviderModule(true);
 
     @Inject
-    private CsvPrinterOptionsModule printerOptions = new CsvPrinterOptionsModule();
+    private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
     @Override
     public void run() {
@@ -81,7 +79,9 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
+
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
 
@@ -97,7 +97,9 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand impl
                                 range.config(),
                                 clusterStrategy.concurrencyConfig(),
                                 targetConfig);
+
                         graphSchema = exportJob.execute();
+
                         configFileResource.save(graphSchema);
                     }
 

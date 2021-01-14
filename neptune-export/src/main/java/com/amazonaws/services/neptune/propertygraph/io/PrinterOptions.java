@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -14,36 +14,31 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 public class PrinterOptions {
 
-    public static final PrinterOptions NO_HEADERS = new PrinterOptions(false, false, false);
+    public static final PrinterOptions NULL_OPTIONS = new PrinterOptions(
+            CsvPrinterOptions.builder().build(),
+            JsonPrinterOptions.builder().build());
 
-    private final boolean includeTypeDefinitions;
-    private final boolean escapeCsvHeaders;
-    private final boolean includeHeaders;
+    private final CsvPrinterOptions csvPrinterOptions;
+    private final JsonPrinterOptions jsonPrinterOptions;
 
-    public PrinterOptions(boolean includeTypeDefinitions, boolean escapeCsvHeaders){
-        this(includeTypeDefinitions, escapeCsvHeaders, false);
+    public PrinterOptions(CsvPrinterOptions csvPrinterOptions) {
+        this(csvPrinterOptions, JsonPrinterOptions.builder().build());
     }
 
-    public PrinterOptions(boolean includeTypeDefinitions, boolean escapeCsvHeaders, boolean includeHeaders) {
-
-        this.includeTypeDefinitions = includeTypeDefinitions;
-        this.escapeCsvHeaders = escapeCsvHeaders;
-        this.includeHeaders = includeHeaders;
+    public PrinterOptions(JsonPrinterOptions jsonPrinterOptions) {
+        this(CsvPrinterOptions.builder().build(), jsonPrinterOptions);
     }
 
-    public boolean includeTypeDefinitions() {
-        return includeTypeDefinitions;
+    public PrinterOptions(CsvPrinterOptions csvPrinterOptions, JsonPrinterOptions jsonPrinterOptions) {
+        this.csvPrinterOptions = csvPrinterOptions;
+        this.jsonPrinterOptions = jsonPrinterOptions;
     }
 
-    public boolean escapeCsvHeaders(){
-        return escapeCsvHeaders;
+    public CsvPrinterOptions csv() {
+        return csvPrinterOptions;
     }
 
-    public boolean includeHeaders() {
-        return includeHeaders;
-    }
-
-    public PrinterOptions withIncludeHeaders(boolean includeHeaders){
-        return new PrinterOptions(includeTypeDefinitions, escapeCsvHeaders, includeHeaders);
+    public JsonPrinterOptions json() {
+        return jsonPrinterOptions;
     }
 }

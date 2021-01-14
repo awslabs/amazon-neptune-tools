@@ -32,13 +32,13 @@ public enum PropertyGraphExportFormat implements FileExtension {
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
-            return new JsonPropertyGraphPrinter(writer, generator, labelSchema);
+            return new JsonPropertyGraphPrinter(writer, generator, labelSchema, printerOptions);
         }
 
         @Override
         PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
             JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
-            return new JsonPropertyGraphPrinter(writer, generator, labelSchema, true);
+            return new JsonPropertyGraphPrinter(writer, generator, labelSchema, printerOptions,  true);
         }
 
         @Override
@@ -59,12 +59,18 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) {
-            return new CsvPropertyGraphPrinter(writer, labelSchema, printerOptions.withIncludeHeaders(true));
+
+            PrinterOptions newPrinterOptions = new PrinterOptions(
+                    printerOptions.csv().copy()
+                            .setIncludeHeaders(true)
+                            .build());
+
+            return new CsvPropertyGraphPrinter(writer, labelSchema, newPrinterOptions);
         }
 
         @Override
         PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
-            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
+            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema, printerOptions);
         }
 
         @Override
@@ -93,12 +99,18 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) {
-            return new CsvPropertyGraphPrinter(writer, labelSchema, printerOptions.withIncludeHeaders(false));
+
+            PrinterOptions newPrinterOptions = new PrinterOptions(
+                    printerOptions.csv().copy()
+                            .setIncludeHeaders(true)
+                            .build());
+
+            return new CsvPropertyGraphPrinter(writer, labelSchema, newPrinterOptions);
         }
 
         @Override
         PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
-            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema);
+            return new VariableRowCsvPropertyGraphPrinter(writer, labelSchema, printerOptions);
         }
 
         @Override

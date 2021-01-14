@@ -49,7 +49,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
@@ -111,7 +111,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "does-not-exist")
                         .build())
@@ -152,7 +152,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
@@ -197,7 +197,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                         .withEdgeClassLabel(knowsLabel, "contact")
                         .build())
@@ -267,7 +267,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                 .withEdgeClassLabel(knowsLabel, "does-not-exist")
                 .build())
@@ -311,7 +311,7 @@ public class JobTrainingConfigurationFileWriterLabelTest {
                 graphSchema,
                 output.generator(),
                 JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
-                PrinterOptions.NO_HEADERS,
+                PrinterOptions.NULL_OPTIONS,
                 TrainingJobConfigBuilder.builder()
                 .withEdgeClassLabel(knowsLabel, "contact")
                 .build())

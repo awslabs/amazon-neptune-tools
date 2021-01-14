@@ -19,12 +19,12 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URL;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -72,9 +72,9 @@ public class JsonResource<T extends Jsonizable> {
             Object o = method.invoke(null, json);
             //noinspection unchecked
             return (T) o;
-        } catch (NoSuchMethodException e){
+        } catch (NoSuchMethodException e) {
             throw new RuntimeException("Jsonizable object must have a static fromJson(JsonNode) method");
-        } catch  ( IllegalAccessException | InvocationTargetException e){
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
@@ -88,11 +88,8 @@ public class JsonResource<T extends Jsonizable> {
     }
 
     private JsonNode readJson() throws IOException {
-        String scheme = resourcePath.getScheme();
 
-        if (scheme == null){
-            return getFromFile();
-        }
+        String scheme = StringUtils.isNotEmpty(resourcePath.getScheme()) ? resourcePath.getScheme() : "file";
 
         switch (scheme) {
             case "https":

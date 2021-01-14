@@ -12,11 +12,13 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
+import com.amazonaws.services.neptune.propertygraph.io.JsonPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 
-public class CsvPrinterOptionsModule {
+public class PrinterOptionsModule {
 
     @Option(name = {"--exclude-type-definitions"}, description = "Exclude type definitions from CSV column headers (optional, default 'false').")
     @Once
@@ -26,9 +28,26 @@ public class CsvPrinterOptionsModule {
     @Once
     private boolean escapeCsvHeaders = false;
 
+    @Option(name = {"--strict-cardinality"}, description = "Format all set and list cardinality properties as arrays in JSON, including properties with a single value (optional, default 'false').")
+    @Once
+    private boolean strictCardinality = false;
+
+    @Option(name = {"--multi-value-separator"}, description = "Separator for multi-value properties in CSV output (optional, default ';').")
+    @Once
+    private String multiValueSeparator = ";";
+
     public PrinterOptions config(){
-        return new PrinterOptions(!excludeTypeDefinitions, escapeCsvHeaders);
+
+        CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder()
+                .setMultiValueSeparator(multiValueSeparator)
+                .setIncludeTypeDefinitions(!excludeTypeDefinitions)
+                .setEscapeCsvHeaders(escapeCsvHeaders)
+                .build();
+
+        JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder()
+                .setStrictCardinality(strictCardinality)
+                .build();
+
+        return new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
     }
-
-
 }
