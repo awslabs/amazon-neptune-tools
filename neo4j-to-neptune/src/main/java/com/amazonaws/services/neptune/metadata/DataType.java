@@ -12,7 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.metadata;
 
-import java.util.Scanner;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.regex.Pattern;
 
 public enum DataType {
     None {
@@ -65,30 +67,81 @@ public enum DataType {
 
     public static DataType identifyType(String s) {
 
-        Scanner scanner = new Scanner(s);
-
-        if (scanner.hasNextBoolean()) {
+        if (isBoolean(s)) {
             return DataType.Boolean;
-        } else if (scanner.hasNextByte()) {
+        } else if (isByte(s)) {
             return DataType.Byte;
-        } else if (scanner.hasNextShort()) {
+        } else if (isShort(s)) {
             return DataType.Short;
-        } else if (scanner.hasNextInt()) {
+        } else if (isInt(s)) {
             return DataType.Int;
-        } else if (scanner.hasNextLong()) {
+        } else if (isLong(s)) {
             return DataType.Long;
-        } else if (scanner.hasNextDouble()) {
+        } else if (isDouble(s)) {
             return DataType.Double;
-        } else if (scanner.hasNext()){
-            java.lang.String v = scanner.next();
+        } else {
+            if (StringUtils.isEmpty(s)) {
+                return DataType.None;
+            }
             try {
-                DateTimeUtils.parseISODate(v);
+                DateTimeUtils.parseISODate(s);
                 return DataType.Date;
             } catch (Exception e) {
                 return DataType.String;
             }
-        } else {
-            return DataType.None;
+        }
+    }
+
+    private static final String BOOLEAN_PATTERN = "true|false";
+    private static final Pattern boolPattern = Pattern.compile(BOOLEAN_PATTERN, Pattern.CASE_INSENSITIVE);
+
+
+    private static boolean isBoolean(String s) {
+        return boolPattern.matcher(s).matches();
+    }
+
+    private static boolean isByte(String s) {
+        try {
+            java.lang.Byte.parseByte(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isShort(String s) {
+        try {
+            java.lang.Short.parseShort(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isInt(String s) {
+        try {
+            java.lang.Integer.parseInt(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isLong(String s) {
+        try {
+            java.lang.Long.parseLong(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isDouble(String s) {
+        try {
+            java.lang.Double.parseDouble(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 

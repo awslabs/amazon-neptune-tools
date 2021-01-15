@@ -19,7 +19,7 @@ import org.apache.commons.csv.QuoteMode;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -32,7 +32,7 @@ public class CSVUtils {
     }
 
     public static CSVParser newParser(Path filePath) throws IOException {
-        return CSVParser.parse(filePath, Charset.forName("UTF-8"), CSVFormat.DEFAULT);
+        return CSVParser.parse(filePath, StandardCharsets.UTF_8, CSVFormat.DEFAULT);
     }
 
     public static CSVRecord firstRecord(String s) {
