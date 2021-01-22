@@ -34,7 +34,9 @@ public class Stream {
 
     private final KinesisProducer kinesisProducer;
     private final String streamName;
-    private final AtomicLong partitionKey = new AtomicLong();
+    private final AtomicLong counter = new AtomicLong();
+    private volatile long currentWindowLength = 0;
+    private volatile long maxRecordCount = 10000;
 
     private static final Logger logger = LoggerFactory.getLogger(Stream.class);
 
@@ -43,21 +45,35 @@ public class Stream {
         this.streamName = streamName;
     }
 
-    public void publish(String s) {
+    private static final long QUEUE_SIZE_BYTES = 10000000;
+    private static final long MAX_WINDOW_SIZE = 1000;
+
+    public synchronized void publish(String s) {
         if (StringUtils.isNotEmpty(s) && s.length() > 2) {
 
             try {
-                if (kinesisProducer.getOutstandingRecordsCount() > (10000)) {
+                long partitionKeyValue = counter.incrementAndGet();
+
+                byte[] bytes = s.getBytes(StandardCharsets.UTF_8.name());
+                ByteBuffer data = ByteBuffer.wrap(bytes);
+
+                currentWindowLength += bytes.length;
+                if (partitionKeyValue % MAX_WINDOW_SIZE == 0){
+                    maxRecordCount = QUEUE_SIZE_BYTES / (currentWindowLength /MAX_WINDOW_SIZE);
+                    logger.info("{} bytes per {} records – maxRecordCount: {}", currentWindowLength, MAX_WINDOW_SIZE, maxRecordCount);
+                    currentWindowLength = 0;
+                }
+
+                if (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
                     long start = System.currentTimeMillis();
-                    while (kinesisProducer.getOutstandingRecordsCount() > (10000)) {
+                    while (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
                         Thread.sleep(1);
                     }
                     long end = System.currentTimeMillis();
                     logger.trace("Paused adding records to stream for {} millis", end - start);
                 }
-                ByteBuffer data = ByteBuffer.wrap(s.getBytes(StandardCharsets.UTF_8.name()));
 
-                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKey.getAndIncrement()), data);
+                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
                 Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
             } catch (InterruptedException e) {
                 logger.error(e.getMessage());
