@@ -109,12 +109,13 @@ public class Directories {
         return createFilePath(statementsDirectory, name, extension);
     }
 
-    public Path createQueryResultsFilePath(String name, FileExtension extension){
-        Path directory = resultsDirectory.resolve(name);
-        return createFilePath(directory, name, extension);
+    public Path createQueryResultsFilePath(String directoryName, String fileName, FileExtension extension){
+        Path directory = resultsDirectory.resolve(directoryName);
+        return createFilePath(directory, fileName, extension);
     }
 
     public void createResultsSubdirectories(Collection<String> subdirectoryNames) throws IOException {
+
         for (String subdirectoryName : subdirectoryNames) {
             Files.createDirectories(resultsDirectory.resolve(subdirectoryName));
         }

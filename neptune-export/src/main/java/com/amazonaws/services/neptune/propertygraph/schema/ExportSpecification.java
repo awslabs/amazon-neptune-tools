@@ -34,8 +34,14 @@ public class ExportSpecification<T extends Map<?, ?>> {
 
     public ExportSpecification(GraphElementType<T> graphElementType,
                                LabelsFilter labelsFilter,
-                               boolean tokensOnly,
+                               ExportStats stats){
+        this(graphElementType, labelsFilter, stats, false, new LabModeFeatures(Collections.emptyList()));
+    }
+
+                               public ExportSpecification(GraphElementType<T> graphElementType,
+                               LabelsFilter labelsFilter,
                                ExportStats stats,
+                               boolean tokensOnly,
                                LabModeFeatures labModeFeatures) {
         this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
@@ -144,7 +150,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
             return Collections.singletonList(this);
         } else {
             return labelsFilter.split().stream()
-                    .map(l -> new ExportSpecification<>(graphElementType, l, tokensOnly, stats, labModeFeatures))
+                    .map(l -> new ExportSpecification<>(graphElementType, l, stats, tokensOnly, labModeFeatures))
                     .collect(Collectors.toList());
         }
     }

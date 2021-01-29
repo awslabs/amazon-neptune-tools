@@ -21,7 +21,25 @@ import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSo
 
 import java.util.Collection;
 
-public class PropertyGraphSchemaSamplingModule {
+public class PropertyGraphSchemaInferencingModule {
+
+    public enum SchemaInferenceStrategy {
+        Scan{
+            @Override
+            boolean scan() {
+                return true;
+            }
+        },
+
+        FullScan {
+            @Override
+            boolean scan() {
+                return false;
+            }
+        };
+
+        abstract boolean scan();
+    }
 
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating schema.")
     @Once
@@ -31,6 +49,18 @@ public class PropertyGraphSchemaSamplingModule {
     @Once
     private long sampleSize = 1000;
 
+    public PropertyGraphSchemaInferencingModule(){
+    }
+
+    public PropertyGraphSchemaInferencingModule withSchemaInferenceStrategy(SchemaInferenceStrategy strategy) {
+        this.sample = strategy.scan();
+        return this;
+    }
+
+    public PropertyGraphSchemaInferencingModule withSampleSize(long sampleSize) {
+        this.sampleSize = sampleSize;
+        return this;
+    }
 
     public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification<?>> exportSpecifications,
                                                         GraphTraversalSource g){

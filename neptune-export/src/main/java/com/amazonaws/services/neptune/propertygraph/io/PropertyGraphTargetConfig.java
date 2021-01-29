@@ -72,7 +72,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForQueries(String name, LabelSchema labelSchema) throws IOException {
-        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(name, fileExtension(useTempFiles)), labelSchema);
+        return createPrinterForQueries(() -> directories.createQueryResultsFilePath(labelSchema.label().labelsAsString(), name, fileExtension(useTempFiles)), labelSchema);
     }
 
     private PropertyGraphPrinter createPrinterForQueries(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {

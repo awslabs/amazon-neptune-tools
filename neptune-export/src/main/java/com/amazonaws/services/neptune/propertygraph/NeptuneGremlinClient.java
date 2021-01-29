@@ -18,6 +18,7 @@ import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.propertygraph.io.SerializationConfig;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
+import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 import org.slf4j.Logger;
@@ -72,7 +73,7 @@ public class NeptuneGremlinClient implements AutoCloseable {
     }
 
     public GraphTraversalSource newTraversalSource() {
-        return EmptyGraph.instance().traversal().withRemote(DriverRemoteConnection.using(cluster));
+        return AnonymousTraversalSource.traversal().withRemote(DriverRemoteConnection.using(cluster));
     }
 
     public QueryClient queryClient() {

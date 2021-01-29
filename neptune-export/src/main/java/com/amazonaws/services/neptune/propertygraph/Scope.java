@@ -40,14 +40,12 @@ public enum Scope {
                 results.add(new ExportSpecification<>(
                         GraphElementTypes.Nodes,
                         Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
-                        tokensOnly.nodeTokensOnly(),
-                        stats,
+                        stats, tokensOnly.nodeTokensOnly(),
                         labModeFeatures));
                 results.add(new ExportSpecification<>(
                         GraphElementTypes.Edges,
                         Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
-                        tokensOnly.edgeTokensOnly(),
-                        stats,
+                        stats, tokensOnly.edgeTokensOnly(),
                         labModeFeatures));
             } else {
                 if (graphSchema.hasNodeSchemas()) {
@@ -57,8 +55,7 @@ public enum Scope {
                         results.add(new ExportSpecification<>(
                                 GraphElementTypes.Nodes,
                                 labelsFilter,
-                                tokensOnly.nodeTokensOnly(),
-                                stats,
+                                stats, tokensOnly.nodeTokensOnly(),
                                 labModeFeatures));
                     }
                 }
@@ -69,8 +66,7 @@ public enum Scope {
                         results.add(new ExportSpecification<>(
                                 GraphElementTypes.Edges,
                                 labelsFilter,
-                                tokensOnly.edgeTokensOnly(),
-                                stats,
+                                stats, tokensOnly.edgeTokensOnly(),
                                 labModeFeatures));
                     }
                 }
@@ -93,8 +89,7 @@ public enum Scope {
                         new ExportSpecification<>(
                                 GraphElementTypes.Nodes,
                                 Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
-                                tokensOnly.nodeTokensOnly(),
-                                stats,
+                                stats, tokensOnly.nodeTokensOnly(),
                                 labModeFeatures)
                 );
             } else if (graphSchema.hasNodeSchemas()) {
@@ -105,8 +100,7 @@ public enum Scope {
                             new ExportSpecification<>(
                                     GraphElementTypes.Nodes,
                                     labelsFilter,
-                                    tokensOnly.nodeTokensOnly(),
-                                    stats,
+                                    stats, tokensOnly.nodeTokensOnly(),
                                     labModeFeatures)
                     );
                 } else {
@@ -133,8 +127,7 @@ public enum Scope {
                         new ExportSpecification<>(
                                 GraphElementTypes.Edges,
                                 Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
-                                tokensOnly.edgeTokensOnly(),
-                                stats,
+                                stats, tokensOnly.edgeTokensOnly(),
                                 labModeFeatures)
                 );
             } else if (graphSchema.hasEdgeSchemas()) {
@@ -145,8 +138,7 @@ public enum Scope {
                             new ExportSpecification<>(
                                     GraphElementTypes.Edges,
                                     labelsFilter,
-                                    tokensOnly.edgeTokensOnly(),
-                                    stats,
+                                    stats, tokensOnly.edgeTokensOnly(),
                                     labModeFeatures)
                     );
                 } else {
