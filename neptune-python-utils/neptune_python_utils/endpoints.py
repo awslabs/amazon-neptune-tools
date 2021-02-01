@@ -60,19 +60,29 @@ class Endpoint:
     
     def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None): 
         
-        if credentials is None and role_arn is None:
-            raise Exception('You must supply either a credentials or role_arn')
-        
         self.protocol = protocol
         self.neptune_endpoint = neptune_endpoint
         self.neptune_port = neptune_port
         self.suffix = suffix
         self.region = region
-        self.credentials = credentials
-        self.role_arn = role_arn
+        
+        if role_arn:
+            self.role_arn = role_arn
+            self.credentials = None
+        elif credentials:
+            self.role_arn = None
+            self.credentials = credentials
+        else:
+            self.role_arn = None
+            self.credentials = self._get_session_credentials()
     
     def __str__(self):
         return self.value()
+        
+    def _get_session_credentials(self):
+        session = boto3.session.Session()
+        return session.get_credentials();
+        
         
     @synchronized_method
     def _get_credentials(self):        
@@ -211,16 +221,15 @@ class Endpoints:
             self.neptune_port = 8182 if 'NEPTUNE_CLUSTER_PORT' not in os.environ else os.environ['NEPTUNE_CLUSTER_PORT']
         else:
             self.neptune_port = neptune_port
-           
-        session = boto3.session.Session()
-        
-        self.region = region_name if region_name is not None else session.region_name
-        self.role_arn = role_arn
-        
-        if credentials is None:
-            self.credentials = session.get_credentials() if role_arn is None else None
+            
+        if region_name:
+            self.region = region_name
         else:
-            self.credentials = credentials
+            session = boto3.session.Session()
+            self.region = session.region_name
+            
+        self.credentials = credentials
+        self.role_arn = role_arn
             
             
     def gremlin_endpoint(self):
