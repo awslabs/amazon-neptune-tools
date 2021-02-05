@@ -25,10 +25,7 @@ import org.apache.http.client.HttpClient;
 import org.eclipse.rdf4j.http.client.HttpClientSessionManager;
 import org.eclipse.rdf4j.http.client.RDF4JProtocolSession;
 import org.eclipse.rdf4j.http.client.SPARQLProtocolSession;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryResultHandlerException;
 import org.eclipse.rdf4j.query.TupleQueryResultHandler;
@@ -156,7 +153,7 @@ public class NeptuneSparqlClient implements AutoCloseable {
                     Value g = bindingSet.getValue("g");
 
 
-                    IRI subject = factory.createIRI(s.stringValue());
+                    Resource subject = s.isIRI() ? factory.createIRI(s.stringValue()) : factory.createBNode(s.stringValue());
                     IRI predicate = factory.createIRI(p.stringValue());
                     IRI graph = getNonDefaultNamedGraph(g, factory);
 
