@@ -13,7 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph;
 
 import com.amazonaws.services.neptune.propertygraph.schema.*;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,8 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
 
 public class ExportStats {
     private long nodeCount = 0;
@@ -48,7 +45,7 @@ public class ExportStats {
         edgeStats.computeIfAbsent(label, LabelStats::new).increment();
     }
 
-    public String formatStats(GraphSchema graphSchema){
+    public String formatStats(GraphSchema graphSchema) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("Source:").append(System.lineSeparator());
@@ -91,11 +88,11 @@ public class ExportStats {
 
     private Long getNumberOfProperties(GraphSchema graphSchema) {
         return graphSchema.graphElementSchemas().stream()
-                    .map(s -> s.labelSchemas().stream()
-                            .map(l -> l.propertySchemaStats().stream()
-                                    .map(p -> (long)p.observationCount()).reduce(0L, Long::sum))
-                            .reduce(0L, Long::sum))
-                    .reduce(0L, Long::sum);
+                .map(s -> s.labelSchemas().stream()
+                        .map(l -> l.propertySchemaStats().stream()
+                                .map(p -> (long) p.observationCount()).reduce(0L, Long::sum))
+                        .reduce(0L, Long::sum))
+                .reduce(0L, Long::sum);
     }
 
     public void addTo(ObjectNode exportNode, GraphSchema graphSchema) {
