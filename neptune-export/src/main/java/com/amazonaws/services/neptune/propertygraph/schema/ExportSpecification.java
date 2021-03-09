@@ -23,6 +23,7 @@ import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ExportSpecification<T extends Map<?, ?>> {
@@ -98,7 +99,8 @@ public class ExportSpecification<T extends Map<?, ?>> {
                                                        PropertyGraphTargetConfig targetConfig,
                                                        RangeFactory rangeFactory,
                                                        Status status,
-                                                       int index) {
+                                                       int index,
+                                                       AtomicInteger fileDescriptorCount) {
         return new ExportPropertyGraphTask<>(
                 graphSchema.copyOfGraphElementSchemasFor(graphElementType),
                 labelsFilter,
@@ -107,7 +109,8 @@ public class ExportSpecification<T extends Map<?, ?>> {
                 targetConfig,
                 rangeFactory,
                 status,
-                index
+                index,
+                fileDescriptorCount
         );
     }
 

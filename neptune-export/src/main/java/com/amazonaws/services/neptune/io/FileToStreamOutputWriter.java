@@ -38,6 +38,11 @@ public class FileToStreamOutputWriter implements OutputWriter {
     }
 
     @Override
+    public boolean isNewTarget() {
+        return false;
+    }
+
+    @Override
     public String outputId() {
         return stream.name();
     }

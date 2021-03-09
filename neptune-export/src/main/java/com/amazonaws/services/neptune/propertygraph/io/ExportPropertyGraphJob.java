@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExportPropertyGraphJob {
 
@@ -70,6 +71,8 @@ public class ExportPropertyGraphJob {
     private MasterLabelSchemas export(ExportSpecification<?> exportSpecification) throws Exception {
         Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas = new ArrayList<>();
 
+        AtomicInteger fileDescriptorCount = new AtomicInteger();
+
 
         for (ExportSpecification<?> labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
@@ -93,7 +96,8 @@ public class ExportPropertyGraphJob {
                             targetConfig,
                             rangeFactory,
                             status,
-                            index
+                            index,
+                            fileDescriptorCount
                     );
                     futures.add(taskExecutor.submit(exportTask));
                 }

@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<FileSpecificLabelSchemas> {
 
@@ -38,7 +38,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
     private final RangeFactory rangeFactory;
     private final Status status;
     private final int index;
-    private final Map<Label, LabelWriter<T>> labelWriters = new HashMap<>();
+    private final LabelWriters<T> labelWriters;
 
     public ExportPropertyGraphTask(GraphElementSchemas graphElementSchemas,
                                    LabelsFilter labelsFilter,
@@ -47,7 +47,8 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                                    PropertyGraphTargetConfig targetConfig,
                                    RangeFactory rangeFactory,
                                    Status status,
-                                   int index) {
+                                   int index,
+                                   AtomicInteger fileDescriptorCount) {
         this.graphElementSchemas = graphElementSchemas;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
@@ -56,6 +57,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         this.rangeFactory = rangeFactory;
         this.status = status;
         this.index = index;
+        this.labelWriters = new LabelWriters<>(fileDescriptorCount);
     }
 
     @Override
@@ -104,7 +106,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         private final GraphElementSchemas graphElementSchemas;
         private final PropertyGraphTargetConfig targetConfig;
         private final WriterFactory<T> writerFactory;
-        private final Map<Label, LabelWriter<T>> labelWriters;
+        private final LabelWriters<T> labelWriters;
         private final GraphClient<T> graphClient;
         private final Status status;
         private final int index;
@@ -113,7 +115,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                             GraphElementSchemas graphElementSchemas,
                             PropertyGraphTargetConfig targetConfig,
                             WriterFactory<T> writerFactory,
-                            Map<Label, LabelWriter<T>> labelWriters,
+                            LabelWriters<T> labelWriters,
                             GraphClient<T> graphClient,
                             Status status,
                             int index) {
@@ -140,12 +142,10 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
 
         @Override
         public void close() {
-            for (LabelWriter<T> labelWriter : labelWriters.values()) {
-                try {
-                    labelWriter.close();
-                } catch (Exception e) {
-                    logger.warn("Error closing label writer: {}.", e.getMessage());
-                }
+            try {
+                labelWriters.close();
+            } catch (Exception e) {
+                logger.warn("Error closing label writer: {}.", e.getMessage());
             }
         }
 
@@ -162,7 +162,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                 labelWriters.put(label, labelWriter);
                 fileSpecificLabelSchemas.add(labelWriter.outputId(), targetConfig.format(), labelSchema);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }

@@ -55,7 +55,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
-        if (printerOptions.csv().includeHeaders()) {
+        if (printerOptions.csv().includeHeaders() && writer.isNewTarget()) {
             for (String column : columns) {
                 commaPrinter.printComma();
                 writer.print(column);
@@ -65,7 +65,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
-        if (printerOptions.csv().includeHeaders()) {
+        if (printerOptions.csv().includeHeaders() && writer.isNewTarget()) {
             for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
                 if (printerOptions.csv().includeTypeDefinitions()) {

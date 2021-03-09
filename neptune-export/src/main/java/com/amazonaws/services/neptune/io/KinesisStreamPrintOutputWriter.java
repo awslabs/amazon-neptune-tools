@@ -18,7 +18,6 @@ public class KinesisStreamPrintOutputWriter extends PrintOutputWriter {
 
     private int opCount;
 
-
     KinesisStreamPrintOutputWriter(String outputId, Writer out) {
         super(outputId, out);
     }
