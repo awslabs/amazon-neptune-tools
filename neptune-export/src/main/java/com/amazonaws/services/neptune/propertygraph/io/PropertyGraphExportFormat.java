@@ -19,13 +19,14 @@ import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
 
 public enum PropertyGraphExportFormat implements FileExtension {
     json {
         @Override
-        public String suffix() {
+        public String extension() {
             return "json";
         }
 
@@ -53,7 +54,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     csv {
         @Override
-        public String suffix() {
+        public String extension() {
             return "csv";
         }
 
@@ -93,7 +94,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     csvNoHeaders {
         @Override
-        public String suffix() {
+        public String extension() {
             return "csv";
         }
 
@@ -133,7 +134,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     neptuneStreamsJson {
         @Override
-        public String suffix() {
+        public String extension() {
             return "json";
         }
 
@@ -173,4 +174,9 @@ public enum PropertyGraphExportFormat implements FileExtension {
     public abstract String description();
 
     public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema);
+
+    public String replaceExtension(String filename, String replacement){
+        return String.format("%s.%s",  FilenameUtils.removeExtension(filename), replacement);
+    }
+
 }

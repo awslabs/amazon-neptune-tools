@@ -13,6 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,10 +26,14 @@ class RenameableFiles {
         entries.put(file, filename);
     }
 
-    public void rename() {
+    public Collection<File> rename() {
+        Collection<File> renamedFiles = new ArrayList<>();
         for (Map.Entry<File, String> entry : entries.entrySet()) {
             File file = entry.getKey();
-            file.renameTo(new File(file.getParentFile(), entry.getValue()));
+            File renamedFile = new File(file.getParentFile(), entry.getValue());
+            file.renameTo(renamedFile);
+            renamedFiles.add(renamedFile);
         }
+        return renamedFiles;
     }
 }

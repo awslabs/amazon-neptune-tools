@@ -99,7 +99,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphTargetConfig forFileConsolidation() {
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, false, mergeFiles, true);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, false, mergeFiles, false);
     }
 
     private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {

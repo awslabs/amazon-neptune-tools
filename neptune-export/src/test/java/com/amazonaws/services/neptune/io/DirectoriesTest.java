@@ -14,15 +14,17 @@ package com.amazonaws.services.neptune.io;
 
 import org.junit.Test;
 
+import java.io.UnsupportedEncodingException;
+
 import static org.junit.Assert.*;
 
 public class DirectoriesTest {
 
     @Test
-    public void replacesForbiddenCharactersInFilename(){
+    public void replacesForbiddenCharactersInFilename() throws UnsupportedEncodingException {
         String filename = "(Person;Staff;Temp\\;Holidays)-works_for-(Admin;Perm;Person)";
         String updated = Directories.fileName(filename, 1);
-        assertEquals("(Person_Staff_Temp__Holidays)-works_for-(Admin_Perm_Person)-1", updated);
+        assertEquals("%28Person%3BStaff%3BTemp%5C%3BHolidays%29-works_for-%28Admin%3BPerm%3BPerson%29-1", updated);
     }
 
 }

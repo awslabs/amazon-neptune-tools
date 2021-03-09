@@ -18,22 +18,22 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.UUID;
 
 public class Directories {
 
-    private final static String REPLACE_REGEX = "[^0-9a-zA-Z\\/\\!\\-_\\.\\*'\\(\\)]";
-
-    public static String fileName(String name, int index){
+    public static String fileName(String name, int index) throws UnsupportedEncodingException {
         String filename = String.format("%s-%s", name, index);
-        return filename.replaceAll(REPLACE_REGEX, "_");
+        return URLEncoder.encode(filename, StandardCharsets.UTF_8.toString());
     }
 
-    public static String fileName(String name){
-        return name.replaceAll(REPLACE_REGEX, "_");
+    public static String fileName(String filename) throws UnsupportedEncodingException {
+        return URLEncoder.encode(filename, StandardCharsets.UTF_8.toString());
     }
 
     private static final String CONFIG_FILE = "config.json";
@@ -135,8 +135,8 @@ public class Directories {
 
     private Path createFilePath(Path directory, String name, FileExtension extension) {
         String filename = tag.isEmpty() ?
-                String.format("%s.%s", name, extension.suffix()) :
-                String.format("%s-%s.%s", tag, name, extension.suffix());
+                String.format("%s.%s", name, extension.extension()) :
+                String.format("%s-%s.%s", tag, name, extension.extension());
         return directory.resolve(filename);
     }
 

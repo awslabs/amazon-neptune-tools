@@ -25,7 +25,7 @@ public enum RdfExportFormat implements FileExtension {
         }
 
         @Override
-        public String suffix() {
+        public String extension() {
             return "ttl";
         }
 
@@ -43,7 +43,7 @@ public enum RdfExportFormat implements FileExtension {
 
 
         @Override
-        public String suffix() {
+        public String extension() {
             return "nq";
         }
 
@@ -61,7 +61,7 @@ public enum RdfExportFormat implements FileExtension {
         }
 
         @Override
-        public String suffix() {
+        public String extension() {
             return "json";
         }
 

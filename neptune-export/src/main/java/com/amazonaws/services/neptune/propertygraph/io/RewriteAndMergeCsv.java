@@ -91,18 +91,17 @@ public class RewriteAndMergeCsv implements RewriteCommand {
         LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
         masterSchema.initStats();
 
-        String filename = Directories.fileName(String.format("%s.%s",
-                masterSchema.label().fullyQualifiedLabel(),
-                targetConfig.format().suffix()));
+        String targetFilename = Directories.fileName(String.format("%s.consolidated",
+                masterSchema.label().fullyQualifiedLabel()));
 
-        RenameableFiles renameableFiles = new RenameableFiles();
+        Collection<String> renamedFiles = new ArrayList<>();
 
         try (PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(
-                filename,
+                targetFilename,
                 masterSchema,
                 targetConfig.forFileConsolidation())) {
 
-            renameableFiles.add(new File(printer.outputId()), filename);
+            renamedFiles.add(printer.outputId());
 
             for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
 
@@ -159,11 +158,9 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
         }
 
-        renameableFiles.rename();
-
         return new MasterLabelSchema(
                 masterSchema,
-                Collections.singletonList(new FileSpecificLabelSchema(filename, targetConfig.format(), masterSchema)));
+                renamedFiles.stream().map(f -> new FileSpecificLabelSchema(f, targetConfig.format(), masterSchema)).collect(Collectors.toList()));
     }
 
 }
