@@ -14,7 +14,5 @@ package com.amazonaws.services.neptune.io;
 
 public interface FileExtension {
 
-    FileExtension TEMP_FILE = () -> "tmp";
-
     String extension();
 }
