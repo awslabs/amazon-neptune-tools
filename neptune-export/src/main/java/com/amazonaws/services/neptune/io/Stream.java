@@ -70,7 +70,7 @@ public class Stream {
                         Thread.sleep(1);
                     }
                     long end = System.currentTimeMillis();
-                    logger.trace("Paused adding records to stream for {} millis", end - start);
+                    logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded current maxRecordCount of {}", end - start, maxRecordCount);
                 }
 
                 ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
