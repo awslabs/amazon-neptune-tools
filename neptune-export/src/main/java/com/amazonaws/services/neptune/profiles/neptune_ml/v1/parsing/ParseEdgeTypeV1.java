@@ -10,28 +10,31 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
-public class ParseNodeType {
+public class ParseEdgeTypeV1 {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseNodeType(JsonNode json, String description) {
+    public ParseEdgeTypeV1(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public Label parseNodeType(){
-        if (json.has("node") && json.get("node").isTextual()){
-            String labelString = json.get("node").textValue();
-
-            return new Label(labelString);
+    public Label parseEdgeType() {
+        if (json.has("edge") && json.path("edge").isArray()){
+            ArrayNode array = (ArrayNode) json.get("edge");
+            if (array.size() != 3){
+                throw new IllegalArgumentException(String.format("Error parsing 'edge' field: expected an array with 3 values for %s", description));
+            }
+            return new Label(array.get(1).textValue(), array.get(0).textValue(), array.get(2).textValue());
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'node' field: expected a text value for %s", description));
+            throw new IllegalArgumentException(String.format("Error parsing 'edge' field: expected an array with 3 values for %s", description));
         }
     }
 }

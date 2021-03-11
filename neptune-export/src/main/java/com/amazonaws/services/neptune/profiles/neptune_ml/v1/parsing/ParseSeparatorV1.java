@@ -10,22 +10,21 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseLanguage {
+public class ParseSeparatorV1 {
     private final JsonNode json;
 
-    public ParseLanguage(JsonNode json) {
+    public ParseSeparatorV1(JsonNode json) {
         this.json = json;
     }
 
-    public String parseLanguage() {
-        if (json.has("language") && json.get("language").isTextual()) {
-            return json.get("language").textValue();
-        } else {
-            return "en_core_web_lg";
+    public String parseSeparator(){
+        if (json.has("separator")){
+            return json.get("separator").textValue();
         }
+        return null;
     }
 }

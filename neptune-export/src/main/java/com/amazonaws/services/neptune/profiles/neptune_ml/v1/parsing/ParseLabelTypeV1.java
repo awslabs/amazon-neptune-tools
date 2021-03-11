@@ -10,16 +10,16 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseLabelType {
+public class ParseLabelTypeV1 {
 
     private final String prefix;
     private final JsonNode json;
 
-    public ParseLabelType(String prefix, JsonNode json) {
+    public ParseLabelTypeV1(String prefix, JsonNode json) {
         this.prefix = prefix;
         this.json = json;
     }

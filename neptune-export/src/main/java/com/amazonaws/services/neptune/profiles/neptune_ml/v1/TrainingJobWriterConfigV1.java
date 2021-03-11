@@ -10,9 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.*;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,14 +21,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TrainingJobWriterConfig {
+public class TrainingJobWriterConfigV1 {
 
     public static final Collection<Double> DEFAULT_SPLIT_RATES = Arrays.asList(0.7, 0.1, 0.2);
     private static final String DEFAULT_NAME = "training-job-configuration";
 
-    public static Collection<TrainingJobWriterConfig> fromJson(JsonNode json) {
+    public static Collection<TrainingJobWriterConfigV1> fromJson(JsonNode json) {
 
-        Collection<TrainingJobWriterConfig> results = new ArrayList<>();
+        Collection<TrainingJobWriterConfigV1> results = new ArrayList<>();
 
         if (json.isArray()) {
             ArrayNode configNodes = (ArrayNode) json;
@@ -40,7 +40,7 @@ public class TrainingJobWriterConfig {
             results.add(getTrainingJobWriterConfig(json, 1));
         }
 
-        Set<String> names = results.stream().map(TrainingJobWriterConfig::name).collect(Collectors.toSet());
+        Set<String> names = results.stream().map(TrainingJobWriterConfigV1::name).collect(Collectors.toSet());
 
         if (names.size() < results.size()) {
             throw new IllegalStateException(String.format("Training job configuration names must be unique: %s", names));
@@ -49,7 +49,7 @@ public class TrainingJobWriterConfig {
         return results;
     }
 
-    private static TrainingJobWriterConfig getTrainingJobWriterConfig(JsonNode json, int index) {
+    private static TrainingJobWriterConfigV1 getTrainingJobWriterConfig(JsonNode json, int index) {
         Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
         Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
@@ -57,7 +57,7 @@ public class TrainingJobWriterConfig {
         Collection<FeatureOverrideConfig> nodeFeatureOverrides = new ArrayList<>();
         Collection<FeatureOverrideConfig> edgeFeatureOverrides = new ArrayList<>();
 
-        Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES).parseSplitRates();
+        Collection<Double> defaultSplitRates = new ParseSplitRateV1(json, DEFAULT_SPLIT_RATES).parseSplitRates();
 
         String name = json.has("name") ?
                 json.get("name").textValue() :
@@ -71,7 +71,7 @@ public class TrainingJobWriterConfig {
             } else {
                 labelNodes.add(labels);
             }
-            ParseLabels parseLabels = new ParseLabels(labelNodes, defaultSplitRates);
+            ParseLabelsV1 parseLabels = new ParseLabelsV1(labelNodes, defaultSplitRates);
             parseLabels.validate();
             nodeClassLabels.putAll(parseLabels.parseNodeClassLabels());
             edgeClassLabels.putAll(parseLabels.parseEdgeClassLabels());
@@ -85,7 +85,7 @@ public class TrainingJobWriterConfig {
             } else {
                 featureNodes.add(features);
             }
-            ParseFeatures parseFeatures = new ParseFeatures(featureNodes);
+            ParseFeaturesV1 parseFeatures = new ParseFeaturesV1(featureNodes);
             parseFeatures.validate();
             word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecNodeFeatures());
             numericalBucketFeatures.addAll(parseFeatures.parseNumericalBucketFeatures());
@@ -93,7 +93,7 @@ public class TrainingJobWriterConfig {
             edgeFeatureOverrides.addAll(parseFeatures.parseEdgeFeatureOverrides());
         }
 
-        return new TrainingJobWriterConfig(
+        return new TrainingJobWriterConfigV1(
                 name,
                 nodeClassLabels,
                 edgeClassLabels,
@@ -111,7 +111,7 @@ public class TrainingJobWriterConfig {
     private final Collection<FeatureOverrideConfig> nodeFeatureOverrides;
     private final Collection<FeatureOverrideConfig> edgeFeatureOverrides;
 
-    public TrainingJobWriterConfig() {
+    public TrainingJobWriterConfigV1() {
         this(DEFAULT_NAME,
                 Collections.emptyMap(),
                 Collections.emptyMap(),
@@ -121,12 +121,12 @@ public class TrainingJobWriterConfig {
                 Collections.emptyList());
     }
 
-    public TrainingJobWriterConfig(String name, Map<Label, LabelConfig> nodeClassLabels,
-                                   Map<Label, LabelConfig> edgeClassLabels,
-                                   Collection<Word2VecConfig> word2VecNodeFeatures,
-                                   Collection<NumericalBucketFeatureConfig> numericalBucketFeatures,
-                                   Collection<FeatureOverrideConfig> nodeFeatureOverrides,
-                                   Collection<FeatureOverrideConfig> edgeFeatureOverrides) {
+    public TrainingJobWriterConfigV1(String name, Map<Label, LabelConfig> nodeClassLabels,
+                                     Map<Label, LabelConfig> edgeClassLabels,
+                                     Collection<Word2VecConfig> word2VecNodeFeatures,
+                                     Collection<NumericalBucketFeatureConfig> numericalBucketFeatures,
+                                     Collection<FeatureOverrideConfig> nodeFeatureOverrides,
+                                     Collection<FeatureOverrideConfig> edgeFeatureOverrides) {
         this.name = name;
         this.nodeClassLabels = nodeClassLabels;
         this.edgeClassLabels = edgeClassLabels;
@@ -415,11 +415,11 @@ public class TrainingJobWriterConfig {
     public static class FeatureOverrideConfig {
         private final Label label;
         private final Collection<String> properties;
-        private final FeatureType featureType;
-        private final Norm norm;
+        private final FeatureTypeV1 featureType;
+        private final NormV1 norm;
         private final String separator;
 
-        public FeatureOverrideConfig(Label label, Collection<String> properties, FeatureType featureType, Norm norm, String separator) {
+        public FeatureOverrideConfig(Label label, Collection<String> properties, FeatureTypeV1 featureType, NormV1 norm, String separator) {
             this.label = label;
             this.properties = properties;
             this.featureType = featureType;
@@ -443,11 +443,11 @@ public class TrainingJobWriterConfig {
             return properties;
         }
 
-        public FeatureType featureType() {
+        public FeatureTypeV1 featureType() {
             return featureType;
         }
 
-        public Norm norm() {
+        public NormV1 norm() {
             return norm;
         }
 

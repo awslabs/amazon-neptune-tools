@@ -10,23 +10,23 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.TrainingJobWriterConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingJobWriterConfigV1;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-public class ParseRange {
+public class ParseRangeV1 {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseRange(JsonNode json, String description) {
+    public ParseRangeV1(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public TrainingJobWriterConfig.Range parseRange() {
+    public TrainingJobWriterConfigV1.Range parseRange() {
         if (json.has("range") && json.path("range").isArray()) {
             ArrayNode rangeNode = (ArrayNode) json.path("range");
             if (rangeNode.size() != 2) {
@@ -35,13 +35,13 @@ public class ParseRange {
             if (!rangeNode.get(0).isNumber() || !rangeNode.get(1).isNumber()) {
                 throwError();
             }
-            return new TrainingJobWriterConfig.Range(rangeNode.get(0).numberValue(), rangeNode.get(1).numberValue());
+            return new TrainingJobWriterConfigV1.Range(rangeNode.get(0).numberValue(), rangeNode.get(1).numberValue());
         } else {
             return throwError();
         }
     }
 
-    private TrainingJobWriterConfig.Range throwError() {
+    private TrainingJobWriterConfigV1.Range throwError() {
         throw new IllegalArgumentException(String.format("Error parsing 'range' field: expected an array with 2 numeric values for %s", description));
     }
 }

@@ -10,27 +10,28 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseFeatureType {
+public class ParseNodeTypeV1 {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseFeatureType(JsonNode json, String description) {
+    public ParseNodeTypeV1(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }
 
-    public FeatureType parseFeatureType() {
-        if (json.has("type") && json.get("type").isTextual()) {
-            String type = json.get("type").textValue();
-            if  ( type.equals("numerical") || type.equals("category")){
-                return FeatureType.valueOf(type);
-            }
+    public Label parseNodeType(){
+        if (json.has("node") && json.get("node").isTextual()){
+            String labelString = json.get("node").textValue();
+
+            return new Label(labelString);
+        } else {
+            throw new IllegalArgumentException(String.format("Error parsing 'node' field: expected a text value for %s", description));
         }
-        throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical' or 'category' value for %s", description));
     }
 }

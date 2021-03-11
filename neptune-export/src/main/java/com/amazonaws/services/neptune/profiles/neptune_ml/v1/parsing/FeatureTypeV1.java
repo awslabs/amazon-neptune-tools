@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 
-public enum FeatureType {
+public enum FeatureTypeV1 {
     category{
         @Override
         void validateHint(JsonNode node, String description, Label label) {

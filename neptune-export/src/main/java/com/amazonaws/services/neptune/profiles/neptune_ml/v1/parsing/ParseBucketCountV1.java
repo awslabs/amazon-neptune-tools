@@ -10,16 +10,16 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseBucketCount {
+public class ParseBucketCountV1 {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseBucketCount(JsonNode json, String description) {
+    public ParseBucketCountV1(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }

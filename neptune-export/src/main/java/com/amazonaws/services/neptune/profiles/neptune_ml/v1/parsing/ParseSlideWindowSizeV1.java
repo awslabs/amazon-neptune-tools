@@ -10,21 +10,23 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseSeparator {
+public class ParseSlideWindowSizeV1 {
+
     private final JsonNode json;
 
-    public ParseSeparator(JsonNode json) {
+    public ParseSlideWindowSizeV1(JsonNode json) {
         this.json = json;
     }
 
-    public String parseSeparator(){
-        if (json.has("separator")){
-            return json.get("separator").textValue();
+    public int parseSlideWindowSize() {
+        if (json.has("slide_window_size") && json.path("slide_window_size").isInt()) {
+            return json.path("slide_window_size").asInt();
+        } else {
+            return 0;
         }
-        return null;
     }
 }

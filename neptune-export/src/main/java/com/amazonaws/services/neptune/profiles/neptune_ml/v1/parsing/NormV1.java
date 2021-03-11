@@ -10,13 +10,13 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
 
-public enum Norm {
+public enum NormV1 {
     none{
         @Override
         public String formattedName() {
@@ -49,7 +49,7 @@ public enum Norm {
     }
 
     public static boolean isValid(String s){
-        for (Norm value : Norm.values()) {
+        for (NormV1 value : NormV1.values()) {
             if (value.formattedName().equals(s)){
                 return true;
             }
@@ -57,8 +57,8 @@ public enum Norm {
         return false;
     }
 
-    public static Norm fromString(String s){
-        for (Norm value : Norm.values()) {
+    public static NormV1 fromString(String s){
+        for (NormV1 value : NormV1.values()) {
             if (value.formattedName().equals(s)){
                 return value;
             }

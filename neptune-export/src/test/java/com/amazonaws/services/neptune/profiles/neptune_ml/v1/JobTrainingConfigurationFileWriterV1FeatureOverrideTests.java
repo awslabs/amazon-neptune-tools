@@ -10,24 +10,23 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.FeatureType;
+import com.amazonaws.services.neptune.profiles.neptune_ml.Output;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing.FeatureTypeV1;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
+public class JobTrainingConfigurationFileWriterV1FeatureOverrideTests {
 
     @Test
     public void shouldOverrideNumericalWithCategoricalFeature() throws IOException {
@@ -46,45 +45,45 @@ public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
+                TrainingJobConfigBuilderV1.builder()
                         .withNodeFeatureOverride(
-                                new TrainingJobWriterConfig.FeatureOverrideConfig(
+                                new TrainingJobWriterConfigV1.FeatureOverrideConfig(
                                         label,
                                         Collections.singletonList("rating"),
-                                        FeatureType.category,
+                                        FeatureTypeV1.category,
                                         null,
                                         ",")).build())
                 .write();
 
         JsonNode graph = output.graph();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
         ArrayNode features = (ArrayNode) array.get(0).path("features");
 
-        assertEquals(1, features.size());
+        Assert.assertEquals(1, features.size());
 
         JsonNode feature = features.get(0);
 
-        assertEquals("node", feature.path("feat_type").textValue());
-        assertEquals("category", feature.path("sub_feat_type").textValue());
-        assertEquals("Admin;Person", feature.path("node_type").textValue());
-        assertEquals(",", feature.path("separator").textValue());
+        Assert.assertEquals("node", feature.path("feat_type").textValue());
+        Assert.assertEquals("category", feature.path("sub_feat_type").textValue());
+        Assert.assertEquals("Admin;Person", feature.path("node_type").textValue());
+        Assert.assertEquals(",", feature.path("separator").textValue());
 
         ArrayNode cols = (ArrayNode) feature.path("cols");
 
-        assertEquals(2, cols.size());
+        Assert.assertEquals(2, cols.size());
 
-        assertEquals("~id", cols.get(0).textValue());
-        assertEquals("rating", cols.get(1).textValue());
+        Assert.assertEquals("~id", cols.get(0).textValue());
+        Assert.assertEquals("rating", cols.get(1).textValue());
 
-        assertTrue(feature.path("norm").isMissingNode());
+        Assert.assertTrue(feature.path("norm").isMissingNode());
     }
 
     @Test
@@ -103,45 +102,45 @@ public class JobTrainingConfigurationFileWriteFeatureOverrideTests {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
+                TrainingJobConfigBuilderV1.builder()
                         .withNodeFeatureOverride(
-                                new TrainingJobWriterConfig.FeatureOverrideConfig(
+                                new TrainingJobWriterConfigV1.FeatureOverrideConfig(
                                         label,
-                                        Arrays.asList("job","rank"),
-                                        FeatureType.category,
+                                        Arrays.asList("job", "rank"),
+                                        FeatureTypeV1.category,
                                         null,
                                         ",")).build())
                 .write();
 
         JsonNode graph = output.graph();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
         ArrayNode features = (ArrayNode) array.get(0).path("features");
 
-        assertEquals(2, features.size());
+        Assert.assertEquals(2, features.size());
 
         JsonNode feature = features.get(1);
 
-        assertEquals("node", feature.path("feat_type").textValue());
-        assertEquals("category", feature.path("sub_feat_type").textValue());
-        assertEquals("Admin;Person", feature.path("node_type").textValue());
+        Assert.assertEquals("node", feature.path("feat_type").textValue());
+        Assert.assertEquals("category", feature.path("sub_feat_type").textValue());
+        Assert.assertEquals("Admin;Person", feature.path("node_type").textValue());
 
         ArrayNode cols = (ArrayNode) feature.path("cols");
 
-        assertEquals(3, cols.size());
+        Assert.assertEquals(3, cols.size());
 
-        assertEquals("~id", cols.get(0).textValue());
-        assertEquals("job", cols.get(1).textValue());
-        assertEquals("rank", cols.get(2).textValue());
+        Assert.assertEquals("~id", cols.get(0).textValue());
+        Assert.assertEquals("job", cols.get(1).textValue());
+        Assert.assertEquals("rank", cols.get(2).textValue());
 
-        assertTrue(feature.path("norm").isMissingNode());
-        assertTrue(feature.path("separator").isMissingNode());
+        Assert.assertTrue(feature.path("norm").isMissingNode());
+        Assert.assertTrue(feature.path("separator").isMissingNode());
     }
 }

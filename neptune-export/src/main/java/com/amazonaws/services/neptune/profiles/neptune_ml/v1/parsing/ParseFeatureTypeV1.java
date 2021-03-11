@@ -10,25 +10,27 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class ParseNorm {
-    private final JsonNode json;
+public class ParseFeatureTypeV1 {
 
-    public ParseNorm(JsonNode json) {
+    private final JsonNode json;
+    private final String description;
+
+    public ParseFeatureTypeV1(JsonNode json, String description) {
         this.json = json;
+        this.description = description;
     }
 
-    public Norm parseNorm(){
-        if (json.has("norm")){
-            String norm = json.get("norm").textValue();
-            if (Norm.isValid(norm)){
-                return Norm.fromString(norm);
+    public FeatureTypeV1 parseFeatureType() {
+        if (json.has("type") && json.get("type").isTextual()) {
+            String type = json.get("type").textValue();
+            if  ( type.equals("numerical") || type.equals("category")){
+                return FeatureTypeV1.valueOf(type);
             }
         }
-
-        return Norm.none;
+        throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical' or 'category' value for %s", description));
     }
 }

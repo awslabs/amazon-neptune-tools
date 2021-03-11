@@ -10,9 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.TrainingJobWriterConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingJobWriterConfigV1;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -20,41 +20,41 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParseLabels {
+public class ParseLabelsV1 {
 
     private final Collection<JsonNode> nodes;
     private final Collection<Double> defaultSplitRates;
 
-    public ParseLabels(Collection<JsonNode> nodes, Collection<Double> defaultSplitRates) {
+    public ParseLabelsV1(Collection<JsonNode> nodes, Collection<Double> defaultSplitRates) {
         this.nodes = nodes;
         this.defaultSplitRates = defaultSplitRates;
     }
 
-    public Map<Label, TrainingJobWriterConfig.LabelConfig> parseNodeClassLabels() {
-        Map<Label, TrainingJobWriterConfig.LabelConfig> nodeClassLabels = new HashMap<>();
+    public Map<Label, TrainingJobWriterConfigV1.LabelConfig> parseNodeClassLabels() {
+        Map<Label, TrainingJobWriterConfigV1.LabelConfig> nodeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             if (isNodeClass(node)) {
                 String description = "node label";
-                Label nodeType = new ParseNodeType(node, description).parseNodeType();
-                String property = new ParseProperty(node, description).parseSingleProperty();
-                String labelType = new ParseLabelType("node", node).parseLabel();
-                Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
-                nodeClassLabels.put(nodeType, new TrainingJobWriterConfig.LabelConfig(labelType, property, splitRates));
+                Label nodeType = new ParseNodeTypeV1(node, description).parseNodeType();
+                String property = new ParsePropertyV1(node, description).parseSingleProperty();
+                String labelType = new ParseLabelTypeV1("node", node).parseLabel();
+                Collection<Double> splitRates = new ParseSplitRateV1(node, defaultSplitRates).parseSplitRates();
+                nodeClassLabels.put(nodeType, new TrainingJobWriterConfigV1.LabelConfig(labelType, property, splitRates));
             }
         }
         return nodeClassLabels;
     }
 
-    public Map<Label, TrainingJobWriterConfig.LabelConfig> parseEdgeClassLabels() {
-        Map<Label, TrainingJobWriterConfig.LabelConfig> edgeClassLabels = new HashMap<>();
+    public Map<Label, TrainingJobWriterConfigV1.LabelConfig> parseEdgeClassLabels() {
+        Map<Label, TrainingJobWriterConfigV1.LabelConfig> edgeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             if (isEdgeClass(node)) {
                 String description = "edge label";
-                Label edgeType = new ParseEdgeType(node, description).parseEdgeType();
-                String property = new ParseProperty(node, description).parseSingleProperty();
-                String labelType = new ParseLabelType("edge", node).parseLabel();
-                Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates).parseSplitRates();
-                edgeClassLabels.put(edgeType, new TrainingJobWriterConfig.LabelConfig(labelType, property, splitRates));
+                Label edgeType = new ParseEdgeTypeV1(node, description).parseEdgeType();
+                String property = new ParsePropertyV1(node, description).parseSingleProperty();
+                String labelType = new ParseLabelTypeV1("edge", node).parseLabel();
+                Collection<Double> splitRates = new ParseSplitRateV1(node, defaultSplitRates).parseSplitRates();
+                edgeClassLabels.put(edgeType, new TrainingJobWriterConfigV1.LabelConfig(labelType, property, splitRates));
             }
         }
         return edgeClassLabels;

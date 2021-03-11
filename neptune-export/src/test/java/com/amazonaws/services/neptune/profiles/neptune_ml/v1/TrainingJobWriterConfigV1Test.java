@@ -10,9 +10,10 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -21,7 +22,7 @@ import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
-public class TrainingJobWriterConfigTest {
+public class TrainingJobWriterConfigV1Test {
 
     @Test
     public void shouldThrowExceptionIfLowOrHighAreNotNumeric(){
@@ -39,12 +40,12 @@ public class TrainingJobWriterConfigTest {
             Object high = iterator.next();
 
             try {
-                new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
+                new TrainingJobWriterConfigV1.NumericalBucketFeatureConfig(
                         new Label("my-label"),
-                        "column", new TrainingJobWriterConfig.Range(low, high), 10, 2);
-                fail("Expected IllegalArgumentException");
+                        "column", new TrainingJobWriterConfigV1.Range(low, high), 10, 2);
+                Assert.fail("Expected IllegalArgumentException");
             } catch (IllegalArgumentException e){
-                assertEquals("Low and high values must be numeric", e.getMessage());
+                Assert.assertEquals("Low and high values must be numeric", e.getMessage());
             }
 
         }
@@ -55,19 +56,19 @@ public class TrainingJobWriterConfigTest {
     public void shouldConvertLowOrHighToBroadestType(){
 
 
-        TrainingJobWriterConfig.NumericalBucketFeatureConfig config1 = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
+        TrainingJobWriterConfigV1.NumericalBucketFeatureConfig config1 = new TrainingJobWriterConfigV1.NumericalBucketFeatureConfig(
                 new Label("my-label"),
-                "column", new TrainingJobWriterConfig.Range(1, 10L), 10, 2);
+                "column", new TrainingJobWriterConfigV1.Range(1, 10L), 10, 2);
 
-        assertEquals(Long.class, config1.range().high().getClass());
-        assertEquals(Long.class, config1.range().low().getClass());
+        Assert.assertEquals(Long.class, config1.range().high().getClass());
+        Assert.assertEquals(Long.class, config1.range().low().getClass());
 
-        TrainingJobWriterConfig.NumericalBucketFeatureConfig config2 = new TrainingJobWriterConfig.NumericalBucketFeatureConfig(
+        TrainingJobWriterConfigV1.NumericalBucketFeatureConfig config2 = new TrainingJobWriterConfigV1.NumericalBucketFeatureConfig(
                 new Label("my-label"),
-                "column", new TrainingJobWriterConfig.Range(0.1, 10), 10, 2);
+                "column", new TrainingJobWriterConfigV1.Range(0.1, 10), 10, 2);
 
-        assertEquals(Double.class, config2.range().high().getClass());
-        assertEquals(Double.class, config2.range().low().getClass());
+        Assert.assertEquals(Double.class, config2.range().high().getClass());
+        Assert.assertEquals(Double.class, config2.range().low().getClass());
 
     }
 

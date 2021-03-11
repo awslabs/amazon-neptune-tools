@@ -10,9 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.TrainingJobWriterConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingJobWriterConfigV1;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -31,8 +31,8 @@ public class ParseRangeTest {
         arrayNode.add(10L);
         root.set("range", arrayNode);
 
-        ParseRange parseRange = new ParseRange(root, "Range");
-        TrainingJobWriterConfig.Range range = parseRange.parseRange();
+        ParseRangeV1 parseRange = new ParseRangeV1(root, "Range");
+        TrainingJobWriterConfigV1.Range range = parseRange.parseRange();
 
         assertEquals(1L, range.low());
         assertEquals(10L, range.high());
@@ -48,8 +48,8 @@ public class ParseRangeTest {
         arrayNode.add(1);
         root.set("range", arrayNode);
 
-        ParseRange parseRange = new ParseRange(root, "Range");
-        TrainingJobWriterConfig.Range range = parseRange.parseRange();
+        ParseRangeV1 parseRange = new ParseRangeV1(root, "Range");
+        TrainingJobWriterConfigV1.Range range = parseRange.parseRange();
 
         assertEquals(1L, range.low());
         assertEquals(10L, range.high());

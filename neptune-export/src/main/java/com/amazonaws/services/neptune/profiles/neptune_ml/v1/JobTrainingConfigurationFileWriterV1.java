@@ -10,10 +10,11 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.FeatureType;
-import com.amazonaws.services.neptune.profiles.neptune_ml.parsing.Norm;
+import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing.FeatureTypeV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing.NormV1;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
@@ -25,7 +26,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JobTrainingConfigurationFileWriter {
+public class JobTrainingConfigurationFileWriterV1 {
 
     public static final PropertyName COLUMN_NAME_WITH_DATATYPE = new PropertyName() {
         @Override
@@ -54,22 +55,22 @@ public class JobTrainingConfigurationFileWriter {
     private final GraphSchema graphSchema;
     private final JsonGenerator generator;
     private final PropertyName propertyName;
-    private final TrainingJobWriterConfig config;
+    private final TrainingJobWriterConfigV1 config;
     private final PrinterOptions printerOptions;
     private final Collection<String> warnings = new ArrayList<>();
 
-    public JobTrainingConfigurationFileWriter(GraphSchema graphSchema,
-                                              JsonGenerator generator,
-                                              PropertyName propertyName,
-                                              PrinterOptions printerOptions) {
-        this(graphSchema, generator, propertyName, printerOptions, new TrainingJobWriterConfig());
+    public JobTrainingConfigurationFileWriterV1(GraphSchema graphSchema,
+                                                JsonGenerator generator,
+                                                PropertyName propertyName,
+                                                PrinterOptions printerOptions) {
+        this(graphSchema, generator, propertyName, printerOptions, new TrainingJobWriterConfigV1());
     }
 
-    public JobTrainingConfigurationFileWriter(GraphSchema graphSchema,
-                                              JsonGenerator generator,
-                                              PropertyName propertyName,
-                                              PrinterOptions printerOptions,
-                                              TrainingJobWriterConfig config
+    public JobTrainingConfigurationFileWriterV1(GraphSchema graphSchema,
+                                                JsonGenerator generator,
+                                                PropertyName propertyName,
+                                                PrinterOptions printerOptions,
+                                                TrainingJobWriterConfigV1 config
                                               ) {
         this.graphSchema = graphSchema;
         this.generator = generator;
@@ -124,7 +125,7 @@ public class JobTrainingConfigurationFileWriter {
 
     }
 
-    private void writeNodeLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
+    private void writeNodeLabel(LabelSchema labelSchema, TrainingJobWriterConfigV1.LabelConfig labelConfig) throws IOException {
 
         Label label = labelSchema.label();
 
@@ -153,7 +154,7 @@ public class JobTrainingConfigurationFileWriter {
         }
     }
 
-    private void writeSplitRates(TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
+    private void writeSplitRates(TrainingJobWriterConfigV1.LabelConfig labelConfig) throws IOException {
         generator.writeArrayFieldStart("split_rate");
         for (Double rate : labelConfig.splitRates()) {
             generator.writeNumber(rate);
@@ -177,7 +178,7 @@ public class JobTrainingConfigurationFileWriter {
             }
         }
 
-        for (TrainingJobWriterConfig.FeatureOverrideConfig featureOverride : config.getNodeFeatureOverrides(label)) {
+        for (TrainingJobWriterConfigV1.FeatureOverrideConfig featureOverride : config.getNodeFeatureOverrides(label)) {
             writeNodeFeatureOverride(label, featureOverride, propertySchemas, labelSchema);
         }
 
@@ -190,14 +191,14 @@ public class JobTrainingConfigurationFileWriter {
 
         if (propertySchema.dataType() == DataType.Float ||
                 propertySchema.dataType() == DataType.Double) {
-            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max, labelSchema);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), NormV1.min_max, labelSchema);
         }
 
         if (propertySchema.dataType() == DataType.Byte ||
                 propertySchema.dataType() == DataType.Short ||
                 propertySchema.dataType() == DataType.Integer ||
                 propertySchema.dataType() == DataType.Long) {
-            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), Norm.min_max, labelSchema);
+            writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), NormV1.min_max, labelSchema);
         }
 
         if (propertySchema.dataType() == DataType.String ||
@@ -207,7 +208,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeNodeFeatureOverride(Label label,
-                                          TrainingJobWriterConfig.FeatureOverrideConfig featureOverride,
+                                          TrainingJobWriterConfigV1.FeatureOverrideConfig featureOverride,
                                           Collection<PropertySchema> propertySchemas,
                                           LabelSchema labelSchema) throws IOException {
 
@@ -221,10 +222,10 @@ public class JobTrainingConfigurationFileWriter {
                         label.fullyQualifiedLabel(),
                         featureOverride.firstProperty()));
             } else {
-                FeatureType featureType = featureOverride.featureType();
-                if (FeatureType.category == featureType) {
+                FeatureTypeV1 featureType = featureOverride.featureType();
+                if (FeatureTypeV1.category == featureType) {
                     writeCategoricalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.separator());
-                } else if (FeatureType.numerical == featureType) {
+                } else if (FeatureTypeV1.numerical == featureType) {
                     writeNumericalNodeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), labelSchema, featureOverride.separator());
                 }
             }
@@ -240,13 +241,13 @@ public class JobTrainingConfigurationFileWriter {
                                 .map(s -> String.format("'%s'", s))
                                 .collect(Collectors.joining(", "))));
             } else {
-                FeatureType featureType = featureOverride.featureType();
+                FeatureTypeV1 featureType = featureOverride.featureType();
                 List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
                         .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
                         .collect(Collectors.toList());
-                if (FeatureType.category == featureType) {
+                if (FeatureTypeV1.category == featureType) {
                     writeCategoricalNodeFeature(label, multiPropertySchemas);
-                } else if (FeatureType.numerical == featureType) {
+                } else if (FeatureTypeV1.numerical == featureType) {
                     writeNumericalNodeFeature(label, multiPropertySchemas, featureOverride.norm(), labelSchema);
                 }
             }
@@ -288,7 +289,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeWord2VecFeature(Label label, PropertySchema propertySchema) throws IOException {
-        TrainingJobWriterConfig.Word2VecConfig word2VecConfig =
+        TrainingJobWriterConfigV1.Word2VecConfig word2VecConfig =
                 config.getWord2VecSpecification(label, propertySchema.nameWithoutDataType());
 
         generator.writeStartObject();
@@ -307,11 +308,11 @@ public class JobTrainingConfigurationFileWriter {
         generator.writeEndObject();
     }
 
-    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema) throws IOException {
+    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, NormV1 norm, LabelSchema labelSchema) throws IOException {
         writeNumericalNodeFeature(label, propertySchemas, norm, labelSchema, null);
     }
 
-    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema, String separator) throws IOException {
+    private void writeNumericalNodeFeature(Label label, Collection<PropertySchema> propertySchemas, NormV1 norm, LabelSchema labelSchema, String separator) throws IOException {
 
         boolean isSinglePropertyFeature = propertySchemas.size() == 1;
         PropertySchema firstPropertySchema = propertySchemas.iterator().next();
@@ -344,7 +345,7 @@ public class JobTrainingConfigurationFileWriter {
 
             generator.writeStartObject();
             generator.writeStringField("feat_type", "node");
-            FeatureType.numerical.addTo(generator);
+            FeatureTypeV1.numerical.addTo(generator);
             generator.writeArrayFieldStart("cols");
             generator.writeString("~id");
             for (PropertySchema propertySchema : propertySchemas) {
@@ -365,7 +366,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeNumericalBucketFeature(Label label, PropertySchema propertySchema) throws IOException {
-        TrainingJobWriterConfig.NumericalBucketFeatureConfig featureConfig =
+        TrainingJobWriterConfigV1.NumericalBucketFeatureConfig featureConfig =
                 config.getNumericalBucketSpecification(label, propertySchema.nameWithoutDataType());
 
         if (propertySchema.isMultiValue()) {
@@ -438,13 +439,13 @@ public class JobTrainingConfigurationFileWriter {
 
                 if (!propertySchema.isMultiValue()) {
                     if (!config.hasEdgeFeatureOverrideForEdgeProperty(label, propertySchema.nameWithoutDataType())) {
-                        writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), Norm.min_max, labelSchema);
+                        writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), NormV1.min_max, labelSchema);
                     }
                 }
             }
         }
 
-        for (TrainingJobWriterConfig.FeatureOverrideConfig featureOverride : config.getEdgeFeatureOverrides(label)) {
+        for (TrainingJobWriterConfigV1.FeatureOverrideConfig featureOverride : config.getEdgeFeatureOverrides(label)) {
             writeEdgeFeatureOverride(label, featureOverride, propertySchemas, labelSchema);
         }
 
@@ -454,7 +455,7 @@ public class JobTrainingConfigurationFileWriter {
     }
 
     private void writeEdgeFeatureOverride(Label label,
-                                          TrainingJobWriterConfig.FeatureOverrideConfig featureOverride,
+                                          TrainingJobWriterConfigV1.FeatureOverrideConfig featureOverride,
                                           Collection<PropertySchema> propertySchemas,
                                           LabelSchema labelSchema) throws IOException {
 
@@ -468,8 +469,8 @@ public class JobTrainingConfigurationFileWriter {
                         label.fullyQualifiedLabel(),
                         featureOverride.firstProperty()));
             } else {
-                FeatureType featureType = featureOverride.featureType();
-                if (FeatureType.numerical == featureType) {
+                FeatureTypeV1 featureType = featureOverride.featureType();
+                if (FeatureTypeV1.numerical == featureType) {
                     writeNumericalEdgeFeature(label, Collections.singletonList(propertySchema), featureOverride.norm(), labelSchema, featureOverride.separator());
                 }
             }
@@ -485,11 +486,11 @@ public class JobTrainingConfigurationFileWriter {
                                 .map(s -> String.format("'%s'", s))
                                 .collect(Collectors.joining(", "))));
             } else {
-                FeatureType featureType = featureOverride.featureType();
+                FeatureTypeV1 featureType = featureOverride.featureType();
                 List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
                         .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
                         .collect(Collectors.toList());
-                if (FeatureType.numerical == featureType) {
+                if (FeatureTypeV1.numerical == featureType) {
                     writeNumericalEdgeFeature(label, multiPropertySchemas, featureOverride.norm(), labelSchema);
                 }
             }
@@ -497,11 +498,11 @@ public class JobTrainingConfigurationFileWriter {
 
     }
 
-    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema) throws IOException {
+    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, NormV1 norm, LabelSchema labelSchema) throws IOException {
         writeNumericalEdgeFeature(label, propertySchemas, norm, labelSchema, null);
     }
 
-    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, Norm norm, LabelSchema labelSchema, String separator) throws IOException {
+    private void writeNumericalEdgeFeature(Label label, Collection<PropertySchema> propertySchemas, NormV1 norm, LabelSchema labelSchema, String separator) throws IOException {
 
         boolean isSinglePropertyFeature = propertySchemas.size() == 1;
         PropertySchema firstPropertySchema = propertySchemas.iterator().next();
@@ -518,7 +519,7 @@ public class JobTrainingConfigurationFileWriter {
 
         generator.writeStartObject();
         generator.writeStringField("feat_type", "edge");
-        FeatureType.numerical.addTo(generator);
+        FeatureTypeV1.numerical.addTo(generator);
         generator.writeArrayFieldStart("cols");
         generator.writeString("~from");
         generator.writeString("~to");
@@ -539,7 +540,7 @@ public class JobTrainingConfigurationFileWriter {
 
     }
 
-    private void writeEdgeLabel(LabelSchema labelSchema, TrainingJobWriterConfig.LabelConfig labelConfig) throws IOException {
+    private void writeEdgeLabel(LabelSchema labelSchema, TrainingJobWriterConfigV1.LabelConfig labelConfig) throws IOException {
 
         Label label = labelSchema.label();
         if (labelSchema.containsProperty(labelConfig.property())) {

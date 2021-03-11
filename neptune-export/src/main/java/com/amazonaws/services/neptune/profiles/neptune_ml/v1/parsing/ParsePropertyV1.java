@@ -10,22 +10,21 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-public class ParseProperty {
+public class ParsePropertyV1 {
 
     private final JsonNode json;
     private final String description;
 
-    public ParseProperty(JsonNode json, String description) {
+    public ParsePropertyV1(JsonNode json, String description) {
         this.json = json;
         this.description = description;
     }

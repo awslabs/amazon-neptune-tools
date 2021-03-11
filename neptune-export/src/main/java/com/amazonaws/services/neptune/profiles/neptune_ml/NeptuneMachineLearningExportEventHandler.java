@@ -15,6 +15,8 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.JobTrainingConfigurationFileWriterV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingJobWriterConfigV1;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
@@ -52,7 +54,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     private final String outputS3Path;
     private final Args args;
-    private final Collection<TrainingJobWriterConfig> trainingJobWriterConfigCollection;
+    private final Collection<TrainingJobWriterConfigV1> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
     private final PrinterOptions printerOptions;
@@ -80,13 +82,13 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
         this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
     }
 
-    private Collection<TrainingJobWriterConfig> createTrainingJobConfigCollection(ObjectNode additionalParams) {
+    private Collection<TrainingJobWriterConfigV1> createTrainingJobConfigCollection(ObjectNode additionalParams) {
         JsonNode neptuneMlNode = additionalParams.path(NEPTUNE_ML_PROFILE_NAME);
         if (neptuneMlNode.isMissingNode()) {
             logger.info("No 'neptune_ml' config node in additional params so creating default training config");
-            return Collections.singletonList(new TrainingJobWriterConfig());
+            return Collections.singletonList(new TrainingJobWriterConfigV1());
         } else {
-            Collection<TrainingJobWriterConfig> trainingJobWriterConfig = TrainingJobWriterConfig.fromJson(neptuneMlNode);
+            Collection<TrainingJobWriterConfigV1> trainingJobWriterConfig = TrainingJobWriterConfigV1.fromJson(neptuneMlNode);
             logger.info("Training job writer config: {}", trainingJobWriterConfig);
             return trainingJobWriterConfig;
         }
@@ -131,17 +133,17 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE :
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITH_DATATYPE;
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITH_DATATYPE;
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
-            for (TrainingJobWriterConfig trainingJobWriterConfig : trainingJobWriterConfigCollection) {
+            for (TrainingJobWriterConfigV1 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
                 createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
             }
         }
     }
 
-    private void createTrainingJobConfigurationFile(TrainingJobWriterConfig trainingJobWriterConfig,
+    private void createTrainingJobConfigurationFile(TrainingJobWriterConfigV1 trainingJobWriterConfig,
                                                     Path outputPath,
                                                     GraphSchema graphSchema,
                                                     PropertyName propertyName,
@@ -152,7 +154,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
         File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
 
         try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-            new JobTrainingConfigurationFileWriter(
+            new JobTrainingConfigurationFileWriterV1(
                     graphSchema,
                     createJsonGenerator(writer),
                     propertyName,

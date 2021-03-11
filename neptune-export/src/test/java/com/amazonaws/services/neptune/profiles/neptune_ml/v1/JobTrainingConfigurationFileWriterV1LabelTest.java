@@ -10,22 +10,21 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.Output;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-public class JobTrainingConfigurationFileWriterLabelTest {
+public class JobTrainingConfigurationFileWriterV1LabelTest {
 
     @Test
     public void shouldAddNodeClassLabelIfSpecifiedInConfig() throws IOException {
@@ -45,48 +44,48 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
+                TrainingJobConfigBuilderV1.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
 
         JsonNode graph = output.graph();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
         ArrayNode labels = (ArrayNode) array.get(0).path("labels");
 
-        assertEquals(1, labels.size());
+        Assert.assertEquals(1, labels.size());
 
         JsonNode label = labels.get(0);
 
-        assertEquals("node", label.path("label_type").textValue());
-        assertEquals("node_class_label", label.path("sub_label_type").textValue());
+        Assert.assertEquals("node", label.path("label_type").textValue());
+        Assert.assertEquals("node_class_label", label.path("sub_label_type").textValue());
 
         ArrayNode cols = (ArrayNode) label.path("cols");
 
-        assertEquals(2, cols.size());
+        Assert.assertEquals(2, cols.size());
 
-        assertEquals("~id", cols.get(0).textValue());
-        assertEquals("role", cols.get(1).textValue());
+        Assert.assertEquals("~id", cols.get(0).textValue());
+        Assert.assertEquals("role", cols.get(1).textValue());
 
         ArrayNode splitRates = (ArrayNode) label.path("split_rate");
 
-        assertEquals(3, splitRates.size());
+        Assert.assertEquals(3, splitRates.size());
 
-        assertEquals(0.7, splitRates.get(0).doubleValue(), 0.0);
-        assertEquals(0.1, splitRates.get(1).doubleValue(), 0.0);
-        assertEquals(0.2, splitRates.get(2).doubleValue(), 0.0);
+        Assert.assertEquals(0.7, splitRates.get(0).doubleValue(), 0.0);
+        Assert.assertEquals(0.1, splitRates.get(1).doubleValue(), 0.0);
+        Assert.assertEquals(0.2, splitRates.get(2).doubleValue(), 0.0);
 
-        assertEquals("Person", label.path("node_type").textValue());
+        Assert.assertEquals("Person", label.path("node_type").textValue());
 
-        assertTrue(label.path("separator").isMissingNode());
+        Assert.assertTrue(label.path("separator").isMissingNode());
     }
 
     @Test
@@ -107,12 +106,12 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
+                TrainingJobConfigBuilderV1.builder()
                         .withNodeClassLabel(personLabel, "does-not-exist")
                         .build())
                 .write();
@@ -120,14 +119,14 @@ public class JobTrainingConfigurationFileWriterLabelTest {
         JsonNode graph = output.graph();
         ArrayNode warnings = output.warnings();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
 
-        assertTrue(array.get(0).path("labels").isMissingNode());
+        Assert.assertTrue(array.get(0).path("labels").isMissingNode());
 
-        assertEquals(1, warnings.size());
-        assertEquals("Unable to add node class label: Node of type 'Person' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
+        Assert.assertEquals(1, warnings.size());
+        Assert.assertEquals("Unable to add node class label: Node of type 'Person' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
     }
 
     @Test
@@ -148,28 +147,28 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
+                TrainingJobConfigBuilderV1.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
 
         JsonNode graph = output.graph();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
         ArrayNode labels = (ArrayNode) array.get(0).path("labels");
 
-        assertEquals(1, labels.size());
+        Assert.assertEquals(1, labels.size());
 
         JsonNode label = labels.get(0);
 
-        assertEquals(";", label.path("separator").textValue());
+        Assert.assertEquals(";", label.path("separator").textValue());
     }
 
     @Test
@@ -193,53 +192,53 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
+                TrainingJobConfigBuilderV1.builder()
                         .withEdgeClassLabel(knowsLabel, "contact")
                         .build())
                 .write();
 
         JsonNode graph = output.graph();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
         ArrayNode labels = (ArrayNode) array.get(0).path("labels");
 
-        assertEquals(1, labels.size());
+        Assert.assertEquals(1, labels.size());
 
         JsonNode label = labels.get(0);
 
-        assertEquals("edge", label.path("label_type").textValue());
-        assertEquals("edge_class_label", label.path("sub_label_type").textValue());
+        Assert.assertEquals("edge", label.path("label_type").textValue());
+        Assert.assertEquals("edge_class_label", label.path("sub_label_type").textValue());
 
         ArrayNode cols = (ArrayNode) label.path("cols");
 
-        assertEquals(3, cols.size());
+        Assert.assertEquals(3, cols.size());
 
-        assertEquals("~from", cols.get(0).textValue());
-        assertEquals("~to", cols.get(1).textValue());
-        assertEquals("contact", cols.get(2).textValue());
+        Assert.assertEquals("~from", cols.get(0).textValue());
+        Assert.assertEquals("~to", cols.get(1).textValue());
+        Assert.assertEquals("contact", cols.get(2).textValue());
 
         ArrayNode splitRates = (ArrayNode) label.path("split_rate");
 
-        assertEquals(3, splitRates.size());
+        Assert.assertEquals(3, splitRates.size());
 
-        assertEquals(0.7, splitRates.get(0).doubleValue(), 0.0);
-        assertEquals(0.1, splitRates.get(1).doubleValue(), 0.0);
-        assertEquals(0.2, splitRates.get(2).doubleValue(), 0.0);
+        Assert.assertEquals(0.7, splitRates.get(0).doubleValue(), 0.0);
+        Assert.assertEquals(0.1, splitRates.get(1).doubleValue(), 0.0);
+        Assert.assertEquals(0.2, splitRates.get(2).doubleValue(), 0.0);
 
         ArrayNode edgeType = (ArrayNode) label.path("edge_type");
 
-        assertEquals("Person", edgeType.get(0).textValue());
-        assertEquals("knows", edgeType.get(1).textValue());
-        assertEquals("Person", edgeType.get(2).textValue());
+        Assert.assertEquals("Person", edgeType.get(0).textValue());
+        Assert.assertEquals("knows", edgeType.get(1).textValue());
+        Assert.assertEquals("Person", edgeType.get(2).textValue());
 
-        assertTrue(label.path("separator").isMissingNode());
+        Assert.assertTrue(label.path("separator").isMissingNode());
     }
 
     @Test
@@ -263,27 +262,27 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
-                .withEdgeClassLabel(knowsLabel, "does-not-exist")
-                .build())
+                TrainingJobConfigBuilderV1.builder()
+                        .withEdgeClassLabel(knowsLabel, "does-not-exist")
+                        .build())
                 .write();
 
         JsonNode graph = output.graph();
         ArrayNode warnings = output.warnings();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
 
-        assertTrue(array.get(0).path("labels").isMissingNode());
+        Assert.assertTrue(array.get(0).path("labels").isMissingNode());
 
-        assertEquals(1, warnings.size());
-        assertEquals("Unable to add edge class label: Edge of type 'knows' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
+        Assert.assertEquals(1, warnings.size());
+        Assert.assertEquals("Unable to add edge class label: Edge of type 'knows' does not contain property 'does-not-exist'.", warnings.get(0).textValue());
     }
 
     @Test
@@ -307,28 +306,28 @@ public class JobTrainingConfigurationFileWriterLabelTest {
 
         Output output = new Output();
 
-        new JobTrainingConfigurationFileWriter(
+        new JobTrainingConfigurationFileWriterV1(
                 graphSchema,
                 output.generator(),
-                JobTrainingConfigurationFileWriter.COLUMN_NAME_WITHOUT_DATATYPE,
+                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingJobConfigBuilder.builder()
-                .withEdgeClassLabel(knowsLabel, "contact")
-                .build())
+                TrainingJobConfigBuilderV1.builder()
+                        .withEdgeClassLabel(knowsLabel, "contact")
+                        .build())
                 .write();
 
         JsonNode graph = output.graph();
 
-        assertEquals(1, graph.size());
+        Assert.assertEquals(1, graph.size());
 
         ArrayNode array = (ArrayNode) graph;
         ArrayNode labels = (ArrayNode) array.get(0).path("labels");
 
-        assertEquals(1, labels.size());
+        Assert.assertEquals(1, labels.size());
 
         JsonNode label = labels.get(0);
 
-        assertEquals(";", label.path("separator").textValue());
+        Assert.assertEquals(";", label.path("separator").textValue());
     }
 
 }

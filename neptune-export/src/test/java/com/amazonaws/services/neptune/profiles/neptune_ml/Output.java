@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
-class Output {
+public class Output {
     private final StringWriter writer = new StringWriter();
     private final JsonGenerator generator;
 

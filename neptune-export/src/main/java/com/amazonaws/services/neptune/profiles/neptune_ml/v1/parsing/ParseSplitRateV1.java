@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,11 +18,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ParseSplitRate {
+public class ParseSplitRateV1 {
     private final JsonNode json;
     private final Collection<Double> defaultSplitRates;
 
-    public ParseSplitRate(JsonNode json, Collection<Double> defaultSplitRates) {
+    public ParseSplitRateV1(JsonNode json, Collection<Double> defaultSplitRates) {
         this.json = json;
         this.defaultSplitRates = defaultSplitRates;
     }
