@@ -21,6 +21,9 @@ import os
 import json
 import neptune_to_es
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 neptune_engine = os.environ['NEPTUNE_ENGINE']
 stream_name = os.environ['STREAM_NAME']
 handler_name = 'neptune_to_es.neptune_sparql_es_handler.ElasticSearchSparqlHandler' if neptune_engine == 'sparql' else 'neptune_to_es.neptune_gremlin_es_handler.ElasticSearchGremlinHandler'
@@ -35,7 +38,6 @@ os.environ["MaxPollingInterval"] = "1"
 os.environ["NeptuneStreamEndpoint"] = ""
 os.environ["StreamRecordsHandler"] = handler_name
 
-logger = logging.getLogger()
 #metrics_publisher_client = MetricsPublisher()
 
 def get_handler_instance(handler_name, retry_count=0):
@@ -57,7 +59,7 @@ def get_handler_instance(handler_name, retry_count=0):
         error_msg = str(e)
         if 'resource_already_exists_exception' in error_msg:
             if retry_count > 3:           
-                logger.info('Elastic Search Index - amazon_neptune already exist')
+                logger.info('Elastic Search Index - amazon_neptune already exists')
                 raise e;
             else:
                 return get_handler_instance(handler_name, retry_count + 1)
@@ -75,10 +77,14 @@ def lambda_bulk_handler(event, context):
     
     raw_kinesis_records = event['Records']
     
+    logger.info('Aggregated Kinesis record count: {}'.format(len(raw_kinesis_records)))
+    
     # Deaggregate all records in one call
     user_records = deaggregate_records(raw_kinesis_records)
     
     total_records = len(user_records)
+    
+    logger.info('Deaggregated record count: {}'.format(total_records))
     
     log_stream = {
             "records": [],
@@ -89,6 +95,11 @@ def lambda_bulk_handler(event, context):
             "totalRecords": total_records
         }
         
+    first_commit_num = None
+    first_op_num = None
+    prev_commit_num = None
+    prev_op_num = None
+        
     for user_record in user_records:
         records_json = base64.b64decode(user_record['kinesis']['data'])
         try:          
@@ -97,12 +108,36 @@ def lambda_bulk_handler(event, context):
             logger.error('Error parsing JSON: \'{}\': {}'.format(records_json, str(e)))
             raise e
         for record in records:
+            
+            commit_num = record['eventId']['commitNum']
+            op_num = record['eventId']['opNum']
+            
+            if not first_commit_num:
+                first_commit_num = commit_num
+                
+            if not first_op_num:
+                first_op_num = op_num
+                
+            #logger.info('Stream record: (commitNum: {}, opNum: {})'.format(commit_num, op_num)) 
+            
+            #if prev_commit_num and commit_num < prev_commit_num:
+            #    logger.warn('Current commitNum [{}] is less than previous commitNum [{}]'.format(commit_num, prev_commit_num))
+                
+            if prev_commit_num and commit_num == prev_commit_num:
+                if prev_op_num and op_num < prev_op_num:
+                    logger.warn('Current opNum [{}] is less than previous opNum [{}] (commitNum [{}])'.format(op_num, prev_op_num, commit_num))
+                    
             log_stream['records'].append(record)
-            log_stream['lastEventId']['commitNum'] = record['eventId']['commitNum']
-            log_stream['lastEventId']['opNum'] = record['eventId']['opNum']
+            
+            prev_commit_num = commit_num
+            prev_op_num = op_num
+            
+    log_stream['lastEventId']['commitNum'] = prev_commit_num if prev_commit_num else -1
+    log_stream['lastEventId']['opNum'] = prev_op_num if prev_op_num else 0
         
-    
-    logger.info('{} records to process'.format(total_records))    
+    logger.info('Log stream record count: {}'.format(len(log_stream['records']))) 
+    logger.info('First record: (commitNum: {}, opNum: {})'.format(first_commit_num, first_op_num))
+    logger.info('Last record: (commitNum: {}, opNum: {})'.format(prev_commit_num, prev_op_num))   
     
     for result in handler.handle_records(log_stream):
         records_processed = result.records_processed
