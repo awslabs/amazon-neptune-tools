@@ -512,7 +512,7 @@ public class TrainingDataConfigurationFileWriterV2 {
         for (PropertySchema propertySchema : propertySchemas) {
 
             if (propertySchema.isMultiValue()) {
-                warnings.add(String.format("Unable to add datetime feature for %s: multi-value datetime features not currently supported. Adding an auto feature instead.", propertySchema.nameWithoutDataType()));
+                warnings.add(String.format("Unable to add datetime feature for '%s'. Multi-value datetime features not currently supported. Adding an auto feature instead.", propertySchema.nameWithoutDataType()));
                 writeAutoFeature(Collections.singletonList(propertySchema), ImputerTypeV2.none);
                 return;
             }

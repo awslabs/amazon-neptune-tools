@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -45,14 +46,14 @@ public class ParseDatetimePartsV2 {
                         throw ErrorMessageHelper.invalidFieldValue("datetime_parts", value, context, datetimePartNames());
                     }
                 }
-                return results;
+                return results.isEmpty() ? Arrays.asList(DatetimePartV2.values()) : results;
 
             } else {
                 throw ErrorMessageHelper.errorParsingField("datetime_parts", context, "an array value");
             }
 
         } else {
-            return Collections.emptyList();
+            return Arrays.asList(DatetimePartV2.values());
         }
     }
 

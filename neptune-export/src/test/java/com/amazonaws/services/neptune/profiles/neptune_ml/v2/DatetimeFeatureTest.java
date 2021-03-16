@@ -26,62 +26,53 @@ import java.util.Collection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class BucketNumericalFeatureTest {
+public class DatetimeFeatureTest {
 
     @Test
-    public void shouldCreateBucketNumericalFeatureConfigWithSuppliedValues() throws IOException {
+    public void shouldCreateDatetimeFeatureConfigWithSuppliedValues() throws IOException {
         runTest("t1.json");
     }
 
     @Test
-    public void shouldThrowErrorIfSeparatorSuppliedForBucketNumericalFeature() throws IOException {
-        try {
-            runTest("t2.json");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Invalid 'separator' field for bucket_numerical feature. Bucket numerical feature property cannot contain multiple values.", e.getMessage());
-        }
+    public void shouldCreateDatetimeFeatureConfigWithFewerDatetimePartsValues() throws IOException {
+        runTest("t2.json");
     }
 
     @Test
-    public void shouldCreateAutoInferredFeatureIfMultiValueProperty() throws IOException {
+    public void shouldCreateDatetimeFeatureConfigForAllDatetimePartsIfDatetimePartsIsMissing() throws IOException {
         runTest("t3.json");
     }
 
     @Test
-    public void shouldThrowErrorIfRangeIsMissing() throws IOException {
-        try {
-            runTest("t4.json");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Error parsing 'range' field for bucket_numerical feature (Label: Person, Property: age). Expected an array with 2 numeric values.", e.getMessage());
-        }
+    public void shouldCreateDatetimeFeatureConfigForAllDatetimePartsIfDatetimePartsIsEmpty() throws IOException {
+        runTest("t4.json");
     }
 
     @Test
-    public void shouldThrowErrorIfBucketCountIsMissing() throws IOException {
+    public void shouldThrowErrorIfInvalidDatetimePart() throws IOException {
         try {
             runTest("t5.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Error parsing 'bucket_cnt' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());
+        } catch (IllegalArgumentException e){
+            assertEquals("Invalid 'datetime_parts' value for datetime feature (Label: Person, Property: created): 'invalid'. Valid values are: 'hour', 'weekday', 'month', 'year'.", e.getMessage());
         }
     }
 
     @Test
-    public void shouldThrowErrorIfSlideWindowSizeIsMissing() throws IOException {
-        try {
-            runTest("t6.json");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Error parsing 'slide_window_size' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());
-        }
+    public void shouldCreateAutoFeatureConfigForMultiValueDateProperty() throws IOException {
+        runTest("t6.json");
     }
 
     @Test
-    public void shouldOmitImputerIfImputerIsMissing() throws IOException {
+    public void shouldAutoInferDatetimeFeatureForDateProperty() throws IOException {
         runTest("t7.json");
     }
+
+    @Test
+    public void shouldAutoInferAutoFeatureForMultiValueDateProperty() throws IOException {
+        runTest("t8.json");
+    }
+
 
     private void runTest(String jsonFile) throws IOException {
         JsonNode json = JsonFromResource.get(jsonFile, getClass());
