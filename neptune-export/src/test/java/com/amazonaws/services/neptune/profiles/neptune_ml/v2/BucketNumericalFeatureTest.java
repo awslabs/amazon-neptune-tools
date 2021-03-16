@@ -30,25 +30,27 @@ public class BucketNumericalFeatureTest {
 
     @Test
     public void shouldCreateBucketNumericalFeatureConfigWithSuppliedValues() throws IOException {
-        runTest("t1_schema.json", "t1_override.json", "t1_training_config.json");
+        runTest("t1.json");
     }
 
     @Test
     public void shouldThrowErrorIfSeparatorSuppliedForBucketNumericalFeature() throws IOException {
         try {
-            runTest("t2_schema.json", "t2_override.json", "t2_training_config.json");
+            runTest("t2.json");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals("Invalid 'separator' field for bucket_numerical feature. Bucket numerical feature property cannot contain multiple values.", e.getMessage());
         }
     }
 
-    private void runTest(String schemaFile, String overrideFile, String expectedTrainingConfigFile) throws IOException {
-        GraphSchema graphSchema = GraphSchema.fromJson(JsonFromResource.get(schemaFile, getClass()));
+    private void runTest(String jsonFile) throws IOException {
+        JsonNode json = JsonFromResource.get(jsonFile, getClass());
 
-        JsonNode expectedTrainingDataConfig = JsonFromResource.get(expectedTrainingConfigFile, getClass());
+        GraphSchema graphSchema = GraphSchema.fromJson(json.get("schema"));
 
-        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(JsonFromResource.get(overrideFile, getClass()));
+        JsonNode expectedTrainingDataConfig = json.get("config");
+
+        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(json.get("feature"));
 
         Output output = new Output();
 
