@@ -1,0 +1,12 @@
+{
+  "features": [
+    {
+      "node": "Person",
+      "property": "measures",
+      "type": "numerical",
+      "separator": ",",
+      "norm": "standard",
+      "imputer": "most-frequent"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "features": [
+    {
+      "node": "Person",
+      "property": "age",
+      "type": "numerical"
+    }
+  ]
+}

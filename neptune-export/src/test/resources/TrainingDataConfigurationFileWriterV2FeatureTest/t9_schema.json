@@ -1,0 +1,13 @@
+{
+  "edges" : [ ],
+  "nodes" : [ {
+    "label" : "Person",
+    "properties" : [ {
+      "property" : "created",
+      "dataType" : "Date",
+      "isMultiValue" : false,
+      "isNullable" : false
+    }],
+    "files" : [ "person-1.csv" ]
+  } ]
+}

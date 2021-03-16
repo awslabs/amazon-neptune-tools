@@ -1,0 +1,11 @@
+{
+  "features": [
+    {
+      "node": "Person",
+      "property": "measures",
+      "type": "category",
+      "separator": "|",
+      "ignored": "min-max"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "version" : "v2.0",
+  "query_engine" : "gremlin",
+  "graph" : {
+    "nodes" : [ {
+      "file_name" : "nodes/person-1.csv",
+      "separator" : ",",
+      "node_type" : [ "~id", "Person" ],
+      "features" : [ {
+        "feature" : [ "age", "age", "auto" ]
+      } ]
+    } ],
+    "edges" : [ ]
+  },
+  "warnings" : [ "Unable to add node feature: Node of type 'Person' does not contain property 'height'." ]
+}

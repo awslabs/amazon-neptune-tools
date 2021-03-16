@@ -1,0 +1,13 @@
+{
+  "edges" : [ ],
+  "nodes" : [ {
+    "label" : "Person",
+    "properties" : [ {
+      "property" : "email",
+      "dataType" : "String",
+      "isMultiValue" : true,
+      "isNullable" : false
+    }],
+    "files" : [ "person-1.csv" ]
+  } ]
+}

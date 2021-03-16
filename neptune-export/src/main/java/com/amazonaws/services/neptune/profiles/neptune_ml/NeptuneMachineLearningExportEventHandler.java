@@ -15,8 +15,8 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v1.JobTrainingConfigurationFileWriterV1;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingJobWriterConfigV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingDataConfigurationFileWriterV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.TrainingDataWriterConfigV1;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
@@ -54,7 +54,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
 
     private final String outputS3Path;
     private final Args args;
-    private final Collection<TrainingJobWriterConfigV1> trainingJobWriterConfigCollection;
+    private final Collection<TrainingDataWriterConfigV1> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
     private final PrinterOptions printerOptions;
@@ -82,13 +82,13 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
         this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
     }
 
-    private Collection<TrainingJobWriterConfigV1> createTrainingJobConfigCollection(ObjectNode additionalParams) {
+    private Collection<TrainingDataWriterConfigV1> createTrainingJobConfigCollection(ObjectNode additionalParams) {
         JsonNode neptuneMlNode = additionalParams.path(NEPTUNE_ML_PROFILE_NAME);
         if (neptuneMlNode.isMissingNode()) {
             logger.info("No 'neptune_ml' config node in additional params so creating default training config");
-            return Collections.singletonList(new TrainingJobWriterConfigV1());
+            return Collections.singletonList(new TrainingDataWriterConfigV1());
         } else {
-            Collection<TrainingJobWriterConfigV1> trainingJobWriterConfig = TrainingJobWriterConfigV1.fromJson(neptuneMlNode);
+            Collection<TrainingDataWriterConfigV1> trainingJobWriterConfig = TrainingDataWriterConfigV1.fromJson(neptuneMlNode);
             logger.info("Training job writer config: {}", trainingJobWriterConfig);
             return trainingJobWriterConfig;
         }
@@ -133,17 +133,17 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
-                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
-                JobTrainingConfigurationFileWriterV1.COLUMN_NAME_WITH_DATATYPE;
+                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
+                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITH_DATATYPE;
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
-            for (TrainingJobWriterConfigV1 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
+            for (TrainingDataWriterConfigV1 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
                 createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
             }
         }
     }
 
-    private void createTrainingJobConfigurationFile(TrainingJobWriterConfigV1 trainingJobWriterConfig,
+    private void createTrainingJobConfigurationFile(TrainingDataWriterConfigV1 trainingJobWriterConfig,
                                                     Path outputPath,
                                                     GraphSchema graphSchema,
                                                     PropertyName propertyName,
@@ -154,7 +154,7 @@ public class NeptuneMachineLearningExportEventHandler implements NeptuneExportSe
         File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
 
         try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-            new JobTrainingConfigurationFileWriterV1(
+            new TrainingDataConfigurationFileWriterV1(
                     graphSchema,
                     createJsonGenerator(writer),
                     propertyName,

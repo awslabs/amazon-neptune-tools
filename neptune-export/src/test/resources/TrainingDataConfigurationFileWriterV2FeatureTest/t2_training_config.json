@@ -1,0 +1,33 @@
+{
+  "version" : "v2.0",
+  "query_engine" : "gremlin",
+  "graph" : {
+    "nodes" : [ {
+      "file_name" : "nodes/person-1.csv",
+      "separator" : ",",
+      "node_type" : [ "~id", "Person" ],
+      "features" : [ ]
+    }, {
+      "file_name" : "nodes/person-2.csv",
+      "separator" : ",",
+      "node_type" : [ "~id", "Person" ],
+      "features" : [ ]
+    } ],
+    "edges" : [ {
+      "file_name" : "edges/follows-1.csv",
+      "separator" : ",",
+      "source" : [ "~from", "Person" ],
+      "relation" : [ "", "follows" ],
+      "dest" : [ "~to", "Person" ],
+      "features" : [ ]
+    }, {
+      "file_name" : "edges/follows-2.csv",
+      "separator" : ",",
+      "source" : [ "~from", "Person" ],
+      "relation" : [ "", "follows" ],
+      "dest" : [ "~to", "Person" ],
+      "features" : [ ]
+    } ]
+  },
+  "warnings" : [ ]
+}

@@ -12,23 +12,25 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class ParseBucketCountV1 {
 
     private final JsonNode json;
-    private final String description;
+    private final ParsingContext context;
 
-    public ParseBucketCountV1(JsonNode json, String description) {
+    public ParseBucketCountV1(JsonNode json, ParsingContext context) {
         this.json = json;
-        this.description = description;
+        this.context = context;
     }
 
     public int parseBucketCount() {
         if (json.has("num_buckets") && json.path("num_buckets").isInt()) {
             return json.path("num_buckets").asInt();
         } else {
-            throw new IllegalArgumentException(String.format("Error parsing 'num_buckets' field: expected an integer value for %s", description));
+            throw ErrorMessageHelper.errorParsingField("num_buckets", context, "an integer");
         }
     }
 }

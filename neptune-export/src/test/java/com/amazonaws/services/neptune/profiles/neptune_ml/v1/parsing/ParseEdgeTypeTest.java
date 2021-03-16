@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseEdgeType;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,7 +27,7 @@ public class ParseEdgeTypeTest {
     public void shouldParseEdge() throws JsonProcessingException {
         String json = "{ \"edge\": [\"person\", \"wrote\", \"post\"]}";
         JsonNode jsonNode = new ObjectMapper().readTree(json);
-        ParseEdgeTypeV1 parseEdgeType = new ParseEdgeTypeV1(jsonNode, "DESC");
+        ParseEdgeType parseEdgeType = new ParseEdgeType(jsonNode,  new ParsingContext("DESC"));
         Label label = parseEdgeType.parseEdgeType();
         assertEquals("person", label.fromLabelsAsString());
         assertEquals("wrote", label.labelsAsString());
@@ -36,7 +38,7 @@ public class ParseEdgeTypeTest {
     public void shouldParseEdgeWithSemicolons() throws JsonProcessingException {
         String json = "{ \"edge\": [\"person;admin\", \"wrote\", \"post;content\"]}";
         JsonNode jsonNode = new ObjectMapper().readTree(json);
-        ParseEdgeTypeV1 parseEdgeType = new ParseEdgeTypeV1(jsonNode, "DESC");
+        ParseEdgeType parseEdgeType = new ParseEdgeType(jsonNode, new ParsingContext("DESC"));
         Label label = parseEdgeType.parseEdgeType();
         assertEquals("admin;person", label.fromLabelsAsString());
         assertEquals("wrote", label.labelsAsString());
@@ -47,7 +49,7 @@ public class ParseEdgeTypeTest {
     public void shouldEscapeSemicolons() throws JsonProcessingException {
         String json = "{ \"edge\": [\"person;admin\\\\;aa\", \"wrote;x\", \"post;content\"]}";
         JsonNode jsonNode = new ObjectMapper().readTree(json);
-        ParseEdgeTypeV1 parseEdgeType = new ParseEdgeTypeV1(jsonNode, "DESC");
+        ParseEdgeType parseEdgeType = new ParseEdgeType(jsonNode, new ParsingContext("DESC"));
         Label label = parseEdgeType.parseEdgeType();
         assertEquals("admin\\;aa;person", label.fromLabelsAsString());
         assertEquals("wrote\\;x", label.labelsAsString());

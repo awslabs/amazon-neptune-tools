@@ -12,16 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.FeatureTypeV1;
 import com.fasterxml.jackson.databind.JsonNode;
+
+import java.util.Arrays;
 
 public class ParseFeatureTypeV1 {
 
     private final JsonNode json;
-    private final String description;
+    private final ParsingContext context;
 
-    public ParseFeatureTypeV1(JsonNode json, String description) {
+    public ParseFeatureTypeV1(JsonNode json, ParsingContext context) {
         this.json = json;
-        this.description = description;
+        this.context = context;
     }
 
     public FeatureTypeV1 parseFeatureType() {
@@ -29,8 +34,10 @@ public class ParseFeatureTypeV1 {
             String type = json.get("type").textValue();
             if  ( type.equals("numerical") || type.equals("category")){
                 return FeatureTypeV1.valueOf(type);
+            } else {
+                throw ErrorMessageHelper.invalidFieldValue("type", type, context, Arrays.asList("numerical", "category"));
             }
         }
-        throw new IllegalArgumentException(String.format("Error parsing 'type' field: expected 'numerical' or 'category' value for %s", description));
+        throw ErrorMessageHelper.errorParsingField("type", context, "'numerical' or 'category' value");
     }
 }

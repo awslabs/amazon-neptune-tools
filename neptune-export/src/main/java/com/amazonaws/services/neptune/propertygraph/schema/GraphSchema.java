@@ -81,11 +81,15 @@ public class GraphSchema implements Jsonizable {
 
     @Override
     public JsonNode toJson() {
+        return toJson(false);
+    }
+
+    public JsonNode toJson(boolean includeFilenames) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         for (Map.Entry<GraphElementType<?>, GraphElementSchemas> entry : graphElementsSchemas.entrySet()) {
             String key = entry.getKey().name();
-            ArrayNode arrayNode = entry.getValue().toJson();
+            ArrayNode arrayNode = entry.getValue().toJson(includeFilenames);
             json.set(key, arrayNode);
         }
         return json;

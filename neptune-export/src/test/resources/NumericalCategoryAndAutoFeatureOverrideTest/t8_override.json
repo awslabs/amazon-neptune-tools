@@ -1,0 +1,10 @@
+{
+  "features": [
+    {
+      "node": "Person",
+      "property": "measures",
+      "type": "numerical",
+      "separator": ","
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "features": [
+    {
+      "node": "Person",
+      "property": "age",
+      "type": "auto",
+      "separator": "|",
+      "norm": "min-max"
+    }
+  ]
+}
