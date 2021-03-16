@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
@@ -267,8 +266,10 @@ public class TrainingDataConfigurationFileWriterV2 {
                     writeCategoricalNodeFeature(Collections.singletonList(propertySchema), featureOverride);
                 } else if (FeatureTypeV2.numerical == featureType) {
                     writeNumericalNodeFeature(Collections.singletonList(propertySchema), featureOverride);
-                } else if (FeatureTypeV2.auto == featureType){
+                } else if (FeatureTypeV2.auto == featureType) {
                     writeAutoFeature(Collections.singletonList(propertySchema), featureOverride);
+                } else if (FeatureTypeV2.none == featureType) {
+                    // Do nothing
                 } else {
                     warnings.add(String.format("Unsupported feature type override for node: %s.", featureType.name()));
                 }
@@ -293,7 +294,7 @@ public class TrainingDataConfigurationFileWriterV2 {
                     writeCategoricalNodeFeature(multiPropertySchemas, featureOverride);
                 } else if (FeatureTypeV2.numerical == featureType) {
                     writeNumericalNodeFeature(multiPropertySchemas, featureOverride);
-                }else if (FeatureTypeV2.auto == featureType){
+                } else if (FeatureTypeV2.auto == featureType) {
                     writeAutoInferredNodeFeature(multiPropertySchemas);
                 } else {
                     warnings.add(String.format("Unsupported multi-property feature type override for node: %s.", featureType.name()));
@@ -344,7 +345,7 @@ public class TrainingDataConfigurationFileWriterV2 {
                         .collect(Collectors.toList());
                 if (FeatureTypeV2.numerical == featureType) {
                     writeNumericalEdgeFeature(multiPropertySchemas, featureOverride);
-                }else if (FeatureTypeV2.auto == featureType){
+                } else if (FeatureTypeV2.auto == featureType) {
                     writeAutoInferredEdgeFeature(multiPropertySchemas);
                 } else {
                     warnings.add(String.format("Unsupported multi-property feature type override for edge: %s.", featureType.name()));
@@ -414,7 +415,7 @@ public class TrainingDataConfigurationFileWriterV2 {
 
     private void writeTfIdfNodeFeature(PropertySchema propertySchema, TfIdfConfigV2 tfIdfSpecification) throws IOException {
 
-        if (propertySchema.isMultiValue()){
+        if (propertySchema.isMultiValue()) {
             warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_tfidf, propertySchema.nameWithoutDataType()));
             writeAutoInferredNodeFeature(propertySchema);
             return;
@@ -450,7 +451,7 @@ public class TrainingDataConfigurationFileWriterV2 {
 
     private void writeNumericalBucketNodeFeature(PropertySchema propertySchema, NumericalBucketFeatureConfigV2 numericalBucketSpecification) throws IOException {
 
-        if (propertySchema.isMultiValue()){
+        if (propertySchema.isMultiValue()) {
             warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.bucket_numerical, propertySchema.nameWithoutDataType()));
             writeAutoInferredNodeFeature(propertySchema);
             return;
@@ -494,7 +495,7 @@ public class TrainingDataConfigurationFileWriterV2 {
 
     private void writeWord2VecNodeFeature(PropertySchema propertySchema, Word2VecConfig word2VecSpecification) throws IOException {
 
-        if (propertySchema.isMultiValue()){
+        if (propertySchema.isMultiValue()) {
             warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_word2vec, propertySchema.nameWithoutDataType()));
             writeAutoInferredNodeFeature(propertySchema);
             return;
@@ -510,10 +511,10 @@ public class TrainingDataConfigurationFileWriterV2 {
                 generator.writeString(language);
                 try {
                     SupportedLanguages.valueOf(language);
-                } catch (IllegalArgumentException e){
+                } catch (IllegalArgumentException e) {
                     warnings.add(String.format("Unsupported language for text_word2vec feature for '%s': '%s'. " +
-                            "Supported languages are: %s. " +
-                            "The output embedding is not guaranteed to be valid if you supply another language.",
+                                    "Supported languages are: %s. " +
+                                    "The output embedding is not guaranteed to be valid if you supply another language.",
                             propertySchema.nameWithoutDataType(),
                             language,
                             ErrorMessageHelper.quoteList(Arrays.stream(SupportedLanguages.values()).map(Enum::name).collect(Collectors.toList()))));

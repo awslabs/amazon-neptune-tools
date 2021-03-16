@@ -60,7 +60,8 @@ public enum FeatureTypeV2 {
         }
     },
     datetime,
-    auto;
+    auto,
+    none;
 
     public void validateOverride(JsonNode node, ParsingContext context) {
         //Do nothing

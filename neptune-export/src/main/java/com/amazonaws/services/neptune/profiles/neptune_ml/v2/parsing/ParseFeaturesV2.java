@@ -191,7 +191,7 @@ public class ParseFeaturesV2 {
     private boolean isNodeFeatureOverride(JsonNode node) {
         if (isNodeFeature(node)) {
             String type = node.get("type").textValue();
-            return (isNumericalType(type) || isCategoricalType(type) || isAutoType(type));
+            return (isNumericalType(type) || isCategoricalType(type) || isAutoType(type) || isNoneType(type));
         }
         return false;
     }
@@ -238,6 +238,10 @@ public class ParseFeaturesV2 {
 
     private boolean isNumericalType(String type) {
         return isOfType(FeatureTypeV2.numerical, type);
+    }
+
+    private boolean isNoneType(String type) {
+        return isOfType(FeatureTypeV2.none, type);
     }
 
     private boolean isOfType(FeatureTypeV2 featureTypeV2, String s) {
