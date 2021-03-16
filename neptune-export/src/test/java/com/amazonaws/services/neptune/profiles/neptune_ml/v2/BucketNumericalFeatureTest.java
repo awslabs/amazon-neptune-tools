@@ -43,6 +43,46 @@ public class BucketNumericalFeatureTest {
         }
     }
 
+    @Test
+    public void shouldCreateAutoInferredFeatureIfMultiValueProperty() throws IOException {
+        runTest("t3.json");
+    }
+
+    @Test
+    public void shouldThrowErrorIfRangeIsMissing() throws IOException {
+        try {
+            runTest("t4.json");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error parsing 'range' field for bucket_numerical feature (Label: Person, Property: age). Expected an array with 2 numeric values.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void shouldThrowErrorIfBucketCountIsMissing() throws IOException {
+        try {
+            runTest("t5.json");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error parsing 'bucket_cnt' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void shouldThrowErrorIfSlideWindowSizeIsMissing() throws IOException {
+        try {
+            runTest("t6.json");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error parsing 'slide_window_size' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void shouldOmitImputerIfImputerIsMissing() throws IOException {
+        runTest("t7.json");
+    }
+
     private void runTest(String jsonFile) throws IOException {
         JsonNode json = JsonFromResource.get(jsonFile, getClass());
 

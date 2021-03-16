@@ -29,10 +29,10 @@ public class ParseSlideWindowSize {
             if (json.path("slide_window_size").isInt()){
                 return json.path("slide_window_size").asInt();
             } else {
-                throw ErrorMessageHelper.errorParsingField("slide_window_size", context, "an integer value");
+                throw ErrorMessageHelper.errorParsingField("slide_window_size", context, "an integer");
             }
         } else {
-            return 0;
+            throw ErrorMessageHelper.errorParsingField("slide_window_size", context, "an integer");
         }
     }
 }

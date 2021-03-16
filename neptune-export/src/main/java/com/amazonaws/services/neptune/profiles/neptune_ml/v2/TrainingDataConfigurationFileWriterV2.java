@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Norm;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Range;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
@@ -443,6 +444,13 @@ public class TrainingDataConfigurationFileWriterV2 {
     }
 
     private void writeNumericalBucketNodeFeature(PropertySchema propertySchema, NumericalBucketFeatureConfigV2 numericalBucketSpecification) throws IOException {
+
+        if (propertySchema.isMultiValue()){
+            warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.bucket_numerical, propertySchema.nameWithoutDataType()));
+            writeAutoInferredNodeFeature(propertySchema);
+            return;
+        }
+
         generator.writeStartObject();
 
         writeFeature(propertySchema, FeatureTypeV2.bucket_numerical);
@@ -470,8 +478,10 @@ public class TrainingDataConfigurationFileWriterV2 {
 
         ImputerTypeV2 imputer = numericalBucketSpecification.imputerType();
 
-        if (imputer != null) {
+        if (imputer != null && imputer != ImputerTypeV2.none) {
             generator.writeStringField("imputer", imputer.formattedName());
+        } else {
+            warnings.add(String.format("'imputer' value missing for %s feature for '%s'. Preprocessing will exit when it encounters an missing value.", FeatureTypeV2.bucket_numerical, propertySchema.nameWithoutDataType()));
         }
 
         generator.writeEndObject();
