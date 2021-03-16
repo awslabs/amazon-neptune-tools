@@ -27,58 +27,60 @@ public class TrainingDataConfigurationFileWriterV2FeatureTest {
 
     @Test
     public void shouldWriteVersionAndQueryEngine() throws IOException {
-        runTest("t1_schema.json", "t1_training_config.json");
+        runTest("t1.json");
     }
 
     @Test
     public void shouldNodeAndEdgeObjectForEachFile() throws IOException {
-        runTest("t2_schema.json", "t2_training_config.json");
+        runTest("t2.json");
     }
 
     @Test
     public void shouldAddAutoFeatureForSingleValueStringProperty() throws IOException {
-        runTest("t3_schema.json", "t3_training_config.json");
+        runTest("t3.json");
     }
 
     @Test
     public void shouldAddAutoFeatureWithSeparatorForMultiValueStringProperty() throws IOException {
-        runTest("t4_schema.json", "t4_training_config.json");
+        runTest("t4.json");
     }
 
     @Test
     public void shouldAddNumericFeatureWithNormMinMaxAndMedianImputerForSingleValueIntegerProperty() throws IOException {
-        runTest("t5_schema.json", "t5_training_config.json");
+        runTest("t5.json");
     }
 
     @Test
     public void shouldAddAutoFeatureWithSeparatorAndMedianImputerForMultiValueIntegerProperty() throws IOException {
-        runTest("t6_schema.json", "t6_training_config.json");
+        runTest("t6.json");
     }
 
     @Test
     public void shouldAddNumericFeatureWithNormMinMaxAndMedianImputerForSingleValueFloatProperty() throws IOException {
-        runTest("t7_schema.json", "t7_training_config.json");
+        runTest("t7.json");
     }
 
     @Test
     public void shouldAddAutoFeatureWithSeparatorAndMedianImputerForMultiValueFloatProperty() throws IOException {
-        runTest("t8_schema.json", "t8_training_config.json");
+        runTest("t8.json");
     }
 
     @Test
     public void shouldAddDatetimeFeatureWithAllDatetimePartsForSingleValueDateProperty() throws IOException {
-        runTest("t9_schema.json", "t9_training_config.json");
+        runTest("t9.json");
     }
 
     @Test
     public void shouldAddAutoFeatureWithSeparatorForMultiValueDateProperty() throws IOException {
-        runTest("t10_schema.json", "t10_training_config.json");
+        runTest("t10.json");
     }
 
-    private void runTest(String schemaFile, String expectedTrainingConfigFile) throws IOException {
-        GraphSchema graphSchema = GraphSchema.fromJson(JsonFromResource.get(schemaFile, getClass()));
+    private void runTest(String jsonFile) throws IOException {
+        JsonNode json = JsonFromResource.get(jsonFile, getClass());
 
-        JsonNode expectedTrainingDataConfig = JsonFromResource.get(expectedTrainingConfigFile, getClass());
+        GraphSchema graphSchema = GraphSchema.fromJson(json.get("schema"));
+
+        JsonNode expectedTrainingDataConfig = json.get("config");
 
         Output output = new Output();
 

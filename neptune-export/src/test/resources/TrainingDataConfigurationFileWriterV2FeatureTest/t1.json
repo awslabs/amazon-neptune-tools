@@ -1,0 +1,15 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}
