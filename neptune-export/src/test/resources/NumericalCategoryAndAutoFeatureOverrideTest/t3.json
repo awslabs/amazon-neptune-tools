@@ -1,0 +1,40 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "age",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "height",
+        "type": "numerical"
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node_type" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "age", "age", "auto" ]
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ "Unable to add node feature: Node of type 'Person' does not contain property 'height'." ]
+  }
+}

@@ -1,9 +1,0 @@
-{
-  "features": [
-    {
-      "node": "Person",
-      "property": "measure",
-      "type": "category"
-    }
-  ]
-}

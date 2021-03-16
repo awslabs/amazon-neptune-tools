@@ -29,65 +29,66 @@ public class NumericalCategoryAndAutoFeatureOverrideTest {
 
     @Test
     public void shouldAllowNumericalOverrideAndSupplyDefaultConfigFieldValues() throws IOException {
-        runTest("t1_schema.json", "t1_override.json", "t1_training_config.json");
+        runTest("t1.json");
     }
 
     @Test
     public void shouldAllowNumericalOverrideAndSupplyDefaultConfigFieldValuesForMultiValueProperty() throws IOException {
-        runTest("t5_schema.json", "t5_override.json", "t5_training_config.json");
+        runTest("t5.json");
     }
 
     @Test
     public void shouldAllowNumericalOverrideAndUseSpecifiedConfigFieldValues() throws IOException {
-        runTest("t2_schema.json", "t2_override.json", "t2_training_config.json");
+        runTest("t2.json");
     }
 
     @Test
     public void shouldAllowNumericalOverrideAndUseSpecifiedConfigFieldValuesIncludingSeparatorForSingleValueProperty() throws IOException {
-        runTest("t8_schema.json", "t8_override.json", "t8_training_config.json");
+        runTest("t8.json");
     }
 
     @Test
     public void shouldAllowNumericalOverrideAndUseSpecifiedConfigFieldValuesForMultiValueProperty() throws IOException {
-        runTest("t6_schema.json", "t6_override.json", "t6_training_config.json");
+        runTest("t6.json");
     }
 
     @Test
     public void shouldAddWarningForOverrideForPropertyThatDoesNotExist() throws IOException {
-        runTest("t3_schema.json", "t3_override.json", "t3_training_config.json");
+        runTest("t3.json");
     }
 
     @Test
     public void shouldAllowCategoryOverrideAndSupplyDefaultConfigFieldValues() throws IOException {
-        runTest("t4_schema.json", "t4_override.json", "t4_training_config.json");
+        runTest("t4.json");
     }
 
     @Test
     public void shouldAllowCategoryOverrideAndSupplyDefaultConfigFieldValuesForMultiValueProperty() throws IOException {
-        runTest("t7_schema.json", "t7_override.json", "t7_training_config.json");
+        runTest("t7.json");
     }
 
     @Test
     public void shouldAllowCategoryOverrideAndUseSpecifiedConfigFieldValuesForSingleValueProperty() throws IOException {
-        runTest("t9_schema.json", "t9_override.json", "t9_training_config.json");
+        runTest("t9.json");
     }
 
     @Test
     public void shouldAllowAutoOverrideForNumericalFeatureWithSuppliedSeparatorAndImputerIgnoringAllOtherConfigValues() throws IOException {
-        runTest("t10_schema.json", "t10_override.json", "t10_training_config.json");
+        runTest("t10.json");
     }
 
     @Test
     public void shouldAllowAutoOverrideForNumericalFeatureWithoutImputerIfNotSupplied() throws IOException {
-        runTest("t11_schema.json", "t11_override.json", "t11_training_config.json");
+        runTest("t11.json");
     }
 
-    private void runTest(String schemaFile, String overrideFile, String expectedTrainingConfigFile) throws IOException {
-        GraphSchema graphSchema = GraphSchema.fromJson(JsonFromResource.get(schemaFile, getClass()));
+    private void runTest(String jsonFile) throws IOException {
+        JsonNode json = JsonFromResource.get(jsonFile, getClass());
+        GraphSchema graphSchema = GraphSchema.fromJson(json.get("schema"));
 
-        JsonNode expectedTrainingDataConfig = JsonFromResource.get(expectedTrainingConfigFile, getClass());
+        JsonNode expectedTrainingDataConfig = json.get("config");
 
-        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(JsonFromResource.get(overrideFile, getClass()));
+        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(json.get("feature"));
 
         Output output = new Output();
 
