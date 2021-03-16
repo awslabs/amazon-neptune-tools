@@ -413,6 +413,13 @@ public class TrainingDataConfigurationFileWriterV2 {
     }
 
     private void writeTfIdfNodeFeature(PropertySchema propertySchema, TfIdfConfigV2 tfIdfSpecification) throws IOException {
+
+        if (propertySchema.isMultiValue()){
+            warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_tfidf, propertySchema.nameWithoutDataType()));
+            writeAutoInferredNodeFeature(propertySchema);
+            return;
+        }
+
         generator.writeStartObject();
 
         writeFeature(propertySchema, FeatureTypeV2.text_tfidf);
