@@ -15,6 +15,11 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 public enum FeatureTypeV2 {
     bucket_numerical {
         @Override
@@ -25,6 +30,11 @@ public enum FeatureTypeV2 {
         }
     },
     text_word2vec {
+        @Override
+        public Collection<String> validNames(){
+            return Arrays.asList(name(), "word2vec");
+        }
+
         @Override
         public void validateOverride(JsonNode json, ParsingContext context) {
             if (json.has("imputer")) {
@@ -54,6 +64,32 @@ public enum FeatureTypeV2 {
 
     public void validateOverride(JsonNode node, ParsingContext context) {
         //Do nothing
+    }
+
+    public Collection<String> validNames(){
+        return Collections.singletonList(name());
+    }
+
+    public static FeatureTypeV2 fromString(String s) {
+        for (FeatureTypeV2 featureType : FeatureTypeV2.values()) {
+            for (String validName : featureType.validNames()) {
+                if (validName.equals(s)){
+                    return featureType;
+                }
+            }
+        }
+        throw new IllegalArgumentException(String.format("Invalid feature type: %s (valid types are: %s)",
+                s,
+                String.join(", ", publicFormattedNames())));
+    }
+
+    public static Collection<String> publicFormattedNames() {
+        Collection<String> results = new ArrayList<>();
+        for (FeatureTypeV2 featureType : FeatureTypeV2.values()) {
+            results.add(featureType.name());
+
+        }
+        return results;
     }
 
 }

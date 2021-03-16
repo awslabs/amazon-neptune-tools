@@ -12,7 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.SupportedLanguages;
 import com.fasterxml.jackson.databind.JsonNode;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class ParseLanguage {
     private final JsonNode json;
@@ -21,11 +25,21 @@ public class ParseLanguage {
         this.json = json;
     }
 
-    public String parseLanguage() {
-        if (json.has("language") && json.get("language").isTextual()) {
-            return json.get("language").textValue();
-        } else {
-            return "en_core_web_lg";
+    public Collection<String> parseLanguage() {
+        Collection<String> results = new ArrayList<>();
+        if (json.has("language")) {
+            if (json.get("language").isArray()) {
+                JsonNode arrayNode = json.get("language");
+                for (JsonNode jsonNode : arrayNode) {
+                    results.add(jsonNode.textValue());
+                }
+            } else if (json.get("language").isTextual()) {
+                results.add(json.get("language").textValue());
+            }
         }
+        if (results.isEmpty()) {
+            results.add(SupportedLanguages.en_core_web_lg.name());
+        }
+        return results;
     }
 }

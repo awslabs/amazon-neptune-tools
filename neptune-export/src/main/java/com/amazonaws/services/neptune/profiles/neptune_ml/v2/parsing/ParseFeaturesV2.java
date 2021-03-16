@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 public class ParseFeaturesV2 {
 
@@ -42,7 +41,13 @@ public class ParseFeaturesV2 {
                     !isNumericalBucketFeature(feature) &&
                     !isNodeFeatureOverride(feature) &&
                     !isEdgeFeatureOverride(feature)) {
-                throw new IllegalArgumentException("Illegal feature element: expected auto, category, numerical, bucket_numerical, datetime, text_word2vec, or text_tfidf for nodes, auto or numerical for edges.");
+                if (feature.has("type")) {
+                    String featureType = feature.get("type").textValue();
+                    throw new IllegalArgumentException(
+                            String.format("Illegal feature type: '%s'. Supported values are: %s.",
+                                    featureType,
+                                    ErrorMessageHelper.quoteList(FeatureTypeV2.publicFormattedNames())));
+                }
             }
         }
     }
@@ -87,8 +92,8 @@ public class ParseFeaturesV2 {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.text_word2vec.name() + " feature");
                 Label nodeType = new ParseNodeType(json, context).parseNodeType();
                 String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
-                String language = new ParseLanguage(json).parseLanguage();
-                Word2VecConfig config = new Word2VecConfig(nodeType, property, Collections.singletonList(language));
+                Collection<String> language = new ParseLanguage(json).parseLanguage();
+                Word2VecConfig config = new Word2VecConfig(nodeType, property, language);
                 word2VecFeatures.add(config);
             }
         }
@@ -208,30 +213,39 @@ public class ParseFeaturesV2 {
     }
 
     private boolean isTfIdfType(String type) {
-        return FeatureTypeV2.text_tfidf.name().equals(type);
+        return isOfType(FeatureTypeV2.text_tfidf, type);
     }
 
     private boolean isDatetimeType(String type) {
-        return FeatureTypeV2.datetime.name().equals(type);
+        return isOfType(FeatureTypeV2.datetime, type);
     }
 
     private boolean isAutoType(String type) {
-        return FeatureTypeV2.auto.name().equals(type);
+        return isOfType(FeatureTypeV2.auto, type);
     }
 
     private boolean isWord2VecType(String type) {
-        return FeatureTypeV2.text_word2vec.name().equals(type);
+        return isOfType(FeatureTypeV2.text_word2vec, type);
     }
 
     private boolean isBucketNumericalType(String type) {
-        return FeatureTypeV2.bucket_numerical.name().equals(type);
+        return isOfType(FeatureTypeV2.bucket_numerical, type);
     }
 
     private boolean isCategoricalType(String type) {
-        return FeatureTypeV2.category.name().equals(type);
+        return isOfType(FeatureTypeV2.category, type);
     }
 
     private boolean isNumericalType(String type) {
-        return FeatureTypeV2.numerical.name().equals(type);
+        return isOfType(FeatureTypeV2.numerical, type);
+    }
+
+    private boolean isOfType(FeatureTypeV2 featureTypeV2, String s) {
+        for (String validName : featureTypeV2.validNames()) {
+            if (validName.equals(s)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

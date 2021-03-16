@@ -4,13 +4,23 @@
     "nodes" : [ {
       "label" : "Person",
       "properties" : [ {
-        "property" : "checkins",
-        "dataType" : "Date",
-        "isMultiValue" : true,
+        "property" : "bio",
+        "dataType" : "String",
+        "isMultiValue" : false,
         "isNullable" : false
       }],
       "files" : [ "person-1.csv" ]
     } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "bio",
+        "type": "text_word2vec",
+        "language": ["fr_core_news_lg"]
+      }
+    ]
   },
   "config": {
     "version" : "v2.0",
@@ -21,12 +31,12 @@
         "separator" : ",",
         "node_type" : [ "~id", "Person" ],
         "features" : [ {
-          "feature" : [ "checkins", "checkins", "auto" ],
-          "separator" : ";"
+          "feature" : [ "bio", "bio", "text_word2vec" ],
+          "language" : [ "fr_core_news_lg" ]
         } ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "Unable to add datetime feature for 'checkins'. Multi-value datetime features not currently supported. Adding an auto feature instead." ]
+    "warnings" : [ ]
   }
 }

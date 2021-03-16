@@ -24,53 +24,37 @@ import java.io.IOException;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
-public class DatetimeFeatureTest {
+public class TextWord2VecFeatureTest {
 
     @Test
-    public void shouldCreateDatetimeFeatureConfigWithSuppliedValues() throws IOException {
+    public void shouldCreateWord2VecFeatureConfigWithSuppliedValues() throws IOException {
         runTest("t1.json");
     }
 
     @Test
-    public void shouldCreateDatetimeFeatureConfigWithFewerDatetimePartsValues() throws IOException {
+    public void shouldUseDefaultLanguageIfLanguageIsMissing() throws IOException {
         runTest("t2.json");
     }
 
     @Test
-    public void shouldCreateDatetimeFeatureConfigForAllDatetimePartsIfDatetimePartsIsMissing() throws IOException {
+    public void shouldUseDefaultLanguageIfLanguageIsEmpty() throws IOException {
         runTest("t3.json");
     }
 
     @Test
-    public void shouldCreateDatetimeFeatureConfigForAllDatetimePartsIfDatetimePartsIsEmpty() throws IOException {
+    public void shouldAddWarningIfUnsupportedLanguageIsSupplied() throws IOException {
         runTest("t4.json");
     }
 
     @Test
-    public void shouldThrowErrorIfInvalidDatetimePart() throws IOException {
-        try {
-            runTest("t5.json");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
-            assertEquals("Invalid 'datetime_parts' value for datetime feature (Label: Person, Property: created): 'invalid'. Valid values are: 'hour', 'weekday', 'month', 'year'.", e.getMessage());
-        }
+    public void shouldSupportOldWord2VecFeatureName() throws IOException {
+        runTest("t5.json");
     }
 
     @Test
-    public void shouldCreateAutoFeatureConfigForMultiValueDateProperty() throws IOException {
+    public void shouldCreateAutoFeatureConfigForMultiValueProperty() throws IOException {
         runTest("t6.json");
-    }
-
-    @Test
-    public void shouldAutoInferDatetimeFeatureForDateProperty() throws IOException {
-        runTest("t7.json");
-    }
-
-    @Test
-    public void shouldAutoInferAutoFeatureForMultiValueDateProperty() throws IOException {
-        runTest("t8.json");
     }
 
     private void runTest(String jsonFile) throws IOException {
@@ -93,5 +77,4 @@ public class DatetimeFeatureTest {
 
         assertEquals(Output.format(expectedTrainingDataConfig), Output.format(output.allOutput()));
     }
-
 }
