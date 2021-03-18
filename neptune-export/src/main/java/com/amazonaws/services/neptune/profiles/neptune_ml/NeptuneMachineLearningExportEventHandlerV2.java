@@ -34,9 +34,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExportServiceEventHandler {
+import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_ML_PROFILE_NAME;
 
-    public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
+public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExportServiceEventHandler {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandlerV2.class);
 

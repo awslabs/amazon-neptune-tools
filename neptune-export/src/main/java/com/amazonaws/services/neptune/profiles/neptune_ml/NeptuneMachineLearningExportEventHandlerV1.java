@@ -46,9 +46,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExportServiceEventHandler {
+import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_ML_PROFILE_NAME;
 
-    public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
+public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExportServiceEventHandler {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandlerV1.class);
 
@@ -205,7 +205,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
 
     private S3ObjectInfo calculateOutputS3Path(File outputDirectory) {
         S3ObjectInfo outputBaseS3ObjectInfo = new S3ObjectInfo(outputS3Path);
-        if (createExportSubdirectory){
+        if (createExportSubdirectory) {
             return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
         } else {
             return outputBaseS3ObjectInfo;

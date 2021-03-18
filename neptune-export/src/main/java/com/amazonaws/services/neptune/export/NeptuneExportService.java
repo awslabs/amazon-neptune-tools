@@ -34,13 +34,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1.NEPTUNE_ML_PROFILE_NAME;
 
 public class NeptuneExportService {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneExportService.class);
 
     public static final List<Tag> NEPTUNE_EXPORT_TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
+    public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
 
     private final String cmd;
     private final String localOutputPath;
