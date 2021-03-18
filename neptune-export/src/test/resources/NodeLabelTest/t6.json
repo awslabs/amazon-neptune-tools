@@ -1,0 +1,27 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "credit",
+        "dataType" : "Integer",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "label": {
+    "targets": [
+      {
+        "node": "Person",
+        "property": "credit",
+        "type": "unknown",
+        "split_rate": [0.7,0.1,0.2]
+      }
+    ]
+  },
+  "config": {
+  }
+}

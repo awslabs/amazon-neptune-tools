@@ -10,30 +10,39 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.common.config;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
+
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
+import com.amazonaws.services.neptune.propertygraph.Label;
 
 import java.util.Collection;
-import java.util.Optional;
 
-public class LabelConfig {
+public class LabelConfigV2 {
+
+    private final Label nodeType;
     private final String labelType;
     private final String property;
     private final Collection<Double> splitRates;
+    private final Separator separator;
 
-    public LabelConfig(String labelType, String property, Collection<Double> splitRates) {
+    public LabelConfigV2(Label nodeType,
+                         String labelType,
+                         String property,
+                         Collection<Double> splitRates,
+                         Separator separator) {
+        this.nodeType = nodeType;
         this.labelType = labelType;
         this.property = property;
         this.splitRates = splitRates;
+        this.separator = separator;
+    }
 
-        if (this.splitRates.size() != 3) {
-            throw new IllegalArgumentException("split rates must contain 3 values");
-        }
+    public Label label() {
+        return nodeType;
+    }
 
-        Optional<Double> sum = this.splitRates.stream().reduce(Double::sum);
-
-        if (sum.orElse(0.0) != 1.0) {
-            throw new IllegalArgumentException("split rate values must add up to 1.0");
-        }
+    public String type() {
+        return labelType;
     }
 
     public String property() {
@@ -44,7 +53,7 @@ public class LabelConfig {
         return splitRates;
     }
 
-    public String labelType() {
-        return labelType;
+    public Separator separator() {
+        return separator;
     }
 }

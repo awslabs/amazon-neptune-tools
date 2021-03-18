@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.LabelConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.LabelConfigV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Norm;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
@@ -22,7 +22,6 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.core.JsonGenerator;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -128,7 +127,7 @@ public class TrainingDataConfigurationFileWriterV1 {
 
     }
 
-    private void writeNodeLabel(LabelSchema labelSchema, LabelConfig labelConfig) throws IOException {
+    private void writeNodeLabel(LabelSchema labelSchema, LabelConfigV1 labelConfig) throws IOException {
 
         Label label = labelSchema.label();
 
@@ -157,7 +156,7 @@ public class TrainingDataConfigurationFileWriterV1 {
         }
     }
 
-    private void writeSplitRates(LabelConfig labelConfig) throws IOException {
+    private void writeSplitRates(LabelConfigV1 labelConfig) throws IOException {
         generator.writeArrayFieldStart("split_rate");
         for (Double rate : labelConfig.splitRates()) {
             generator.writeNumber(rate);
@@ -519,7 +518,7 @@ public class TrainingDataConfigurationFileWriterV1 {
 
     }
 
-    private void writeEdgeLabel(LabelSchema labelSchema, LabelConfig labelConfig) throws IOException {
+    private void writeEdgeLabel(LabelSchema labelSchema, LabelConfigV1 labelConfig) throws IOException {
 
         Label label = labelSchema.label();
         if (labelSchema.containsProperty(labelConfig.property())) {

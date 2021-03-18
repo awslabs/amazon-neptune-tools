@@ -35,15 +35,13 @@
         "separator" : ",",
         "source" : [ "~from", "Person" ],
         "relation" : [ "", "follows" ],
-        "dest" : [ "~to", "Person" ],
-        "features" : [ ]
+        "dest" : [ "~to", "Person" ]
       }, {
         "file_name" : "edges/follows-2.csv",
         "separator" : ",",
         "source" : [ "~from", "Person" ],
         "relation" : [ "", "follows" ],
-        "dest" : [ "~to", "Person" ],
-        "features" : [ ]
+        "dest" : [ "~to", "Person" ]
       } ]
     },
     "warnings" : [ ]

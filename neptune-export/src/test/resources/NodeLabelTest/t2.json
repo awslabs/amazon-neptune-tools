@@ -4,20 +4,21 @@
     "nodes" : [ {
       "label" : "Person",
       "properties" : [ {
-        "property" : "age",
-        "dataType" : "String",
-        "isMultiValue" : false,
+        "property" : "credit",
+        "dataType" : "Integer",
+        "isMultiValue" : true,
         "isNullable" : false
       }],
       "files" : [ "person-1.csv" ]
     } ]
   },
-  "feature": {
-    "features": [
+  "label": {
+    "targets": [
       {
         "node": "Person",
-        "property": "height",
-        "type": "numerical"
+        "property": "credit",
+        "type": "regression",
+        "split_rate": [0.7,0.1,0.2]
       }
     ]
   },
@@ -29,12 +30,15 @@
         "file_name" : "nodes/person-1.csv",
         "separator" : ",",
         "node_type" : [ "~id", "Person" ],
-        "features" : [ {
-          "feature" : [ "age", "age", "auto" ]
+        "features" : [ ],
+        "labels" : [ {
+          "label" : [ "credit", "regression" ],
+          "split_rate" : [ 0.7, 0.1, 0.2 ],
+          "separator" : ";"
         } ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "Unable to add numerical feature override (Label: Person, Property: height). Property is missing, or is being used to label the node." ]
+    "warnings" : [ ]
   }
 }

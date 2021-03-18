@@ -10,19 +10,21 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Arrays;
 
-public class ParseLabelType {
+public class ParseLabelTypeV1 {
 
     private final String prefix;
     private final JsonNode json;
     private final ParsingContext context;
 
-    public ParseLabelType(String prefix, JsonNode json, ParsingContext context) {
+    public ParseLabelTypeV1(String prefix, JsonNode json, ParsingContext context) {
         this.prefix = prefix;
         this.json = json;
         this.context = context;

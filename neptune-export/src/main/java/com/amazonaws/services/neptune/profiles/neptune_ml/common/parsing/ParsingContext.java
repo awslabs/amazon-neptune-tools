@@ -29,7 +29,7 @@ public class ParsingContext {
     }
 
     public ParsingContext(String description) {
-        this(description, null, null);
+        this(description, null, Collections.emptyList());
     }
 
     public ParsingContext withLabel(Label label) {
@@ -47,11 +47,11 @@ public class ParsingContext {
     @Override
     public String toString() {
         if (label != null && properties.size() == 1) {
-            return String.format("%s (Label: %s, Property: %s)", description, label.labelsAsString(), properties.iterator().next());
+            return String.format("%s (Label: %s, Property: %s)", description, label.allLabelsAsArrayString(), properties.iterator().next());
         } else if (label != null && !properties.isEmpty()) {
-            return String.format("%s (Label: %s, Properties: [%s])", description, label.labelsAsString(), String.join(", ", properties));
+            return String.format("%s (Label: %s, Properties: [%s])", description, label.allLabelsAsArrayString(), String.join(", ", properties));
         } else if (label != null) {
-            return String.format("%s (Label: %s)", description, label.labelsAsString());
+            return String.format("%s (Label: %s)", description, label.allLabelsAsArrayString());
         } else {
             return description;
         }

@@ -12,12 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.LabelConfig;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseLabels;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseSplitRate;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseFeaturesV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseLabelsV2;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class TrainingDataWriterConfigV2 {
 
-    public static final Collection<Double> DEFAULT_SPLIT_RATES_V2 = Arrays.asList(0.8, 0.2, 0.0);
+    public static final Collection<Double> DEFAULT_SPLIT_RATES_V2 = Arrays.asList(0.9, 0.1, 0.0);
     private static final String DEFAULT_NAME_V2 = "training-data-configuration";
 
     public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json) {
@@ -56,8 +55,8 @@ public class TrainingDataWriterConfigV2 {
     private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index) {
 
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES_V2, new ParsingContext("config")).parseSplitRates();
-        Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
-        Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
+        Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
+        Collection<LabelConfigV2> edgeClassLabels = new ArrayList<>();
         Collection<TfIdfConfigV2> tfIdfNodeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeNodeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
@@ -77,10 +76,10 @@ public class TrainingDataWriterConfigV2 {
             } else {
                 labelNodes.add(labels);
             }
-            ParseLabels parseLabels = new ParseLabels(labelNodes, defaultSplitRates);
+            ParseLabelsV2 parseLabels = new ParseLabelsV2(labelNodes, defaultSplitRates);
             parseLabels.validate();
-            nodeClassLabels.putAll(parseLabels.parseNodeClassLabels());
-            edgeClassLabels.putAll(parseLabels.parseEdgeClassLabels());
+            nodeClassLabels.addAll(parseLabels.parseNodeClassLabels());
+            edgeClassLabels.addAll(parseLabels.parseEdgeClassLabels());
         }
 
         if (json.has("features")) {
@@ -120,8 +119,8 @@ public class TrainingDataWriterConfigV2 {
     }
 
     private final String name;
-    private final Map<Label, LabelConfig> nodeClassLabels;
-    private final Map<Label, LabelConfig> edgeClassLabels;
+    private final Collection<LabelConfigV2> nodeClassLabels;
+    private final Collection<LabelConfigV2> edgeClassLabels;
     private final Collection<TfIdfConfigV2> tfIdfNodeFeatures;
     private final Collection<DatetimeConfigV2> datetimeNodeFeatures;
     private final Collection<Word2VecConfig> word2VecNodeFeatures;
@@ -131,8 +130,8 @@ public class TrainingDataWriterConfigV2 {
 
     public TrainingDataWriterConfigV2() {
         this(DEFAULT_NAME_V2,
-                Collections.emptyMap(),
-                Collections.emptyMap(),
+                Collections.emptyList(),
+                Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -142,8 +141,8 @@ public class TrainingDataWriterConfigV2 {
     }
 
     public TrainingDataWriterConfigV2(String name,
-                                      Map<Label, LabelConfig> nodeClassLabels,
-                                      Map<Label, LabelConfig> edgeClassLabels,
+                                      Collection<LabelConfigV2> nodeClassLabels,
+                                      Collection<LabelConfigV2> edgeClassLabels,
                                       Collection<TfIdfConfigV2> tfIdfNodeFeatures,
                                       Collection<DatetimeConfigV2> datetimeNodeFeatures,
                                       Collection<Word2VecConfig> word2VecNodeFeatures,
@@ -162,7 +161,7 @@ public class TrainingDataWriterConfigV2 {
     }
 
     public boolean allowAutoInferNodeFeature(Label nodeType, String property){
-        if (isNodeClassificationPropertyForNode(nodeType, property)) {
+        if (hasNodeClassificationSpecificationForNodeProperty(nodeType, property)) {
             return false;
         }
         if (hasTfIdfSpecification(nodeType, property)){
@@ -183,46 +182,28 @@ public class TrainingDataWriterConfigV2 {
         return true;
     }
 
-    public boolean allowAutoInferEdgeFeature(Label edgeType, String property){
-        if (isEdgeClassificationPropertyForEdge(edgeType, property)) {
-            return false;
-        }
-        if (hasEdgeFeatureOverrideForEdgeProperty(edgeType, property)){
-            return false;
-        }
-        return true;
+    public boolean hasNodeClassificationSpecificationsForNode(Label nodeType) {
+        return !getNodeClassificationSpecificationsForNode(nodeType).isEmpty();
     }
 
-    public boolean hasNodeClassificationSpecificationForNode(Label nodeType) {
-        return nodeClassLabels.containsKey(nodeType);
+    public Collection<LabelConfigV2> getNodeClassificationSpecificationsForNode(Label nodeType) {
+        return nodeClassLabels.stream().filter(c -> c.label().equals(nodeType)).collect(Collectors.toList());
     }
 
-    public LabelConfig getNodeClassificationPropertyForNode(Label nodeType) {
-        return nodeClassLabels.get(nodeType);
+    public boolean hasNodeClassificationSpecificationForNodeProperty(Label nodeType, String property) {
+        return getNodeClassificationSpecificationsForNode(nodeType).stream().anyMatch(s -> s.property().equals(property));
     }
 
-    public boolean isNodeClassificationPropertyForNode(Label nodeType, String property) {
-        if (hasNodeClassificationSpecificationForNode(nodeType)) {
-            return getNodeClassificationPropertyForNode(nodeType).property().equals(property);
-        } else {
-            return false;
-        }
+    public boolean hasEdgeClassificationSpecificationsForEdge(Label edgeType) {
+        return !getEdgeClassificationSpecificationsForEdge(edgeType).isEmpty();
     }
 
-    public boolean hasEdgeClassificationSpecificationForEdge(Label edgeType) {
-        return edgeClassLabels.containsKey(edgeType);
+    public Collection<LabelConfigV2> getEdgeClassificationSpecificationsForEdge(Label edgeType) {
+        return edgeClassLabels.stream().filter(c -> c.label().equals(edgeType)).collect(Collectors.toList());
     }
 
-    public LabelConfig getEdgeClassificationPropertyForEdge(Label nodeType) {
-        return edgeClassLabels.get(nodeType);
-    }
-
-    public boolean isEdgeClassificationPropertyForEdge(Label edgeType, String property) {
-        if (hasEdgeClassificationSpecificationForEdge(edgeType)) {
-            return getEdgeClassificationPropertyForEdge(edgeType).property().equals(property);
-        } else {
-            return false;
-        }
+    public boolean hasEdgeClassificationPropertyForEdge(Label edgeType, String property) {
+        return getEdgeClassificationSpecificationsForEdge(edgeType).stream().anyMatch(s -> s.property().equals(property));
     }
 
     public boolean hasTfIdfSpecification(Label nodeType, String property) {

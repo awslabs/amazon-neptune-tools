@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ErrorMessageHelper {
@@ -34,5 +35,13 @@ public class ErrorMessageHelper {
 
     public static String quoteList(Collection<String> values) {
         return values.stream().map(s -> String.format("'%s'", s)).collect(Collectors.joining(", "));
+    }
+
+    public static String quoteList(List<Enum<?>> enums) {
+        return quoteList(enumNames(enums));
+    }
+
+    public static Collection<String> enumNames(List<Enum<?>> enums) {
+        return enums.stream().map(Enum::name).collect(Collectors.toList());
     }
 }

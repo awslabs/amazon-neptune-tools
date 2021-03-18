@@ -4,7 +4,7 @@
     "nodes" : [ {
       "label" : "Person",
       "properties" : [ {
-        "property" : "age",
+        "property" : "bio",
         "dataType" : "String",
         "isMultiValue" : false,
         "isNullable" : false
@@ -12,12 +12,12 @@
       "files" : [ "person-1.csv" ]
     } ]
   },
-  "feature": {
-    "features": [
+  "label": {
+    "targets": [
       {
         "node": "Person",
-        "property": "height",
-        "type": "numerical"
+        "property": "credit",
+        "type": "regression"
       }
     ]
   },
@@ -30,11 +30,12 @@
         "separator" : ",",
         "node_type" : [ "~id", "Person" ],
         "features" : [ {
-          "feature" : [ "age", "age", "auto" ]
-        } ]
+          "feature" : [ "bio", "bio", "auto" ]
+        } ],
+        "labels" : [ ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "Unable to add numerical feature override (Label: Person, Property: height). Property is missing, or is being used to label the node." ]
+    "warnings" : [ "Unrecognized node classification property (Label: Person, Property: credit)." ]
   }
 }

@@ -12,9 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1.config;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.LabelConfig;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseLabels;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing.ParseLabelsV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseSplitRate;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing.*;
@@ -54,8 +53,8 @@ public class TrainingDataWriterConfigV1 {
     }
 
     private static TrainingDataWriterConfigV1 getTrainingJobWriterConfig(JsonNode json, int index) {
-        Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
-        Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
+        Map<Label, LabelConfigV1> nodeClassLabels = new HashMap<>();
+        Map<Label, LabelConfigV1> edgeClassLabels = new HashMap<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfigV1> numericalBucketFeatures = new ArrayList<>();
         Collection<FeatureOverrideConfigV1> nodeFeatureOverrides = new ArrayList<>();
@@ -75,7 +74,7 @@ public class TrainingDataWriterConfigV1 {
             } else {
                 labelNodes.add(labels);
             }
-            ParseLabels parseLabels = new ParseLabels(labelNodes, defaultSplitRates);
+            ParseLabelsV1 parseLabels = new ParseLabelsV1(labelNodes, defaultSplitRates);
             parseLabels.validate();
             nodeClassLabels.putAll(parseLabels.parseNodeClassLabels());
             edgeClassLabels.putAll(parseLabels.parseEdgeClassLabels());
@@ -108,8 +107,8 @@ public class TrainingDataWriterConfigV1 {
     }
 
     private final String name;
-    private final Map<Label, LabelConfig> nodeClassLabels;
-    private final Map<Label, LabelConfig> edgeClassLabels;
+    private final Map<Label, LabelConfigV1> nodeClassLabels;
+    private final Map<Label, LabelConfigV1> edgeClassLabels;
     private final Collection<Word2VecConfig> word2VecNodeFeatures;
     private final Collection<NumericalBucketFeatureConfigV1> numericalBucketFeatures;
     private final Collection<FeatureOverrideConfigV1> nodeFeatureOverrides;
@@ -125,8 +124,8 @@ public class TrainingDataWriterConfigV1 {
                 Collections.emptyList());
     }
 
-    public TrainingDataWriterConfigV1(String name, Map<Label, LabelConfig> nodeClassLabels,
-                                      Map<Label, LabelConfig> edgeClassLabels,
+    public TrainingDataWriterConfigV1(String name, Map<Label, LabelConfigV1> nodeClassLabels,
+                                      Map<Label, LabelConfigV1> edgeClassLabels,
                                       Collection<Word2VecConfig> word2VecNodeFeatures,
                                       Collection<NumericalBucketFeatureConfigV1> numericalBucketFeatures,
                                       Collection<FeatureOverrideConfigV1> nodeFeatureOverrides,
@@ -144,7 +143,7 @@ public class TrainingDataWriterConfigV1 {
         return nodeClassLabels.containsKey(nodeType);
     }
 
-    public LabelConfig getNodeClassificationPropertyForNode(Label nodeType) {
+    public LabelConfigV1 getNodeClassificationPropertyForNode(Label nodeType) {
         return nodeClassLabels.get(nodeType);
     }
 
@@ -160,7 +159,7 @@ public class TrainingDataWriterConfigV1 {
         return edgeClassLabels.containsKey(edgeType);
     }
 
-    public LabelConfig getEdgeClassificationPropertyForEdge(Label nodeType) {
+    public LabelConfigV1 getEdgeClassificationPropertyForEdge(Label nodeType) {
         return edgeClassLabels.get(nodeType);
     }
 

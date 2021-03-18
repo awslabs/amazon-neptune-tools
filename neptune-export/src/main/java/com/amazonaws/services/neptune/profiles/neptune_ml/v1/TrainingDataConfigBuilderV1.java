@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.LabelConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.LabelConfigV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Range;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.FeatureOverrideConfigV1;
@@ -28,8 +28,8 @@ public class TrainingDataConfigBuilderV1 {
         return new TrainingDataConfigBuilderV1();
     }
 
-    Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
-    Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
+    Map<Label, LabelConfigV1> nodeClassLabels = new HashMap<>();
+    Map<Label, LabelConfigV1> edgeClassLabels = new HashMap<>();
     Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
     Collection<NumericalBucketFeatureConfigV1> numericalBucketFeatures = new ArrayList<>();
     Collection<FeatureOverrideConfigV1> nodeFeatureOverrides = new ArrayList<>();
@@ -37,12 +37,12 @@ public class TrainingDataConfigBuilderV1 {
     Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
 
     public TrainingDataConfigBuilderV1 withNodeClassLabel(Label label, String column) {
-        nodeClassLabels.put(label, new LabelConfig("node_class_label", column, splitRates));
+        nodeClassLabels.put(label, new LabelConfigV1("node_class_label", column, splitRates));
         return this;
     }
 
     public TrainingDataConfigBuilderV1 withEdgeClassLabel(Label label, String column) {
-        edgeClassLabels.put(label, new LabelConfig("edge_class_label", column, splitRates));
+        edgeClassLabels.put(label, new LabelConfigV1("edge_class_label", column, splitRates));
         return this;
     }
 

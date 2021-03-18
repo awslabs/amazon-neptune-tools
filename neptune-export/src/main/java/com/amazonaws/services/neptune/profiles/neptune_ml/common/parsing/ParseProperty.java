@@ -37,6 +37,14 @@ public class ParseProperty {
         }
     }
 
+    public String parseNullableSingleProperty() {
+        if (json.has("property") && json.get("property").isTextual()) {
+            return json.get("property").textValue();
+        } else {
+            return "";
+        }
+    }
+
     public Collection<String> parseMultipleProperties() {
         if (json.has("property") && json.get("property").isTextual()) {
             return Collections.singletonList(json.get("property").textValue());

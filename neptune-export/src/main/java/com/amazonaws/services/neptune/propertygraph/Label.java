@@ -167,6 +167,12 @@ public class Label {
         return fullyQualifiedLabel;
     }
 
+    public String allLabelsAsArrayString(){
+        return hasFromLabels() || hasToLabels() ?
+                String.format("[%s, %s, %s]", fromLabelsAsString(), labelsAsString(), toLabelsAsString()):
+                labelsAsString();
+    }
+
     public boolean hasFromAndToLabels() {
         return !fromLabels.isEmpty() && !toLabels.isEmpty();
     }

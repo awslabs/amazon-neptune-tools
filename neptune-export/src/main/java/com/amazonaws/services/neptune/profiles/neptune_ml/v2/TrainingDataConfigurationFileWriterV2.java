@@ -15,11 +15,13 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -124,10 +126,8 @@ public class TrainingDataConfigurationFileWriterV2 {
                 writeCommaSeparator();
                 writeNodeType(labelSchema);
                 writeNodeFeatures(labelSchema);
+                writeNodeLabels(labelSchema);
 
-//                if (config.hasNodeClassificationSpecificationForNode(nodeLabel)) {
-//                    writeNodeLabel(labelSchema, config.getNodeClassificationPropertyForNode(nodeLabel));
-//                }
                 generator.writeEndObject();
             }
         }
@@ -154,11 +154,8 @@ public class TrainingDataConfigurationFileWriterV2 {
                 writeFileName(graphElementType, outputId);
                 writeCommaSeparator();
                 writeEdgeType(labelSchema);
-                writeEdgeFeatures(labelSchema);
+                writeEdgeLabels(labelSchema);
 
-//                if (config.hasNodeClassificationSpecificationForNode(nodeLabel)) {
-//                    writeNodeLabel(labelSchema, config.getNodeClassificationPropertyForNode(nodeLabel));
-//                }
                 generator.writeEndObject();
             }
         }
@@ -201,6 +198,9 @@ public class TrainingDataConfigurationFileWriterV2 {
 
         for (PropertySchema propertySchema : propertySchemas) {
             String column = propertySchema.nameWithoutDataType();
+            if (config.hasNodeClassificationSpecificationForNodeProperty(label, column)) {
+                continue;
+            }
             if (config.allowAutoInferNodeFeature(label, column)) {
                 writeAutoInferredNodeFeature(propertySchema);
             }
@@ -225,133 +225,103 @@ public class TrainingDataConfigurationFileWriterV2 {
         generator.writeEndArray();
     }
 
-    private void writeEdgeFeatures(LabelSchema labelSchema) throws IOException {
-
+    private void writeNodeLabels(LabelSchema labelSchema) throws IOException {
         Label label = labelSchema.label();
-        Collection<PropertySchema> propertySchemas = labelSchema.propertySchemas();
 
-        generator.writeArrayFieldStart("features");
-
-        for (PropertySchema propertySchema : propertySchemas) {
-            String column = propertySchema.nameWithoutDataType();
-            if (config.allowAutoInferEdgeFeature(label, column)) {
-                writeAutoInferredEdgeFeature(propertySchema);
+        if (config.hasNodeClassificationSpecificationsForNode(label)) {
+            generator.writeArrayFieldStart("labels");
+            for (LabelConfigV2 labelConfig : config.getNodeClassificationSpecificationsForNode(label)) {
+                if (labelSchema.containsProperty(labelConfig.property())) {
+                    PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.property());
+                    writeLabel(propertySchema, labelConfig);
+                } else {
+                    ParsingContext context = new ParsingContext("node classification property").withLabel(label).withProperty(labelConfig.property());
+                    warnings.add(String.format("Unrecognized %s.", context));
+                }
             }
-        }
 
-        for (FeatureOverrideConfigV2 featureOverride : config.getEdgeFeatureOverrides(label)) {
-            writeEdgeFeatureOverride(labelSchema, featureOverride);
+            generator.writeEndArray();
         }
+    }
 
+    private void writeLabel(PropertySchema propertySchema, LabelConfigV2 labelConfig) throws IOException {
+        generator.writeStartObject();
+        generator.writeArrayFieldStart("label");
+        generator.writeString(labelConfig.property());
+        generator.writeString(labelConfig.type());
+        generator.writeEndArray();
+        writeSplitRates(labelConfig);
+        labelConfig.separator().writeTo(generator, propertySchema.isMultiValue());
+        generator.writeEndObject();
+    }
+
+    private void writeEdgeLabels(LabelSchema labelSchema) throws IOException {
+        Label label = labelSchema.label();
+
+        if (config.hasEdgeClassificationSpecificationsForEdge(label)) {
+            generator.writeArrayFieldStart("labels");
+            for (LabelConfigV2 labelConfig : config.getEdgeClassificationSpecificationsForEdge(label)) {
+                if (StringUtils.isEmpty(labelConfig.property())){
+                    writeLabel(new PropertySchema(""), labelConfig);
+                }
+                else if (labelSchema.containsProperty(labelConfig.property())) {
+                    PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.property());
+                    writeLabel(propertySchema, labelConfig);
+                } else {
+                    ParsingContext context = new ParsingContext("edge classification property").withLabel(label).withProperty(labelConfig.property());
+                    warnings.add(String.format("Unrecognized %s.", context));
+                }
+            }
+
+            generator.writeEndArray();
+        }
+    }
+
+    private void writeSplitRates(LabelConfigV2 labelConfig) throws IOException {
+        generator.writeArrayFieldStart("split_rate");
+        for (Double rate : labelConfig.splitRates()) {
+            generator.writeNumber(rate);
+        }
         generator.writeEndArray();
     }
 
     private void writeNodeFeatureOverride(LabelSchema labelSchema, FeatureOverrideConfigV2 featureOverride) throws IOException {
 
-        Label label = labelSchema.label();
-        Collection<PropertySchema> propertySchemas = labelSchema.propertySchemas();
-
-        if (featureOverride.isSinglePropertyOverride()) {
-            PropertySchema propertySchema = propertySchemas.stream()
-                    .filter(p -> p.nameWithoutDataType().equals(featureOverride.firstProperty()))
-                    .findFirst()
-                    .orElse(null);
-            if (propertySchema == null) {
-                warnings.add(String.format("Unable to add node feature: Node of type '%s' does not contain property '%s'.",
-                        label.fullyQualifiedLabel(),
-                        featureOverride.firstProperty()));
-            } else {
-                FeatureTypeV2 featureType = featureOverride.featureType();
-                if (FeatureTypeV2.category == featureType) {
-                    writeCategoricalNodeFeature(Collections.singletonList(propertySchema), featureOverride);
-                } else if (FeatureTypeV2.numerical == featureType) {
-                    writeNumericalNodeFeature(Collections.singletonList(propertySchema), featureOverride);
-                } else if (FeatureTypeV2.auto == featureType) {
-                    writeAutoFeature(Collections.singletonList(propertySchema), featureOverride);
-                } else if (FeatureTypeV2.none == featureType) {
-                    // Do nothing
-                } else {
-                    warnings.add(String.format("Unsupported feature type override for node: %s.", featureType.name()));
-                }
-            }
-        } else {
-            boolean allPropertiesPresent = featureOverride.properties().stream()
-                    .allMatch(p ->
-                            propertySchemas.stream()
-                                    .anyMatch(s -> s.nameWithoutDataType().equals(p)));
-            if (!allPropertiesPresent) {
-                warnings.add(String.format("Unable to add multi-property node feature: Node of type '%s' does not contain one or more of the following properties: %s.",
-                        label.fullyQualifiedLabel(),
-                        featureOverride.properties().stream()
-                                .map(s -> String.format("'%s'", s))
-                                .collect(Collectors.joining(", "))));
-            } else {
-                FeatureTypeV2 featureType = featureOverride.featureType();
-                List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
-                        .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
-                        .collect(Collectors.toList());
-                if (FeatureTypeV2.category == featureType) {
-                    writeCategoricalNodeFeature(multiPropertySchemas, featureOverride);
-                } else if (FeatureTypeV2.numerical == featureType) {
-                    writeNumericalNodeFeature(multiPropertySchemas, featureOverride);
-                } else if (FeatureTypeV2.auto == featureType) {
-                    writeAutoInferredNodeFeature(multiPropertySchemas);
-                } else {
-                    warnings.add(String.format("Unsupported multi-property feature type override for node: %s.", featureType.name()));
-                }
-            }
-        }
-    }
-
-    private void writeEdgeFeatureOverride(LabelSchema labelSchema, FeatureOverrideConfigV2 featureOverride) throws IOException {
+        FeatureTypeV2 featureType = featureOverride.featureType();
 
         Label label = labelSchema.label();
-        Collection<PropertySchema> propertySchemas = labelSchema.propertySchemas();
 
-        if (featureOverride.isSinglePropertyOverride()) {
-            PropertySchema propertySchema = propertySchemas.stream()
-                    .filter(p -> p.nameWithoutDataType().equals(featureOverride.firstProperty()))
-                    .findFirst()
-                    .orElse(null);
-            if (propertySchema == null) {
-                warnings.add(String.format("Unable to add edge feature: Edge of type '%s' does not contain property '%s'.",
-                        label.fullyQualifiedLabel(),
-                        featureOverride.firstProperty()));
-            } else {
-                FeatureTypeV2 featureType = featureOverride.featureType();
-                if (FeatureTypeV2.auto == featureType) {
-                    writeAutoFeature(Collections.singletonList(propertySchema), featureOverride);
-                } else if (FeatureTypeV2.numerical == featureType) {
-                    writeNumericalEdgeFeature(Collections.singletonList(propertySchema), featureOverride);
-                } else {
-                    warnings.add(String.format("Unsupported feature type override for edge: %s.", featureType.name()));
-                }
-            }
-        } else {
-            boolean allPropertiesPresent = featureOverride.properties().stream()
-                    .allMatch(p ->
-                            propertySchemas.stream()
-                                    .anyMatch(s -> s.nameWithoutDataType().equals(p)));
-            if (!allPropertiesPresent) {
-                warnings.add(String.format("Unable to add multi-property edge feature: Node of type '%s' does not contain one or more of the following properties: %s.",
-                        label.fullyQualifiedLabel(),
-                        featureOverride.properties().stream()
-                                .map(s -> String.format("'%s'", s))
-                                .collect(Collectors.joining(", "))));
-            } else {
-                FeatureTypeV2 featureType = featureOverride.featureType();
-                List<PropertySchema> multiPropertySchemas = propertySchemas.stream()
-                        .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()))
-                        .collect(Collectors.toList());
-                if (FeatureTypeV2.numerical == featureType) {
-                    writeNumericalEdgeFeature(multiPropertySchemas, featureOverride);
-                } else if (FeatureTypeV2.auto == featureType) {
-                    writeAutoInferredEdgeFeature(multiPropertySchemas);
-                } else {
-                    warnings.add(String.format("Unsupported multi-property feature type override for edge: %s.", featureType.name()));
-                }
-            }
+        Collection<PropertySchema> propertySchemas = labelSchema.propertySchemas().stream()
+                .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()) &&
+                        !config.hasNodeClassificationSpecificationForNodeProperty(label, p.nameWithoutDataType()))
+                .collect(Collectors.toList());
+
+        Collection<String> propertyNames = propertySchemas.stream()
+                .map(PropertySchema::nameWithoutDataType)
+                .collect(Collectors.toList());
+
+        Collection<String> missingProperties = featureOverride.properties().stream()
+                .filter(p -> !propertyNames.contains(p))
+                .collect(Collectors.toList());
+
+        for (String missingProperty : missingProperties) {
+            ParsingContext context = new ParsingContext(featureType.name() + " feature override").withLabel(label).withProperty(missingProperty);
+            warnings.add(String.format("Unable to add %s. Property is missing, or is being used to label the node.", context));
         }
+
+        if (FeatureTypeV2.category == featureType) {
+            writeCategoricalNodeFeature(propertySchemas, featureOverride);
+        } else if (FeatureTypeV2.numerical == featureType) {
+            writeNumericalNodeFeature(propertySchemas, featureOverride);
+        } else if (FeatureTypeV2.auto == featureType) {
+            writeAutoFeature(propertySchemas, featureOverride);
+        } else if (FeatureTypeV2.none == featureType) {
+            // Do nothing
+        } else {
+            warnings.add(String.format("Unsupported feature type override for node: %s.", featureType.name()));
+        }
+
+
     }
 
     private void writeAutoInferredNodeFeature(Collection<PropertySchema> propertySchemas) throws IOException {
@@ -393,17 +363,6 @@ public class TrainingDataConfigurationFileWriterV2 {
                             DatetimePartV2.hour));
         }
     }
-
-    private void writeAutoInferredEdgeFeature(Collection<PropertySchema> propertySchemas) throws IOException {
-        for (PropertySchema propertySchema : propertySchemas) {
-            writeAutoFeature(Collections.singletonList(propertySchema), ImputerTypeV2.none);
-        }
-    }
-
-    private void writeAutoInferredEdgeFeature(PropertySchema propertySchema) throws IOException {
-        writeAutoFeature(Collections.singletonList(propertySchema), ImputerTypeV2.none);
-    }
-
 
     private void writeFeature(PropertySchema propertySchema, FeatureTypeV2 featureType) throws IOException {
         generator.writeArrayFieldStart("feature");
@@ -578,24 +537,6 @@ public class TrainingDataConfigurationFileWriterV2 {
 
             if (imputer != ImputerTypeV2.none) {
                 generator.writeStringField("imputer", imputer.formattedName());
-            }
-
-            generator.writeEndObject();
-        }
-    }
-
-    private void writeNumericalEdgeFeature(Collection<PropertySchema> propertySchemas, FeatureOverrideConfigV2 featureOverride) throws IOException {
-
-        for (PropertySchema propertySchema : propertySchemas) {
-
-            generator.writeStartObject();
-
-            writeFeature(propertySchema, FeatureTypeV2.numerical);
-
-            generator.writeStringField("norm", featureOverride.norm().formattedName());
-
-            if (featureOverride.imputer() != ImputerTypeV2.none) {
-                generator.writeStringField("imputer", featureOverride.imputer().formattedName());
             }
 
             generator.writeEndObject();

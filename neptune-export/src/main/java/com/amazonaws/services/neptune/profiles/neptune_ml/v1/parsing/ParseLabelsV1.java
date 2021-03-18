@@ -10,9 +10,10 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.LabelConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.LabelConfigV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -20,43 +21,43 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParseLabels {
+public class ParseLabelsV1 {
 
     private final Collection<JsonNode> nodes;
     private final Collection<Double> defaultSplitRates;
 
-    public ParseLabels(Collection<JsonNode> nodes, Collection<Double> defaultSplitRates) {
+    public ParseLabelsV1(Collection<JsonNode> nodes, Collection<Double> defaultSplitRates) {
         this.nodes = nodes;
         this.defaultSplitRates = defaultSplitRates;
     }
 
-    public Map<Label, LabelConfig> parseNodeClassLabels() {
-        Map<Label, LabelConfig> nodeClassLabels = new HashMap<>();
+    public Map<Label, LabelConfigV1> parseNodeClassLabels() {
+        Map<Label, LabelConfigV1> nodeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             if (isNodeClass(node)) {
                 ParsingContext context = new ParsingContext("node label");
                 Label nodeType = new ParseNodeType(node, context).parseNodeType();
                 String property = new ParseProperty(node, context.withLabel(nodeType)).parseSingleProperty();
                 ParsingContext propertyContext = context.withLabel(nodeType).withProperty(property);
-                String labelType = new ParseLabelType("node", node, propertyContext).parseLabel();
+                String labelType = new ParseLabelTypeV1("node", node, propertyContext).parseLabel();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates, propertyContext).parseSplitRates();
-                nodeClassLabels.put(nodeType, new LabelConfig(labelType, property, splitRates));
+                nodeClassLabels.put(nodeType, new LabelConfigV1(labelType, property, splitRates));
             }
         }
         return nodeClassLabels;
     }
 
-    public Map<Label, LabelConfig> parseEdgeClassLabels() {
-        Map<Label, LabelConfig> edgeClassLabels = new HashMap<>();
+    public Map<Label, LabelConfigV1> parseEdgeClassLabels() {
+        Map<Label, LabelConfigV1> edgeClassLabels = new HashMap<>();
         for (JsonNode node : nodes) {
             if (isEdgeClass(node)) {
                 ParsingContext context = new ParsingContext("edge label");
                 Label edgeType = new ParseEdgeType(node, context).parseEdgeType();
                 String property = new ParseProperty(node, context.withLabel(edgeType)).parseSingleProperty();
                 ParsingContext propertyContext = context.withLabel(edgeType).withProperty(property);
-                String labelType = new ParseLabelType("edge", node, propertyContext).parseLabel();
+                String labelType = new ParseLabelTypeV1("edge", node, propertyContext).parseLabel();
                 Collection<Double> splitRates = new ParseSplitRate(node, defaultSplitRates, propertyContext).parseSplitRates();
-                edgeClassLabels.put(edgeType, new LabelConfig(labelType, property, splitRates));
+                edgeClassLabels.put(edgeType, new LabelConfigV1(labelType, property, splitRates));
             }
         }
         return edgeClassLabels;
