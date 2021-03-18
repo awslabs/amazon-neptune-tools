@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementTypes;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -32,7 +32,7 @@ public enum Scope {
                                                                        TokensOnly tokensOnly,
                                                                        EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
-                                                                       LabModeFeatures labModeFeatures) {
+                                                                       FeatureToggles featureToggles) {
 
             Collection<ExportSpecification<?>> results = new ArrayList<>();
 
@@ -41,12 +41,12 @@ public enum Scope {
                         GraphElementTypes.Nodes,
                         Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                         stats, tokensOnly.nodeTokensOnly(),
-                        labModeFeatures));
+                        featureToggles));
                 results.add(new ExportSpecification<>(
                         GraphElementTypes.Edges,
                         Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                         stats, tokensOnly.edgeTokensOnly(),
-                        labModeFeatures));
+                        featureToggles));
             } else {
                 if (graphSchema.hasNodeSchemas()) {
                     LabelsFilter labelsFilter = Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly)
@@ -56,7 +56,7 @@ public enum Scope {
                                 GraphElementTypes.Nodes,
                                 labelsFilter,
                                 stats, tokensOnly.nodeTokensOnly(),
-                                labModeFeatures));
+                                featureToggles));
                     }
                 }
                 if (graphSchema.hasEdgeSchemas()) {
@@ -67,7 +67,7 @@ public enum Scope {
                                 GraphElementTypes.Edges,
                                 labelsFilter,
                                 stats, tokensOnly.edgeTokensOnly(),
-                                labModeFeatures));
+                                featureToggles));
                     }
                 }
             }
@@ -83,14 +83,14 @@ public enum Scope {
                                                                        TokensOnly tokensOnly,
                                                                        EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
-                                                                       LabModeFeatures labModeFeatures) {
+                                                                       FeatureToggles featureToggles) {
             if (graphSchema.isEmpty()) {
                 return Collections.singletonList(
                         new ExportSpecification<>(
                                 GraphElementTypes.Nodes,
                                 Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                                 stats, tokensOnly.nodeTokensOnly(),
-                                labModeFeatures)
+                                featureToggles)
                 );
             } else if (graphSchema.hasNodeSchemas()) {
                 LabelsFilter labelsFilter = Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly)
@@ -101,7 +101,7 @@ public enum Scope {
                                     GraphElementTypes.Nodes,
                                     labelsFilter,
                                     stats, tokensOnly.nodeTokensOnly(),
-                                    labModeFeatures)
+                                    featureToggles)
                     );
                 } else {
                     return Collections.emptyList();
@@ -121,14 +121,14 @@ public enum Scope {
                                                                        TokensOnly tokensOnly,
                                                                        EdgeLabelStrategy edgeLabelStrategy,
                                                                        ExportStats stats,
-                                                                       LabModeFeatures labModeFeatures) {
+                                                                       FeatureToggles featureToggles) {
             if (graphSchema.isEmpty()) {
                 return Collections.singletonList(
                         new ExportSpecification<>(
                                 GraphElementTypes.Edges,
                                 Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                                 stats, tokensOnly.edgeTokensOnly(),
-                                labModeFeatures)
+                                featureToggles)
                 );
             } else if (graphSchema.hasEdgeSchemas()) {
                 LabelsFilter labelsFilter = Scope.labelsFilter(edgeLabels, edgeLabelStrategy)
@@ -139,7 +139,7 @@ public enum Scope {
                                     GraphElementTypes.Edges,
                                     labelsFilter,
                                     stats, tokensOnly.edgeTokensOnly(),
-                                    labModeFeatures)
+                                    featureToggles)
                     );
                 } else {
                     return Collections.emptyList();
@@ -165,6 +165,6 @@ public enum Scope {
             TokensOnly tokensOnly,
             EdgeLabelStrategy edgeLabelStrategy,
             ExportStats stats,
-            LabModeFeatures labModeFeatures);
+            FeatureToggles featureToggles);
 
 }

@@ -12,7 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-public enum LabModeFeature {
+public enum FeatureToggle {
     FilterByPropertyKeys,
-    LegacyLabelFiltering
+    LegacyLabelFiltering,
+    NeptuneML_V2
 }

@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
@@ -25,7 +25,7 @@ public interface GraphElementType<T> {
 
     Collection<String> tokenNames();
 
-    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, LabModeFeatures labModeFeatures);
+    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, FeatureToggles featureToggles);
 
     WriterFactory<T> writerFactory();
 }

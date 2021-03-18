@@ -13,10 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.AwsCliModule;
-import com.amazonaws.services.neptune.export.LabModeFeature;
-import com.amazonaws.services.neptune.cli.LabModeModule;
+import com.amazonaws.services.neptune.cli.FeatureToggleModule;
 import com.amazonaws.services.neptune.cli.ProfilesModule;
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -27,7 +26,6 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
-import java.util.Collection;
 
 public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHandler {
 
@@ -40,7 +38,7 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
     protected AwsCliModule awsCli = new AwsCliModule();
 
     @Inject
-    private LabModeModule labModeModule = new LabModeModule();
+    private FeatureToggleModule featureToggleModule = new FeatureToggleModule();
 
     @Inject
     private ProfilesModule profilesModule = new ProfilesModule();
@@ -75,7 +73,7 @@ public abstract class NeptuneExportBaseCommand implements NeptuneExportEventHand
         }
     }
 
-    LabModeFeatures labModeFeatures() {
-        return labModeModule.labFeatures();
+    FeatureToggles labModeFeatures() {
+        return featureToggleModule.featureToggles();
     }
 }

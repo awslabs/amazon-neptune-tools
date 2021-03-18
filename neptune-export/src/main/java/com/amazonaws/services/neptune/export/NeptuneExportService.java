@@ -12,7 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandler;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV2;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.AmazonS3;
@@ -33,7 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandler.NEPTUNE_ML_PROFILE_NAME;
+import static com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1.NEPTUNE_ML_PROFILE_NAME;
 
 public class NeptuneExportService {
 
@@ -113,7 +114,7 @@ public class NeptuneExportService {
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 
-            if (cleanOutputPath){
+            if (cleanOutputPath) {
                 clearTempFiles();
             }
 
@@ -125,13 +126,13 @@ public class NeptuneExportService {
             }
         }
 
-        if (additionalParams.has(NEPTUNE_ML_PROFILE_NAME) && (!args.contains("--profile", NEPTUNE_ML_PROFILE_NAME))){
+        if (additionalParams.has(NEPTUNE_ML_PROFILE_NAME) && (!args.contains("--profile", NEPTUNE_ML_PROFILE_NAME))) {
             args.addOption("--profile", NEPTUNE_ML_PROFILE_NAME);
         }
 
         Collection<String> profiles = args.getOptionValues("--profile");
 
-        if (!createExportSubdirectory && !overwriteExisting){
+        if (!createExportSubdirectory && !overwriteExisting) {
             checkS3OutputIsEmpty();
         }
 
@@ -147,15 +148,27 @@ public class NeptuneExportService {
 
         eventHandlerCollection.addHandler(eventHandler);
 
-        if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)){
-            NeptuneMachineLearningExportEventHandler neptuneMlEventHandler =
-                    new NeptuneMachineLearningExportEventHandler(
-                            outputS3Path,
-                            createExportSubdirectory,
-                            additionalParams,
-                            args,
-                            profiles);
-            eventHandlerCollection.addHandler(neptuneMlEventHandler);
+        if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)) {
+            if (args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name())) {
+                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV2(
+                                outputS3Path,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            } else {
+                NeptuneMachineLearningExportEventHandlerV1 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV1(
+                                outputS3Path,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            }
+
         }
 
         eventHandlerCollection.onBeforeExport(args);
@@ -177,7 +190,7 @@ public class NeptuneExportService {
                         null,
                         null,
                         1));
-        if (!listing.getObjectSummaries().isEmpty()){
+        if (!listing.getObjectSummaries().isEmpty()) {
             throw new IllegalStateException(String.format("S3 destination contains existing objects: %s. Set 'overwriteExisting' parameter to 'true' to allow overwriting existing objects.", outputS3Path));
         }
     }

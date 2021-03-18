@@ -12,21 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.export.LabModeFeature;
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedEnumValues;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-public class LabModeModule {
+public class FeatureToggleModule {
 
-    @Option(name = {"--lab-feature"}, description = "Name of a lab feature to enable.", hidden = true)
-    @AllowedEnumValues(LabModeFeature.class)
-    private Collection<LabModeFeature> labFeatures = new HashSet<>();
+    @Option(name = {"--feature-toggle"}, description = "Name of a feature to enable.", hidden = true)
+    @AllowedEnumValues(FeatureToggle.class)
+    private Collection<FeatureToggle> featureToggles = new HashSet<>();
 
-    public LabModeFeatures labFeatures() {
-        return new LabModeFeatures(labFeatures);
+    public FeatureToggles featureToggles() {
+        return new FeatureToggles(featureToggles);
     }
 }

@@ -12,8 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeature;
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
@@ -39,10 +39,10 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures) {
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, FeatureToggles featureToggles) {
 
 
-        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)) {
+        if (featureToggles.containsFeature(FeatureToggle.LegacyLabelFiltering)) {
 
             List<String> labelList = labels.stream()
                     .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())

@@ -14,14 +14,14 @@ package com.amazonaws.services.neptune.export;
 
 import java.util.Collection;
 
-public class LabModeFeatures {
-    private final Collection<LabModeFeature> features;
+public class FeatureToggles {
+    private final Collection<FeatureToggle> features;
 
-    public LabModeFeatures(Collection<LabModeFeature> features) {
+    public FeatureToggles(Collection<FeatureToggle> features) {
         this.features = features;
     }
 
-    public boolean containsFeature(LabModeFeature feature) {
+    public boolean containsFeature(FeatureToggle feature) {
         return features.contains(feature);
     }
 }

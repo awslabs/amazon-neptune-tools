@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -38,7 +38,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.V(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.V(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.V().hasLabel(\"label1\")",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -55,7 +55,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.V(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.V(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.V().hasLabel(\"label1\").hasLabel(\"label2\")",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -72,7 +72,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.V(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.V(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.V().or(__.hasLabel(\"label1\"),__.hasLabel(\"label2\"))",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -89,7 +89,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.V(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.V(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.V().or(__.hasLabel(\"label1\").hasLabel(\"labelA\"),__.hasLabel(\"label2\").hasLabel(\"labelB\"))",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -106,7 +106,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.E(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.E(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.E().hasLabel(\"edgeLabel1\")",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -123,7 +123,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.E(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.E(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.E().hasLabel(\"edgeLabel1\").where(__.and(__.outV().hasLabel(\"startLabel\"),__.inV().hasLabel(\"endLabel\")))",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -140,7 +140,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.E(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.E(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.E().hasLabel(\"edgeLabel1\").where(__.and(__.outV().hasLabel(\"startLabel1\").hasLabel(\"startLabel2\"),__.inV().hasLabel(\"endLabel1\").hasLabel(\"endLabel2\")))",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -157,7 +157,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.E(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.E(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.E().hasLabel(\"edgeLabel1\").where(__.outV().hasLabel(\"startLabel\"))",
                 GremlinQueryDebugger.queryAsString(traversal));
@@ -174,7 +174,7 @@ public class SpecifiedLabelsTest {
         GraphTraversalSource g = traversalSource.withGraph(EmptyGraph.instance());
 
         GraphTraversal<? extends Element, ?> traversal =
-                specifiedLabels.apply(g.E(), new LabModeFeatures(Collections.emptyList()));
+                specifiedLabels.apply(g.E(), new FeatureToggles(Collections.emptyList()));
 
         assertEquals("__.E().hasLabel(\"edgeLabel1\").where(__.inV().hasLabel(\"endLabel\"))",
                 GremlinQueryDebugger.queryAsString(traversal));
