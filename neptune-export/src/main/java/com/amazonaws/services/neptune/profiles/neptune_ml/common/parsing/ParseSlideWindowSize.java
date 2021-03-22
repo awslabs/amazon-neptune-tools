@@ -32,7 +32,7 @@ public class ParseSlideWindowSize {
                 throw ErrorMessageHelper.errorParsingField("slide_window_size", context, "an integer");
             }
         } else {
-            throw ErrorMessageHelper.errorParsingField("slide_window_size", context, "an integer");
+            return 0;
         }
     }
 }
