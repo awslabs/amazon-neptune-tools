@@ -69,13 +69,8 @@ public class BucketNumericalFeatureTest {
     }
 
     @Test
-    public void shouldThrowErrorIfSlideWindowSizeIsMissing() throws IOException {
-        try {
-            runTest("t6.json");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Error parsing 'slide_window_size' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());
-        }
+    public void shouldSupplyDefaultSlideWindowSizeIfSlideWindowSizeIsMissing() throws IOException {
+        runTest("t6.json");
     }
 
     @Test
