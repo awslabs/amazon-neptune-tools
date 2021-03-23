@@ -54,6 +54,25 @@ public enum RdfExportFormat implements FileExtension {
 
 
     },
+    ntriples {
+        @Override
+        RDFWriter createWriter(OutputWriter writer, Prefixes prefixes) {
+            return new EnhancedNTriplesWriter(writer, prefixes);
+        }
+
+
+        @Override
+        public String extension() {
+            return "nt";
+        }
+
+        @Override
+        public String description() {
+            return "NTRIPLES";
+        }
+
+
+    },
     neptuneStreamsJson {
         @Override
         RDFWriter createWriter(OutputWriter writer, Prefixes prefixes) {

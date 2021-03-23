@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
+import com.amazonaws.services.neptune.cli.RdfExportScopeModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
 import com.amazonaws.services.neptune.cluster.ClusterStrategy;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
@@ -21,7 +22,7 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
-import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
+import com.amazonaws.services.neptune.rdf.ExportRdfJob;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
@@ -36,7 +37,7 @@ import java.nio.file.Path;
         descriptions = {
                 "Export all data to the /home/ec2-user/output directory"
         })
-@Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle.")
+@Command(name = "export-rdf", description = "Export RDF graph from Neptune.")
 public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
 
     @Inject
@@ -47,6 +48,9 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
 
     @Inject
     private RdfTargetModule target = new RdfTargetModule();
+
+    @Inject
+    private RdfExportScopeModule exportScope = new RdfExportScopeModule();
 
     @Override
     public void run() {
@@ -59,7 +63,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
 
                     try (NeptuneSparqlClient client = NeptuneSparqlClient.create(clusterStrategy.connectionConfig())) {
 
-                        ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
+                        ExportRdfJob job = exportScope.createJob(client, target.config(directories));
                         job.execute();
                     }
 

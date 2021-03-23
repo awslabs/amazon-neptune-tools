@@ -10,14 +10,13 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.rdf.io;
+package com.amazonaws.services.neptune.rdf;
 
-import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
-import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 
-public class ExportRdfGraphJob {
+public class ExportRdfGraphJob implements ExportRdfJob {
 
     private final NeptuneSparqlClient client;
     private final RdfTargetConfig targetConfig;
@@ -27,11 +26,12 @@ public class ExportRdfGraphJob {
         this.targetConfig = targetConfig;
     }
 
+    @Override
     public void execute() throws Exception {
         Timer.timedActivity("exporting RDF as " + targetConfig.format().description(),
                 (CheckedActivity.Runnable) () -> {
                     System.err.println("Creating statement files");
-                    client.executeQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", targetConfig);
+                    client.executeTupleQuery("SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }", targetConfig);
                 });
     }
 }
