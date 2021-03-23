@@ -30,7 +30,7 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TrainingDataConfigurationFileWriterV1FeatureTest {
+public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
     @Test
     public void shouldWriteNewObjectForEach() throws IOException {
@@ -43,7 +43,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -67,7 +67,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -92,7 +92,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -136,7 +136,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -181,7 +181,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -210,7 +210,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -256,7 +256,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -301,7 +301,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+        new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
         JsonNode graph = output.graph();
 
@@ -346,12 +346,12 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withWord2VecNodeFeature(
                                 movieLabel,
                                 "genre",
@@ -409,12 +409,12 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                 .withNumericalBucketFeature(movieLabel, "score", new Range(1, 100), 10, 2)
                 .build())
                 .write();
@@ -473,12 +473,12 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
             Output output = new Output();
 
-            new TrainingDataConfigurationFileWriterV1(
+            new PropertyGraphTrainingDataConfigWriterV1(
                     graphSchema,
                     output.generator(),
-                    TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                    PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                     PrinterOptions.NULL_OPTIONS,
-                    TrainingDataConfigBuilderV1.builder()
+                    PropertyGraphTrainingDataConfigBuilderV1.builder()
                     .withNumericalBucketFeature(movieLabel, "score", new Range(1, 100), 10, 2)
                     .build())
                     .write();
@@ -516,11 +516,11 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS,
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                 .withNumericalBucketFeature(movieLabel, "score", new Range(1, 100), 10, 2)
                 .build())
                 .write();
@@ -562,7 +562,7 @@ public class TrainingDataConfigurationFileWriterV1FeatureTest {
 
             Output output = new Output();
 
-            new TrainingDataConfigurationFileWriterV1(graphSchema, output.generator(), TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
+            new PropertyGraphTrainingDataConfigWriterV1(graphSchema, output.generator(), PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE, PrinterOptions.NULL_OPTIONS).write();
 
             JsonNode graph = output.graph();
 

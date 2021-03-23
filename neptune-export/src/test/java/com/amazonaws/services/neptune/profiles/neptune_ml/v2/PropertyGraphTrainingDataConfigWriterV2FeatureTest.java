@@ -23,7 +23,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class TrainingDataConfigurationFileWriterV2FeatureTest {
+public class PropertyGraphTrainingDataConfigWriterV2FeatureTest {
 
     @Test
     public void shouldWriteVersionAndQueryEngine() throws IOException {
@@ -84,10 +84,10 @@ public class TrainingDataConfigurationFileWriterV2FeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV2(
+        new PropertyGraphTrainingDataConfigWriterV2(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV2.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS).write();
 
         assertEquals(Output.format(expectedTrainingDataConfig), Output.format(output.allOutput()));

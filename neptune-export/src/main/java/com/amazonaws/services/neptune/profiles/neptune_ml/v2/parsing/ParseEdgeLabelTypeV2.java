@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeLabelTypeV2;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.NodeLabelTypeV2;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Arrays;

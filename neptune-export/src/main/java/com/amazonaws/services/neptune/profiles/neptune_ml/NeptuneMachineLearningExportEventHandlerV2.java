@@ -3,7 +3,8 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.TrainingDataConfigurationFileWriterV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.PropertyGraphTrainingDataConfigWriterV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.RdfTrainingDataConfigWriter;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -11,6 +12,8 @@ import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.JsonPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.rdf.RdfExportScope;
+import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
@@ -30,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -84,45 +88,56 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
 
     @Override
     public void onBeforeExport(Args args) {
-        if (!args.contains("--exclude-type-definitions")) {
-            args.addFlag("--exclude-type-definitions");
-        }
-
-        if (args.contains("export-pg") &&
-                args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")) {
-            args.replace("export-pg", "export-pg-from-config");
-        }
-
-        if (!args.contains("--merge-files")) {
-            args.addFlag("--merge-files");
-        }
-
-        if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
-            args.removeOptions("--edge-label-strategy");
-        }
-
-        if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
-            args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
-        }
-
-        if (args.contains("--export-id")) {
-            args.removeOptions("--export-id");
-        }
 
         args.addOption("--export-id", new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
+
+        if (args.contains("export-rdf")) {
+            args.removeOptions("--format");
+            args.addOption("--format", RdfExportFormat.ntriples.name());
+
+            args.removeOptions("--rdf-export-scope");
+            args.addOption("--rdf-export-scope", RdfExportScope.edges.name());
+        } else {
+
+
+            if (!args.contains("--exclude-type-definitions")) {
+                args.addFlag("--exclude-type-definitions");
+            }
+
+            if (args.contains("export-pg") &&
+                    args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")) {
+                args.replace("export-pg", "export-pg-from-config");
+            }
+
+            if (!args.contains("--merge-files")) {
+                args.addFlag("--merge-files");
+            }
+
+            if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
+                args.removeOptions("--edge-label-strategy");
+            }
+
+            if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
+                args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
+            }
+
+            if (args.contains("--export-id")) {
+                args.removeOptions("--export-id");
+            }
+        }
     }
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-        //Do nothing
+        onExportComplete(outputPath, stats, new GraphSchema());
     }
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
-                TrainingDataConfigurationFileWriterV2.COLUMN_NAME_WITHOUT_DATATYPE :
-                TrainingDataConfigurationFileWriterV2.COLUMN_NAME_WITH_DATATYPE;
+                PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE :
+                PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITH_DATATYPE;
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
             for (TrainingDataWriterConfigV2 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
@@ -131,23 +146,43 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         }
     }
 
-    private void createTrainingJobConfigurationFile(TrainingDataWriterConfigV2 trainingJobWriterConfig,
+    private void createTrainingJobConfigurationFile(TrainingDataWriterConfigV2 trainingDataWriterConfig,
                                                     Path outputPath,
                                                     GraphSchema graphSchema,
                                                     PropertyName propertyName,
                                                     TransferManagerWrapper transferManager) throws Exception {
 
         File outputDirectory = outputPath.toFile();
-        String filename = String.format("%s.json", trainingJobWriterConfig.name());
+        String filename = String.format("%s.json", trainingDataWriterConfig.name());
         File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
 
         try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-            new TrainingDataConfigurationFileWriterV2(
-                    graphSchema,
-                    createJsonGenerator(writer),
-                    propertyName,
-                    printerOptions,
-                    trainingJobWriterConfig).write();
+            if (args.contains("export-rdf")) {
+
+                Collection<String> filenames = new ArrayList<>();
+
+                File[] directories = outputDirectory.listFiles(File::isDirectory);
+
+                for (File directory : directories) {
+                    File[] files = directory.listFiles(File::isFile);
+                    for (File file : files) {
+                        filenames.add(outputDirectory.toPath().relativize(file.toPath()).toString());
+
+                    }
+                }
+
+                new RdfTrainingDataConfigWriter(
+                        filenames,
+                        createJsonGenerator(writer),
+                        trainingDataWriterConfig).write();
+            } else {
+                new PropertyGraphTrainingDataConfigWriterV2(
+                        graphSchema,
+                        createJsonGenerator(writer),
+                        propertyName,
+                        printerOptions,
+                        trainingDataWriterConfig).write();
+            }
         }
 
         if (StringUtils.isNotEmpty(outputS3Path)) {

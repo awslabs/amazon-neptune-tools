@@ -15,7 +15,7 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v1.TrainingDataConfigurationFileWriterV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v1.PropertyGraphTrainingDataConfigWriterV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.TrainingDataWriterConfigV1;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -133,8 +133,8 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITH_DATATYPE;
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITH_DATATYPE;
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
             for (TrainingDataWriterConfigV1 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
@@ -154,7 +154,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
         File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
 
         try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-            new TrainingDataConfigurationFileWriterV1(
+            new PropertyGraphTrainingDataConfigWriterV1(
                     graphSchema,
                     createJsonGenerator(writer),
                     propertyName,

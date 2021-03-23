@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class TrainingDataConfigurationFileWriterV1FeatureOverrideTests {
+public class PropertyGraphTrainingDataConfigWriterV1FeatureOverrideTests {
 
     @Test
     public void shouldOverrideNumericalWithCategoricalFeature() throws IOException {
@@ -47,12 +47,12 @@ public class TrainingDataConfigurationFileWriterV1FeatureOverrideTests {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withNodeFeatureOverride(
                                 new FeatureOverrideConfigV1(
                                         label,
@@ -104,12 +104,12 @@ public class TrainingDataConfigurationFileWriterV1FeatureOverrideTests {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withNodeFeatureOverride(
                                 new FeatureOverrideConfigV1(
                                         label,

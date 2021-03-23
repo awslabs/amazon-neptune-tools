@@ -108,6 +108,7 @@ public class TrainingDataWriterConfigV2 {
 
 
         return new TrainingDataWriterConfigV2(name,
+                defaultSplitRates,
                 nodeClassLabels,
                 edgeClassLabels,
                 tfIdfNodeFeatures,
@@ -119,6 +120,7 @@ public class TrainingDataWriterConfigV2 {
     }
 
     private final String name;
+    private final Collection<Double> defaultSplitRates;
     private final Collection<LabelConfigV2> nodeClassLabels;
     private final Collection<LabelConfigV2> edgeClassLabels;
     private final Collection<TfIdfConfigV2> tfIdfNodeFeatures;
@@ -130,6 +132,7 @@ public class TrainingDataWriterConfigV2 {
 
     public TrainingDataWriterConfigV2() {
         this(DEFAULT_NAME_V2,
+                DEFAULT_SPLIT_RATES_V2,
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -141,6 +144,7 @@ public class TrainingDataWriterConfigV2 {
     }
 
     public TrainingDataWriterConfigV2(String name,
+                                      Collection<Double> defaultSplitRates,
                                       Collection<LabelConfigV2> nodeClassLabels,
                                       Collection<LabelConfigV2> edgeClassLabels,
                                       Collection<TfIdfConfigV2> tfIdfNodeFeatures,
@@ -150,6 +154,7 @@ public class TrainingDataWriterConfigV2 {
                                       Collection<FeatureOverrideConfigV2> nodeFeatureOverrides,
                                       Collection<FeatureOverrideConfigV2> edgeFeatureOverrides) {
         this.name = name;
+        this.defaultSplitRates = defaultSplitRates;
         this.nodeClassLabels = nodeClassLabels;
         this.edgeClassLabels = edgeClassLabels;
         this.tfIdfNodeFeatures = tfIdfNodeFeatures;
@@ -158,6 +163,10 @@ public class TrainingDataWriterConfigV2 {
         this.numericalBucketFeatures = numericalBucketFeatures;
         this.nodeFeatureOverrides = nodeFeatureOverrides;
         this.edgeFeatureOverrides = edgeFeatureOverrides;
+    }
+
+    public Collection<Double> defaultSplitRates() {
+        return defaultSplitRates;
     }
 
     public boolean allowAutoInferNodeFeature(Label nodeType, String property){

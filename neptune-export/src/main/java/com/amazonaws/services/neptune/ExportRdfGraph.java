@@ -56,7 +56,7 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     public void run() {
 
         try {
-            Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
+            Timer.timedActivity(String.format("exporting rdf %s", exportScope.scope()), (CheckedActivity.Runnable) () -> {
                 try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1))) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.Rdf);

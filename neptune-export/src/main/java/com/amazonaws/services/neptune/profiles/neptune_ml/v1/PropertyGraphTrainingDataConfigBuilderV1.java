@@ -22,10 +22,10 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 
 import java.util.*;
 
-public class TrainingDataConfigBuilderV1 {
+public class PropertyGraphTrainingDataConfigBuilderV1 {
 
-    public static TrainingDataConfigBuilderV1 builder() {
-        return new TrainingDataConfigBuilderV1();
+    public static PropertyGraphTrainingDataConfigBuilderV1 builder() {
+        return new PropertyGraphTrainingDataConfigBuilderV1();
     }
 
     Map<Label, LabelConfigV1> nodeClassLabels = new HashMap<>();
@@ -36,32 +36,32 @@ public class TrainingDataConfigBuilderV1 {
     Collection<FeatureOverrideConfigV1> edgeFeatureOverrides = new ArrayList<>();
     Collection<Double> splitRates = Arrays.asList(0.7, 0.1, 0.2);
 
-    public TrainingDataConfigBuilderV1 withNodeClassLabel(Label label, String column) {
+    public PropertyGraphTrainingDataConfigBuilderV1 withNodeClassLabel(Label label, String column) {
         nodeClassLabels.put(label, new LabelConfigV1("node_class_label", column, splitRates));
         return this;
     }
 
-    public TrainingDataConfigBuilderV1 withEdgeClassLabel(Label label, String column) {
+    public PropertyGraphTrainingDataConfigBuilderV1 withEdgeClassLabel(Label label, String column) {
         edgeClassLabels.put(label, new LabelConfigV1("edge_class_label", column, splitRates));
         return this;
     }
 
-    public TrainingDataConfigBuilderV1 withWord2VecNodeFeature(Label label, String column, String... languages) {
+    public PropertyGraphTrainingDataConfigBuilderV1 withWord2VecNodeFeature(Label label, String column, String... languages) {
         word2VecNodeFeatures.add(new Word2VecConfig(label, column, Arrays.asList(languages)));
         return this;
     }
 
-    public TrainingDataConfigBuilderV1 withNumericalBucketFeature(Label label, String column, Range range, int bucketCount, int slideWindowSize) {
+    public PropertyGraphTrainingDataConfigBuilderV1 withNumericalBucketFeature(Label label, String column, Range range, int bucketCount, int slideWindowSize) {
         numericalBucketFeatures.add(new NumericalBucketFeatureConfigV1(label, column, range, bucketCount, slideWindowSize));
         return this;
     }
 
-    public TrainingDataConfigBuilderV1 withNodeFeatureOverride(FeatureOverrideConfigV1 override) {
+    public PropertyGraphTrainingDataConfigBuilderV1 withNodeFeatureOverride(FeatureOverrideConfigV1 override) {
         nodeFeatureOverrides.add(override);
         return this;
     }
 
-    public TrainingDataConfigBuilderV1 withEdgeFeatureOverride(FeatureOverrideConfigV1 override) {
+    public PropertyGraphTrainingDataConfigBuilderV1 withEdgeFeatureOverride(FeatureOverrideConfigV1 override) {
         edgeFeatureOverrides.add(override);
         return this;
     }

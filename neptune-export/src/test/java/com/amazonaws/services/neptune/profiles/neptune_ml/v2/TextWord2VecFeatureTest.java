@@ -20,7 +20,9 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
@@ -68,10 +70,10 @@ public class TextWord2VecFeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV2(
+        new PropertyGraphTrainingDataConfigWriterV2(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV2.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
                 overrideConfig.iterator().next()).write();
 

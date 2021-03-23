@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TrainingDataConfigurationFileWriterV2 {
+public class PropertyGraphTrainingDataConfigWriterV2 {
 
     public static final PropertyName COLUMN_NAME_WITH_DATATYPE = new PropertyName() {
         @Override
@@ -61,18 +61,18 @@ public class TrainingDataConfigurationFileWriterV2 {
     private final TrainingDataWriterConfigV2 config;
     private final Collection<String> warnings = new ArrayList<>();
 
-    public TrainingDataConfigurationFileWriterV2(GraphSchema graphSchema,
-                                                 JsonGenerator generator,
-                                                 PropertyName propertyName,
-                                                 PrinterOptions printerOptions) {
+    public PropertyGraphTrainingDataConfigWriterV2(GraphSchema graphSchema,
+                                                   JsonGenerator generator,
+                                                   PropertyName propertyName,
+                                                   PrinterOptions printerOptions) {
         this(graphSchema, generator, propertyName, printerOptions, new TrainingDataWriterConfigV2());
     }
 
-    public TrainingDataConfigurationFileWriterV2(GraphSchema graphSchema,
-                                                 JsonGenerator generator,
-                                                 PropertyName propertyName,
-                                                 PrinterOptions printerOptions,
-                                                 TrainingDataWriterConfigV2 config) {
+    public PropertyGraphTrainingDataConfigWriterV2(GraphSchema graphSchema,
+                                                   JsonGenerator generator,
+                                                   PropertyName propertyName,
+                                                   PrinterOptions printerOptions,
+                                                   TrainingDataWriterConfigV2 config) {
         this.graphSchema = graphSchema;
         this.generator = generator;
         this.propertyName = propertyName;

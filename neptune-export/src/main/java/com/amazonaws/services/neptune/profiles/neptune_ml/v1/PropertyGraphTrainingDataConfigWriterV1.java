@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TrainingDataConfigurationFileWriterV1 {
+public class PropertyGraphTrainingDataConfigWriterV1 {
 
     public static final PropertyName COLUMN_NAME_WITH_DATATYPE = new PropertyName() {
         @Override
@@ -61,18 +61,18 @@ public class TrainingDataConfigurationFileWriterV1 {
     private final PrinterOptions printerOptions;
     private final Collection<String> warnings = new ArrayList<>();
 
-    public TrainingDataConfigurationFileWriterV1(GraphSchema graphSchema,
-                                                 JsonGenerator generator,
-                                                 PropertyName propertyName,
-                                                 PrinterOptions printerOptions) {
+    public PropertyGraphTrainingDataConfigWriterV1(GraphSchema graphSchema,
+                                                   JsonGenerator generator,
+                                                   PropertyName propertyName,
+                                                   PrinterOptions printerOptions) {
         this(graphSchema, generator, propertyName, printerOptions, new TrainingDataWriterConfigV1());
     }
 
-    public TrainingDataConfigurationFileWriterV1(GraphSchema graphSchema,
-                                                 JsonGenerator generator,
-                                                 PropertyName propertyName,
-                                                 PrinterOptions printerOptions,
-                                                 TrainingDataWriterConfigV1 config
+    public PropertyGraphTrainingDataConfigWriterV1(GraphSchema graphSchema,
+                                                   JsonGenerator generator,
+                                                   PropertyName propertyName,
+                                                   PrinterOptions printerOptions,
+                                                   TrainingDataWriterConfigV1 config
                                               ) {
         this.graphSchema = graphSchema;
         this.generator = generator;

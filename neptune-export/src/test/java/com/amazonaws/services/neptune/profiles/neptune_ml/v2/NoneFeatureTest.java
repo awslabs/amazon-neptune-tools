@@ -43,10 +43,10 @@ public class NoneFeatureTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV2(
+        new PropertyGraphTrainingDataConfigWriterV2(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV2.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
                 overrideConfig.iterator().next()).write();
 

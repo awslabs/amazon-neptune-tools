@@ -33,4 +33,8 @@ public class RdfExportScopeModule {
         }
         throw new IllegalStateException(String .format("Unknown export scope: %s", scope));
     }
+
+    public String scope(){
+        return scope.name();
+    }
 }

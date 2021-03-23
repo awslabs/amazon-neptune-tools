@@ -13,7 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Range;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.ImputerTypeV2;
 import com.amazonaws.services.neptune.propertygraph.Label;
 
 public class NumericalBucketFeatureConfigV2 {

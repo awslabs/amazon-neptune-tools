@@ -80,7 +80,6 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-
         onExportComplete(outputPath, stats, new GraphSchema());
     }
 

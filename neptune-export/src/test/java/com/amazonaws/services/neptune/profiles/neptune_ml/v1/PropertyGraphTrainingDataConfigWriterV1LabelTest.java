@@ -24,7 +24,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Collections;
 
-public class TrainingDataConfigurationFileWriterV1LabelTest {
+public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
 
     @Test
     public void shouldAddNodeClassLabelIfSpecifiedInConfig() throws IOException {
@@ -44,12 +44,12 @@ public class TrainingDataConfigurationFileWriterV1LabelTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -106,12 +106,12 @@ public class TrainingDataConfigurationFileWriterV1LabelTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withNodeClassLabel(personLabel, "does-not-exist")
                         .build())
                 .write();
@@ -147,12 +147,12 @@ public class TrainingDataConfigurationFileWriterV1LabelTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withNodeClassLabel(personLabel, "role")
                         .build())
                 .write();
@@ -192,12 +192,12 @@ public class TrainingDataConfigurationFileWriterV1LabelTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withEdgeClassLabel(knowsLabel, "contact")
                         .build())
                 .write();
@@ -262,12 +262,12 @@ public class TrainingDataConfigurationFileWriterV1LabelTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withEdgeClassLabel(knowsLabel, "does-not-exist")
                         .build())
                 .write();
@@ -306,12 +306,12 @@ public class TrainingDataConfigurationFileWriterV1LabelTest {
 
         Output output = new Output();
 
-        new TrainingDataConfigurationFileWriterV1(
+        new PropertyGraphTrainingDataConfigWriterV1(
                 graphSchema,
                 output.generator(),
-                TrainingDataConfigurationFileWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
+                PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE,
                 PrinterOptions.NULL_OPTIONS,
-                TrainingDataConfigBuilderV1.builder()
+                PropertyGraphTrainingDataConfigBuilderV1.builder()
                         .withEdgeClassLabel(knowsLabel, "contact")
                         .build())
                 .write();
