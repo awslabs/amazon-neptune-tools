@@ -59,9 +59,29 @@ public class BucketNumericalFeatureTest {
     }
 
     @Test
+    public void shouldThrowErrorIfRangeIsSpecifiedIncorrectly() throws IOException {
+        try {
+            runTest("t8.json");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error parsing 'range' field for bucket_numerical feature (Label: Person, Property: age). Expected an array with 2 numeric values.", e.getMessage());
+        }
+    }
+
+    @Test
     public void shouldThrowErrorIfBucketCountIsMissing() throws IOException {
         try {
             runTest("t5.json");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error parsing 'bucket_cnt' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void shouldThrowErrorIfBucketCountIsSpecifiedIncorrectly() throws IOException {
+        try {
+            runTest("t9.json");
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'bucket_cnt' field for bucket_numerical feature (Label: Person, Property: age). Expected an integer.", e.getMessage());

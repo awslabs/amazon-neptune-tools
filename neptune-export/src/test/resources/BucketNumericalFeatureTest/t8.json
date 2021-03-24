@@ -1,0 +1,29 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "age",
+        "dataType" : "Integer",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "age",
+        "type": "bucket_numerical",
+        "range": 1,
+        "bucket_cnt": 5,
+        "slide_window_size": 3,
+        "imputer": "median"
+      }
+    ]
+  },
+  "config": {}
+}

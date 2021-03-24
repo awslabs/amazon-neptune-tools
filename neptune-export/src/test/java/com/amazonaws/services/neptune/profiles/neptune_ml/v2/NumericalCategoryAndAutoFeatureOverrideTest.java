@@ -73,6 +73,11 @@ public class NumericalCategoryAndAutoFeatureOverrideTest {
     }
 
     @Test
+    public void shouldAllowCategoryOverrideAndUseSpecifiedConfigFieldValuesForMultiValueProperty() throws IOException {
+        runTest("t12.json");
+    }
+
+    @Test
     public void shouldAllowAutoOverrideForNumericalFeatureWithSuppliedSeparatorAndImputerIgnoringAllOtherConfigValues() throws IOException {
         runTest("t10.json");
     }
@@ -80,6 +85,16 @@ public class NumericalCategoryAndAutoFeatureOverrideTest {
     @Test
     public void shouldAllowAutoOverrideForNumericalFeatureWithoutImputerIfNotSupplied() throws IOException {
         runTest("t11.json");
+    }
+
+    @Test
+    public void autoOverrideForIntegerMultiValuePropertyWithNoAdditionalConfigValuesShouldProduceAutoFeatureWithSeparatorButNoImputer() throws IOException {
+        runTest("t13.json");
+    }
+
+    @Test
+    public void autoOverrideForIntegerSingleValuePropertyWithNoAdditionalConfigValuesShouldProduceAutoFeatureNoOtherConfig() throws IOException {
+        runTest("t14.json");
     }
 
     private void runTest(String jsonFile) throws IOException {

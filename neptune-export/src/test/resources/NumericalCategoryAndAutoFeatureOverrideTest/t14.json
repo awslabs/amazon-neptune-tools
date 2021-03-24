@@ -6,7 +6,7 @@
       "properties" : [ {
         "property" : "age",
         "dataType" : "Integer",
-        "isMultiValue" : true,
+        "isMultiValue" : false,
         "isNullable" : false
       }],
       "files" : [ "person-1.csv" ]
@@ -17,11 +17,7 @@
       {
         "node": "Person",
         "property": "age",
-        "type": "bucket_numerical",
-        "range": [1, 10],
-        "bucket_cnt": 5,
-        "slide_window_size": 3,
-        "imputer": "most-frequent"
+        "type": "auto"
       }
     ]
   },
@@ -34,13 +30,11 @@
         "separator" : ",",
         "node_type" : [ "~id", "Person" ],
         "features" : [ {
-          "feature" : [ "age", "age", "auto" ],
-          "separator" : ";",
-          "imputer" : "median"
+          "feature" : [ "age", "age", "auto" ]
         } ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "bucket_numerical feature does not support multi-value properties. Auto-inferring a feature for 'age'." ]
+    "warnings" : [ ]
   }
 }

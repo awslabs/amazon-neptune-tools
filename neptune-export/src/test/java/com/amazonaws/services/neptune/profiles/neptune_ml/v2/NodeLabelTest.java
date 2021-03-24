@@ -39,6 +39,11 @@ public class NodeLabelTest {
     }
 
     @Test
+    public void ifSeparatorIsSpecifiedForMultiValuePropertyThisIsUsedInsteadOfDefaultSeparator() throws IOException {
+        runTest("t8.json");
+    }
+
+    @Test
     public void shouldSupplyDefaultSplitRateIfSplitRateNotSpecified() throws IOException {
         runTest("t3.json");
     }
@@ -66,6 +71,16 @@ public class NodeLabelTest {
     @Test
     public void classificationLabelShouldTakePrecedenceOverFeatureOverride() throws IOException {
         runTest("t7.json");
+    }
+
+    @Test
+    public void shouldThrowAnErrorIfNoPropertySpecified() throws IOException {
+        try {
+            runTest("t9.json");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Error parsing 'property' field for node label (Label: Person). Expected a 'property' field with a string value.", e.getMessage());
+        }
     }
 
     private void runTest(String jsonFile) throws IOException {

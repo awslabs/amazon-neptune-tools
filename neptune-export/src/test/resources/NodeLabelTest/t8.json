@@ -4,7 +4,7 @@
     "nodes" : [ {
       "label" : "Person",
       "properties" : [ {
-        "property" : "age",
+        "property" : "credit",
         "dataType" : "Integer",
         "isMultiValue" : true,
         "isNullable" : false
@@ -12,16 +12,14 @@
       "files" : [ "person-1.csv" ]
     } ]
   },
-  "feature": {
-    "features": [
+  "label": {
+    "targets": [
       {
         "node": "Person",
-        "property": "age",
-        "type": "bucket_numerical",
-        "range": [1, 10],
-        "bucket_cnt": 5,
-        "slide_window_size": 3,
-        "imputer": "most-frequent"
+        "property": "credit",
+        "type": "regression",
+        "split_rate": [0.7,0.1,0.2],
+        "separator": "|"
       }
     ]
   },
@@ -33,14 +31,15 @@
         "file_name" : "nodes/person-1.csv",
         "separator" : ",",
         "node_type" : [ "~id", "Person" ],
-        "features" : [ {
-          "feature" : [ "age", "age", "auto" ],
-          "separator" : ";",
-          "imputer" : "median"
+        "features" : [ ],
+        "labels" : [ {
+          "label" : [ "credit", "regression" ],
+          "split_rate" : [ 0.7, 0.1, 0.2 ],
+          "separator" : "|"
         } ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "bucket_numerical feature does not support multi-value properties. Auto-inferring a feature for 'age'." ]
+    "warnings" : [ ]
   }
 }

@@ -4,7 +4,7 @@
     "nodes" : [ {
       "label" : "Person",
       "properties" : [ {
-        "property" : "age",
+        "property" : "measures",
         "dataType" : "Integer",
         "isMultiValue" : true,
         "isNullable" : false
@@ -16,12 +16,10 @@
     "features": [
       {
         "node": "Person",
-        "property": "age",
-        "type": "bucket_numerical",
-        "range": [1, 10],
-        "bucket_cnt": 5,
-        "slide_window_size": 3,
-        "imputer": "most-frequent"
+        "property": "measures",
+        "type": "category",
+        "separator": "|",
+        "ignored": "min-max"
       }
     ]
   },
@@ -34,13 +32,12 @@
         "separator" : ",",
         "node_type" : [ "~id", "Person" ],
         "features" : [ {
-          "feature" : [ "age", "age", "auto" ],
-          "separator" : ";",
-          "imputer" : "median"
+          "feature" : [ "measures", "measures", "category" ],
+          "separator": "|"
         } ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "bucket_numerical feature does not support multi-value properties. Auto-inferring a feature for 'age'." ]
+    "warnings" : [ ]
   }
 }
