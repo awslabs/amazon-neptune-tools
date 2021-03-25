@@ -20,10 +20,6 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 
 class GraphQueryHandler implements RDFHandler {
 
-    public static void run(RepositoryConnection connection, String sparql, RDFWriter writer){
-        connection.prepareGraphQuery(sparql).evaluate(new GraphQueryHandler(writer));
-    }
-
     private final RDFWriter writer;
 
     public GraphQueryHandler(RDFWriter writer) {

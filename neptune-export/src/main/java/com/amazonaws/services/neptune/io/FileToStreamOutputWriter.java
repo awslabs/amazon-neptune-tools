@@ -104,14 +104,6 @@ public class FileToStreamOutputWriter implements OutputWriter {
         }
 
         public void handle(String line) {
-
-            if (line.length() > 1024){
-                System.out.println("LINE: " + line.substring(0, 1024));
-
-            } else {
-                System.out.println("LINE: " + line);
-            }
-
             stream.publish(line);
             linesProcessed++;
         }

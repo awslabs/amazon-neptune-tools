@@ -25,10 +25,6 @@ import java.util.List;
 
 class TupleQueryHandler implements TupleQueryResultHandler {
 
-    public static void run(RepositoryConnection connection, String sparql, RDFWriter writer, ValueFactory factory){
-        connection.prepareTupleQuery(sparql).evaluate(new TupleQueryHandler(writer, factory));
-    }
-
     private final RDFWriter writer;
     private final ValueFactory factory;
 

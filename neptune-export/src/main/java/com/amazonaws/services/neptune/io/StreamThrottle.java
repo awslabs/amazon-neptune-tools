@@ -23,39 +23,35 @@ public class StreamThrottle {
     private static final Logger logger = LoggerFactory.getLogger(StreamThrottle.class);
 
     private final KinesisProducer kinesisProducer;
-    private final AtomicLong counter = new AtomicLong();
-    private final AtomicLong windowLength = new AtomicLong();
-    private volatile long maxRecordCount = 10000;
+    private final AtomicLong windowSizeBytes = new AtomicLong();
+    private volatile long maxNumberOfQueuedRecords = 10000;
 
     private static final long QUEUE_SIZE_BYTES = 10000000;
-    private static final long MAX_WINDOW_SIZE = 1000;
+    private static final long TUMBLING_WINDOW_NUMBER_OF_RECORDS = 1000;
 
     public StreamThrottle(KinesisProducer kinesisProducer) {
         this.kinesisProducer = kinesisProducer;
     }
 
-    public long counterForNextRecord(long length){
+    public void recalculateMaxBufferSize(long counter, long length){
 
-        long currentWindowLength = windowLength.addAndGet(length);
-        long counterValue = counter.incrementAndGet();
+        long currentWindowSizeBytes = windowSizeBytes.addAndGet(length);
 
-        if (counterValue % MAX_WINDOW_SIZE == 0){
-            maxRecordCount = QUEUE_SIZE_BYTES / (currentWindowLength /MAX_WINDOW_SIZE);
-            logger.info("{} bytes per {} records – maxRecordCount: {}", currentWindowLength, MAX_WINDOW_SIZE, maxRecordCount);
-            windowLength.set(0);
+        if (counter % TUMBLING_WINDOW_NUMBER_OF_RECORDS == 0){
+            maxNumberOfQueuedRecords = QUEUE_SIZE_BYTES / (currentWindowSizeBytes / TUMBLING_WINDOW_NUMBER_OF_RECORDS);
+            logger.info("Current window has {} records totalling {} bytes, meaning that maxNumberOfQueuedRecords cannot exceed {}", TUMBLING_WINDOW_NUMBER_OF_RECORDS, currentWindowSizeBytes, maxNumberOfQueuedRecords);
+            windowSizeBytes.set(0);
         }
-
-        return counterValue;
     }
 
     public void throttle() throws InterruptedException {
-        if (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
+        if (kinesisProducer.getOutstandingRecordsCount() > (maxNumberOfQueuedRecords)) {
             long start = System.currentTimeMillis();
-            while (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
+            while (kinesisProducer.getOutstandingRecordsCount() > (maxNumberOfQueuedRecords)) {
                 Thread.sleep(1);
             }
             long end = System.currentTimeMillis();
-            logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded current maxRecordCount of {}", end - start, maxRecordCount);
+            logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded maxNumberOfQueuedRecords of {}", end - start, maxNumberOfQueuedRecords);
         }
     }
 }

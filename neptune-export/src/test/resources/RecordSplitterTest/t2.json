@@ -1,0 +1,74 @@
+{
+  "input": [
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 1
+      },
+      "data": {
+        "id": "v-small",
+        "type": "vl",
+        "key": "label",
+        "value": {
+          "value": "Entity",
+          "dataType": "String"
+        }
+      },
+      "op": "ADD"
+    },
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 2
+      },
+      "data": {
+        "id": "v-small",
+        "type": "vp",
+        "key": "field3",
+        "value": {
+          "value": "abcdefghijklmnopqrstuvwxyz",
+          "dataType": "String"
+        }
+      },
+      "op": "ADD"
+    },
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 3
+      },
+      "data": {
+        "id": "v-small",
+        "type": "vp",
+        "key": "field2",
+        "value": {
+          "value": "field-2-value-1",
+          "dataType": "String"
+        }
+      },
+      "op": "ADD"
+    },
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 4
+      },
+      "data": {
+        "id": "v-small",
+        "type": "vp",
+        "key": "field1",
+        "value": {
+          "value": "field-1-value-1",
+          "dataType": "String"
+        }
+      },
+      "op": "ADD"
+    }
+  ],
+  "output": [
+    [{"eventId":{"commitNum":1,"opNum":1},"data":{"id":"v-small","type":"vl","key":"label","value":{"value":"Entity","dataType":"String"}},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":2},"data":{"id":"v-small","type":"vp","key":"field3","value":{"value":"abcdefghijklmnopqr","dataType":"String"}},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":3},"data":{"id":"v-small","type":"vp","key":"field3","value":{"value":"stuvwxyz","dataType":"String"}},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":4},"data":{"id":"v-small","type":"vp","key":"field2","value":{"value":"field-2-value-1","dataType":"String"}},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":5},"data":{"id":"v-small","type":"vp","key":"field1","value":{"value":"field-1-value-1","dataType":"String"}},"op":"ADD"}]
+  ]}

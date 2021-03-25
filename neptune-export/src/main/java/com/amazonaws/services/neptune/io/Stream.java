@@ -27,22 +27,28 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Stream {
 
     private final KinesisProducer kinesisProducer;
     private final String streamName;
     private final StreamThrottle streamThrottle;
+    private final AtomicLong counter = new AtomicLong();
+    private final RecordSplitter splitter;
 
     private static final Logger logger = LoggerFactory.getLogger(Stream.class);
 
-    private static final long MAX_SIZE = 900000;
+    private static final int MAX_SIZE_BYTES = 1000000;
 
     public Stream(KinesisProducer kinesisProducer, String streamName) {
         this.kinesisProducer = kinesisProducer;
         this.streamName = streamName;
         this.streamThrottle = new StreamThrottle(kinesisProducer);
+        this.splitter = new RecordSplitter(MAX_SIZE_BYTES);
     }
 
     public synchronized void publish(String s) {
@@ -50,22 +56,44 @@ public class Stream {
         if (StringUtils.isNotEmpty(s) && s.length() > 2) {
 
             try {
+                long partitionKeyValue = counter.incrementAndGet();
                 byte[] bytes = s.getBytes(StandardCharsets.UTF_8.name());
-                ByteBuffer data = ByteBuffer.wrap(bytes);
 
-                long partitionKeyValue = streamThrottle.counterForNextRecord(bytes.length);
+                if (bytes.length > MAX_SIZE_BYTES) {
+                    Collection<String> splitRecords = splitter.split(s);
+                    for (String splitRecord : splitRecords) {
+                        publish(partitionKeyValue, splitRecord.getBytes(StandardCharsets.UTF_8.name()));
+                    }
+                } else {
+                    publish(partitionKeyValue, bytes);
+                }
 
-                streamThrottle.throttle();
 
-                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
-                Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
-
-            } catch (InterruptedException e) {
-                logger.error(e.getMessage());
-                Thread.currentThread().interrupt();
             } catch (UnsupportedEncodingException e) {
                 logger.error(e.getMessage());
             }
+        }
+    }
+
+    private void publish(long partitionKeyValue, byte[] bytes) {
+
+        if (bytes.length > MAX_SIZE_BYTES) {
+            logger.warn("Dropping record because it is larger than 1 MB: [{}] '{}...'", bytes.length, new String(Arrays.copyOfRange(bytes, 0, 1024)));
+            return;
+        }
+
+        try {
+            ByteBuffer data = ByteBuffer.wrap(bytes);
+
+            streamThrottle.recalculateMaxBufferSize(partitionKeyValue, bytes.length);
+            streamThrottle.throttle();
+
+            ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
+            Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
+
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+            Thread.currentThread().interrupt();
         }
     }
 
