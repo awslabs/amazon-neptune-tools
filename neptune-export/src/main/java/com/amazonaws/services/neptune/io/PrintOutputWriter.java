@@ -105,4 +105,9 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     public void endOp() {
         // Do nothing
     }
+
+    @Override
+    public String lineSeparator() {
+        return System.lineSeparator();
+    }
 }

@@ -32,5 +32,7 @@ public interface OutputWriter extends AutoCloseable {
 
     void endOp();
 
+    String lineSeparator();
+
     void close() throws Exception;
 }

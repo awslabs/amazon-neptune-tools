@@ -74,7 +74,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
                     writer.print(property.nameWithoutDataType(printerOptions.csv().escapeCsvHeaders()));
                 }
             }
-            writer.print(System.lineSeparator());
+            writer.print(writer.lineSeparator());
         }
     }
 
@@ -178,7 +178,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printEndRow() {
-        writer.print(System.lineSeparator());
+        writer.print(writer.lineSeparator());
         writer.endCommit();
     }
 

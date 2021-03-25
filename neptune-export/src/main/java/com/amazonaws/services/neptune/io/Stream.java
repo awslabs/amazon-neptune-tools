@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -28,53 +28,38 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Stream {
 
     private final KinesisProducer kinesisProducer;
     private final String streamName;
-    private final AtomicLong counter = new AtomicLong();
-    private volatile long currentWindowLength = 0;
-    private volatile long maxRecordCount = 10000;
+    private final StreamThrottle streamThrottle;
 
     private static final Logger logger = LoggerFactory.getLogger(Stream.class);
+
+    private static final long MAX_SIZE = 900000;
 
     public Stream(KinesisProducer kinesisProducer, String streamName) {
         this.kinesisProducer = kinesisProducer;
         this.streamName = streamName;
+        this.streamThrottle = new StreamThrottle(kinesisProducer);
     }
 
-    private static final long QUEUE_SIZE_BYTES = 10000000;
-    private static final long MAX_WINDOW_SIZE = 1000;
-
     public synchronized void publish(String s) {
+
         if (StringUtils.isNotEmpty(s) && s.length() > 2) {
 
             try {
-                long partitionKeyValue = counter.incrementAndGet();
-
                 byte[] bytes = s.getBytes(StandardCharsets.UTF_8.name());
                 ByteBuffer data = ByteBuffer.wrap(bytes);
 
-                currentWindowLength += bytes.length;
-                if (partitionKeyValue % MAX_WINDOW_SIZE == 0){
-                    maxRecordCount = QUEUE_SIZE_BYTES / (currentWindowLength /MAX_WINDOW_SIZE);
-                    logger.info("{} bytes per {} records – maxRecordCount: {}", currentWindowLength, MAX_WINDOW_SIZE, maxRecordCount);
-                    currentWindowLength = 0;
-                }
+                long partitionKeyValue = streamThrottle.counterForNextRecord(bytes.length);
 
-                if (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
-                    long start = System.currentTimeMillis();
-                    while (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
-                        Thread.sleep(1);
-                    }
-                    long end = System.currentTimeMillis();
-                    logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded current maxRecordCount of {}", end - start, maxRecordCount);
-                }
+                streamThrottle.throttle();
 
                 ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
                 Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
+
             } catch (InterruptedException e) {
                 logger.error(e.getMessage());
                 Thread.currentThread().interrupt();

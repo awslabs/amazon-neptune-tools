@@ -18,6 +18,8 @@ public class KinesisStreamPrintOutputWriter extends PrintOutputWriter {
 
     private int opCount;
 
+    private static final String LINE_SEPARATOR = "";
+
     KinesisStreamPrintOutputWriter(String outputId, Writer out) {
         super(outputId, out);
     }
@@ -37,6 +39,11 @@ public class KinesisStreamPrintOutputWriter extends PrintOutputWriter {
     @Override
     public Writer writer() {
         return this;
+    }
+
+    @Override
+    public String lineSeparator(){
+        return LINE_SEPARATOR;
     }
 
     @Override

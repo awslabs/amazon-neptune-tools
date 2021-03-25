@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileToStreamOutputWriter implements OutputWriter {
 
-
     private final OutputWriter innerOutputWriter;
     private final Path filePath;
     private final Stream stream;
@@ -79,6 +78,11 @@ public class FileToStreamOutputWriter implements OutputWriter {
     }
 
     @Override
+    public String lineSeparator() {
+        return innerOutputWriter.lineSeparator();
+    }
+
+    @Override
     public void close() throws Exception {
         innerOutputWriter.close();
         while (!listener.isFinished()) {
@@ -100,6 +104,14 @@ public class FileToStreamOutputWriter implements OutputWriter {
         }
 
         public void handle(String line) {
+
+            if (line.length() > 1024){
+                System.out.println("LINE: " + line.substring(0, 1024));
+
+            } else {
+                System.out.println("LINE: " + line);
+            }
+
             stream.publish(line);
             linesProcessed++;
         }
