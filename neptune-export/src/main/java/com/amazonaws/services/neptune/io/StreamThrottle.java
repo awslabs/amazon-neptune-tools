@@ -24,34 +24,43 @@ public class StreamThrottle {
 
     private final KinesisProducer kinesisProducer;
     private final AtomicLong windowSizeBytes = new AtomicLong();
-    private volatile long maxNumberOfQueuedRecords = 10000;
+    private volatile long queueHighWatermark = 10000;
+    private volatile int tumblingWindowSize = 10;
 
+    private static final long MAX_QUEUE_HIGH_WATERMARK = 10000;
     private static final long QUEUE_SIZE_BYTES = 10000000;
-    private static final long TUMBLING_WINDOW_NUMBER_OF_RECORDS = 1000;
+    private static final int LENGTH_HIGH_WATERMARK = 900000;
 
     public StreamThrottle(KinesisProducer kinesisProducer) {
         this.kinesisProducer = kinesisProducer;
     }
 
-    public void recalculateMaxBufferSize(long counter, long length){
+    public void recalculateMaxBufferSize(long counter, long length) {
 
         long currentWindowSizeBytes = windowSizeBytes.addAndGet(length);
 
-        if (counter % TUMBLING_WINDOW_NUMBER_OF_RECORDS == 0){
-            maxNumberOfQueuedRecords = QUEUE_SIZE_BYTES / (currentWindowSizeBytes / TUMBLING_WINDOW_NUMBER_OF_RECORDS);
-            logger.info("Current window has {} records totalling {} bytes, meaning that maxNumberOfQueuedRecords cannot exceed {}", TUMBLING_WINDOW_NUMBER_OF_RECORDS, currentWindowSizeBytes, maxNumberOfQueuedRecords);
+        if (length > LENGTH_HIGH_WATERMARK || counter % tumblingWindowSize == 0) {
+            queueHighWatermark = Math.min(QUEUE_SIZE_BYTES / (currentWindowSizeBytes / tumblingWindowSize), MAX_QUEUE_HIGH_WATERMARK);
+            logger.info("Current window has {} records totalling {} bytes, meaning that maxNumberOfQueuedRecords cannot exceed {}", tumblingWindowSize, currentWindowSizeBytes, queueHighWatermark);
             windowSizeBytes.set(0);
+//            if (queueHighWatermark < 100) {
+//                tumblingWindowSize = 10;
+//            } else if (queueHighWatermark < 5000) {
+//                tumblingWindowSize = 100;
+//            } else {
+//                tumblingWindowSize = 1000;
+//            }
         }
     }
 
     public void throttle() throws InterruptedException {
-        if (kinesisProducer.getOutstandingRecordsCount() > (maxNumberOfQueuedRecords)) {
+        if (kinesisProducer.getOutstandingRecordsCount() > (queueHighWatermark)) {
             long start = System.currentTimeMillis();
-            while (kinesisProducer.getOutstandingRecordsCount() > (maxNumberOfQueuedRecords)) {
+            while (kinesisProducer.getOutstandingRecordsCount() > (queueHighWatermark)) {
                 Thread.sleep(1);
             }
             long end = System.currentTimeMillis();
-            logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded maxNumberOfQueuedRecords of {}", end - start, maxNumberOfQueuedRecords);
+            logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded maxNumberOfQueuedRecords of {}", end - start, queueHighWatermark);
         }
     }
 }
