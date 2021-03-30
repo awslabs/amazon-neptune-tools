@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -27,6 +28,8 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.nquads.NQuadsParserFactory;
 import org.eclipse.rdf4j.rio.nquads.NQuadsWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -37,17 +40,49 @@ import java.util.Collections;
 
 public class RecordSplitter {
 
-    public static Collection<String> splitByLength(String s, int length) {
+    private static final Logger logger = LoggerFactory.getLogger(RecordSplitter.class);
+
+    public static Collection<String> splitByLength(String s, int length){
+        return splitByLength(s ,length, 10);
+    }
+
+    public static Collection<String> splitByLength(String s, int length, int wordBoundaryMargin) {
+
         int startIndex = 0;
-        int endIndex = length;
 
         Collection<String> results = new ArrayList<>();
 
         while (startIndex < s.length()) {
-            String result = s.substring(startIndex, Math.min(endIndex, s.length()));
-            results.add(result);
-            startIndex = endIndex;
-            endIndex += length;
+
+            boolean foundWordBoundary = false;
+
+            int endIndex = Math.min(startIndex + length, s.length());
+            int minCandidateEndIndex = Math.max(startIndex +1, endIndex - wordBoundaryMargin);
+
+            for (int actualEndIndex = endIndex; actualEndIndex >= minCandidateEndIndex; actualEndIndex--){
+
+                if (!StringUtils.isAlphanumeric( s.substring(actualEndIndex - 1, actualEndIndex))){
+
+                    String result = s.substring(startIndex, actualEndIndex);
+                    String trimmedResult = result.trim();
+                    if (StringUtils.isNotEmpty(trimmedResult)){
+                        results.add(trimmedResult);
+                    }
+                    startIndex = actualEndIndex;
+                    foundWordBoundary = true;
+                    break;
+                }
+            }
+
+            if (!foundWordBoundary){
+                String result = s.substring(startIndex, endIndex);
+                String trimmedResult = result.trim();
+                if (StringUtils.isNotEmpty(trimmedResult)){
+                    results.add(trimmedResult);
+                }
+                startIndex = endIndex;
+            }
+
         }
 
         return results;
@@ -59,12 +94,14 @@ public class RecordSplitter {
     }
 
     private final int maxSize;
+    private final LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy;
     private final ObjectMapper mapper = new ObjectMapper();
     private final RDFParser parser = new NQuadsParserFactory().getParser();
     private final StatementHandler handler = new StatementHandler();
 
-    public RecordSplitter(int maxSize) {
+    public RecordSplitter(int maxSize, LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy) {
         this.maxSize = maxSize;
+        this.largeStreamRecordHandlingStrategy = largeStreamRecordHandlingStrategy;
         this.parser.setRDFHandler(handler);
     }
 
@@ -102,7 +139,7 @@ public class RecordSplitter {
         ((ObjectNode) jsonNode.get("eventId")).replace("opNum", mapper.valueToTree(opNum));
         String jsonString = jsonNode.toString();
         int eventJsonLength = jsonString.length();
-        if (eventJsonLength > maxSize) {
+        if (eventJsonLength > maxSize && largeStreamRecordHandlingStrategy.allowShred()) {
             if (isProperytGraphEvent(jsonNode)) {
                 String value = jsonNode.get("data").get("value").get("value").textValue();
                 int maxStringLength = calculateStringMaxLength(maxSize, eventJsonLength, value.length());
@@ -134,6 +171,7 @@ public class RecordSplitter {
         } else {
             results.add(format(jsonString));
         }
+
         return results;
     }
 

@@ -38,7 +38,7 @@ import java.nio.file.Path;
                 "Export all data to the /home/ec2-user/output directory"
         })
 @Command(name = "export-rdf", description = "Export RDF graph from Neptune.")
-public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
+public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);

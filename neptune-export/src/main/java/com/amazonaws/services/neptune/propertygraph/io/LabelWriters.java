@@ -47,7 +47,7 @@ public class LabelWriters<T extends Map<?, ?>> implements AutoCloseable {
             leastRecentlyAccessedLabelWriter.close();
             fileDescriptorCount.decrementAndGet();
         }
-        logger.trace("Adding writer for label {} for output {}", label.labelsAsString(), labelWriter.outputId());
+        logger.debug("Adding writer for label {} for output {}", label.labelsAsString(), labelWriter.outputId());
         labelWriters.put(label, labelWriter);
         fileDescriptorCount.incrementAndGet();
     }

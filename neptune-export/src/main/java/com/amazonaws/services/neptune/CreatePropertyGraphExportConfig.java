@@ -39,7 +39,7 @@ import java.util.Collection;
         "Create config file containing schema for User nodes and FOLLOWS edges"
 })
 @Command(name = "create-pg-config", description = "Create a property graph schema config file.")
-public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
+public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);

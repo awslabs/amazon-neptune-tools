@@ -45,7 +45,7 @@ import java.util.List;
                 "Parallel export of Person data and Post data as JSON"
         })
 @Command(name = "export-pg-from-queries", description = "Export property graph to CSV or JSON from Gremlin queries.")
-public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportBaseCommand implements Runnable {
+public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);

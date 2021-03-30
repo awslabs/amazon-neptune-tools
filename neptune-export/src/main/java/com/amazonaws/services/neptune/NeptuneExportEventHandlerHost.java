@@ -12,13 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
-import com.github.rvesse.airline.annotations.restrictions.Once;
+import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 
-public abstract class NeptuneExportBaseCommand {
-    @Option(name = {"--log-level"}, description = "Log level (optional, default 'error').", title = "log level")
-    @Once
-    @AllowedValues(allowedValues = {"trace", "debug", "info", "warn", "error"})
-    private String logLevel = "error";
+public interface NeptuneExportEventHandlerHost {
+    void setEventHandler(NeptuneExportEventHandler eventHandler);
 }

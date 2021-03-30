@@ -37,6 +37,7 @@ public class Stream {
     private final KinesisProducer kinesisProducer;
     private final String streamName;
     private final StreamThrottle streamThrottle;
+    private final LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy;
     private final AtomicLong counter = new AtomicLong();
     private final RecordSplitter splitter;
 
@@ -44,11 +45,14 @@ public class Stream {
 
     private static final int MAX_SIZE_BYTES = 1000000;
 
-    public Stream(KinesisProducer kinesisProducer, String streamName) {
+    public Stream(KinesisProducer kinesisProducer,
+                  String streamName,
+                  LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy) {
         this.kinesisProducer = kinesisProducer;
         this.streamName = streamName;
         this.streamThrottle = new StreamThrottle(kinesisProducer);
-        this.splitter = new RecordSplitter(MAX_SIZE_BYTES);
+        this.largeStreamRecordHandlingStrategy = largeStreamRecordHandlingStrategy;
+        this.splitter = new RecordSplitter(MAX_SIZE_BYTES, largeStreamRecordHandlingStrategy);
     }
 
     public synchronized void publish(String s) {
@@ -59,7 +63,7 @@ public class Stream {
                 long partitionKeyValue = counter.incrementAndGet();
                 byte[] bytes = s.getBytes(StandardCharsets.UTF_8.name());
 
-                if (bytes.length > MAX_SIZE_BYTES) {
+                if (bytes.length > MAX_SIZE_BYTES && largeStreamRecordHandlingStrategy.allowSplit()) {
                     Collection<String> splitRecords = splitter.split(s);
                     for (String splitRecord : splitRecords) {
                         publish(partitionKeyValue, splitRecord.getBytes(StandardCharsets.UTF_8.name()));
@@ -78,7 +82,7 @@ public class Stream {
     private void publish(long partitionKeyValue, byte[] bytes) {
 
         if (bytes.length > MAX_SIZE_BYTES) {
-            logger.warn("Dropping record because it is larger than 1 MB: [{}] '{}...'", bytes.length, new String(Arrays.copyOfRange(bytes, 0, 1024)));
+            logger.warn("Dropping record because it is larger than 1 MB: [{}] '{}...'", bytes.length, new String(Arrays.copyOfRange(bytes, 0, 256)));
             return;
         }
 

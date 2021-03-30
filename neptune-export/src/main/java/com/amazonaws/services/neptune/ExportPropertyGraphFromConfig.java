@@ -41,7 +41,7 @@ import java.util.Collection;
         "Export data as JSON using the schema config in /home/ec2-user/config.json"
 })
 @Command(name = "export-pg-from-config", description = "Export property graph from Neptune to CSV or JSON using an existing schema config file.")
-public class ExportPropertyGraphFromConfig extends NeptuneExportBaseCommand implements Runnable {
+public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);

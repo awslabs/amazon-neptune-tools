@@ -41,15 +41,8 @@ public class StreamThrottle {
 
         if (length > LENGTH_HIGH_WATERMARK || counter % tumblingWindowSize == 0) {
             queueHighWatermark = Math.min(QUEUE_SIZE_BYTES / (currentWindowSizeBytes / tumblingWindowSize), MAX_QUEUE_HIGH_WATERMARK);
-            logger.info("Current window has {} records totalling {} bytes, meaning that maxNumberOfQueuedRecords cannot exceed {}", tumblingWindowSize, currentWindowSizeBytes, queueHighWatermark);
+            logger.debug("Current window has {} records totalling {} bytes, meaning that maxNumberOfQueuedRecords cannot exceed {}", tumblingWindowSize, currentWindowSizeBytes, queueHighWatermark);
             windowSizeBytes.set(0);
-//            if (queueHighWatermark < 100) {
-//                tumblingWindowSize = 10;
-//            } else if (queueHighWatermark < 5000) {
-//                tumblingWindowSize = 100;
-//            } else {
-//                tumblingWindowSize = 1000;
-//            }
         }
     }
 
@@ -60,7 +53,7 @@ public class StreamThrottle {
                 Thread.sleep(1);
             }
             long end = System.currentTimeMillis();
-            logger.trace("Paused adding records to stream for {} millis while number of queued records exceeded maxNumberOfQueuedRecords of {}", end - start, queueHighWatermark);
+            logger.debug("Paused adding records to stream for {} millis while number of queued records exceeded maxNumberOfQueuedRecords of {}", end - start, queueHighWatermark);
         }
     }
 }

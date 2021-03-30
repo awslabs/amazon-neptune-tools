@@ -12,8 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.NeptuneExportBaseCommand;
 import com.amazonaws.services.neptune.NeptuneExportCli;
+import com.amazonaws.services.neptune.NeptuneExportEventHandlerHost;
+import org.apache.commons.lang.StringUtils;
 
 public class NeptuneExportRunner {
 
@@ -29,16 +30,24 @@ public class NeptuneExportRunner {
         this.eventHandler = eventHandler;
     }
 
-    public void run(){
+    public void run() {
+
+        Args argsCollection = new Args(this.args);
+        if (argsCollection.contains("--log-level")){
+            String logLevel = argsCollection.getFirstOptionValue("--log-level");
+            if (StringUtils.isNotEmpty(logLevel)){
+                System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
+            }
+        }
+
         com.github.rvesse.airline.Cli<Runnable> cli = new com.github.rvesse.airline.Cli<>(NeptuneExportCli.class);
 
         try {
-            Runnable cmd = cli.parse(args);
+            Runnable cmd = cli.parse(this.args);
 
-            if (NeptuneExportBaseCommand.class.isAssignableFrom(cmd.getClass())) {
-                NeptuneExportBaseCommand baseCommand = (NeptuneExportBaseCommand) cmd;
-                baseCommand.applyLogLevel();
-                baseCommand.setEventHandler(eventHandler);
+            if (NeptuneExportEventHandlerHost.class.isAssignableFrom(cmd.getClass())) {
+                NeptuneExportEventHandlerHost eventHandlerHost = (NeptuneExportEventHandlerHost) cmd;
+                eventHandlerHost.setEventHandler(eventHandler);
             }
 
             cmd.run();

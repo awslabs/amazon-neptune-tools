@@ -48,9 +48,14 @@ public class RdfTargetModule implements CommandWriter {
     @Once
     private String streamName;
 
-    @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
+    @Option(name = {"--region", "--stream-region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
     @Once
     private String region;
+
+    @Option(name = {"--stream-large-record-strategy"}, description = "Strategy for dealing with records to be sent to Amazon Kinesis that are larger than 1 MB.")
+    @Once
+    @AllowedEnumValues(LargeStreamRecordHandlingStrategy.class)
+    private LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy = LargeStreamRecordHandlingStrategy.splitAndShred;
 
     @Option(name = {"--export-id"}, description = "Export ID", hidden = true)
     @Once
@@ -61,7 +66,7 @@ public class RdfTargetModule implements CommandWriter {
     }
 
     public RdfTargetConfig config(Directories directories) {
-        return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
+        return new RdfTargetConfig(directories, new KinesisConfig(streamName, region, largeStreamRecordHandlingStrategy), output, format);
     }
 
     @Override

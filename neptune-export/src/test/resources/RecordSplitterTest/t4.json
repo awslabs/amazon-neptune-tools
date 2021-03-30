@@ -1,6 +1,6 @@
 {
-  "input":  ["v-1","Entity","field-3-value-1",10,"field-1-value-1"],
+  "input":  ["v-1","Entity","field3value1",10,"field1value1"],
   "output": [
-    ["v-1"],["Entity"],["field-3-va"],["lue-1"],[10],["field-1-va"],["lue-1"]
+    ["v-1"],["Entity"],["field3va"],["lue1"],[10],["field1va"],["lue1"]
   ]
 }

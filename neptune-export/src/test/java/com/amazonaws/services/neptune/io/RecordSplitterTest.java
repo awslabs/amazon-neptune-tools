@@ -12,6 +12,8 @@ import static org.junit.Assert.assertEquals;
 
 public class RecordSplitterTest {
 
+    private final LargeStreamRecordHandlingStrategy STRATEGY = LargeStreamRecordHandlingStrategy.splitAndShred;
+
     @Test
     public void shouldSplitStringByLength(){
 
@@ -24,10 +26,21 @@ public class RecordSplitterTest {
     }
 
     @Test
+    public void shouldSplitStringAttemptToSplitOnWordBoundary(){
+
+        String s = " abc defghij klmno ";
+
+        assertStringCollections(Collections.singletonList("abc defghij klmno"), RecordSplitter.splitByLength(s, 19, 4));
+        assertStringCollections(Collections.singletonList("abc defghij klmno"), RecordSplitter.splitByLength(s, 24, 4));
+        assertStringCollections(Arrays.asList("abc", "defgh", "ij", "klmno"), RecordSplitter.splitByLength(s, 5));
+        assertStringCollections(Arrays.asList("abc", "defghi", "j", "klmno"), RecordSplitter.splitByLength(s, 6, 4));
+    }
+
+    @Test
     public void shouldSplitIntoIndividualNeptuneStreamsPGRecords() throws IOException {
         TestFixture testFixture = new TestFixture("t1.json", getClass());
 
-        RecordSplitter recordSplitter = new RecordSplitter(160);
+        RecordSplitter recordSplitter = new RecordSplitter(160, STRATEGY);
         Collection<String> records = recordSplitter.split(testFixture.input());
 
         assertStringCollections(testFixture.expectedOutputs(), records);
@@ -37,7 +50,7 @@ public class RecordSplitterTest {
     public void shouldSubdivideLongPGRecords() throws IOException {
         TestFixture testFixture = new TestFixture("t2.json", getClass());
 
-        RecordSplitter recordSplitter = new RecordSplitter(160);
+        RecordSplitter recordSplitter = new RecordSplitter(160, STRATEGY);
         Collection<String> records = recordSplitter.split(testFixture.input());
 
         assertStringCollections(testFixture.expectedOutputs(), records);
@@ -47,7 +60,7 @@ public class RecordSplitterTest {
     public void shouldSplitCsvIntoIndividualFields() throws IOException {
         TestFixture testFixture = new TestFixture("t3.json", getClass());
 
-        RecordSplitter recordSplitter = new RecordSplitter(160);
+        RecordSplitter recordSplitter = new RecordSplitter(160, STRATEGY);
         Collection<String> records = recordSplitter.split(testFixture.input());
 
         assertStringCollections(testFixture.expectedOutputs(), records);
@@ -57,7 +70,7 @@ public class RecordSplitterTest {
     public void shouldSubdivideLongCsvFields() throws IOException {
         TestFixture testFixture = new TestFixture("t4.json", getClass());
 
-        RecordSplitter recordSplitter = new RecordSplitter(10);
+        RecordSplitter recordSplitter = new RecordSplitter(8, STRATEGY);
         Collection<String> records = recordSplitter.split(testFixture.input());
 
         assertStringCollections(testFixture.expectedOutputs(), records);
@@ -67,7 +80,7 @@ public class RecordSplitterTest {
     public void shouldSplitIntoIndividualNeptuneStreamsRDFRecords() throws IOException {
         TestFixture testFixture = new TestFixture("t5.json", getClass());
 
-        RecordSplitter recordSplitter = new RecordSplitter(160);
+        RecordSplitter recordSplitter = new RecordSplitter(160, STRATEGY);
         Collection<String> records = recordSplitter.split(testFixture.input());
 
         assertStringCollections(testFixture.expectedOutputs(), records);
@@ -77,7 +90,7 @@ public class RecordSplitterTest {
     public void shouldSubdivideLongRDFRecords() throws IOException {
         TestFixture testFixture = new TestFixture("t6.json", getClass());
 
-        RecordSplitter recordSplitter = new RecordSplitter(140);
+        RecordSplitter recordSplitter = new RecordSplitter(140, STRATEGY);
         Collection<String> records = recordSplitter.split(testFixture.input());
 
         assertStringCollections(testFixture.expectedOutputs(), records);

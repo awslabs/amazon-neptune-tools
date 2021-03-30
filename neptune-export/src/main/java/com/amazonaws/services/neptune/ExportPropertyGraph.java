@@ -49,7 +49,7 @@ import java.util.Collection;
         "Parallel export using 2 threads, with each thread processing batches of 1000 nodes or edges"
 })
 @Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON.")
-public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
+public class ExportPropertyGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
