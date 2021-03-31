@@ -34,7 +34,7 @@ public class EdgeWriter implements LabelWriter<Map<String, Object>> {
         String to = String.valueOf(map.get("~to"));
         @SuppressWarnings("unchecked")
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
-        String id = (String) map.get("~id");
+        String id = String.valueOf(map.get("~id"));
         String label = (String) map.get("~label");
 
         propertyGraphPrinter.printStartRow();

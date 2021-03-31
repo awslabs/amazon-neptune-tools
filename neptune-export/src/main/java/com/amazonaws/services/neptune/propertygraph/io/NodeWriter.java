@@ -33,7 +33,7 @@ public class NodeWriter implements LabelWriter<Map<String, Object>> {
 
         @SuppressWarnings("unchecked")
         Map<?, Object> properties = (Map<?, Object>) map.get("properties");
-        String id = (String) map.get("~id");
+        String id = String.valueOf(map.get("~id"));
         @SuppressWarnings("unchecked")
         List<String> labels = (List<String>) map.get("~label");
 
