@@ -33,24 +33,24 @@ The export process uses SSL to connect to Neptune. It currently supports IAM Dat
   
 ### Exporting from a Database Clone
 
-If you want to [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) your database before exporting, you can add a `--clone-cluster` flag, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the _export-neptune-to-kinesis_ AWS Lambda function once the solution has been installed.
+If you want to [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) your database before exporting, you can add a `--clone-cluster` flag, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.
 
 ### Handling Large Properties
 
-As noted in the solution overview, this solution exports data from Neptune and publishes it to an Amazon Kinesis Data Stream in the [Neptune Streams format](https://docs.aws.amazon.com/neptune/latest/userguide/streams-change-formats.html). Each record published to Kinesis comprises a JSON document containing an array of Neptune Streams change records that represent the labels and properties of a single vertex or edge. A vertex with a single label and two properties, for example, would be published to Kinesis as an array of three Neptune Streams change records.
+As noted in the solution overview, _neptune-export_ exports data from Neptune and publishes it to an Amazon Kinesis Data Stream in the [Neptune Streams format](https://docs.aws.amazon.com/neptune/latest/userguide/streams-change-formats.html). Each record published to Kinesis comprises a JSON document containing an array of Neptune Streams change records that represent the labels and properties of a single vertex or edge. A vertex with a single label and two properties, for example, would be published to Kinesis as an array of three Neptune Streams change records.
 
 The maximum size of a data payload of a [Kinesis record is 1 MB](https://docs.aws.amazon.com/streams/latest/dev/service-sizes-and-limits.html). Therefore, a vertex or edge with a set of properties whose array of Neptune Streams change records totals more than 1 MB in size will fail to be published to Kinesis. And obviously, any single property whose value exceeds 1 MB will similarly fail.
 
-_neptune-export_ provides a configuration option, `--`, that allows you to control how large properties and collections of properties whose size exceeds 1 MB are handled. By default, this configuration uses the `splitAndShred` strategy, which ensures that all properties, irrespective of their size, are published successfully to Kinesis, and thereafter indexed in ElasticSearch.
+_neptune-export_ provides a configuration option, `--stream-large-record-strategy`, that allows you to control how large properties and collections of properties whose size exceeds 1 MB are handled. By default, this configuration uses the `splitAndShred` strategy, which ensures that all properties, irrespective of their size, are published successfully to Kinesis, and thereafter indexed in ElasticSearch.
 
   - `dropAll` - If the array of Neptune Streams change records for a vertex or edge exceeds 1 MB, all records for that vertex or edge will be dropped.
-  - `splitAndDrop` – The array of Neptune Streams change records for a vertex or edge is split and the individual records submitted to Kinesis. Any individual property record whose size exceeds 1 MB, however, will be dropped.
-  - `splitAndShred` – The array of Neptune Streams change records for a vertex or edge is split and the individual records submitted to Kinesis. Any individual property record whose size exceeds 1 MB is then further split into multiple records, each up 1 MB in size. These records are then submitted to Kinesis. 
+  - `splitAndDrop` – If the array of Neptune Streams change records for a vertex or edge exceeds 1 MB, the array is split and the individual records submitted to Kinesis. Any individual property record whose size exceeds 1 MB, however, will be dropped.
+  - `splitAndShred` – If the array of Neptune Streams change records for a vertex or edge exceeds 1 MB, the array is split and the individual records submitted to Kinesis. Any individual property record whose size exceeds 1 MB is then further split into multiple records, each up 1 MB in size. These records are then submitted to Kinesis. 
 
-If you want to change the large property handling strategy, you can add a `--clone-cluster` parameter, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the _export-neptune-to-kinesis_ AWS Lambda function once the solution has been installed. For example:
+If you want to change the large property handling strategy, you can add a `--stream-large-record-strategy` parameter, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed. For example:
 
 ```
--- splitAndDrop
+--stream-large-record-strategy splitAndDrop
 ```
     
 ### Installation
