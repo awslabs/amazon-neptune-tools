@@ -112,6 +112,31 @@ For example, to export only _airport_ and _country_ nodes, and _route_ edges, su
 
 Add a `--filter` parameter with a JSON description of the nodes and edges and their properties that you want to export, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.
 
+The following example shows a filter than specifies that only _airport_ nodes, with their _code_, _desc_, and _region_ properties, and _route_ edges, with their _dist_ property, should be exported:
+
+```
+--filter "{
+  \"nodes\": [
+    {
+      \"label\": \"airport\",
+      \"properties\": [
+        \"code\",
+        \"desc\",
+        \"region\"
+      ]
+    }
+  ],
+  \"edges\": [
+    {
+      \"label\": \"route\",
+      \"properties\": [
+        \"dist\"
+      ]
+    }
+  ]
+}"
+```
+
 ### Monitoring and troubleshooting
 
 To diagnose issues with the export from Neptune to Kinesis, consult the Amazon CloudWatch logs for your AWS Batch __export-neptune-to-kinesis-job__. These logs will indicate whether _neptune-export_ was successfully downloaded to the batch instance, and the progress of the export job. When reviewing the logs, ensure that:
