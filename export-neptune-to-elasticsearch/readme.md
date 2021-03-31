@@ -31,11 +31,11 @@ The export process uses SSL to connect to Neptune. It currently supports IAM Dat
   2. The export process uses AWS Batch to host and execute _neptune-export_, which exports data from Neptune and publishes it to an Amazon Kinesis Data Stream in the [Neptune Streams format](https://docs.aws.amazon.com/neptune/latest/userguide/streams-change-formats.html).
   3. A second AWS Lambda function polls the Kinesis Stream and publishes records to your Amazon ElasticSearch cluster. This function uses the same parsing and publishing code as the Neptune Streams ElasticSearch integration solution.
   
-### Exporting from a Database Clone
+### Exporting from a database clone
 
 If you want to [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) your database before exporting, you can add a `--clone-cluster` flag, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.
 
-### Handling Large Properties
+### Handling large properties
 
 As noted in the solution overview, _neptune-export_ exports data from Neptune and publishes it to an Amazon Kinesis Data Stream in the [Neptune Streams format](https://docs.aws.amazon.com/neptune/latest/userguide/streams-change-formats.html). Each record published to Kinesis comprises a JSON document containing an array of Neptune Streams change records that represent the labels and properties of a single vertex or edge. A vertex with a single label and two properties, for example, would be published to Kinesis as an array of three Neptune Streams change records.
 
@@ -85,6 +85,32 @@ If you want to change the large property handling strategy, you can add a `--str
 |Asia Pacific (Sydney) | [<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://ap-southeast-2.console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/create/review?templateURL=https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-sagemaker/cloudformation-templates/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.json&stackName=neptune-index) |
 |Asia Pacific (Tokyo) | [<img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png">](https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/create/review?templateURL=https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-sagemaker/cloudformation-templates/export-neptune-to-elasticsearch/export-neptune-to-elasticsearch.json&stackName=neptune-index) |
 
+
+### Filtering exported data
+
+Sometimes you may want to filter the data that you export from Neptune and index in ElasticSearch. There are three ways in which you can filter data:
+
+#### Use the ExportScope parameter to filter either edges or nodes
+
+Set the either the __ExportScope__ CloudFormation parameter or the __EXPORT_SCOPE___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function to one of the following values:
+
+  - `all` – Exports both nodes and edges.
+  - `nodes` – Exports nodes only.
+  - `edges` – Exports edges only.
+  
+#### Use the -nl and -el parameters to specify node labels and edge labels
+
+Add one or more `-nl` and `-el` parameters with the names of node and edge labels that you want to export, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.
+
+For example, to export only _airport_ and _country_ nodes, and _route_ edges, supply the following parameters:
+
+```
+-nl aiport -nl country -el route
+```
+
+#### Use the --filter parameter to specify particular node and edge properties
+
+Add a `--filter` parameter with a JSON description of the nodes and edges and their properties that you want to export, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.
 
 ### Monitoring and troubleshooting
 
