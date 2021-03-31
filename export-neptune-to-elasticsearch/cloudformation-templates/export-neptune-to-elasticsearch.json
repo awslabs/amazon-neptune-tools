@@ -720,16 +720,60 @@
         "Path": "/",
         "Policies": [
           {
-            "PolicyName": "batch-job-role",
+            "PolicyName": {
+              "Fn::Sub": [
+                "neptune-index-batch-job-role-${id}",
+                {
+                  "id": {
+                    "Fn::Select": [
+                      0,
+                      {
+                        "Fn::Split": [
+                          "-",
+                          {
+                            "Fn::Select": [
+                              2,
+                              {
+                                "Fn::Split": [
+                                  "/",
+                                  {
+                                    "Ref": "AWS::StackId"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
             "PolicyDocument": {
               "Version": "2012-10-17",
               "Statement": [
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "cloudwatch:*"
+                    "cloudwatch:PutMetricData"
                   ],
-                  "Resource": "*"
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                    "logs:GetLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
                 },
                 {
                   "Effect": "Allow",
@@ -750,9 +794,33 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:neptune-db:${AWS::Region}:${AWS::AccountId}:*/*"
+                      "Fn::Sub": "arn:${AWS::Partition}:neptune-db:${AWS::Region}:${AWS::AccountId}:*/*"
                     }
                   ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "rds:AddTagsToResource",
+                    "rds:DescribeDBClusters",
+                    "rds:DescribeDBInstances",
+                    "rds:ListTagsForResource",
+                    "rds:DescribeDBClusterParameters",
+                    "rds:DescribeDBParameters",
+                    "rds:ModifyDBParameterGroup",
+                    "rds:ModifyDBClusterParameterGroup",
+                    "rds:RestoreDBClusterToPointInTime",
+                    "rds:DeleteDBInstance",
+                    "rds:DeleteDBClusterParameterGroup",
+                    "rds:DeleteDBParameterGroup",
+                    "rds:DeleteDBCluster",
+                    "rds:CreateDBInstance",
+                    "rds:CreateDBClusterParameterGroup",
+                    "rds:CreateDBParameterGroup"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:*"
+                  }
                 }
               ]
             }
