@@ -477,7 +477,7 @@
             "NEPTUNE_ENGINE": {
               "Ref": "NeptuneEngine"
             },
-            "NEPTUNE_EXPORT_JAR_URI": "https://aws-neptune-customer-samples-eu-west-1.s3-eu-west-1.amazonaws.com/neptune-sagemaker/bin/neptune-export/neptune-export.jar",
+            "NEPTUNE_EXPORT_JAR_URI": "https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-export/bin/neptune-export.jar",
             "STREAM_NAME": {
               "Ref": "KinesisStream"
             },
