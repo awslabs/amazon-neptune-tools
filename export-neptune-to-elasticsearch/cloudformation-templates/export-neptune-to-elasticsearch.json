@@ -756,10 +756,10 @@
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "cloudwatch:PutMetricData"
+                    "cloudwatch:*"
                   ],
                   "Resource": {
-                    "Fn::Sub": "arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:*"
+                    "Fn::Sub": "*"
                   }
                 },
                 {
