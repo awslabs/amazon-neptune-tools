@@ -45,7 +45,7 @@ def trigger_neptune_export():
     concurrency_param = ' --concurrency {}'.format(concurrency) if neptune_engine == 'gremlin' else ''
     scope_param = ' --scope {}'.format(scope) if neptune_engine == 'gremlin' else ''
             
-    command = 'df -h && rm -rf neptune-export.jar && wget {} && export SERVICE_REGION="{}" && java -Xms8g -Xmx8g -jar neptune-export.jar {} -e {} -p {} -d /neptune/results --output stream --stream-name {} --region {} --format neptuneStreamsJson --log-level info --use-ssl{}{}{}{}'.format(
+    command = 'df -h && rm -rf neptune-export.jar && wget {} && export SERVICE_REGION="{}" && java -Xms8g -Xmx8g -jar neptune-export.jar {} -e {} -p {} -d /neptune/results --output stream --stream-name {} --region {} --format neptuneStreamsJson --use-ssl{}{}{}{}'.format(
         neptune_export_jar_uri, 
         region,
         export_command, 

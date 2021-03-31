@@ -477,7 +477,7 @@
             "NEPTUNE_ENGINE": {
               "Ref": "NeptuneEngine"
             },
-            "NEPTUNE_EXPORT_JAR_URI": "https://aws-neptune-customer-samples-eu-west-1.s3-eu-west-1.amazonaws.com/neptune-sagemaker/bin/neptune-export/neptune-export.jar",
+            "NEPTUNE_EXPORT_JAR_URI": "https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-export/bin/neptune-export.jar",
             "STREAM_NAME": {
               "Ref": "KinesisStream"
             },
@@ -720,7 +720,36 @@
         "Path": "/",
         "Policies": [
           {
-            "PolicyName": "batch-job-role",
+            "PolicyName": {
+              "Fn::Sub": [
+                "neptune-index-batch-job-role-${id}",
+                {
+                  "id": {
+                    "Fn::Select": [
+                      0,
+                      {
+                        "Fn::Split": [
+                          "-",
+                          {
+                            "Fn::Select": [
+                              2,
+                              {
+                                "Fn::Split": [
+                                  "/",
+                                  {
+                                    "Ref": "AWS::StackId"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
             "PolicyDocument": {
               "Version": "2012-10-17",
               "Statement": [
@@ -729,7 +758,22 @@
                   "Action": [
                     "cloudwatch:*"
                   ],
-                  "Resource": "*"
+                  "Resource": {
+                    "Fn::Sub": "*"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:DescribeLogStreams",
+                    "logs:PutLogEvents",
+                    "logs:GetLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
                 },
                 {
                   "Effect": "Allow",
@@ -750,9 +794,33 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:neptune-db:${AWS::Region}:${AWS::AccountId}:*/*"
+                      "Fn::Sub": "arn:${AWS::Partition}:neptune-db:${AWS::Region}:${AWS::AccountId}:*/*"
                     }
                   ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "rds:AddTagsToResource",
+                    "rds:DescribeDBClusters",
+                    "rds:DescribeDBInstances",
+                    "rds:ListTagsForResource",
+                    "rds:DescribeDBClusterParameters",
+                    "rds:DescribeDBParameters",
+                    "rds:ModifyDBParameterGroup",
+                    "rds:ModifyDBClusterParameterGroup",
+                    "rds:RestoreDBClusterToPointInTime",
+                    "rds:DeleteDBInstance",
+                    "rds:DeleteDBClusterParameterGroup",
+                    "rds:DeleteDBParameterGroup",
+                    "rds:DeleteDBCluster",
+                    "rds:CreateDBInstance",
+                    "rds:CreateDBClusterParameterGroup",
+                    "rds:CreateDBParameterGroup"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:*"
+                  }
                 }
               ]
             }
@@ -844,7 +912,36 @@
     "LaunchTemplate": {
       "Type": "AWS::EC2::LaunchTemplate",
       "Properties": {
-        "LaunchTemplateName": "increase-container-volume",
+        "LaunchTemplateName": {
+          "Fn::Sub": [
+            "increase-container-volume-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "LaunchTemplateData": {
           "UserData": {
             "Fn::Base64": {
