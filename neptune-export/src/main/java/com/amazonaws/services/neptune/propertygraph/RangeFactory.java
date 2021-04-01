@@ -56,23 +56,28 @@ public class RangeFactory {
     }
 
     private final long rangeSize;
-    private final long numberOfItemsToExport;
+    private final boolean exportAll;
     private final int concurrency;
     private final long rangeUpperBound;
     private final AtomicLong currentEnd;
+    private final long numberOfItemsToExport;
 
     private RangeFactory(long rangeSize,
-                         long numberOfItemsToExport,
-                         long numberOfItemsToSkip,
+                         long limit,
+                         long skip,
                          long estimatedNumberOfItemsInGraph,
                          int concurrency) {
         this.rangeSize = rangeSize;
-        this.numberOfItemsToExport = numberOfItemsToExport;
+        this.exportAll = limit == Long.MAX_VALUE;
         this.concurrency = concurrency;
-        this.rangeUpperBound = numberOfItemsToExport == Long.MAX_VALUE ?
-                estimatedNumberOfItemsInGraph :
-                numberOfItemsToExport + numberOfItemsToSkip;
-        this.currentEnd = new AtomicLong(numberOfItemsToSkip);
+        if (exportAll){
+            this.rangeUpperBound = estimatedNumberOfItemsInGraph;
+            this.numberOfItemsToExport = estimatedNumberOfItemsInGraph - skip;
+        } else {
+            this.rangeUpperBound = limit + skip;
+            this.numberOfItemsToExport = limit;
+        }
+        this.currentEnd = new AtomicLong(skip);
     }
 
     public Range nextRange() {
@@ -86,12 +91,16 @@ public class RangeFactory {
         long start = min(proposedEnd - rangeSize, rangeUpperBound);
         long actualEnd =  min(proposedEnd, rangeUpperBound);
 
-        if ((proposedEnd >= rangeUpperBound) && (numberOfItemsToExport == Long.MAX_VALUE)){
+        if ((proposedEnd >= rangeUpperBound) && exportAll){
             actualEnd = -1;
         }
 
         return new Range(start, actualEnd);
 
+    }
+
+    public long numberOfItemsToExport() {
+        return numberOfItemsToExport;
     }
 
     public boolean isExhausted() {
