@@ -626,10 +626,11 @@
             },
             "STREAM_NAME": {
               "Ref": "KinesisStream"
-            }
+            },
+            "log_commit_nums": "false"
           }
         },
-        "MemorySize": 512,
+        "MemorySize": 1024,
         "Runtime": "python3.8",
         "Timeout": "900",
         "ReservedConcurrentExecutions": {
@@ -670,6 +671,7 @@
         "BatchSize": {
           "Ref": "BatchSize"
         },
+        "MaximumRetryAttempts": 3,
         "StartingPosition": "LATEST"
       }
     },
