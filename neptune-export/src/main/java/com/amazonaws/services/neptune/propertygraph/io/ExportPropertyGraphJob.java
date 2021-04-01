@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
@@ -77,7 +78,7 @@ public class ExportPropertyGraphJob {
         for (ExportSpecification<?> labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
             RangeFactory rangeFactory = labelSpecificExportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
-            Status status = new Status();
+            Status status = new Status(StatusOutputFormat.Description, exportSpecification.description());
 
             String description = String.format("writing %s as %s to %s",
                     labelSpecificExportSpecification.description(),

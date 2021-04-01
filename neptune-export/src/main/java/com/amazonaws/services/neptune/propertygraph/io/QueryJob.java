@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -56,7 +57,7 @@ public class QueryJob {
 
         System.err.println("Writing query results to " + targetConfig.output().name() + " as " + targetConfig.format().description());
 
-        Status status = new Status();
+        Status status = new Status(StatusOutputFormat.Description, "query results");
 
         ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
 

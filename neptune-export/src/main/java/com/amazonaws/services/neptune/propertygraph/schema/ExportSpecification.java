@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphTask;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
@@ -162,11 +163,12 @@ public class ExportSpecification<T extends Map<?, ?>> {
 
         private final GraphElementType<?> graphElementType;
         private final GraphSchema graphSchema;
-        private final Status status = new Status();
+        private final Status status;
 
         private CreateSchemaHandler(GraphElementType<?> graphElementType, GraphSchema graphSchema) {
             this.graphElementType = graphElementType;
             this.graphSchema = graphSchema;
+            this.status = new Status(StatusOutputFormat.Dot);
         }
 
         @Override
