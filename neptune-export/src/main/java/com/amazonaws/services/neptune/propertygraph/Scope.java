@@ -50,23 +50,25 @@ public enum Scope {
             } else {
                 if (graphSchema.hasNodeSchemas()) {
                     LabelsFilter labelsFilter = Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly)
-                            .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes).labels());
+                            .intersection(graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes).labels());
                     if (!labelsFilter.isEmpty()) {
                         results.add(new ExportSpecification<>(
                                 GraphElementTypes.Nodes,
                                 labelsFilter,
-                                stats, tokensOnly.nodeTokensOnly(),
+                                stats,
+                                tokensOnly.nodeTokensOnly(),
                                 featureToggles));
                     }
                 }
                 if (graphSchema.hasEdgeSchemas()) {
                     LabelsFilter labelsFilter = Scope.labelsFilter(edgeLabels, edgeLabelStrategy)
-                            .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Edges).labels());
+                            .intersection(graphSchema.graphElementSchemasFor(GraphElementTypes.Edges).labels());
                     if (!labelsFilter.isEmpty()) {
                         results.add(new ExportSpecification<>(
                                 GraphElementTypes.Edges,
                                 labelsFilter,
-                                stats, tokensOnly.edgeTokensOnly(),
+                                stats,
+                                tokensOnly.edgeTokensOnly(),
                                 featureToggles));
                     }
                 }
@@ -94,7 +96,7 @@ public enum Scope {
                 );
             } else if (graphSchema.hasNodeSchemas()) {
                 LabelsFilter labelsFilter = Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly)
-                        .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes).labels());
+                        .intersection(graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes).labels());
                 if (!labelsFilter.isEmpty()) {
                     return Collections.singletonList(
                             new ExportSpecification<>(
@@ -132,7 +134,7 @@ public enum Scope {
                 );
             } else if (graphSchema.hasEdgeSchemas()) {
                 LabelsFilter labelsFilter = Scope.labelsFilter(edgeLabels, edgeLabelStrategy)
-                        .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Edges).labels());
+                        .intersection(graphSchema.graphElementSchemasFor(GraphElementTypes.Edges).labels());
                 if (!labelsFilter.isEmpty()) {
                     return Collections.singletonList(
                             new ExportSpecification<>(

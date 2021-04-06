@@ -78,7 +78,7 @@ public class ExportPropertyGraphJob {
         for (ExportSpecification<?> labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
             RangeFactory rangeFactory = labelSpecificExportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
-            Status status = new Status(StatusOutputFormat.Description, String.format("%s: %s total", exportSpecification.description(), rangeFactory.numberOfItemsToExport()));
+            Status status = new Status(StatusOutputFormat.Description, String.format("%s: %s total", labelSpecificExportSpecification.description(), rangeFactory.numberOfItemsToExport()));
 
             String description = String.format("writing %s as %s to %s",
                     labelSpecificExportSpecification.description(),

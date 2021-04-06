@@ -156,11 +156,13 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public LabelsFilter union(Collection<Label> others) {
-        Collection<Label> results = new ArrayList<>();
+    public LabelsFilter intersection(Collection<Label> others) {
+        Collection<Label> results = new HashSet<>();
         for (Label label : labels) {
-            if (others.contains(label)) {
-                results.add(label);
+            for (Label other : others) {
+                if (label.isAssignableFrom(other)){
+                    results.add(other);
+                }
             }
         }
         return new SpecifiedLabels(results, labelStrategy);
@@ -173,7 +175,10 @@ public class SpecifiedLabels implements LabelsFilter {
 
     @Override
     public String description(String element) {
-        String labelList = labels.stream().map(l -> String.format("'%s'", l.labelsAsString())).collect(Collectors.joining(" or "));
+        if (isEmpty()){
+            return String.format("%s with zero labels", element);
+        }
+        String labelList = labels.stream().map(l -> String.format("'%s'", l.fullyQualifiedLabel())).collect(Collectors.joining(" or "));
         return String.format("%s with label(s) %s", element, labelList);
     }
 

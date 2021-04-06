@@ -77,7 +77,7 @@ public class AllLabels implements LabelsFilter {
     }
 
     @Override
-    public LabelsFilter union(Collection<Label> labels) {
+    public LabelsFilter intersection(Collection<Label> labels) {
         return new SpecifiedLabels(labels, labelStrategy);
     }
 

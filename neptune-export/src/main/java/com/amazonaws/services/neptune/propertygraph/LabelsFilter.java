@@ -36,7 +36,7 @@ public interface LabelsFilter {
 
     LabelsFilter filterFor(Label label);
 
-    LabelsFilter union(Collection<Label> labels);
+    LabelsFilter intersection(Collection<Label> labels);
 
     boolean isEmpty();
 
