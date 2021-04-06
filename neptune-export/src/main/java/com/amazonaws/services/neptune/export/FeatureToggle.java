@@ -14,6 +14,6 @@ package com.amazonaws.services.neptune.export;
 
 public enum FeatureToggle {
     FilterByPropertyKeys,
-    LegacyLabelFiltering,
+    ExportByIndividualLabels,
     NeptuneML_V2
 }

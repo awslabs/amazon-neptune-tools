@@ -42,7 +42,7 @@ public class SpecifiedLabels implements LabelsFilter {
     public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, FeatureToggles featureToggles) {
 
 
-        if (featureToggles.containsFeature(FeatureToggle.LegacyLabelFiltering)) {
+        if (featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
 
             List<String> labelList = labels.stream()
                     .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())

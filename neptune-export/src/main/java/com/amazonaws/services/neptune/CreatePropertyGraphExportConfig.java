@@ -48,7 +48,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();

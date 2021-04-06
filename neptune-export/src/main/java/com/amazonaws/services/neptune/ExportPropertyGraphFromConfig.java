@@ -53,7 +53,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(true);
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -80,10 +80,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
-
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
+
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config(), graphSchema.allowInferSchema());
 
                     Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
 

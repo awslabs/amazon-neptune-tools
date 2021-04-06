@@ -54,7 +54,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -98,7 +98,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
                     CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder().setIncludeTypeDefinitions(includeTypeDefinitions).build();
                     JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder().setStrictCardinality(true).build();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(csvPrinterOptions, jsonPrinterOptions));
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(csvPrinterOptions, jsonPrinterOptions), false);
                     NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
 
                     directories.createResultsSubdirectories(namedQueries.names());

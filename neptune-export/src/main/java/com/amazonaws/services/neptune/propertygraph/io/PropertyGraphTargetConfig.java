@@ -23,26 +23,26 @@ import java.util.function.Supplier;
 public class PropertyGraphTargetConfig {
 
     private final Directories directories;
+    private final KinesisConfig kinesisConfig;
+    private final PrinterOptions printerOptions;
+    private final boolean inferSchema;
     private final PropertyGraphExportFormat format;
     private final Target output;
-    private final PrinterOptions printerOptions;
-    private final KinesisConfig kinesisConfig;
-    private final boolean inferSchema;
     private final boolean mergeFiles;
 
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
                                      PrinterOptions printerOptions,
+                                     boolean inferSchema,
                                      PropertyGraphExportFormat format,
                                      Target output,
-                                     boolean inferSchema,
                                      boolean mergeFiles) {
         this.directories = directories;
+        this.kinesisConfig = kinesisConfig;
+        this.printerOptions = printerOptions;
+        this.inferSchema = inferSchema;
         this.format = format;
         this.output = output;
-        this.printerOptions = printerOptions;
-        this.kinesisConfig = kinesisConfig;
-        this.inferSchema = inferSchema;
         this.mergeFiles = mergeFiles;
     }
 
@@ -86,7 +86,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphTargetConfig forFileConsolidation() {
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, false, mergeFiles);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, false, format, output, mergeFiles);
     }
 
     private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {

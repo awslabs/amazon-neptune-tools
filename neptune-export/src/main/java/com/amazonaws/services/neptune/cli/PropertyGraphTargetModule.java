@@ -66,19 +66,13 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 
-    private final boolean inferSchema;
-
-    public PropertyGraphTargetModule(boolean inferSchema) {
-        this.inferSchema = inferSchema;
-    }
-
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
         return Directories.createFor(directoryStructure, directory, exportId, tag );
     }
 
-    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions){
+    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions, boolean inferSchema){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region, largeStreamRecordHandlingStrategy);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, inferSchema, mergeFiles);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, inferSchema, format, output, mergeFiles);
     }
 
     public String description(){
