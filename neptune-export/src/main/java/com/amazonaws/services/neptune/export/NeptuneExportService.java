@@ -48,6 +48,7 @@ public class NeptuneExportService {
     private final String outputS3Path;
     private final boolean createExportSubdirectory;
     private final boolean overwriteExisting;
+    private final boolean uploadToS3OnError;
     private final String configFileS3Path;
     private final String queriesFileS3Path;
     private final String completionFileS3Path;
@@ -61,6 +62,7 @@ public class NeptuneExportService {
                                 String outputS3Path,
                                 boolean createExportSubdirectory,
                                 boolean overwriteExisting,
+                                boolean uploadToS3OnError,
                                 String configFileS3Path,
                                 String queriesFileS3Path,
                                 String completionFileS3Path,
@@ -73,6 +75,7 @@ public class NeptuneExportService {
         this.outputS3Path = outputS3Path;
         this.createExportSubdirectory = createExportSubdirectory;
         this.overwriteExisting = overwriteExisting;
+        this.uploadToS3OnError = uploadToS3OnError;
         this.configFileS3Path = configFileS3Path;
         this.queriesFileS3Path = queriesFileS3Path;
         this.completionFileS3Path = completionFileS3Path;
@@ -107,7 +110,6 @@ public class NeptuneExportService {
                     args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
                 }
             }
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -175,7 +177,14 @@ public class NeptuneExportService {
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
-        new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
+        try{
+            new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
+        } catch (Exception e){
+            if (uploadToS3OnError){
+                eventHandler.onError();
+            }
+            throw e;
+        }
 
         return eventHandler.result();
     }

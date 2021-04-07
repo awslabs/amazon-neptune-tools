@@ -21,14 +21,21 @@ import com.amazonaws.services.neptune.util.Timer;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.Reader;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class RewriteAndMergeCsv implements RewriteCommand {
+
+    private static final Logger logger = LoggerFactory.getLogger(RewriteAndMergeCsv.class);
 
     private final PropertyGraphTargetConfig targetConfig;
     private final ConcurrencyConfig concurrencyConfig;
@@ -152,6 +159,10 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                             printer.printEndRow();
                         }
 
+                    } catch (Exception e) {
+                        logger.error("Error while rewriting file: {}", fileSpecificLabelSchema.outputId(), e);
+                        file.doNotDelete();
+                        throw e;
                     }
                 }
             }

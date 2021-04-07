@@ -20,6 +20,7 @@ import java.io.Reader;
 class DeletableFile implements AutoCloseable {
 
     private final File file;
+    private boolean allowDelete = true;
 
     DeletableFile(File file) {
         this.file = file;
@@ -33,9 +34,13 @@ class DeletableFile implements AutoCloseable {
         return file.getName();
     }
 
+    public void doNotDelete(){
+        allowDelete = false;
+    }
+
     @Override
     public void close() {
-        if (file.exists()){
+        if (file.exists() && allowDelete){
             boolean deletedOriginalFile = file.delete();
 
             if (!deletedOriginalFile) {

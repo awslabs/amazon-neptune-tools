@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,9 +46,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHandler {
 
-    public static ObjectTagging createObjectTags(Collection<String> profiles){
+    public static ObjectTagging createObjectTags(Collection<String> profiles) {
         List<Tag> tags = new ArrayList<>(NEPTUNE_EXPORT_TAGS);
-        if (!profiles.isEmpty()){
+        if (!profiles.isEmpty()) {
             String profilesTagValue = String.join(":", profiles);
             tags.add(new Tag("neptune-export:profiles", profilesTagValue));
         }
@@ -86,15 +87,14 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     @Override
     public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
-        try
-        {
-            long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length() ).sum();
+        try {
+            long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length()).sum();
             logger.info("Total size of exported files: {}", FileUtils.byteCountToDisplaySize(size));
-        } catch (Exception e){
+        } catch (Exception e) {
             // Ignore
         }
 
-        if (StringUtils.isEmpty(outputS3Path)){
+        if (StringUtils.isEmpty(outputS3Path)) {
             return;
         }
 
@@ -116,9 +116,40 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
         return result.get();
     }
 
+    public void onError() {
+
+        logger.warn("Uploading results of failed export to S3");
+
+        if (StringUtils.isEmpty(outputS3Path)) {
+            logger.warn("S3 output path is empty");
+            return;
+        }
+
+        try {
+            Path outputPath = Paths.get(localOutputPath);
+
+            long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length()).sum();
+            logger.warn("Total size of failed export files: {}", FileUtils.byteCountToDisplaySize(size));
+
+            try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+
+                File outputDirectory = outputPath.toFile();
+                S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
+
+                Timer.timedActivity("uploading failed export files to S3", (CheckedActivity.Runnable) () -> {
+                    uploadExportFilesToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo);
+                });
+
+                result.set(outputS3ObjectInfo);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to upload failed export files to S3", e);
+        }
+    }
+
     private S3ObjectInfo calculateOutputS3Path(File outputDirectory) {
         S3ObjectInfo outputBaseS3ObjectInfo = new S3ObjectInfo(outputS3Path);
-        if (createExportSubdirectory){
+        if (createExportSubdirectory) {
             return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
         } else {
             return outputBaseS3ObjectInfo;

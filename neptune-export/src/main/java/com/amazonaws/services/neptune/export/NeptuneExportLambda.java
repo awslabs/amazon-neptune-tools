@@ -72,6 +72,11 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                         json.path("overwriteExisting").toString():
                         EnvironmentVariableUtils.getOptionalEnv("OVERWRITE_EXISTING", "false"));
 
+        boolean uploadToS3OnError = Boolean.parseBoolean(
+                json.has("uploadToS3OnError") ?
+                        json.path("uploadToS3OnError").toString():
+                        EnvironmentVariableUtils.getOptionalEnv("UPLOAD_TO_S3_ON_ERROR", "false"));
+
         String configFileS3Path = json.has("configFileS3Path") ?
                 json.path("configFileS3Path").textValue() :
                 EnvironmentVariableUtils.getOptionalEnv("CONFIG_FILE_S3_PATH", "");
@@ -105,6 +110,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         logger.log("outputS3Path              : " + outputS3Path);
         logger.log("createExportSubdirectory  : " + createExportSubdirectory);
         logger.log("overwriteExisting         : " + overwriteExisting);
+        logger.log("uploadToS3OnError         : " + uploadToS3OnError);
         logger.log("configFileS3Path          : " + configFileS3Path);
         logger.log("queriesFileS3Path         : " + queriesFileS3Path);
         logger.log("completionFileS3Path      : " + completionFileS3Path);
@@ -124,6 +130,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 outputS3Path,
                 createExportSubdirectory,
                 overwriteExisting,
+                uploadToS3OnError,
                 configFileS3Path,
                 queriesFileS3Path,
                 completionFileS3Path,
