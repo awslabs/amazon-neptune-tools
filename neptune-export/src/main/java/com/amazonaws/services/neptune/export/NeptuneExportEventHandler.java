@@ -22,6 +22,11 @@ public interface NeptuneExportEventHandler {
     NeptuneExportEventHandler NULL_EVENT_HANDLER = new NeptuneExportEventHandler() {
 
         @Override
+        public void onError() {
+            // Do nothing
+        }
+
+        @Override
         public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
             //Do nothing
         }
@@ -31,6 +36,8 @@ public interface NeptuneExportEventHandler {
             //Do nothing
         }
     };
+
+    void onError();
 
     void onExportComplete(Path outputPath, ExportStats stats) throws Exception;
 

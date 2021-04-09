@@ -63,6 +63,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     private final boolean createExportSubdirectory;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
+    private final boolean uploadToS3OnError;
     private final Collection<String> profiles;
     private final AtomicReference<S3ObjectInfo> result = new AtomicReference<>();
 
@@ -71,12 +72,14 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
                                                boolean createExportSubdirectory,
                                                String completionFileS3Path,
                                                ObjectNode completionFilePayload,
+                                               boolean uploadToS3OnError,
                                                Collection<String> profiles) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.createExportSubdirectory = createExportSubdirectory;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
+        this.uploadToS3OnError = uploadToS3OnError;
         this.profiles = profiles;
     }
 
@@ -117,7 +120,12 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
         return result.get();
     }
 
+    @Override
     public void onError() {
+
+        if (!uploadToS3OnError){
+            return;
+        }
 
         logger.warn("Uploading results of failed export to S3");
 
@@ -138,7 +146,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
                 File outputDirectory = outputPath.toFile();
                 S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory)
-                        .replaceOrAppendKey("/tmp/", "/failed/")
+                        .replaceOrAppendKey("/tmp", "/failed")
                         .withNewKeySuffix(s3Suffix);
 
                 Timer.timedActivity("uploading failed export files to S3", (CheckedActivity.Runnable) () -> {

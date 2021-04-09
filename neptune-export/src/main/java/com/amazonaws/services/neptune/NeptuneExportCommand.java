@@ -53,6 +53,10 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
         eventHandler.onExportComplete(outputPath, stats);
     }
 
+    public void onError(){
+        eventHandler.onError();
+    }
+
     void handleException(Throwable e) {
         if (e.getCause() != null && RemoteConnectionException.class.isAssignableFrom(e.getCause().getClass())) {
             e.printStackTrace();
@@ -61,6 +65,7 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
                     "Ensure you have specified the --use-iam-auth flag if the database uses IAM database authentication.");
         } else {
             e.printStackTrace();
+            onError();
             System.err.println("An error occurred while exporting from Neptune: " + e.getMessage());
         }
     }

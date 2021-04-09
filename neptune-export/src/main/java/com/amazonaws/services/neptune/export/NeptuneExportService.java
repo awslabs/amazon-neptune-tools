@@ -146,6 +146,7 @@ public class NeptuneExportService {
                 createExportSubdirectory,
                 completionFileS3Path,
                 completionFilePayload,
+                uploadToS3OnError,
                 profiles);
 
         eventHandlerCollection.addHandler(eventHandler);
@@ -179,13 +180,7 @@ public class NeptuneExportService {
 
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 
-        S3ObjectInfo result = eventHandler.result();
-
-        if (result == null && uploadToS3OnError){
-            eventHandler.onError();
-        }
-
-        return result;
+        return eventHandler.result();
     }
 
     private void checkS3OutputIsEmpty() {

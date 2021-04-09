@@ -35,6 +35,17 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
+    public void onError() {
+        for (NeptuneExportEventHandler handler : exportHandlers) {
+            try {
+                handler.onError();
+            } catch (Exception e) {
+                logger.warn("Error while handling export error with {}", handler.getClass().getSimpleName(), e);
+            }
+        }
+    }
+
+    @Override
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
         boolean error = false;
 

@@ -128,6 +128,11 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     }
 
     @Override
+    public void onError() {
+        // Do nothing
+    }
+
+    @Override
     public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
         onExportComplete(outputPath, stats, new GraphSchema());
     }
