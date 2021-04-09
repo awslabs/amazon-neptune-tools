@@ -131,6 +131,8 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                             graphElementType.tokenNames().toArray(new String[]{}),
                             ArrayUtils.addAll(additionalElementHeaders, filePropertyHeaders));
 
+                    logger.info("File: {}, Headers: [{}]", fileSpecificLabelSchema.outputId(), fileHeaders);
+
                     try (Reader in = file.reader()) {
 
                         CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);

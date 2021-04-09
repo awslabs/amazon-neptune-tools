@@ -61,4 +61,5 @@ public class S3ObjectInfo {
     public String toString() {
         return String.format("s3://%s/%s", bucket, key);
     }
+
 }

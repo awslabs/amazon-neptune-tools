@@ -91,6 +91,15 @@ public class S3ObjectInfoTest {
     }
 
     @Test
+    public void canReplaceTmpPlaceholderInKey() {
+        String s3Uri = "s3://my-bucket/a/b/tmp/manifest.json";
+
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
+
+        assertEquals("a/b/failed/manifest.json", s3ObjectInfo.replaceOrAppendKey("/tmp/", "/failed/").key());
+    }
+
+    @Test
     public void canAppendSuffixIfNoPlaceholder() {
         String s3Uri = "s3://my-bucket/a/b/";
 

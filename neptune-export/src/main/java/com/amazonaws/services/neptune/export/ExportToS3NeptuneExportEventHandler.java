@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_EXPORT_TAGS;
@@ -133,17 +134,57 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
             try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
 
+                String s3Suffix = UUID.randomUUID().toString().replace("-", "");
+
                 File outputDirectory = outputPath.toFile();
-                S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
+                S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory)
+                        .replaceOrAppendKey("/tmp/", "/failed/")
+                        .withNewKeySuffix(s3Suffix);
 
                 Timer.timedActivity("uploading failed export files to S3", (CheckedActivity.Runnable) () -> {
                     uploadExportFilesToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo);
+                    uploadGcLogToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo);
                 });
 
-                result.set(outputS3ObjectInfo);
+                logger.warn("Failed export S3 location: {}", outputS3ObjectInfo.toString());
             }
         } catch (Exception e) {
             logger.error("Failed to upload failed export files to S3", e);
+        }
+    }
+
+    private void uploadGcLogToS3(TransferManager transferManager,
+                                          File directory,
+                                          S3ObjectInfo outputS3ObjectInfo) throws IOException {
+
+
+        File gcLog = new File(directory, "./../gc.log");
+
+        if (!gcLog.exists()){
+            logger.warn("Ignoring request to upload GC log to S3 because GC log does not exist");
+            return;
+        }
+
+        S3ObjectInfo gcLogS3ObjectInfo = outputS3ObjectInfo.withNewKeySuffix("gc.log");
+
+        try (InputStream inputStream = new FileInputStream(gcLog)) {
+
+            ObjectMetadata objectMetadata = new ObjectMetadata();
+            objectMetadata.setContentLength(gcLog.length());
+            objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+
+            PutObjectRequest putObjectRequest = new PutObjectRequest(gcLogS3ObjectInfo.bucket(),
+                    gcLogS3ObjectInfo.key(),
+                    inputStream,
+                    objectMetadata).withTagging(createObjectTags(profiles));
+
+            Upload upload = transferManager.upload(putObjectRequest);
+
+            upload.waitForUploadResult();
+
+        } catch (InterruptedException e) {
+            logger.warn(e.getMessage());
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -159,7 +200,8 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     private void uploadCompletionFileToS3(TransferManager transferManager,
                                           File directory,
                                           S3ObjectInfo outputS3ObjectInfo,
-                                          ExportStats stats, GraphSchema graphSchema) throws IOException {
+                                          ExportStats stats,
+                                          GraphSchema graphSchema) throws IOException {
 
         if (StringUtils.isEmpty(completionFileS3Path)) {
             return;

@@ -75,7 +75,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         boolean uploadToS3OnError = Boolean.parseBoolean(
                 json.has("uploadToS3OnError") ?
                         json.path("uploadToS3OnError").toString():
-                        EnvironmentVariableUtils.getOptionalEnv("UPLOAD_TO_S3_ON_ERROR", "false"));
+                        EnvironmentVariableUtils.getOptionalEnv("UPLOAD_TO_S3_ON_ERROR", "true"));
 
         String configFileS3Path = json.has("configFileS3Path") ?
                 json.path("configFileS3Path").textValue() :

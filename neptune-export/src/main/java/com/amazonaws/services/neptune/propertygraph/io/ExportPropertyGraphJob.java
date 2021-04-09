@@ -22,6 +22,8 @@ import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +36,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExportPropertyGraphJob {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExportPropertyGraphJob.class);
 
     private final Collection<ExportSpecification<?>> exportSpecifications;
     private final GraphSchema graphSchema;
@@ -106,7 +110,9 @@ public class ExportPropertyGraphJob {
                 taskExecutor.shutdown();
 
                 try {
-                    taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                    if (!taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)){
+                        logger.warn("Timeout expired with uncompleted tasks");
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(e);

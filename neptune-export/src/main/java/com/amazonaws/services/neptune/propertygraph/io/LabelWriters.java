@@ -24,7 +24,6 @@ public class LabelWriters<T extends Map<?, ?>> implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(LabelWriters.class);
 
-
     private static final int MAX_FILE_DESCRIPTOR_COUNT = 9000;
 
     private final AtomicInteger fileDescriptorCount;
@@ -54,8 +53,9 @@ public class LabelWriters<T extends Map<?, ?>> implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        for (LabelWriter<T> value : labelWriters.values()) {
-            value.close();
+        for (LabelWriter<T> writer : labelWriters.values()) {
+            logger.info("Closing file: {}", writer.outputId());
+            writer.close();
             fileDescriptorCount.decrementAndGet();
         }
     }

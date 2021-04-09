@@ -177,16 +177,15 @@ public class NeptuneExportService {
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
-        try{
-            new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
-        } catch (Exception e){
-            if (uploadToS3OnError){
-                eventHandler.onError();
-            }
-            throw e;
+        new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
+
+        S3ObjectInfo result = eventHandler.result();
+
+        if (result == null && uploadToS3OnError){
+            eventHandler.onError();
         }
 
-        return eventHandler.result();
+        return result;
     }
 
     private void checkS3OutputIsEmpty() {

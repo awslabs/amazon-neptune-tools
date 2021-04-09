@@ -28,6 +28,10 @@ public class PropertyGraphSerializationModule {
     @Once
     private String serializer = Serializers.GRAPHBINARY_V1D0.name();
 
+    @Option(name = {"--janus"}, description = "Use JanusGraph serializer.")
+    @Once
+    private boolean useJanusSerializer = false;
+
     @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 50000000).")
     @Once
     private int maxContentLength = 50000000;
@@ -37,7 +41,7 @@ public class PropertyGraphSerializationModule {
     private int batchSize = NeptuneGremlinClient.DEFAULT_BATCH_SIZE;
 
     public SerializationConfig config(){
-        return new SerializationConfig(serializer, maxContentLength, batchSize);
+        return new SerializationConfig(serializer, maxContentLength, batchSize, useJanusSerializer);
     }
 }
 

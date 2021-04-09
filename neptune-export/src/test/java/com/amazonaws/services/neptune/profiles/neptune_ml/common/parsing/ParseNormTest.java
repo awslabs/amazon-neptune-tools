@@ -17,6 +17,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -35,5 +37,4 @@ public class ParseNormTest {
             assertEquals("Invalid 'norm' value for node feature (Label: Person, Property: age): 'invalid'. Valid values are: 'none', 'min-max', 'standard'.", e.getMessage());
         }
     }
-
 }

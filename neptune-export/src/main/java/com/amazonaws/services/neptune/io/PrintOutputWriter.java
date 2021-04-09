@@ -19,7 +19,7 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     private final String outputId;
     private final boolean isNewTarget;
 
-    public PrintOutputWriter(String outputId,Writer out) {
+    public PrintOutputWriter(String outputId, Writer out) {
         this(outputId, true, out);
     }
 
@@ -110,4 +110,5 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     public String lineSeparator() {
         return System.lineSeparator();
     }
+
 }
