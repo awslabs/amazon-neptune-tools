@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class GraphElementTypes {
+    
     public static final GraphElementType<Map<String, Object>> Nodes = new GraphElementType<Map<String, Object>>() {
         @Override
         public String name() {
