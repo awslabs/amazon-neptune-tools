@@ -35,7 +35,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         Label personLabel = new Label(Collections.singletonList("Person"));
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
         labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
@@ -97,7 +97,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         Label personLabel = new Label(Collections.singletonList("Person"));
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
         labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
@@ -138,7 +138,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         Label personLabel = new Label(Collections.singletonList("Person"));
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
         labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
@@ -183,7 +183,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
         labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
@@ -253,7 +253,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
         labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
@@ -297,7 +297,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         boolean isMultiValue = true;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
         labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));

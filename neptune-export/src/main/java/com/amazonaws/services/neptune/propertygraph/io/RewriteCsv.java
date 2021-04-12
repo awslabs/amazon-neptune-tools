@@ -46,7 +46,7 @@ public class RewriteCsv implements RewriteCommand {
 
     @Override
     public MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception {
-        GraphElementType<?> graphElementType = masterLabelSchemas.graphElementType();
+        GraphElementType graphElementType = masterLabelSchemas.graphElementType();
 
         System.err.println(String.format("Rewriting %s files...", graphElementType.name()));
 
@@ -56,7 +56,7 @@ public class RewriteCsv implements RewriteCommand {
     }
 
     private MasterLabelSchemas rewriteFiles(MasterLabelSchemas masterLabelSchemas,
-                                            GraphElementType<?> graphElementType,
+                                            GraphElementType graphElementType,
                                             PropertyGraphTargetConfig targetConfig) throws Exception {
 
         Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
@@ -91,7 +91,7 @@ public class RewriteCsv implements RewriteCommand {
     }
 
     private MasterLabelSchema rewrite(PropertyGraphTargetConfig targetConfig,
-                                      GraphElementType<?> graphElementType,
+                                      GraphElementType graphElementType,
                                       MasterLabelSchema masterLabelSchema) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
@@ -105,12 +105,12 @@ public class RewriteCsv implements RewriteCommand {
             Label label = labelSchema.label();
             File sourceCsvFile = new File(fileSpecificLabelSchema.outputId());
 
-            if (sourceCsvFile.getName().contains("Cpt_LP_COLLECT_")){
+            if (sourceCsvFile.getName().contains("Cpt_LP_COLLECT_")) {
                 System.out.println("ALERT: " + fileSpecificLabelSchema.labelSchema().label().labelsAsString() + "[" + sourceCsvFile + "]");
             }
 
-            if (!sourceCsvFile.exists()){
-                if (label.label().size() > 1){
+            if (!sourceCsvFile.exists()) {
+                if (label.label().size() > 1) {
                     logger.warn("Skipping multi-label file {} because it has already been rewritten under another label", sourceCsvFile);
                     continue;
                 }
@@ -146,7 +146,7 @@ public class RewriteCsv implements RewriteCommand {
                 for (CSVRecord record : records) {
                     target.printStartRow();
 
-                    if (graphElementType.equals(GraphElementTypes.Nodes)) {
+                    if (graphElementType.equals(GraphElementType.nodes)) {
                         target.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                     } else {
                         if (label.hasFromAndToLabels()) {

@@ -85,7 +85,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config(), graphSchema.allowInferSchema());
 
-                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {

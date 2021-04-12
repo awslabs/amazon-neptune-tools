@@ -25,7 +25,10 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class PropertyGraphTrainingDataConfigWriterV2 {
@@ -109,7 +112,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
 
     private void writeNodes() throws IOException {
 
-        GraphElementType<Map<String, Object>> graphElementType = GraphElementTypes.Nodes;
+        GraphElementType graphElementType = GraphElementType.nodes;
         GraphElementSchemas graphElementSchemas = graphSchema.graphElementSchemasFor(graphElementType);
 
         generator.writeArrayFieldStart("nodes");
@@ -138,7 +141,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
 
     private void writeEdges() throws IOException {
 
-        GraphElementType<Map<String, Object>> graphElementType = GraphElementTypes.Edges;
+        GraphElementType graphElementType = GraphElementType.edges;
         GraphElementSchemas graphElementSchemas = graphSchema.graphElementSchemasFor(graphElementType);
 
         generator.writeArrayFieldStart("edges");
@@ -261,10 +264,9 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         if (config.hasEdgeClassificationSpecificationsForEdge(label)) {
             generator.writeArrayFieldStart("labels");
             for (LabelConfigV2 labelConfig : config.getEdgeClassificationSpecificationsForEdge(label)) {
-                if (StringUtils.isEmpty(labelConfig.property())){
+                if (StringUtils.isEmpty(labelConfig.property())) {
                     writeLabel(new PropertySchema(""), labelConfig);
-                }
-                else if (labelSchema.containsProperty(labelConfig.property())) {
+                } else if (labelSchema.containsProperty(labelConfig.property())) {
                     PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.property());
                     writeLabel(propertySchema, labelConfig);
                 } else {
@@ -580,7 +582,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         }
     }
 
-    private void writeFileName(GraphElementType<Map<String, Object>> graphElementType, String outputId) throws IOException {
+    private void writeFileName(GraphElementType graphElementType, String outputId) throws IOException {
         generator.writeStringField("file_name", String.format("%s/%s", graphElementType.name(), new File(outputId).getName()));
     }
 

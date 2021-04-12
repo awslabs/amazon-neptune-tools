@@ -60,7 +60,7 @@ public class ExportStats {
         sb.append("Details:").append(System.lineSeparator());
 
         sb.append("  Nodes: ").append(System.lineSeparator());
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
         for (Map.Entry<Label, LabelStats> entry : nodeStats.entrySet()) {
             Label label = entry.getKey();
             LabelStats labelStats = entry.getValue();
@@ -72,7 +72,7 @@ public class ExportStats {
         }
 
         sb.append("  Edges: ").append(System.lineSeparator());
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
         for (Map.Entry<Label, LabelStats> entry : edgeStats.entrySet()) {
             Label label = entry.getKey();
             LabelStats labelStats = entry.getValue();
@@ -108,7 +108,7 @@ public class ExportStats {
         ArrayNode nodesArrayNode = JsonNodeFactory.instance.arrayNode();
         detailsNode.set("nodes", nodesArrayNode);
 
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
         for (Map.Entry<Label, LabelStats> entry : nodeStats.entrySet()) {
 
             Label label = entry.getKey();
@@ -135,7 +135,7 @@ public class ExportStats {
         ArrayNode edgesArrayNode = JsonNodeFactory.instance.arrayNode();
         detailsNode.set("edges", edgesArrayNode);
 
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
         for (Map.Entry<Label, LabelStats> entry : edgeStats.entrySet()) {
             Label label = entry.getKey();
             LabelStats labelStats = entry.getValue();

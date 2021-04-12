@@ -36,8 +36,8 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
     public void shouldWriteNewObjectForEach() throws IOException {
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
         nodeSchemas.addLabelSchema(new LabelSchema(new Label("Person")), Arrays.asList("person-1.csv", "person-2.csv"));
         edgeSchemas.addLabelSchema(new LabelSchema(new Label("follows")), Arrays.asList("follows-1.csv", "follows-2.csv"));
 
@@ -60,8 +60,8 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
     @Test
     public void everyObjectShouldHaveACommaSeparator() throws IOException {
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
         nodeSchemas.addLabelSchema(new LabelSchema(new Label("Person")), Collections.singletonList("person-1.csv"));
         edgeSchemas.addLabelSchema(new LabelSchema(new Label("follows")), Collections.singletonList("follows-1.csv"));
 
@@ -82,7 +82,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
     @Test
     public void edgesShouldIncludeEdgeSpec() throws IOException {
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+        GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
         edgeSchemas.addLabelSchema(new LabelSchema(
                         new Label(
                                 "follows",
@@ -127,7 +127,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Arrays.asList("Person", "Admin")));
         labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue));
@@ -172,7 +172,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = true;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
         labelSchema.put("encoding", new PropertySchema("encoding", isNullable, dataType, isMultiValue));
@@ -201,7 +201,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Arrays.asList("Person", "Admin")));
         labelSchema.put("age", new PropertySchema("age", isNullable, dataType, isMultiValue));
@@ -247,7 +247,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
         labelSchema.put("class", new PropertySchema("class", isNullable, dataType, isMultiValue));
@@ -292,7 +292,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = true;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
         labelSchema.put("movieType", new PropertySchema("movieType", isNullable, dataType, isMultiValue));
@@ -336,7 +336,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
@@ -399,7 +399,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
@@ -463,7 +463,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
         for (DataType dataType : dataTypes) {
             GraphSchema graphSchema = new GraphSchema();
-            GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+            GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
             Label movieLabel = new Label(Collections.singletonList("Movie"));
             LabelSchema labelSchema = new LabelSchema(movieLabel);
@@ -506,7 +506,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         boolean isMultiValue = true;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
@@ -553,7 +553,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
         for (DataType dataType : dataTypes) {
             GraphSchema graphSchema = new GraphSchema();
-            GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Edges);
+            GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
             LabelSchema labelSchema = new LabelSchema(new Label("knows", Collections.singletonList("Person"), Collections.singletonList("Person")));
             labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue));

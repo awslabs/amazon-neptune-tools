@@ -47,7 +47,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
     @Override
     public MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception {
-        GraphElementType<?> graphElementType = masterLabelSchemas.graphElementType();
+        GraphElementType graphElementType = masterLabelSchemas.graphElementType();
 
         System.err.println(String.format("Rewriting and merging %s files...", graphElementType.name()));
 
@@ -57,7 +57,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
     }
 
     private MasterLabelSchemas rewriteFiles(MasterLabelSchemas masterLabelSchemas,
-                                            GraphElementType<?> graphElementType,
+                                            GraphElementType graphElementType,
                                             PropertyGraphTargetConfig targetConfig) throws Exception {
 
         Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
@@ -92,7 +92,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
     }
 
     private MasterLabelSchema rewriteAndMerge(PropertyGraphTargetConfig targetConfig,
-                                              GraphElementType<?> graphElementType,
+                                              GraphElementType graphElementType,
                                               MasterLabelSchema masterLabelSchema) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
@@ -141,7 +141,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                         for (CSVRecord record : records) {
                             printer.printStartRow();
 
-                            if (graphElementType.equals(GraphElementTypes.Nodes)) {
+                            if (graphElementType.equals(GraphElementType.nodes)) {
                                 printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                             } else {
                                 if (label.hasFromAndToLabels()) {

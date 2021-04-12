@@ -53,11 +53,11 @@ public class PropertyGraphScopeModule {
     @AllowedEnumValues(EdgeLabelStrategy.class)
     private EdgeLabelStrategy edgeLabelStrategy = EdgeLabelStrategy.edgeLabelsOnly;
 
-    public Collection<ExportSpecification<?>> exportSpecifications(ExportStats stats, FeatureToggles featureToggles){
+    public Collection<ExportSpecification> exportSpecifications(ExportStats stats, FeatureToggles featureToggles){
         return exportSpecifications(new GraphSchema(), stats, featureToggles);
     }
 
-    public Collection<ExportSpecification<?>> exportSpecifications(GraphSchema graphSchema,
+    public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
                                                                    ExportStats stats,
                                                                    FeatureToggles featureToggles){
         return scope.exportSpecifications(

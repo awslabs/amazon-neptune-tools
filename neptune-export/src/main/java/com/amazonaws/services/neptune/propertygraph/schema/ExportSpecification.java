@@ -27,20 +27,15 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class ExportSpecification<T extends Map<?, ?>> {
-    private final GraphElementType<T> graphElementType;
+public class ExportSpecification {
+    private final GraphElementType graphElementType;
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;
     private final ExportStats stats;
     private final FeatureToggles featureToggles;
 
-    public ExportSpecification(GraphElementType<T> graphElementType,
-                               LabelsFilter labelsFilter,
-                               ExportStats stats){
-        this(graphElementType, labelsFilter, stats, false, new FeatureToggles(Collections.emptyList()));
-    }
 
-                               public ExportSpecification(GraphElementType<T> graphElementType,
+    public ExportSpecification(GraphElementType graphElementType,
                                LabelsFilter labelsFilter,
                                ExportStats stats,
                                boolean tokensOnly,
@@ -57,7 +52,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
             return;
         }
 
-        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, featureToggles);
+        GraphClient<Map<String, Object>> graphClient = graphElementType.graphClient(g, tokensOnly, stats, featureToggles);
 
         graphClient.queryForSchema(
                 new CreateSchemaHandler(graphElementType, graphSchema),
@@ -70,7 +65,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
             return;
         }
 
-        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, featureToggles);
+        GraphClient<Map<String, Object>> graphClient = graphElementType.graphClient(g, tokensOnly, stats, featureToggles);
         Collection<Label> labels = labelsFilter.getLabelsUsing(graphClient);
 
         for (Label label : labels) {
@@ -95,13 +90,13 @@ public class ExportSpecification<T extends Map<?, ?>> {
                 concurrencyConfig);
     }
 
-    public ExportPropertyGraphTask<T> createExportTask(GraphSchema graphSchema,
-                                                       GraphTraversalSource g,
-                                                       PropertyGraphTargetConfig targetConfig,
-                                                       RangeFactory rangeFactory,
-                                                       Status status,
-                                                       int index,
-                                                       AtomicInteger fileDescriptorCount) {
+    public ExportPropertyGraphTask<Map<String, Object>> createExportTask(GraphSchema graphSchema,
+                                                                         GraphTraversalSource g,
+                                                                         PropertyGraphTargetConfig targetConfig,
+                                                                         RangeFactory rangeFactory,
+                                                                         Status status,
+                                                                         int index,
+                                                                         AtomicInteger fileDescriptorCount) {
         return new ExportPropertyGraphTask<>(
                 graphSchema.copyOfGraphElementSchemasFor(graphElementType),
                 labelsFilter,
@@ -148,11 +143,11 @@ public class ExportSpecification<T extends Map<?, ?>> {
         return new MasterLabelSchemas(masterLabelSchemas, graphElementType);
     }
 
-    public Collection<ExportSpecification<T>> splitByLabel() {
+    public Collection<ExportSpecification> splitByLabel() {
 
         if (featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
             return labelsFilter.split().stream()
-                    .map(l -> new ExportSpecification<>(graphElementType, l, stats, tokensOnly, featureToggles))
+                    .map(l -> new ExportSpecification(graphElementType, l, stats, tokensOnly, featureToggles))
                     .collect(Collectors.toList());
 
         } else {
@@ -162,11 +157,11 @@ public class ExportSpecification<T extends Map<?, ?>> {
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {
 
-        private final GraphElementType<?> graphElementType;
+        private final GraphElementType graphElementType;
         private final GraphSchema graphSchema;
         private final Status status;
 
-        private CreateSchemaHandler(GraphElementType<?> graphElementType, GraphSchema graphSchema) {
+        private CreateSchemaHandler(GraphElementType graphElementType, GraphSchema graphSchema) {
             this.graphElementType = graphElementType;
             this.graphSchema = graphSchema;
             this.status = new Status(StatusOutputFormat.Dot);

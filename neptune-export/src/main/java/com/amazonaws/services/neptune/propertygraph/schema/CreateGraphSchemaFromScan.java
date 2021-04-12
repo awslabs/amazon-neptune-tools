@@ -20,10 +20,10 @@ import java.util.Collection;
 
 public class CreateGraphSchemaFromScan implements CreateGraphSchemaCommand {
 
-    private final Collection<ExportSpecification<?>> exportSpecifications;
+    private final Collection<ExportSpecification> exportSpecifications;
     private final GraphTraversalSource g;
 
-    public CreateGraphSchemaFromScan(Collection<ExportSpecification<?>> exportSpecifications,
+    public CreateGraphSchemaFromScan(Collection<ExportSpecification> exportSpecifications,
                                      GraphTraversalSource g) {
         this.exportSpecifications = exportSpecifications;
         this.g = g;
@@ -32,7 +32,7 @@ public class CreateGraphSchemaFromScan implements CreateGraphSchemaCommand {
     @Override
     public GraphSchema execute() {
         GraphSchema graphSchema = new GraphSchema();
-        for (ExportSpecification<?> exportSpecification : exportSpecifications) {
+        for (ExportSpecification exportSpecification : exportSpecifications) {
             Timer.timedActivity("creating " + exportSpecification.description() + " schema from graph scan",
                     (Activity.Runnable) () -> {
                         System.err.println("Creating " + exportSpecification.description() + " schema");

@@ -37,7 +37,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureOverrideTests {
         boolean isMultiValue = false;
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         Label label = new Label(Arrays.asList("Person", "Admin"));
         LabelSchema labelSchema = new LabelSchema(label);
@@ -92,7 +92,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureOverrideTests {
     public void shouldCreateMultiCategoricalFeature() throws IOException {
 
         GraphSchema graphSchema = new GraphSchema();
-        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes);
+        GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         Label label = new Label(Arrays.asList("Person", "Admin"));
         LabelSchema labelSchema = new LabelSchema(label);

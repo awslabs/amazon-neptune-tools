@@ -13,7 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.LabelConfigV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Norm;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
@@ -25,7 +24,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class PropertyGraphTrainingDataConfigWriterV1 {
@@ -73,7 +75,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
                                                    PropertyName propertyName,
                                                    PrinterOptions printerOptions,
                                                    TrainingDataWriterConfigV1 config
-                                              ) {
+    ) {
         this.graphSchema = graphSchema;
         this.generator = generator;
         this.propertyName = propertyName;
@@ -107,7 +109,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
 
     private void writeNodes() throws IOException {
 
-        GraphElementType<Map<String, Object>> graphElementType = GraphElementTypes.Nodes;
+        GraphElementType graphElementType = GraphElementType.nodes;
         GraphElementSchemas graphElementSchemas = graphSchema.graphElementSchemasFor(graphElementType);
 
         for (Label nodeLabel : graphElementSchemas.labels()) {
@@ -324,7 +326,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
                     .map(PropertySchema::nameWithoutDataType)
                     .collect(Collectors.toList());
 
-            if (!multiValueProperties.isEmpty()){
+            if (!multiValueProperties.isEmpty()) {
                 warnings.add(String.format("Unable to add numerical node feature: Node of type '%s' has one or more multi-value numerical properties: %s.",
                         label.fullyQualifiedLabel(),
                         multiValueProperties));
@@ -376,7 +378,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
     }
 
     private void writeEdges() throws IOException {
-        GraphElementType<Map<String, Object>> graphElementType = GraphElementTypes.Edges;
+        GraphElementType graphElementType = GraphElementType.edges;
         GraphElementSchemas graphElementSchemas = graphSchema.graphElementSchemasFor(graphElementType);
 
         for (Label edgeLabel : graphElementSchemas.labels()) {
@@ -387,7 +389,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
                 writeFileName(graphElementType, outputId);
                 writeSeparator(",");
 
-                if (graphElementSchemas.getSchemaFor(edgeLabel).propertyCount() == 0){
+                if (graphElementSchemas.getSchemaFor(edgeLabel).propertyCount() == 0) {
 
                     generator.writeArrayFieldStart("edges");
                     generator.writeStartObject();
@@ -489,9 +491,9 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
         boolean isSinglePropertyFeature = propertySchemas.size() == 1;
         PropertySchema firstPropertySchema = propertySchemas.iterator().next();
 
-        if (isSinglePropertyFeature){
+        if (isSinglePropertyFeature) {
             PropertySchemaStats propertySchemaStats = labelSchema.getPropertySchemaStats(firstPropertySchema.property());
-            if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()){
+            if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()) {
                 warnings.add(String.format("Unable to add numerical edge feature: Edge of type '%s' has a multi-value numerical property '%s' with differing numbers of values.",
                         label.fullyQualifiedLabel(),
                         firstPropertySchema.property()));
@@ -551,7 +553,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
         generator.writeStringField("separator", separator);
     }
 
-    private void writeFileName(GraphElementType<Map<String, Object>> graphElementType, String outputId) throws IOException {
+    private void writeFileName(GraphElementType graphElementType, String outputId) throws IOException {
         generator.writeStringField("file_name", String.format("%s/%s", graphElementType.name(), new File(outputId).getName()));
     }
 

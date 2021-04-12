@@ -14,14 +14,15 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.propertygraph.Label;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 public class MasterLabelSchemas {
 
     private final Map<Label, MasterLabelSchema> masterLabelSchemas;
-    private final GraphElementType<?> graphElementType;
+    private final GraphElementType graphElementType;
 
-    public MasterLabelSchemas(Map<Label, MasterLabelSchema> masterLabelSchemas, GraphElementType<?> graphElementType) {
+    public MasterLabelSchemas(Map<Label, MasterLabelSchema> masterLabelSchemas, GraphElementType graphElementType) {
         this.masterLabelSchemas = masterLabelSchemas;
         this.graphElementType = graphElementType;
     }
@@ -30,7 +31,7 @@ public class MasterLabelSchemas {
         return masterLabelSchemas.values();
     }
 
-    public GraphElementType<?> graphElementType() {
+    public GraphElementType graphElementType() {
         return graphElementType;
     }
 
