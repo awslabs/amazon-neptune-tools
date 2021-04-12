@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -85,7 +86,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                 g.withSideEffect("x", new HashMap<String, Object>()).E() :
                 g.E();
 
-        GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1, featureToggles));
+        GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1, featureToggles, GraphElementType.edges));
         GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
         GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
@@ -160,6 +161,6 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     private GraphTraversal<? extends Element, ?> traversal(Range range, LabelsFilter labelsFilter) {
-        return range.applyRange(labelsFilter.apply(g.E(), featureToggles));
+        return range.applyRange(labelsFilter.apply(g.E(), featureToggles, GraphElementType.edges));
     }
 }

@@ -16,6 +16,7 @@ import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -161,7 +162,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<Vertex, Vertex> t = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).V() :
                 g.V();
-        return range.applyRange(labelsFilter.apply(t, featureToggles));
+        return range.applyRange(labelsFilter.apply(t, featureToggles, GraphElementType.nodes));
     }
 
 }

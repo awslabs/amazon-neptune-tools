@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.propertygraph;
 import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
@@ -39,10 +40,12 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, FeatureToggles featureToggles) {
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, FeatureToggles featureToggles, GraphElementType graphElementType) {
 
+        boolean simpleEdgeLabels = graphElementType == GraphElementType.edges &&
+                labels.stream().allMatch(l -> !l.hasFromLabels() && !l.hasToLabels());
 
-        if (featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
+        if (simpleEdgeLabels || featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
 
             List<String> labelList = labels.stream()
                     .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())

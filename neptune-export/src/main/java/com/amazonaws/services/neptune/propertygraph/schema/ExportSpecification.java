@@ -145,7 +145,7 @@ public class ExportSpecification {
 
     public Collection<ExportSpecification> splitByLabel() {
 
-        if (featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
+        if (graphElementType == GraphElementType.edges || featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
             return labelsFilter.split().stream()
                     .map(l -> new ExportSpecification(graphElementType, l, stats, tokensOnly, featureToggles))
                     .collect(Collectors.toList());
