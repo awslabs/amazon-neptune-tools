@@ -1,0 +1,233 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Recommends EBS volume size based on VolumeBytesUsed CloudWatch metric for Amazon Neptune cluster",
+  "Parameters": {
+    "ClusterEndpoint": {
+      "Description": "Amazon Neptune cluster endpoint.",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "CustomFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": [
+            "recommend-ebs-volme-size-${id}",
+            {
+              "id": {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "-",
+                      {
+                        "Fn::Select": [
+                          2,
+                          {
+                            "Fn::Split": [
+                              "/",
+                              {
+                                "Ref": "AWS::StackId"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "",
+              [
+                "import json\n",
+                "import logging\n",
+                "import boto3\n",
+                "import urllib.request\n",
+                "from datetime import datetime, timedelta\n",
+                "\n",
+                "\n",
+                "logger = logging.getLogger()\n",
+                "logger.setLevel(logging.INFO)\n",
+                "\n",
+                "def handler(event, context):\n",
+                "    \n",
+                "    logger.info('Event: {}'.format(event))\n",
+                "    \n",
+                "    if event['RequestType'] == 'Create':\n",
+                "        logger.info('CREATE')\n",
+                "        \n",
+                "        cluster_endpoint = event['ResourceProperties']['ClusterEndpoint']\n",
+                "        cluster_id = cluster_endpoint.split('.')[0]\n",
+                "        \n",
+                "        cloudwatch = boto3.client('cloudwatch', region_name='",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "')\n",
+                "        \n",
+                "        seconds_in_one_day = 86400\n",
+                "        \n",
+                "        metrics = cloudwatch.get_metric_statistics(\n",
+                "            Namespace='AWS/Neptune',\n",
+                "            Dimensions=[\n",
+                "                {\n",
+                "                    'Name': 'DBClusterIdentifier',\n",
+                "                    'Value': cluster_id\n",
+                "                }\n",
+                "            ],\n",
+                "            MetricName='VolumeBytesUsed',\n",
+                "            StartTime=datetime.now() - timedelta(hours=1),\n",
+                "            EndTime=datetime.now(),\n",
+                "            Period=seconds_in_one_day,\n",
+                "            Statistics=[\n",
+                "                'Average'\n",
+                "            ],\n",
+                "            Unit='Bytes'\n",
+                "        )\n",
+                "        \n",
+                "        volume_bytes_used = metrics['Datapoints'][0]['Average']\n",
+                "        volume_gb_used = volume_bytes_used / (10 ** 9)\n",
+                "        recommended_ebs_volume_size = min(((((int)(volume_gb_used/1000)) + 1) * 1000), 16000)\n",
+                "        \n",
+                "        logger.info('volume_bytes_used: {}'.format(volume_bytes_used))\n",
+                "        logger.info('volume_gb_used: {}'.format(volume_gb_used))\n",
+                "        logger.info('recommended_ebs_volume_size: {}'.format(recommended_ebs_volume_size))\n",
+                "\n",
+                "        sendResponse(event, context, 'SUCCESS', {'RecommendedEbsVolumeSize': recommended_ebs_volume_size})\n",
+                "        \n",
+                "    elif event['RequestType'] == 'Update':\n",
+                "        logger.info('UPDATE')\n",
+                "        sendResponse(event, context, 'SUCCESS', { 'Message': 'Resource update successful!' })\n",
+                "    elif event['RequestType'] == 'Delete':\n",
+                "        logger.info('DELETE')\n",
+                "        sendResponse(event, context, 'SUCCESS', { 'Message': 'Resource deletion successful!' })\n",
+                "    else:\n",
+                "        logger.info('FAILED!')\n",
+                "        sendResponse(event, context, 'FAILED', { 'Message': 'Unexpected event received from CloudFormation' })\n",
+                "\n",
+                "def sendResponse(event, context, responseStatus, responseData):\n",
+                "    responseBody = json.dumps({\n",
+                "        'Status': responseStatus,\n",
+                "        'Reason': 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,\n",
+                "        'PhysicalResourceId': context.log_stream_name,\n",
+                "        'StackId': event['StackId'],\n",
+                "        'RequestId': event['RequestId'],\n",
+                "        'LogicalResourceId': event['LogicalResourceId'],\n",
+                "        'Data': responseData\n",
+                "    })\n",
+                "\n",
+                "\n",
+                "    logger.info('ResponseURL: {}'.format(event['ResponseURL']))\n",
+                "    logger.info('ResponseBody: {}'.format(responseBody))\n",
+                "\n",
+                "    req = urllib.request.Request(url=event['ResponseURL'], data=responseBody.encode('UTF-8'), method='PUT')\n",
+                "    response = urllib.request.urlopen(req)\n",
+                "    print('Status code: {}'.format(response.getcode()))\n",
+                "    print('Status message: {}'.format(response.msg))\n"
+              ]
+            ]
+          }
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.8",
+        "Timeout": "30"
+      }
+    },
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "attachiamrolelambdapolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeRouteTables"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudwatch:GetMetricStatistics"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "CustomResource": {
+      "Type": "Custom::CustomResource",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomFunction",
+            "Arn"
+          ]
+        },
+        "ClusterEndpoint": {
+          "Ref": "ClusterEndpoint"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "RecommendedEbsVolumeSize": {
+      "Description": "Recommended EBS volume size (in GB).",
+      "Value": {
+        "Fn::GetAtt": [
+          "CustomResource",
+          "RecommendedEbsVolumeSize"
+        ]
+      }
+    }
+  }
+}
