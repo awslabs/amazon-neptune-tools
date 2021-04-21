@@ -12,6 +12,7 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
 
 ### Topics
 
+  - [Neptune-Export service](#neptune-export-service)
   - [Best practices](#best-practices)
   - [Exporting to the Bulk Loader CSV Format](#exporting-to-the-bulk-loader-csv-format)
   - [Exporting the Results of User-Supplied Queries](#exporting-the-results-of-user-supplied-queries)
@@ -19,6 +20,10 @@ Exports Amazon Neptune property graph data to CSV or JSON, or RDF graph data to 
   - [Building neptune-export](#building-neptune-export)
   - [Security](#security)
   - [Deploying neptune-export as an AWS Lambda Function](#deploying-neptune-export-as-an-aws-lambda-function)
+  
+## Neptune-Export service
+
+You can now deploy _neptune-export_ as a service inside your Neptune VPC. Use [these CloudFormation templates](https://docs.aws.amazon.com/neptune/latest/userguide/machine-learning-data-export-service.html) to install the Neptune-Export service.
  
 ## Best practices
 
@@ -142,7 +147,9 @@ At present _neptune-export_ supports exporting an RDF dataset to Turtle with a s
   
 ### Encryption in transit
 
-You can connect to Neptune from _neptune-export_ using SSL by specifying the `--use-ssl` option.
+By default, _neptune-export_ connects to your database using SSL. If your target does not support SSL connections, use the `--disable-ssl` flag.
+
+(SSL used to be an opt-in feature for _neptune-export_, with a `--use-ssl` option for turning SSL on. This behaviour has now changed: SSL is on by default, but can be turned off using `--disable-ssl`. The `--use-ssl` option now no longer has any effect.)
 
 If you are using a load balancer or a proxy server (such as HAProxy), you must [use SSL termination and have your own SSL certificate on the proxy server](https://docs.aws.amazon.com/neptune/latest/userguide/security-ssl.html).
 

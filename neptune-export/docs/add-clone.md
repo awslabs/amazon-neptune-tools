@@ -1,5 +1,5 @@
     NAME
-            neptune-export.sh add-clone - Clone an Amazon Neptune database cluster
+            neptune-export.sh add-clone - Clone an Amazon Neptune database cluster.
     
     SYNOPSIS
             neptune-export.sh add-clone [ --clone-cluster-id <targetClusterId> ]
@@ -9,14 +9,14 @@
     
     OPTIONS
             --clone-cluster-id <targetClusterId>
-                Cluster ID of the cloned Amazon Neptune database cluster
+                Cluster ID of the cloned Amazon Neptune database cluster.
     
                 This option may occur a maximum of 1 times
     
     
             --clone-cluster-instance-type <cloneClusterInstanceType>
                 Instance type for cloned cluster (by default neptune-export will
-                use the same instance type as the source cluster)
+                use the same instance type as the source cluster).
     
                 This options value is restricted to the following set of values:
                     db.r4.large
@@ -31,12 +31,24 @@
                     db.r5.8xlarge
                     db.r5.12xlarge
                     db.t3.medium
+                    r4.large
+                    r4.xlarge
+                    r4.2xlarge
+                    r4.4xlarge
+                    r4.8xlarge
+                    r5.large
+                    r5.xlarge
+                    r5.2xlarge
+                    r5.4xlarge
+                    r5.8xlarge
+                    r5.12xlarge
+                    t3.medium
     
                 This option may occur a maximum of 1 times
     
     
             --clone-cluster-replica-count <replicaCount>
-                Number of read replicas to add to the cloned cluster (default, 0)
+                Number of read replicas to add to the cloned cluster (default, 0).
     
                 This option may occur a maximum of 1 times
     
@@ -45,7 +57,7 @@
     
     
             --source-cluster-id <sourceClusterId>
-                Cluster ID of the source Amazon Neptune database cluster
+                Cluster ID of the source Amazon Neptune database cluster.
     
                 This option may occur a maximum of 1 times
     

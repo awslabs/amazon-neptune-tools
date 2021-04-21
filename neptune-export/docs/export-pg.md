@@ -1,30 +1,39 @@
     NAME
             neptune-export.sh export-pg - Export property graph from Neptune to CSV
-            or JSON
+            or JSON.
     
     SYNOPSIS
             neptune-export.sh export-pg
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
                     [ --approx-edge-count <approxEdgeCount> ]
                     [ --approx-node-count <approxNodeCount> ]
-                    [ {-b | --batch-size} <batchSize> ] [ --clone-cluster ]
+                    [ {-b | --batch-size} <batchSize> ]
+                    [ {-c | --config-file | --filter-config-file} <configFile> ]
+                    [ --clone-cluster ]
                     [ --clone-cluster-instance-type <cloneClusterInstanceType> ]
                     [ --clone-cluster-replica-count <replicaCount> ]
-                    [ --cluster-id <clusterId> ]
+                    [ {--cluster-id | --cluster | --clusterid} <clusterId> ]
                     [ {-cn | --concurrency} <concurrency> ]
-                    {-d | --dir} <directory> [ {-e | --endpoint} <endpoint>... ]
+                    [ {--config | --filter} <configJson> ] {-d | --dir} <directory>
+                    [ --disable-ssl ] [ {-e | --endpoint} <endpoint>... ]
+                    [ --edge-label-strategy <edgeLabelStrategy> ]
                     [ {-el | --edge-label} <edgeLabels>... ]
-                    [ --exclude-type-definitions ] [ --format <format> ]
+                    [ --escape-csv-headers ] [ --exclude-type-definitions ]
+                    [ --format <format> ] [ --janus ]
                     [ --lb-port <loadBalancerPort> ] [ --limit <limit> ]
                     [ --log-level <log level> ]
-                    [ --max-content-length <maxContentLength> ]
+                    [ --max-content-length <maxContentLength> ] [ --merge-files ]
+                    [ --multi-value-separator <multiValueSeparator> ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
+                    [ --profile <profiles>... ]
                     [ {-r | --range | --range-size} <rangeSize> ]
-                    [ --region <region> ] [ {-s | --scope} <scope> ] [ --sample ]
-                    [ --sample-size <sampleSize> ] [ --serializer <serializer> ]
-                    [ --skip <skip> ] [ --stream-name <streamName> ]
+                    [ {--region | --stream-region} <region> ]
+                    [ {-s | --scope} <scope> ] [ --serializer <serializer> ]
+                    [ --skip <skip> ]
+                    [ --stream-large-record-strategy <largeStreamRecordHandlingStrategy> ]
+                    [ --stream-name <streamName> ] [ --strict-cardinality ]
                     [ {-t | --tag} <tag> ] [ --tokens-only <tokensOnly> ]
                     [ --use-iam-auth ] [ --use-ssl ]
     
@@ -32,7 +41,7 @@
             --alb-endpoint <applicationLoadBalancerEndpoint>
                 Application load balancer endpoint (optional: use only if
                 connecting to an IAM DB enabled Neptune cluster through an
-                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-application-load-balancer)
+                application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-application-load-balancer).
     
                 This option may occur a maximum of 1 times
     
@@ -42,13 +51,13 @@
     
     
             --approx-edge-count <approxEdgeCount>
-                Approximate number of edges in graph
+                Approximate number of edges in the graph.
     
                 This option may occur a maximum of 1 times
     
     
             --approx-node-count <approxNodeCount>
-                Approximate number of nodes in graph
+                Approximate number of nodes in the graph.
     
                 This option may occur a maximum of 1 times
     
@@ -60,15 +69,24 @@
                 This option may occur a maximum of 1 times
     
     
+            -c <configFile>, --config-file <configFile>, --filter-config-file
+            <configFile>
+                Path to JSON schema config file (file path, or 'https' or 's3'
+                URI).
+    
+                This option is part of the group 'configFile or config' from which
+                only one option may be specified
+    
+    
             --clone-cluster
-                Clone Neptune cluster
+                Clone an Amazon Neptune cluster.
     
                 This option may occur a maximum of 1 times
     
     
             --clone-cluster-instance-type <cloneClusterInstanceType>
                 Instance type for cloned cluster (by default neptune-export will
-                use the same instance type as the source cluster)
+                use the same instance type as the source cluster).
     
                 This options value is restricted to the following set of values:
                     db.r4.large
@@ -82,23 +100,25 @@
                     db.r5.4xlarge
                     db.r5.8xlarge
                     db.r5.12xlarge
-                    db.r5.16xlarge
-                    db.r5.24xlarge
-                    db.m5.large
-                    db.m5.xlarge
-                    db.m5.2xlarge
-                    db.m5.3xlarge
-                    db.m5.8xlarge
-                    db.m5.12xlarge
-                    db.m5.16xlarge
-                    db.m5.24xlarge
                     db.t3.medium
+                    r4.large
+                    r4.xlarge
+                    r4.2xlarge
+                    r4.4xlarge
+                    r4.8xlarge
+                    r5.large
+                    r5.xlarge
+                    r5.2xlarge
+                    r5.4xlarge
+                    r5.8xlarge
+                    r5.12xlarge
+                    t3.medium
     
                 This option may occur a maximum of 1 times
     
     
             --clone-cluster-replica-count <replicaCount>
-                Number of read replicas to add to the cloned cluster (default, 0)
+                Number of read replicas to add to the cloned cluster (default, 0).
     
                 This option may occur a maximum of 1 times
     
@@ -106,23 +126,36 @@
                 This options value must fall in the following range: 0 <= value <= 15
     
     
-            --cluster-id <clusterId>
+            --cluster-id <clusterId>, --cluster <clusterId>, --clusterid
+            <clusterId>
                 ID of an Amazon Neptune cluster. If you specify a cluster ID,
                 neptune-export will use all of the instance endpoints in the
                 cluster in addition to any endpoints you have specified using the
-                -e and --endpoint options.
+                endpoint options.
     
                 This option may occur a maximum of 1 times
+    
+    
+                This option is part of the group 'endpoint or clusterId' from which
+                at least one option must be specified
     
     
             -cn <concurrency>, --concurrency <concurrency>
-                Concurrency (optional)
+                Concurrency – the number of parallel queries used to run the export
+                (optional, default 4).
     
                 This option may occur a maximum of 1 times
     
     
+            --config <configJson>, --filter <configJson>
+                JSON schema for property graph.
+    
+                This option is part of the group 'configFile or config' from which
+                only one option may be specified
+    
+    
             -d <directory>, --dir <directory>
-                Root directory for output
+                Root directory for output.
     
                 This option may occur a maximum of 1 times
     
@@ -131,35 +164,70 @@
                 must be readable and writable.
     
     
+            --disable-ssl
+                Disables connectivity over SSL.
+    
+                This option may occur a maximum of 1 times
+    
+    
             -e <endpoint>, --endpoint <endpoint>
                 Neptune endpoint(s) – supply multiple instance endpoints if you
-                want to load balance requests across a cluster
+                want to load balance requests across a cluster.
+    
+                This option is part of the group 'endpoint or clusterId' from which
+                at least one option must be specified
+    
+    
+            --edge-label-strategy <edgeLabelStrategy>
+                Export edges by their edge labels, or by a combination of their
+                start vertex label, edge label, and end vertex label (optional,
+                default 'edgeLabelsOnly').
+    
+                This options value is restricted to the following set of values:
+                    edgeLabelsOnly
+                    edgeAndVertexLabels
+    
+                This option may occur a maximum of 1 times
+    
     
             -el <edgeLabels>, --edge-label <edgeLabels>
                 Labels of edges to be included in config (optional, default all
-                labels)
+                labels).
+    
+            --escape-csv-headers
+                Escape characters in CSV column headers (optional, default
+                'false').
+    
+                This option may occur a maximum of 1 times
+    
     
             --exclude-type-definitions
-                Exclude type definitions from column headers (optional, default
-                'false')
+                Exclude type definitions from CSV column headers (optional, default
+                'false').
     
                 This option may occur a maximum of 1 times
     
     
             --format <format>
-                Output format (optional, default 'csv')
+                Output format (optional, default 'csv').
     
                 This options value is restricted to the following set of values:
+                    json
                     csv
                     csvNoHeaders
-                    json
                     neptuneStreamsJson
     
                 This option may occur a maximum of 1 times
     
     
+            --janus
+                Use JanusGraph serializer.
+    
+                This option may occur a maximum of 1 times
+    
+    
             --lb-port <loadBalancerPort>
-                Load balancer port (optional, default 80)
+                Load balancer port (optional, default 80).
     
                 This option may occur a maximum of 1 times
     
@@ -169,13 +237,13 @@
     
     
             --limit <limit>
-                Maximum number of items to export (optional)
+                Maximum number of items to export (optional).
     
                 This option may occur a maximum of 1 times
     
     
             --log-level <log level>
-                Log level (optional, default 'error')
+                Log level (optional, default 'error').
     
                 This options value is restricted to the following set of values:
                     trace
@@ -188,19 +256,32 @@
     
     
             --max-content-length <maxContentLength>
-                Max content length (optional, default 65536)
+                Max content length (optional, default 50000000).
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --merge-files
+                Merge files for each vertex or edge label.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --multi-value-separator <multiValueSeparator>
+                Separator for multi-value properties in CSV output (optional,
+                default ';').
     
                 This option may occur a maximum of 1 times
     
     
             -nl <nodeLabels>, --node-label <nodeLabels>
                 Labels of nodes to be included in config (optional, default all
-                labels)
+                labels).
     
             --nlb-endpoint <networkLoadBalancerEndpoint>
                 Network load balancer endpoint (optional: use only if connecting to
                 an IAM DB enabled Neptune cluster through a network load balancer
-                (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer)
+                (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer).
     
                 This option may occur a maximum of 1 times
     
@@ -210,7 +291,7 @@
     
     
             -o <output>, --output <output>
-                Output target (optional, default 'file')
+                Output target (optional, default 'file').
     
                 This options value is restricted to the following set of values:
                     files
@@ -221,7 +302,7 @@
     
     
             -p <port>, --port <port>
-                Neptune port (optional, default 8182)
+                Neptune port (optional, default 8182).
     
                 This option may occur a maximum of 1 times
     
@@ -230,20 +311,23 @@
                 following port ranges: 1-1023, 1024-49151
     
     
+            --profile <profiles>
+                Name of an export profile.
+    
             -r <rangeSize>, --range <rangeSize>, --range-size <rangeSize>
-                Number of items to fetch per request (optional)
+                Number of items to fetch per request (optional).
     
                 This option may occur a maximum of 1 times
     
     
-            --region <region>
-                AWS Region in which your Amazon Kinesis Data Stream is located
+            --region <region>, --stream-region <region>
+                AWS Region in which your Amazon Kinesis Data Stream is located.
     
                 This option may occur a maximum of 1 times
     
     
             -s <scope>, --scope <scope>
-                Scope (optional, default 'all')
+                Scope (optional, default 'all').
     
                 This options value is restricted to the following set of values:
                     all
@@ -253,50 +337,63 @@
                 This option may occur a maximum of 1 times
     
     
-            --sample
-                Select only a subset of nodes and edges when generating property
-                metadata
-    
-                This option may occur a maximum of 1 times
-    
-    
-            --sample-size <sampleSize>
-                Property metadata sample size (optional, default 1000
-    
-                This option may occur a maximum of 1 times
-    
-    
             --serializer <serializer>
-                Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0'
-                (optional, default 'GRAPHBINARY_V1D0')
+                Message serializer – (optional, default 'GRAPHBINARY_V1D0').
     
                 This options value is restricted to the following set of values:
+                    GRAPHSON
+                    GRAPHSON_V1D0
+                    GRAPHSON_V2D0
+                    GRAPHSON_V3D0
                     GRAPHBINARY_V1D0
+                    GRYO_V1D0
                     GRYO_V3D0
+                    GRYO_LITE_V1D0
     
                 This option may occur a maximum of 1 times
     
     
             --skip <skip>
-                Number of items to skip (optional)
+                Number of items to skip (optional).
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --stream-large-record-strategy <largeStreamRecordHandlingStrategy>
+                Strategy for dealing with records to be sent to Amazon Kinesis that
+                are larger than 1 MB.
+    
+                This options value is restricted to the following set of values:
+                    dropAll
+                    splitAndDrop
+                    splitAndShred
     
                 This option may occur a maximum of 1 times
     
     
             --stream-name <streamName>
-                Name of an Amazon Kinesis Data Stream
+                Name of an Amazon Kinesis Data Stream.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --strict-cardinality
+                Format all set and list cardinality properties as arrays in JSON,
+                including properties with a single value (optional, default
+                'false').
     
                 This option may occur a maximum of 1 times
     
     
             -t <tag>, --tag <tag>
-                Directory prefix (optional)
+                Directory prefix (optional).
     
                 This option may occur a maximum of 1 times
     
     
             --tokens-only <tokensOnly>
-                Export tokens (~id, ~label) only (optional, default 'off')
+                Export tokens (~id, ~label, ~from, ~to) only (optional, default
+                'off').
     
                 This options value is restricted to the following set of values:
                     off
@@ -309,13 +406,15 @@
     
             --use-iam-auth
                 Use IAM database authentication to authenticate to Neptune
-                (remember to set SERVICE_REGION environment variable)
+                (remember to set the SERVICE_REGION environment variable).
     
                 This option may occur a maximum of 1 times
     
     
             --use-ssl
-                Enables connectivity over SSL
+                Enables connectivity over SSL. This option is
+                deprecated: neptune-export will always connect via SSL unless you
+                use --disable-ssl to explicitly disable connectivity over SSL.
     
                 This option may occur a maximum of 1 times
     
