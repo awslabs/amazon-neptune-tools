@@ -38,11 +38,10 @@ public class Stream {
     private final String streamName;
     private final StreamThrottle streamThrottle;
     private final LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy;
-    private final AtomicLong counter = new AtomicLong();
     private final RecordSplitter splitter;
+    private final AtomicLong counter = new AtomicLong();
 
     private static final Logger logger = LoggerFactory.getLogger(Stream.class);
-
     private static final int MAX_SIZE_BYTES = 1000000;
 
     public Stream(KinesisProducer kinesisProducer,

@@ -23,6 +23,7 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -152,7 +153,13 @@ public class NeptuneExportService {
         eventHandlerCollection.addHandler(eventHandler);
 
         if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)) {
-            if (args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name())) {
+
+            JsonNode neptuneMlNode = additionalParams.path(NEPTUNE_ML_PROFILE_NAME);
+
+            boolean useV2 =  args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name()) ||
+                    (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v2."));
+
+            if (useV2) {
                 NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
                         new NeptuneMachineLearningExportEventHandlerV2(
                                 outputS3Path,

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
-    private final static AtomicLong COMMIT_NUM_GENERATOR = new AtomicLong(1);
+    private static final AtomicLong COMMIT_NUM_GENERATOR = new AtomicLong(1);
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
