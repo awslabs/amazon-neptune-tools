@@ -179,6 +179,18 @@
     }
   },
   "Resources": {
+    "EbsVolumeSizeStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-sagemaker/cloudformation-templates/export-neptune-to-elasticsearch/neptune-export-recommend-ebs-volume-size-stack.json",
+        "Parameters": {
+          "ClusterEndpoint": {
+            "Ref": "NeptuneEndpoint"
+          }
+        },
+        "TimeoutInMinutes": "60"
+      }
+    },
     "KinesisStream": {
       "Type": "AWS::Kinesis::Stream",
       "Properties": {
@@ -626,10 +638,11 @@
             },
             "STREAM_NAME": {
               "Ref": "KinesisStream"
-            }
+            },
+            "log_commit_nums": "false"
           }
         },
-        "MemorySize": 512,
+        "MemorySize": 1024,
         "Runtime": "python3.8",
         "Timeout": "900",
         "ReservedConcurrentExecutions": {
@@ -670,6 +683,7 @@
         "BatchSize": {
           "Ref": "BatchSize"
         },
+        "MaximumRetryAttempts": 3,
         "StartingPosition": "LATEST"
       }
     },
@@ -955,7 +969,7 @@
                   "Content-Type: text/cloud-config; charset=\"us-ascii\"\n",
                   "\n",
                   "runcmd:\n",
-                  "- file_system_id_01=/dev/nvme2n1\n",
+                  "- file_system_id_01=/dev/nvme1n1\n",
                   "- my_directory=/mnt/neptune\n",
                   "\n",
                   "- mkdir -p ${my_directory}\n",
@@ -975,7 +989,13 @@
                 "DeleteOnTermination": true,
                 "VolumeType": "io1",
                 "Iops": "50000",
-                "VolumeSize": "1000"
+                "VolumeSize": {
+                  "Fn::GetAtt": [
+                    "EbsVolumeSizeStack",
+                    "Outputs.RecommendedEbsVolumeSize"
+                  ]
+                },
+                "Encrypted": true
               }
             }
           ]
@@ -1046,6 +1066,11 @@
             }
           ],
           "Type": "EC2",
+          "Ec2Configuration": [
+            {
+              "ImageType": "ECS_AL2"
+            }
+          ],
           "Subnets": [
             {
               "Ref": "Subnet1"
@@ -1059,8 +1084,11 @@
             ]
           },
           "InstanceTypes": [
-            "m5d.2xlarge"
-          ]
+            "c5"
+          ],
+          "Tags": {
+            "Name": "Neptune-Export-to-Elasticsearch"
+          }
         },
         "State": "ENABLED"
       }
@@ -1147,7 +1175,7 @@
           ]
         },
         "ContainerProperties": {
-          "Memory": 16000,
+          "Memory": 32000,
           "Ulimits": [
             {
               "HardLimit": 10000,

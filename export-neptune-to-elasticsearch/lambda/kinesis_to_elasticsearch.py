@@ -24,6 +24,7 @@ import neptune_to_es
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+log_commit_nums = os.environ.get('log_commit_nums', 'false').lower() == 'true'
 neptune_engine = os.environ['NEPTUNE_ENGINE']
 stream_name = os.environ['STREAM_NAME']
 handler_name = 'neptune_to_es.neptune_sparql_es_handler.ElasticSearchSparqlHandler' if neptune_engine == 'sparql' else 'neptune_to_es.neptune_gremlin_es_handler.ElasticSearchGremlinHandler'
@@ -99,6 +100,7 @@ def lambda_bulk_handler(event, context):
     first_op_num = None
     prev_commit_num = None
     prev_op_num = None
+    commit_nums = set()
         
     for user_record in user_records:
         records_json = base64.b64decode(user_record['kinesis']['data'])
@@ -111,6 +113,9 @@ def lambda_bulk_handler(event, context):
             
             commit_num = record['eventId']['commitNum']
             op_num = record['eventId']['opNum']
+            
+            if log_commit_nums:
+                commit_nums.add(commit_num)
             
             if not first_commit_num:
                 first_commit_num = commit_num
@@ -137,8 +142,11 @@ def lambda_bulk_handler(event, context):
         
     logger.info('Log stream record count: {}'.format(len(log_stream['records']))) 
     logger.info('First record: (commitNum: {}, opNum: {})'.format(first_commit_num, first_op_num))
-    logger.info('Last record: (commitNum: {}, opNum: {})'.format(prev_commit_num, prev_op_num))   
+    logger.info('Last record: (commitNum: {}, opNum: {})'.format(prev_commit_num, prev_op_num))  
     
+    if log_commit_nums:
+        logger.info('Commit nums: {}'.format(commit_nums))  
+        
     for result in handler.handle_records(log_stream):
         records_processed = result.records_processed
         logger.info('{} records processed'.format(records_processed))
