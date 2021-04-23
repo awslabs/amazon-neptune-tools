@@ -58,6 +58,15 @@
         "nodes"
       ]
     },
+    "CloneCluster": {
+      "Type": "String",
+      "Description": "Clone Neptune cluster and export from clone (recommended for consistent exports that don't impact source cluster).",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ]
+    },
     "AdditionalParams": {
       "Type": "String",
       "Description": "Allows you to specify additional parameters to neptune-export, e.g. '--max-content-length 131072'. See https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export for documentation of neptune-export params.",
@@ -121,6 +130,7 @@
             "NeptunePort",
             "NeptuneEngine",
             "ExportScope",
+            "CloneCluster",
             "NeptuneClientSecurityGroup",
             "AdditionalParams"
           ]
@@ -498,6 +508,9 @@
             },
             "CONCURRENCY": {
               "Ref": "Concurrency"
+            },
+            "CLONE_CLUSTER": {
+              "Ref": "CloneCluster"
             },
             "ADDITIONAL_PARAMS": {
               "Ref": "AdditionalParams"

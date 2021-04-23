@@ -17,7 +17,7 @@ Before provisioning the solution ensure the following conditions are met:
     - Or, a subnet with the __Auto-assign public IPv4 address__ set to __No__, a route table with a route destination of __0.0.0.0/0__, and a NAT gateway set to __Target__ (for example, __nat-12345678901234567__). For more details, see [Routing](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html#VPC_Scenario2_Routinghttps://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html#VPC_Scenario2_Routing).
   - You have VPC security groups that can be used to access your Neptune and ElasticSearch clusters.
     
-This solution uses [_neptune-export_](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export) to export data from your Neptune database. We recommend using _neptune-export_ against a static version of your data. Either suspend writes to your database while the export is taking place, or run the export against a [snapshot](https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-create-snapshot.html) or [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) of your database.
+This solution uses [_neptune-export_](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-export) to export data from your Neptune database. We recommend using _neptune-export_ against a static version of your data. Either suspend writes to your database while the export is taking place, or run the export against a [snapshot](https://docs.aws.amazon.com/neptune/latest/userguide/backup-restore-create-snapshot.html) or [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) of your database. The CloudFormation template allows you to specify whether you want the export process to clone your cluster or not.
 
 _neptune-export_ uses long-running queries to get data from Neptune. You may need to increase the __neptune_query_timeout__ [DB parameter](https://docs.aws.amazon.com/neptune/latest/userguide/parameters.html) in order to run the export solution against large datasets.
 
@@ -33,7 +33,7 @@ The export process uses SSL to connect to Neptune. It currently supports IAM Dat
   
 ### Exporting from a database clone
 
-If you want to [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) your database before exporting, you can add a `--clone-cluster` flag, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.
+If you want to [clone](https://docs.aws.amazon.com/neptune/latest/userguide/manage-console-cloning.html) your database before exporting, set the CloudFormation __CloneCluster__ parameter to __true__. (Alternatively, you can add a `--clone-cluster` flag, either to the __AdditionalParams__ CloudFormation parameter when you install the solution, or to the __ADDITIONAL_PARAMS___ environment variable of the __export-neptune-to-kinesis__ AWS Lambda function once the solution has been installed.)
 
 ### Handling large properties
 
