@@ -15,6 +15,9 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 public class ParseNodeType {
 
     private final JsonNode json;
@@ -26,12 +29,25 @@ public class ParseNodeType {
     }
 
     public Label parseNodeType(){
-        if (json.has("node") && json.get("node").isTextual()){
-            String labelString = json.get("node").textValue();
-
-            return new Label(labelString);
+        JsonNode node = json.get("node");
+        if (json.has("node")){
+            if (node.isTextual()){
+                return new Label(node.textValue());
+            } else if (node.isArray()){
+                Collection<String> values = new ArrayList<>();
+                for (JsonNode element : node) {
+                    values.add(element.textValue());
+                }
+                return new Label(values);
+            } else {
+                throw error();
+            }
         } else {
-            throw ErrorMessageHelper.errorParsingField("node", context, "a text value");
+            throw error();
         }
+    }
+
+    private IllegalArgumentException error() {
+        return ErrorMessageHelper.errorParsingField("node", context, "a text value or array of text values");
     }
 }

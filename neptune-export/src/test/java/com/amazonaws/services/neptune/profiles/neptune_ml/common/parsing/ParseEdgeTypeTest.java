@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseEdgeType;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
@@ -18,6 +18,9 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -54,5 +57,55 @@ public class ParseEdgeTypeTest {
         assertEquals("admin\\;aa;person", label.fromLabelsAsString());
         assertEquals("wrote\\;x", label.labelsAsString());
         assertEquals("content;post", label.toLabelsAsString());
+    }
+
+    @Test
+    public void canParseSimpleEdge() {
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        arrayNode.add("Person");
+        arrayNode.add("wrote");
+        arrayNode.add("Post");
+        json.set("edge", arrayNode);
+
+        Label label = new ParseEdgeType(json, new ParsingContext("edge")).parseEdgeType();
+        assertEquals("(Person)-wrote-(Post)", label.fullyQualifiedLabel());
+    }
+
+    @Test
+    public void canParseComplexEdge() {
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        arrayNode.add(arrayFrom("Person", "Admin"));
+        arrayNode.add("wrote");
+        arrayNode.add(arrayFrom("Post", "Content"));
+        json.set("edge", arrayNode);
+
+        Label label = new ParseEdgeType(json, new ParsingContext("edge")).parseEdgeType();
+        assertEquals("(Admin;Person)-wrote-(Content;Post)", label.fullyQualifiedLabel());
+    }
+
+    @Test
+    public void canParseEdgeWithOneComplexLabel() {
+
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        arrayNode.add("Person"); // Simple
+        arrayNode.add("wrote");
+        arrayNode.add(arrayFrom("Post", "Content")); // Complex
+        json.set("edge", arrayNode);
+
+        Label label = new ParseEdgeType(json, new ParsingContext("edge")).parseEdgeType();
+        assertEquals("(Person)-wrote-(Content;Post)", label.fullyQualifiedLabel());
+    }
+
+    private ArrayNode arrayFrom(String... values){
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        for (String value : values) {
+            arrayNode.add(value);
+        }
+        return arrayNode;
     }
 }

@@ -16,6 +16,8 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import java.util.*;
+
 public class ParseEdgeType {
 
     private final JsonNode json;
@@ -32,10 +34,34 @@ public class ParseEdgeType {
             if (array.size() != 3){
                 throw error();
             }
-            return new Label(array.get(1).textValue(), array.get(0).textValue(), array.get(2).textValue());
+            List<String> fromLabels = getLabels(array.get(0));
+            String edgeLabel = array.get(1).textValue();
+            List<String> toLabels = getLabels(array.get(2));
+
+            if (fromLabels.size() == 1 && toLabels.size() == 1){
+                return new Label(edgeLabel, fromLabels.get(0), toLabels.get(0));
+            } else {
+                return new Label(edgeLabel, fromLabels, toLabels);
+            }
+
         } else {
             throw error();
         }
+    }
+
+    private List<String> getLabels(JsonNode jsonNode){
+        if (jsonNode.isTextual()){
+            return Collections.singletonList(jsonNode.textValue());
+        } else if (jsonNode.isArray()){
+            List<String> values = new ArrayList<>();
+            for (JsonNode element : jsonNode) {
+                values.add(element.textValue());
+            }
+            return values;
+        } else {
+            return Collections.emptyList();
+        }
+
     }
 
     private IllegalArgumentException error() {

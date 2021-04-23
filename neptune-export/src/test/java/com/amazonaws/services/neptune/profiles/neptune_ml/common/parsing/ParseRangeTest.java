@@ -10,11 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.v1.parsing;
+package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Range;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseRange;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
