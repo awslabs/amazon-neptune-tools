@@ -34,7 +34,8 @@ def trigger_neptune_export():
     concurrency = os.environ['CONCURRENCY']
     scope = os.environ['EXPORT_SCOPE']
     additional_params = os.environ['ADDITIONAL_PARAMS']
-    
+    clone_cluster = os.environ.get('CLONE_CLUSTER')
+
     if additional_params:
         additional_params = additional_params if additional_params.startswith(' ') else ' {}'.format(additional_params)
     else:
@@ -44,8 +45,9 @@ def trigger_neptune_export():
     export_command = 'export-pg' if neptune_engine == 'gremlin' else 'export-rdf'
     concurrency_param = ' --concurrency {}'.format(concurrency) if neptune_engine == 'gremlin' else ''
     scope_param = ' --scope {}'.format(scope) if neptune_engine == 'gremlin' else ''
+    clone_cluster_param = ' --clone-cluster' if clone_cluster and clone_cluster.lower() == 'true' else ''
             
-    command = 'df -h && rm -rf neptune-export.jar && wget {} -nv && export SERVICE_REGION="{}" && java -Xms16g -Xmx16g -jar neptune-export.jar {} -e {} -p {} -d /neptune/results --output stream --stream-name {} --region {} --format neptuneStreamsJson --use-ssl{}{}{}{}'.format(
+    command = 'df -h && rm -rf neptune-export.jar && wget {} -nv && export SERVICE_REGION="{}" && java -Xms16g -Xmx16g -jar neptune-export.jar {} -e {} -p {} -d /neptune/results --output stream --stream-name {} --region {} --format neptuneStreamsJson --use-ssl{}{}{}{}{}'.format(
         neptune_export_jar_uri, 
         region,
         export_command, 
@@ -56,6 +58,7 @@ def trigger_neptune_export():
         use_iam_auth,
         concurrency_param,
         scope_param,
+        clone_cluster_param,
         additional_params)
         
     logger.info('Command: {}'.format(command))
