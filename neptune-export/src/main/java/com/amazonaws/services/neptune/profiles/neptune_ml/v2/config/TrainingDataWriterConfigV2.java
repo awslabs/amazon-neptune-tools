@@ -40,7 +40,15 @@ public class TrainingDataWriterConfigV2 {
                 results.add(getTrainingJobWriterConfig(configNode, index++));
             }
         } else {
-            results.add(getTrainingJobWriterConfig(json, 1));
+            if (json.has("jobs")){
+                ArrayNode configNodes = (ArrayNode) json.get("jobs");
+                int index = 1;
+                for (JsonNode configNode : configNodes) {
+                    results.add(getTrainingJobWriterConfig(configNode, index++));
+                }
+            } else {
+                results.add(getTrainingJobWriterConfig(json, 1));
+            }
         }
 
         Set<String> names = results.stream().map(TrainingDataWriterConfigV2::name).collect(Collectors.toSet());

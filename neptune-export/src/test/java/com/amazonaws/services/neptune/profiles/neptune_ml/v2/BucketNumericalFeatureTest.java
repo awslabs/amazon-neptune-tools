@@ -98,6 +98,11 @@ public class BucketNumericalFeatureTest {
         runTest("t7.json");
     }
 
+    @Test
+    public void shouldSupportOldNumBucketsField() throws IOException {
+        runTest("t10.json");
+    }
+
     private void runTest(String jsonFile) throws IOException {
         JsonNode json = JsonFromResource.get(jsonFile, getClass());
 

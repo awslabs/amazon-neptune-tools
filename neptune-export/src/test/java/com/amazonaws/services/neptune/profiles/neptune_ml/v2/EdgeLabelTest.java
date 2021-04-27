@@ -83,6 +83,11 @@ public class EdgeLabelTest {
         }
     }
 
+    @Test
+    public void shouldAllowComplexToAndFromLabels() throws IOException {
+        runTest("t9.json");
+    }
+
     private void runTest(String jsonFile) throws IOException {
         JsonNode json = JsonFromResource.get(jsonFile, getClass());
 
