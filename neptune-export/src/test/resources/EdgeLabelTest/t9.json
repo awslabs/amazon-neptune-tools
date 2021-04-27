@@ -31,13 +31,13 @@
     "graph" : {
       "nodes" : [ ],
       "edges" : [ {
-        "file_name" : "edges/knows-1.csv",
+        "file_name" : "edges/edited-1.csv",
         "separator" : ",",
-        "source" : [ "~from", "Person" ],
-        "relation" : [ "", "knows" ],
-        "dest" : [ "~to", "Person" ],
+        "source" : [ "~from", "Admin;Person" ],
+        "relation" : [ "", "edited" ],
+        "dest" : [ "~to", "Content;Post" ],
         "labels" : [ {
-          "label" : [ "metAtLocation", "classification" ],
+          "label" : [ "reason", "classification" ],
           "split_rate" : [ 0.9, 0.1, 0.0 ]
         } ]
       } ]
