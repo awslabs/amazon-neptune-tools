@@ -160,7 +160,7 @@ class SessionedClient(Client):
     def __exit__(self, type, value, traceback):
         self.close()
         
-    def submitAsync(self, message, bindings=None):
+    def submitAsync(self, message, bindings=None, request_options=None):
         if isinstance(message, str):
             message = request.RequestMessage(
                 processor='session', 
@@ -174,6 +174,8 @@ class SessionedClient(Client):
         else:
             raise Exception('Unsupported message type: {}'.format(type(message)))
         conn = self._pool.get(True)
+        if request_options:
+            message.args.update(request_options)
         return conn.write(message)
     
     def close(self):
