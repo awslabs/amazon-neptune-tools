@@ -19,7 +19,7 @@ rm -rf certifi-*
 rm -rf easy_install.py
 rm -rf six.py
 cp -r ../../../../neptune_python_utils .
-zip -r neptune_python_utils.zip ./* -x "*pycache*" -x "*.so" -x "*dist-info*" -x "*.virtualenv" -x "pip*" -x "pkg_resources*" -x "setuptools*" -x "wheel*"
+zip -r neptune_python_utils.zip ./* -x "*pycache*" -x "*.so" -x "*dist-info*" -x "*.virtualenv" -x "pip*" -x "pkg_resources*" -x "setuptools*" -x "wheel*" -x "certifi*"
 mv neptune_python_utils.zip ../../../../target/neptune_python_utils.zip
 deactivate
 popd
