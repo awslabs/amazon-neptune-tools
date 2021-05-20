@@ -28,20 +28,7 @@ from gremlin_python.process.anonymous_traversal import *
 from gremlin_python.process.strategies import *
 from gremlin_python.driver.driver_remote_connection import DriverRemoteConnection
 from gremlin_python.process.traversal import *
-from gremlin_python.driver.tornado.transport import TornadoTransport
-from tornado.httpclient import HTTPError
-from tornado import httpclient 
-
-class TornadoTransportProxy(TornadoTransport):
-
-    def __init__(self):
-        TornadoTransport.__init__(self)
-
-    def connect(self, url, headers=None):
-        lazy_url = httpclient.HTTPRequest(
-                    url.url, 
-                    headers=url.headers)
-        super().connect(lazy_url, headers)
+from aiohttp.client_exceptions import ClientError
         
         
 class GremlinUtils:
@@ -74,7 +61,6 @@ class GremlinUtils:
     def remote_connection(self, 
                           show_endpoint=False,
                           protocol_factory=None,
-                          transport_factory=lambda:TornadoTransportProxy(),
                           pool_size=None,
                           max_workers=None,
                           message_serializer=None,
@@ -90,22 +76,19 @@ class GremlinUtils:
         while True:
             try:
                 request_parameters = gremlin_endpoint.prepare_request()
-                signed_ws_request = httpclient.HTTPRequest(
-                    request_parameters.uri, 
-                    headers=request_parameters.headers)
                 connection = DriverRemoteConnection(
-                    signed_ws_request, 
+                    request_parameters.uri, 
                     'g',
                     protocol_factory=protocol_factory,
-                    transport_factory=transport_factory,
                     pool_size=pool_size,
                     max_workers=max_workers,
                     message_serializer=message_serializer,
                     graphson_reader=graphson_reader,
-                    graphson_writer=graphson_writer)
+                    graphson_writer=graphson_writer,
+                    headers=request_parameters.headers)
                 self.connections.append(connection)
                 return connection
-            except HTTPError as e:
+            except ClientError as e:
                 exc_info = sys.exc_info()
                 if retry_count < 3:
                     retry_count+=1
@@ -121,23 +104,23 @@ class GremlinUtils:
     def client(self, pool_size=None, max_workers=None):
         gremlin_endpoint = self.endpoints.gremlin_endpoint()
         request_parameters = gremlin_endpoint.prepare_request()
-        signed_ws_request = httpclient.HTTPRequest(
-            request_parameters.uri, 
+        return Client(
+            request_parameters.uri,
+            'g',
+            pool_size=pool_size,
+            max_workers=max_workers,
             headers=request_parameters.headers)
-        return Client(signed_ws_request, 'g', pool_size=pool_size, max_workers=max_workers)
         
     def sessioned_client(self, session_id=None, pool_size=None, max_workers=None):
         gremlin_endpoint = self.endpoints.gremlin_endpoint()
         request_parameters = gremlin_endpoint.prepare_request()
-        signed_ws_request = httpclient.HTTPRequest(
-            request_parameters.uri, 
-            headers=request_parameters.headers)
         return SessionedClient(
-            signed_ws_request, 
+            request_parameters.uri, 
             'g', 
             uuid.uuid4().hex if session_id is None else session_id,
             pool_size=pool_size, 
-            max_workers=max_workers)
+            max_workers=max_workers,
+            headers=request_parameters.headers)
             
         
 class Session(Processor):
@@ -164,10 +147,11 @@ class SessionedClient(Client):
     
     def __init__(self, url, traversal_source, session_id, protocol_factory=None,
                  transport_factory=None, pool_size=None, max_workers=None,
-                 message_serializer=ExtendedGraphSONSerializersV3d0(), username="", password=""):
+                 message_serializer=ExtendedGraphSONSerializersV3d0(), username="", password="",
+                 headers=None):
         super(SessionedClient, self).__init__(url, traversal_source, protocol_factory,
                  transport_factory, pool_size, max_workers,
-                 message_serializer, username, password)
+                 message_serializer, username, password, headers=headers)
         self._session_id = session_id
         
     def __enter__(self):
@@ -176,7 +160,7 @@ class SessionedClient(Client):
     def __exit__(self, type, value, traceback):
         self.close()
         
-    def submitAsync(self, message, bindings=None):
+    def submitAsync(self, message, bindings=None, request_options=None):
         if isinstance(message, str):
             message = request.RequestMessage(
                 processor='session', 
@@ -190,6 +174,8 @@ class SessionedClient(Client):
         else:
             raise Exception('Unsupported message type: {}'.format(type(message)))
         conn = self._pool.get(True)
+        if request_options:
+            message.args.update(request_options)
         return conn.write(message)
     
     def close(self):
