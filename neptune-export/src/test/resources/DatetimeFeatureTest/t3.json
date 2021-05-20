@@ -28,7 +28,7 @@
       "nodes" : [ {
         "file_name" : "nodes/person-1.csv",
         "separator" : ",",
-        "node_type" : [ "~id", "Person" ],
+        "node" : [ "~id", "Person" ],
         "features" : [ {
           "feature" : [ "created", "created", "datetime" ],
           "datetime_parts" : [ "hour", "weekday", "month", "year" ]

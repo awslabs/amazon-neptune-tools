@@ -31,7 +31,7 @@
       "nodes" : [ {
         "file_name" : "nodes/person-1.csv",
         "separator" : ",",
-        "node_type" : [ "~id", "Person" ],
+        "node" : [ "~id", "Person" ],
         "features" : [ {
           "feature" : [ "bio", "bio", "auto" ],
           "separator" : ";"

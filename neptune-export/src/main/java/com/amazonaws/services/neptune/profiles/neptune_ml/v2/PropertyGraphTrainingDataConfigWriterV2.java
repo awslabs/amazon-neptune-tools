@@ -167,7 +167,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
     }
 
     private void writeNodeType(LabelSchema labelSchema) throws IOException {
-        generator.writeArrayFieldStart("node_type");
+        generator.writeArrayFieldStart("node");
 
         generator.writeString("~id");
         generator.writeString(labelSchema.label().labelsAsString());
