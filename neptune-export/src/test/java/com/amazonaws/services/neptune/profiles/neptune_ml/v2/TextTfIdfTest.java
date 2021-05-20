@@ -38,7 +38,7 @@ public class TextTfIdfTest {
         try {
             runTest("t2.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'ngram_range' field for text_tfidf feature (Label: Person, Property: bio). Expected an array with 2 numeric values.", e.getMessage());
         }
     }
@@ -48,7 +48,7 @@ public class TextTfIdfTest {
         try {
             runTest("t3.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'ngram_range' field for text_tfidf feature (Label: Person, Property: bio). Expected an array with 2 numeric values.", e.getMessage());
         }
     }
@@ -58,7 +58,7 @@ public class TextTfIdfTest {
         try {
             runTest("t4.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'ngram_range' field for text_tfidf feature (Label: Person, Property: bio). Expected an array with 2 numeric values.", e.getMessage());
         }
     }
@@ -68,7 +68,7 @@ public class TextTfIdfTest {
         try {
             runTest("t5.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'ngram_range' field for text_tfidf feature (Label: Person, Property: bio). Expected an array with 2 numeric values.", e.getMessage());
         }
     }
@@ -78,7 +78,7 @@ public class TextTfIdfTest {
         try {
             runTest("t6.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'min_df' field for text_tfidf feature (Label: Person, Property: bio). Expected an integer value.", e.getMessage());
         }
     }
@@ -88,7 +88,7 @@ public class TextTfIdfTest {
         try {
             runTest("t7.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'min_df' field for text_tfidf feature (Label: Person, Property: bio). Expected an integer value.", e.getMessage());
         }
     }
@@ -98,7 +98,7 @@ public class TextTfIdfTest {
         try {
             runTest("t8.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'max_features' field for text_tfidf feature (Label: Person, Property: bio). Expected an integer value.", e.getMessage());
         }
     }
@@ -108,7 +108,7 @@ public class TextTfIdfTest {
         try {
             runTest("t9.json");
             fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             assertEquals("Error parsing 'max_features' field for text_tfidf feature (Label: Person, Property: bio). Expected an integer value.", e.getMessage());
         }
     }

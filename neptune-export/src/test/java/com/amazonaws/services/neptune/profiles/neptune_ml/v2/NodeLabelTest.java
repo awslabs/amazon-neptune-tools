@@ -54,6 +54,11 @@ public class NodeLabelTest {
     }
 
     @Test
+    public void shouldUseSpecificSplitRateInPreferenceToTopLevelDefaultSplitRate() throws IOException {
+        runTest("t10.json");
+    }
+
+    @Test
     public void shouldAddWarningIfPropertyDoesNotExist() throws IOException {
         runTest("t5.json");
     }
