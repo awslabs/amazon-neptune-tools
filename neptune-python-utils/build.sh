@@ -11,12 +11,15 @@ cd temp
 pip install gremlinpython
 pip install requests
 pip install backoff
+pip install cchardet
+pip install aiodns
+pip install idna-ssl
 cd lib/python3.8/site-packages
 rm -rf certifi-*
 rm -rf easy_install.py
 rm -rf six.py
 cp -r ../../../../neptune_python_utils .
-zip -r neptune_python_utils.zip neptune_python_utils gremlin_python aenum isodate tornado backoff
+zip -r neptune_python_utils.zip ./* -x "*pycache*" -x "*.so" -x "*dist-info*" -x "*.virtualenv" -x "pip*" -x "pkg_resources*" -x "setuptools*" -x "wheel*" -x "certifi*"
 mv neptune_python_utils.zip ../../../../target/neptune_python_utils.zip
 deactivate
 popd

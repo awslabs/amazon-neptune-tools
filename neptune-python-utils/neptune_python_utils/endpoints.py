@@ -15,7 +15,6 @@
 import sys, os, base64, datetime, hashlib, hmac, boto3, urllib, uuid, threading
 from botocore.credentials import Credentials
 from botocore.credentials import RefreshableCredentials
-from tornado.httputil import HTTPHeaders
 import typing
 from typing import (
     Tuple,
@@ -37,7 +36,7 @@ def synchronized_method(method):
 
     return sync_method
 
-class LazyHttpHeaders(HTTPHeaders):
+class LazyHttpHeaders:
     
     def __init__(self, lazy_headers):
         self.lazy_headers = lazy_headers
