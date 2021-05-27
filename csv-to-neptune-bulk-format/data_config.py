@@ -46,6 +46,16 @@ class BaseDef:
         logger.info(f'Edges: {cls.edge_label_count}')
 
     @classmethod
+    def get_node_id(cls, label, uk):
+        result = ""
+        key = label + "-" + str(uk)
+        if key not in cls.nodes:
+            result = uk
+        else:
+            result = cls.nodes[key]
+        return str(result)
+
+    @classmethod
     def validate_nodes(cls, nodes):
         result = []
         for node in nodes:
@@ -244,7 +254,6 @@ class NodeDef(BaseDef):
                         node = {}
                         node['~id'] = self.get_indexed_value(self.evaluate(row, self.id), index)
                         node['~label'] = self.get_indexed_value(self.evaluate(row, self.label), index)
-                        #if node['~label'] == 'Application' and key in ['Western B', 'We']: print(row) 
                         # ~key needs to be popped by the caller
                         node['~key'] = node['~label'] + '-' + key
                         for prop_def in self.properties:
@@ -300,9 +309,9 @@ class EdgeDef(BaseDef):
                         # id of each edge has to  be different and most probably a UUID
                         edge['~id'] = self.evaluate(row, self.id)
                         edge['~label'] = self.get_indexed_value(label, index)
-                        edge['~from'] = nodes[self.get_indexed_value(from_label, index) + '-' + self.get_indexed_value(from_node, index)]
-                        edge['~to'] = nodes[self.get_indexed_value(to_label, index) + '-' + key]
-                        edge['~key'] = edge['~label'] + '-' + str(edge['~from']) + '-' + str(edge['~to'])
+                        edge['~from'] = self.get_node_id(self.get_indexed_value(from_label, index), self.get_indexed_value(from_node, index))
+                        edge['~to'] = self.get_node_id(self.get_indexed_value(to_label, index), key)
+                        edge['~key'] = edge['~label'] + '-' + edge['~from'] + '-' + edge['~to']
                         for prop_def in self.properties:
                             edge[prop_def.header] = self.get_indexed_value(prop_def.get_value(row), index)
                         edges.append(edge)
@@ -310,9 +319,9 @@ class EdgeDef(BaseDef):
                     edge = {}
                     edge['~id'] = self.evaluate(row, self.id)
                     edge['~label'] = self.evaluate(row, self.label)
-                    edge['~from'] = nodes[self.evaluate(row, self.frmLabel) + '-' + self.evaluate(row, self.frm)]
-                    edge['~to'] = nodes[self.evaluate(row, self.toLabel) + '-' + to_node]
-                    edge['~key'] = edge['~label'] + '-' + str(edge['~from']) + '-' + str(edge['~to'])
+                    edge['~from'] = self.get_node_id(self.evaluate(row, self.frmLabel), self.evaluate(row, self.frm))
+                    edge['~to'] = self.get_node_id(self.evaluate(row, self.toLabel), to_node)
+                    edge['~key'] = edge['~label'] + '-' + edge['~from'] + '-' + edge['~to']
                     for prop_def in self.properties:
                         edge[prop_def.header] = prop_def.get_value(row)
                     edges.append(edge)

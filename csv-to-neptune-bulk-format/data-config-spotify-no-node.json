@@ -1,0 +1,65 @@
+{
+    "source_folder": ".source",
+    "data_folder": ".data",
+    "fileNames": [
+        "spotify_songs.csv"
+    ],
+    "nodes": [],
+    "edges": [
+        {
+            "csvFileName": "Track_Album_Edges.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != '' and 'track_album_id' in row and row['track_album_id'] != ''",
+            "id": "uuid()",
+            "label": "'IN_ALBUM'",
+            "from": "row['track_artist'] + '-' + row['track_name']",
+            "to": "row['track_album_id']",
+            "fromLabel": "'Track'",
+            "toLabel": "'Album'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Track_Artist_Edges.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != ''",
+            "id": "uuid()",
+            "label": "'BY_ARTIST'",
+            "from": "row['track_artist'] + '-' + row['track_name']",
+            "to": "row['track_artist']",
+            "fromLabel": "'Track'",
+            "toLabel": "'Artist'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Track_Playlist_Edges.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != '' and 'playlist_id' in row and row['playlist_id'] != ''",
+            "id": "uuid()",
+            "label": "'IN_PLAYLIST'",
+            "from": "row['track_artist'] + '-' + row['track_name']",
+            "to": "row['playlist_id']",
+            "fromLabel": "'Track'",
+            "toLabel": "'Playlist'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Playlist_Genre_Edges.csv",
+            "select": "'playlist_id' in row and row['playlist_id'] != ''and 'playlist_genre' in row and row['playlist_genre'] != ''",
+            "id": "uuid()",
+            "label": "'HAS_GENRE'",
+            "from": "row['playlist_id']",
+            "to": "row['playlist_genre']",
+            "fromLabel": "'Playlist'",
+            "toLabel": "'Genre'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Genre_SubGenre_Edges.csv",
+            "select": "'playlist_genre' in row and row['playlist_genre'] != '' and 'playlist_subgenre' in row and row['playlist_subgenre'] != ''",
+            "id": "uuid()",
+            "label": "'HAS_SUBGENRE'",
+            "from": "row['playlist_genre']",
+            "to": "row['playlist_subgenre']",
+            "fromLabel": "'Genre'",
+            "toLabel": "'SubGenre'",
+            "properties": []
+        }
+    ]
+}
