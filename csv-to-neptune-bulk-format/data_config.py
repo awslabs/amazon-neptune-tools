@@ -117,10 +117,10 @@ class ConfigDef(BaseDef):
         self.source_folder = self.data['source_folder'] if 'source_folder' in self.data else '.source'
         self.data_folder = self.data['data_folder'] if 'data_folder' in self.data else '.data'
         self.file_names = self.data['fileNames']
-        self.s3_bucket = self.data['s3_bucket']
-        self.s3_conf_folder = self.data['s3_conf_folder']
-        self.s3_source_folder = self.data['s3_source_folder']
-        self.s3_data_folder = self.data['s3_data_folder']
+        self.s3_bucket = self.data['s3_bucket'] if 's3_bucket' in self.data else ''
+        self.s3_conf_folder = self.data['s3_conf_folder'] if 's3_conf_folder' in self.data else ''
+        self.s3_source_folder = self.data['s3_source_folder'] if 's3_source_folder' in self.data else ''
+        self.s3_data_folder = self.data['s3_data_folder'] if 's3_data_folder' in self.data else ''
         self.nodeDefs = []
         for dict_node in self.data['nodes']:
             self.nodeDefs.append(NodeDef(dict_node))

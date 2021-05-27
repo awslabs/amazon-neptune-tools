@@ -1,6 +1,10 @@
 {
     "source_folder": ".source",
     "data_folder": ".data",
+    "s3_bucket": "spotify-neptune-data",
+    "s3_conf_folder": "conf",
+    "s3_source_folder": "source",
+    "s3_data_folder": "data",
     "fileNames": [
         "spotify_songs.csv"
     ],
