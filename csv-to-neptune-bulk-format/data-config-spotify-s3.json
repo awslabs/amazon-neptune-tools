@@ -1,0 +1,209 @@
+{
+    "source_folder": ".source",
+    "data_folder": ".data",
+    "s3_bucket": "spotify-neptune-data",
+    "s3_conf_folder": "conf",
+    "s3_source_folder": "source",
+    "s3_data_folder": "data",
+    "fileNames": [
+        "spotify_songs.csv"
+    ],
+    "nodes": [
+        {
+            "csvFileName": "Track.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != ''",
+            "id": "uuid()",
+            "label": "'Track'",
+            "uniqueKey": "row['track_artist'] + '-' + row['track_name']",
+            "properties": [
+                {
+                    "property": "track_name",
+                    "key": "track_name"
+                },
+                {
+                    "property": "track_artist",
+                    "key": "track_artist"
+                },
+                {
+                    "property": "track_popularity",
+                    "key": "track_popularity"
+                },
+                {
+                    "property": "danceability",
+                    "key": "danceability"
+                },
+                {
+                    "property": "energy",
+                    "key": "energy"
+                },
+                {
+                    "property": "key",
+                    "key": "key"
+                },
+                {
+                    "property": "loudness",
+                    "key": "loudness"
+                },
+                
+                {
+                    "property": "mode",
+                    "key": "mode"
+                },
+                {
+                    "property": "speechiness",
+                    "key": "speechiness"
+                },
+                {
+                    "property": "acousticness",
+                    "key": "acousticness"
+                },
+                {
+                    "property": "instrumentalness",
+                    "key": "instrumentalness"
+                },
+                {
+                    "property": "liveness",
+                    "key": "liveness"
+                },
+                {
+                    "property": "valence",
+                    "key": "valence"
+                },
+                {
+                    "property": "tempo",
+                    "key": "tempo"
+                },
+                {
+                    "property": "duration_ms",
+                    "key": "duration_ms"
+                }
+            ]
+        },
+        {
+            "csvFileName": "Artist.csv",
+            "select": "'track_artist' in row and row['track_artist'] != ''",
+            "id": "uuid()",
+            "label": "'Artist'",
+            "uniqueKey": "row['track_artist']",
+            "properties": [
+                {
+                    "property": "name",
+                    "value": "row['track_artist']"
+                }
+            ]
+        },
+        {
+            "csvFileName": "Album.csv",
+            "select": "'track_album_name' in row and row['track_album_name'] != '' and 'track_album_id' in row and row['track_album_id'] != ''",
+            "id": "uuid()",
+            "label": "'Album'",
+            "uniqueKey": "row['track_album_id']",
+            "properties": [
+                {
+                    "property": "name",
+                    "value": "row['track_album_name']"
+                },
+                {
+                    "property": "album_release_date",
+                    "value": "row['track_album_release_date']"
+                }
+            ]
+        },
+        {
+            "csvFileName": "Playlist.csv",
+            "select": "'playlist_name' in row and row['playlist_name'] != '' and 'playlist_id' in row and row['playlist_id'] != ''",
+            "id": "uuid()",
+            "label": "'Playlist'",
+            "uniqueKey": "row['playlist_id']",
+            "properties": [
+                {
+                    "property": "name",
+                    "value": "row['playlist_name']"
+                }
+            ]
+        },
+        {
+            "csvFileName": "Playlist_Genre.csv",
+            "select": "'playlist_genre' in row and row['playlist_genre'] != ''",
+            "id": "uuid()",
+            "label": "'Genre'",
+            "uniqueKey": "row['playlist_genre']",
+            "properties": [
+                {
+                    "property": "name",
+                    "value": "row['playlist_genre']"
+                }
+            ]
+        },
+        {
+            "csvFileName": "Playlist_SubGenre.csv",
+            "select": "'playlist_subgenre' in row and row['playlist_subgenre'] != ''",
+            "id": "uuid()",
+            "label": "'SubGenre'",
+            "uniqueKey": "row['playlist_subgenre']",
+            "properties": [
+                {
+                    "property": "name",
+                    "value": "row['playlist_subgenre']"
+                }
+            ]
+        }
+    ],
+    "edges": [
+        {
+            "csvFileName": "Track_Album_Edges.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != '' and 'track_album_id' in row and row['track_album_id'] != ''",
+            "id": "uuid()",
+            "label": "'IN_ALBUM'",
+            "from": "row['track_artist'] + '-' + row['track_name']",
+            "to": "row['track_album_id']",
+            "fromLabel": "'Track'",
+            "toLabel": "'Album'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Track_Artist_Edges.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != ''",
+            "id": "uuid()",
+            "label": "'BY_ARTIST'",
+            "from": "row['track_artist'] + '-' + row['track_name']",
+            "to": "row['track_artist']",
+            "fromLabel": "'Track'",
+            "toLabel": "'Artist'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Track_Playlist_Edges.csv",
+            "select": "'track_name' in row and 'track_artist' in row and row['track_name'] != '' and row['track_artist'] != '' and 'playlist_id' in row and row['playlist_id'] != ''",
+            "id": "uuid()",
+            "label": "'IN_PLAYLIST'",
+            "from": "row['track_artist'] + '-' + row['track_name']",
+            "to": "row['playlist_id']",
+            "fromLabel": "'Track'",
+            "toLabel": "'Playlist'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Playlist_Genre_Edges.csv",
+            "select": "'playlist_id' in row and row['playlist_id'] != ''and 'playlist_genre' in row and row['playlist_genre'] != ''",
+            "id": "uuid()",
+            "label": "'HAS_GENRE'",
+            "from": "row['playlist_id']",
+            "to": "row['playlist_genre']",
+            "fromLabel": "'Playlist'",
+            "toLabel": "'Genre'",
+            "properties": []
+        },
+        {
+            "csvFileName": "Genre_SubGenre_Edges.csv",
+            "select": "'playlist_genre' in row and row['playlist_genre'] != '' and 'playlist_subgenre' in row and row['playlist_subgenre'] != ''",
+            "id": "uuid()",
+            "label": "'HAS_SUBGENRE'",
+            "from": "row['playlist_genre']",
+            "to": "row['playlist_subgenre']",
+            "fromLabel": "'Genre'",
+            "toLabel": "'SubGenre'",
+            "properties": []
+        }
+    ]
+}
