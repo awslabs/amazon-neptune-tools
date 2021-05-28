@@ -24,7 +24,7 @@ This utility has following features:
 
 ## Example
 
-Spotify Songs dataset from [rfordatascience/tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv) is used as an example along with example configuration and Neptune Jupyter notebooks to prepare, load and query the Amazon Neptune database. You can download and copy the dataset in the `.source` folder for testing the example.
+Spotify Songs dataset from [rfordatascience/tidytuesday](https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv) is used as an example along with example configuration and Neptune Jupyter notebooks to prepare, load and query the Amazon Neptune database. You can download (right-click on the link and click on save link as..) and copy the dataset in the `.source` folder for testing the example.
 
 ## Prerequisites
 
