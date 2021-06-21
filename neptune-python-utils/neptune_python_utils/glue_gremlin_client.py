@@ -14,6 +14,8 @@
 
 import sys
 import backoff
+import logging
+import boto3
 
 from pyspark.sql.functions import lit
 from pyspark.sql.functions import format_string
@@ -26,14 +28,45 @@ from gremlin_python.driver.protocol import GremlinServerError
 from gremlin_python.process.traversal import *
 from neptune_python_utils.gremlin_utils import GremlinUtils
 from neptune_python_utils.endpoints import Endpoints
-    
+
+logging.getLogger('backoff').addHandler(logging.StreamHandler())
+
 class GlueGremlinClient:
     
-    def __init__(self, endpoints):
+    def __init__(self, endpoints, job_name=None):
         
         self.gremlin_utils = GremlinUtils(endpoints)
+        self.region = endpoints.region
+        self.job_name = job_name
         
         GremlinUtils.init_statics(globals())
+        
+    def publish_metrics(invocation_details):
+        
+        number_tries = invocation_details['tries']
+        kwargs = invocation_details['kwargs']
+        job_name = kwargs['job_name']
+        region = kwargs['region']
+        
+        if job_name and number_tries > 1:
+            cloudwatch = boto3.client('cloudwatch', region_name=region)
+            cloudwatch.put_metric_data(
+                MetricData = [
+                    {
+                        'MetricName': 'Retries',
+                        'Dimensions': [
+                            {
+                                'Name': 'client',
+                                'Value': job_name
+                            }
+                        ],
+                        'Unit': 'Count',
+                        'Value': float(number_tries - 1)
+                    },
+                ],
+                Namespace='awslab/amazon-neptune-tools/neptune-python-utils'
+            )
+        
         
     def not_cme(e):
         return '"code":"ConcurrentModificationException"' not in str(e)
@@ -41,9 +74,11 @@ class GlueGremlinClient:
     @backoff.on_exception(backoff.expo,
                           GremlinServerError,
                           max_tries=5,
-                          giveup=not_cme)
-    def retry_query(self, query):
-        q = query
+                          giveup=not_cme,
+                          on_success=publish_metrics,
+                          on_giveup=publish_metrics)
+    def retry_query(self, **kwargs):      
+        q = kwargs['query']
         q.next()
 
         
@@ -58,30 +93,32 @@ class GlueGremlinClient:
         def add_vertices_for_label(rows):
 
             conn = self.gremlin_utils.remote_connection()
-            g = self.gremlin_utils.traversal_source(connection=conn)
             
-            t = g
-            i = 0
-            for row in rows:
-                entries = row.asDict()
-                t = t.addV(label)
-                for key, value in entries.items():
-                    key = key.split(':')[0]
-                    if key == '~id':
-                        t = t.property(id, value)
-                    elif key == '~label':
-                        pass
-                    else:
-                        t = t.property(key, value)
-                i += 1
-                if i == batch_size:
-                    self.retry_query(t)
-                    t = g
-                    i = 0
-            if i > 0:
-                self.retry_query(t)
-
-            conn.close()
+            try:
+                g = self.gremlin_utils.traversal_source(connection=conn)
+                
+                t = g
+                i = 0
+                for row in rows:
+                    entries = row.asDict()
+                    t = t.addV(label)
+                    for key, value in entries.items():
+                        key = key.split(':')[0]
+                        if key == '~id':
+                            t = t.property(id, value)
+                        elif key == '~label':
+                            pass
+                        else:
+                            t = t.property(key, value)
+                    i += 1
+                    if i == batch_size:
+                        self.retry_query(query=t, job_name=self.job_name, region=self.region)
+                        t = g
+                        i = 0
+                if i > 0:
+                    self.retry_query(query=t, job_name=self.job_name, region=self.region)
+            finally:
+                conn.close()
 
         return add_vertices_for_label
 
@@ -96,31 +133,33 @@ class GlueGremlinClient:
         def upsert_vertices_for_label(rows):
 
             conn = self.gremlin_utils.remote_connection()
-            g = self.gremlin_utils.traversal_source(connection=conn) 
             
-            t = g
-            i = 0
-            for row in rows:
-                entries = row.asDict()
-                create_traversal = __.addV(label)
-                for key, value in entries.items():
-                    key = key.split(':')[0]
-                    if key == '~id':
-                        create_traversal = create_traversal.property(id, value)
-                    elif key == '~label':
-                        pass
-                    else:
-                        create_traversal = create_traversal.property(key, value)
-                t = t.V(entries['~id']).fold().coalesce(__.unfold(), create_traversal)
-                i += 1
-                if i == batch_size:
-                    self.retry_query(t)
-                    t = g
-                    i = 0
-            if i > 0:
-                self.retry_query(t)
-                        
-            conn.close()
+            try:
+                g = self.gremlin_utils.traversal_source(connection=conn) 
+                
+                t = g
+                i = 0
+                for row in rows:
+                    entries = row.asDict()
+                    create_traversal = __.addV(label)
+                    for key, value in entries.items():
+                        key = key.split(':')[0]
+                        if key == '~id':
+                            create_traversal = create_traversal.property(id, value)
+                        elif key == '~label':
+                            pass
+                        else:
+                            create_traversal = create_traversal.property(key, value)
+                    t = t.V(entries['~id']).fold().coalesce(__.unfold(), create_traversal)
+                    i += 1
+                    if i == batch_size:
+                        self.retry_query(query=t, job_name=self.job_name, region=self.region)
+                        t = g
+                        i = 0
+                if i > 0:
+                    self.retry_query(query=t, job_name=self.job_name, region=self.region)
+            finally:
+                conn.close()
 
         return upsert_vertices_for_label
     
@@ -135,26 +174,28 @@ class GlueGremlinClient:
         def add_edges_for_label(rows):
 
             conn = self.gremlin_utils.remote_connection()
-            g = self.gremlin_utils.traversal_source(connection=conn) 
             
-            t = g
-            i = 0
-            for row in rows:
-                entries = row.asDict()
-                t = t.V(entries['~from']).addE(label).to(V(entries['~to'])).property(id, entries['~id'])
-                for key, value in entries.items():
-                    key = key.split(':')[0]
-                    if key not in ['~id', '~from', '~to', '~label']:
-                        t = t.property(key, value)
-                i += 1
-                if i == batch_size:
-                    self.retry_query(t)
-                    t = g
-                    i = 0
-            if i > 0:
-                self.retry_query(t) 
+            try:
+                g = self.gremlin_utils.traversal_source(connection=conn) 
                 
-            conn.close()
+                t = g
+                i = 0
+                for row in rows:
+                    entries = row.asDict()
+                    t = t.addE(label).from_(V(entries['~from'])).to(V(entries['~to'])).property(id, entries['~id'])
+                    for key, value in entries.items():
+                        key = key.split(':')[0]
+                        if key not in ['~id', '~from', '~to', '~label']:
+                            t = t.property(key, value)
+                    i += 1
+                    if i == batch_size:
+                        self.retry_query(query=t, job_name=self.job_name, region=self.region)
+                        t = g
+                        i = 0
+                if i > 0:
+                    self.retry_query(query=t, job_name=self.job_name, region=self.region) 
+            finally:
+                conn.close()
             
         return add_edges_for_label
         
@@ -168,26 +209,28 @@ class GlueGremlinClient:
         def add_edges_for_label(rows):
 
             conn = self.gremlin_utils.remote_connection()
-            g = self.gremlin_utils.traversal_source(connection=conn) 
             
-            t = g
-            i = 0
-            for row in rows:
-                entries = row.asDict()
-                create_traversal = __.V(entries['~from']).addE(label).to(V(entries['~to'])).property(id, entries['~id'])
-                for key, value in entries.items():
-                    key = key.split(':')[0]
-                    if key not in ['~id', '~from', '~to', '~label']:
-                        create_traversal.property(key, value)
-                t = t.V(entries['~from']).outE(label).hasId(entries['~id']).fold().coalesce(__.unfold(), create_traversal)
-                i += 1
-                if i == batch_size:
-                    self.retry_query(t)
-                    t = g
-                    i = 0
-            if i > 0:
-                self.retry_query(t)
+            try:
+                g = self.gremlin_utils.traversal_source(connection=conn) 
                 
-            conn.close()
+                t = g
+                i = 0
+                for row in rows:
+                    entries = row.asDict()
+                    create_traversal = __.addE(label).from_(V(entries['~from'])).to(V(entries['~to'])).property(id, entries['~id'])
+                    for key, value in entries.items():
+                        key = key.split(':')[0]
+                        if key not in ['~id', '~from', '~to', '~label']:
+                            create_traversal.property(key, value)
+                    t = t.V(entries['~from']).outE(label).hasId(entries['~id']).fold().coalesce(__.unfold(), create_traversal)
+                    i += 1
+                    if i == batch_size:
+                        self.retry_query(query=t, job_name=self.job_name, region=self.region)
+                        t = g
+                        i = 0
+                if i > 0:
+                    self.retry_query(query=t, job_name=self.job_name, region=self.region)
+            finally:
+                conn.close()
 
         return add_edges_for_label
