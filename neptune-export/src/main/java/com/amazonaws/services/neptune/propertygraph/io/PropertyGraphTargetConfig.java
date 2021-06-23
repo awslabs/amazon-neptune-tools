@@ -29,6 +29,7 @@ public class PropertyGraphTargetConfig {
     private final PropertyGraphExportFormat format;
     private final Target output;
     private final boolean mergeFiles;
+    private final boolean perLabelDirectories;
 
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
@@ -36,7 +37,8 @@ public class PropertyGraphTargetConfig {
                                      boolean inferSchema,
                                      PropertyGraphExportFormat format,
                                      Target output,
-                                     boolean mergeFiles) {
+                                     boolean mergeFiles,
+                                     boolean perLabelDirectories) {
         this.directories = directories;
         this.kinesisConfig = kinesisConfig;
         this.printerOptions = printerOptions;
@@ -44,6 +46,7 @@ public class PropertyGraphTargetConfig {
         this.format = format;
         this.output = output;
         this.mergeFiles = mergeFiles;
+        this.perLabelDirectories = perLabelDirectories;
     }
 
     public Target output() {
@@ -68,7 +71,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForEdges(String name, LabelSchema labelSchema) throws IOException {
-        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, format), labelSchema);
+        return createPrinterForEdges(() -> directories.createEdgesFilePath(name, format, labelSchema.label(), perLabelDirectories), labelSchema);
     }
 
     private PropertyGraphPrinter createPrinterForEdges(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
@@ -77,7 +80,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphPrinter createPrinterForNodes(String name, LabelSchema labelSchema) throws IOException {
-        return createPrinterForNodes(() -> directories.createNodesFilePath(name, format), labelSchema);
+        return createPrinterForNodes(() -> directories.createNodesFilePath(name, format, labelSchema.label(), perLabelDirectories), labelSchema);
     }
 
     private PropertyGraphPrinter createPrinterForNodes(Supplier<Path> pathSupplier, LabelSchema labelSchema) throws IOException {
@@ -86,7 +89,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphTargetConfig forFileConsolidation() {
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, false, format, output, mergeFiles);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, false, format, output, mergeFiles, perLabelDirectories);
     }
 
     private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {

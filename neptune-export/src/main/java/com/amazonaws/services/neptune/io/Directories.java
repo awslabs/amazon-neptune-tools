@@ -12,9 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,12 +99,44 @@ public class Directories {
         writer.writeMessage(fileType + " files : " + resultsDirectory.toAbsolutePath().toString());
     }
 
-    public Path createNodesFilePath(String name, FileExtension extension){
-        return createFilePath(nodesDirectory, name, extension);
+    public Path createNodesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories)  {
+        if (perLabelDirectories){
+            File labelDirectory = new File(nodesDirectory.toFile(), label.labelsAsString());
+            if (!labelDirectory.exists()){
+                synchronized(this){
+                    if (!labelDirectory.exists()){
+                        try {
+                            Files.createDirectories(labelDirectory.toPath());
+                        } catch (IOException e) {
+                            throw new RuntimeException(String.format("Unable to create nodes directory for %s", label.labelsAsString()));
+                        }
+                    }
+                }
+            }
+            return createFilePath(labelDirectory.toPath(), name, extension);
+        } else {
+            return createFilePath(nodesDirectory, name, extension);
+        }
     }
 
-    public Path createEdgesFilePath(String name, FileExtension extension){
-        return createFilePath(edgesDirectory, name, extension);
+    public Path createEdgesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories){
+        if (perLabelDirectories){
+            File labelDirectory = new File(edgesDirectory.toFile(), label.labelsAsString());
+            if (!labelDirectory.exists()){
+                synchronized(this){
+                    if (!labelDirectory.exists()){
+                        try {
+                            Files.createDirectories(labelDirectory.toPath());
+                        } catch (IOException e) {
+                            throw new RuntimeException(String.format("Unable to create edges directory for %s", label.labelsAsString()));
+                        }
+                    }
+                }
+            }
+            return createFilePath(labelDirectory.toPath(), name, extension);
+        } else {
+            return createFilePath(edgesDirectory, name, extension);
+        }
     }
 
     public Path createStatementsFilePath(String name, FileExtension extension){

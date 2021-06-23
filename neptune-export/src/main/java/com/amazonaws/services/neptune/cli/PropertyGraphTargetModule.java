@@ -62,9 +62,13 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private boolean mergeFiles = false;
 
-    @Option(name = {"--export-id"}, description = "Export id", hidden = true)
+    @Option(name = {"--export-id"}, description = "Export id")
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
+
+    @Option(name = {"--per-label-directories"}, description = "Create a subdirectory for each distinct vertex or edge label.")
+    @Once
+    private boolean perLabelDirectories = false;
 
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
         return Directories.createFor(directoryStructure, directory, exportId, tag );
@@ -72,7 +76,7 @@ public class PropertyGraphTargetModule implements CommandWriter {
 
     public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions, boolean inferSchema){
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region, largeStreamRecordHandlingStrategy);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, inferSchema, format, output, mergeFiles);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, inferSchema, format, output, mergeFiles, perLabelDirectories);
     }
 
     public String description(){
