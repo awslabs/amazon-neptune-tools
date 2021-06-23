@@ -39,17 +39,15 @@ def get_cardinality(s):
 def add_vertex(t, row, **kwargs):
     
     mappings = kwargs['mappings']
-    label = kwargs['label'] if 'label' in kwargs else row['~label']
+    label = kwargs['label'] if 'label' in kwargs else mappings.get_label(row)
     
     t = t.addV(label)
     
     for key, value in row.items():
         mapping = mappings.mapping_for(key)
-        if mapping.name == '~id':
+        if mapping.is_id_token():
             t = t.property(id, value)
-        elif mapping.name == '~label':
-            pass
-        else:
+        elif not mapping.is_token():
             t = t.property(mapping.name, mapping.convert(value))
     return t
 
@@ -57,7 +55,7 @@ def add_vertex(t, row, **kwargs):
 def upsert_vertex(t, row, **kwargs):
     
     mappings = kwargs['mappings']
-    label = kwargs['label'] if 'label' in kwargs else row['~label']
+    label = kwargs['label'] if 'label' in kwargs else mappings.get_label(row)
     on_upsert = kwargs.get('on_upsert', None)
     
     #updateSingleCardinalityProperties
@@ -72,11 +70,9 @@ def upsert_vertex(t, row, **kwargs):
         
         mapping = mappings.mapping_for(key)
         
-        if mapping.name == '~id':
+        if mapping.is_id_token():
             create_traversal = create_traversal.property(id, value)
-        elif mapping.name == '~label':
-            pass
-        else:
+        elif not mapping.is_token():
             if not on_upsert:
                 create_traversal = create_traversal.property(mapping.name, mapping.convert(value))              
             elif on_upsert == 'updateSingleCardinalityProperties':
@@ -89,7 +85,7 @@ def upsert_vertex(t, row, **kwargs):
             elif on_upsert == 'replaceAllProperties':
                 pass
             
-    t = t.V(row['~id']).fold().coalesce(__.unfold(), create_traversal)
+    t = t.V(mappings.get_id(row)).fold().coalesce(__.unfold(), create_traversal)
     
     if updateable_items:
         for key, value in updateable_items:
@@ -102,13 +98,13 @@ def upsert_vertex(t, row, **kwargs):
 def add_edge(t, row, **kwargs):
     
     mappings = kwargs['mappings']
-    label = kwargs['label'] if 'label' in kwargs else row['~label']
+    label = kwargs['label'] if 'label' in kwargs else mappings.get_label(row)
     
-    t = t.addE(label).from_(V(row['~from'])).to(V(row['~to'])).property(id, row['~id'])
+    t = t.addE(label).from_(V(mappings.get_from(row))).to(V(mappings.get_to(row))).property(id, mappings.get_id(row))
     
     for key, value in row.items():
         mapping = mappings.mapping_for(key)
-        if mapping.name not in ['~id', '~from', '~to', '~label']:
+        if not mapping.is_token():
             t = t.property(mapping.name, mapping.convert(value))
     return t
 
@@ -116,45 +112,60 @@ def add_edge(t, row, **kwargs):
 def upsert_edge(t, row, **kwargs):
     
     mappings = kwargs['mappings']
-    label = kwargs['label'] if 'label' in kwargs else row['~label']
+    label = kwargs['label'] if 'label' in kwargs else mappings.get_label(row)
     on_upsert = kwargs.get('on_upsert', None)
     
-    create_traversal = __.addE(label).from_(V(row['~from'])).to(V(row['~to'])).property(id, row['~id'])
+    #updateSingleCardinalityProperties
+    #updateAllProperties
+    #replaceAllProperties
     
-    updateable_items = []
-    
-    for key, value in row.items():
-        
-        mapping = mappings.mapping_for(key)
-        
-        if mapping.name not in ['~id', '~from', '~to', '~label']:
-            create_traversal.property(mapping.name, mapping.convert(value))
+    create_traversal = __.addE(label).from_(V(mappings.get_from(row))).to(V(mappings.get_to(row))).property(id, mappings.get_id(row))
+
+    if not on_upsert:
+        for key, value in row.items():       
+            mapping = mappings.mapping_for(key)
+            if not mapping.is_token():
+                create_traversal = create_traversal.property(mapping.name, mapping.convert(value))
             
-    t = t.V(row['~from']).outE(label).hasId(row['~id']).fold().coalesce(__.unfold(), create_traversal)
+    t = t.V(mappings.get_from(row)).outE(label).hasId(mappings.get_id(row)).fold().coalesce(__.unfold(), create_traversal)
+    
+    if on_upsert and on_upsert in ['updateSingleCardinalityProperties', 'updateAllProperties']:
+        for key, value in row.items():     
+            mapping = mappings.mapping_for(key)       
+            if not mapping.is_token():
+                t = t.property(mapping.name, mapping.convert(value))
+        
     
     return t
 
 def replace_vertex_properties(t, row, **kwargs):
     mappings = kwargs['mappings']
     
-    vertex_id = None
-    
-    for key, value in row.items():      
-        mapping = mappings.mapping_for(key)       
-        if mapping.name == '~id':
-            vertex_id = value
-            t = t.sideEffect(V(vertex_id).properties().drop())
+    vertex_id = mappings.get_id(row)
             
     if vertex_id:
+        t = t.sideEffect(V(vertex_id).properties().drop())
         t = t.V(vertex_id)
         for key, value in row.items(): 
             mapping = mappings.mapping_for(key) 
-            if mapping.name == '~id':
-                pass
-            elif mapping.name == '~label':
-                pass
-            else:
+            if not mapping.is_token():
                 t = t.property(get_cardinality(mapping.cardinality), mapping.name, mapping.convert(value))
+    return t
+    
+def replace_edge_properties(t, row, **kwargs):
+    mappings = kwargs['mappings']
+    
+    edge_id = mappings.get_id(row)
+    from_id = mappings.get_from(row)
+    
+    if edge_id and from_id:
+        t = t.sideEffect(V(from_id).outE().hasId(edge_id).properties().drop())
+        t = t.V(from_id).outE().hasId(edge_id)
+        for key, value in row.items(): 
+            mapping = mappings.mapping_for(key) 
+            if not mapping.is_token():
+                t = t.property(mapping.name, mapping.convert(value))
+
     return t
 
     
@@ -195,7 +206,7 @@ class BatchUtils:
                         'Value': float(retries)
                     },
                 ],
-                Namespace='awslab/amazon-neptune-tools/neptune-python-utils'
+                Namespace='awslabs/amazon-neptune-tools/neptune-python-utils'
             )
         
         
@@ -261,7 +272,11 @@ class BatchUtils:
             self.execute_batch(rows, operations=[add_edge], batch_size=batch_size, **kwargs)
         return batch_op(rows) if rows else batch_op
         
-    def upsert_edges(self, batch_size=50, rows=None, **kwargs):
+    def upsert_edges(self, batch_size=50, rows=None, **kwargs):       
         def batch_op(rows):
-            self.execute_batch(rows, operations=[upsert_edge], batch_size=batch_size, **kwargs)
+            operations = [upsert_edge]
+            on_upsert = kwargs.get('on_upsert', None)
+            if on_upsert and on_upsert == 'replaceAllProperties':
+                operations.append(replace_edge_properties)
+            self.execute_batch(rows, operations=operations, batch_size=batch_size, **kwargs)
         return batch_op(rows) if rows else batch_op

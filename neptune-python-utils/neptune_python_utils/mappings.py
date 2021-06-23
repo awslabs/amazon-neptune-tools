@@ -36,10 +36,34 @@ class Separator:
         values = re.split(Separator.MULTI_VALUED_FIELD_DELIMITER_REGEX, s)
         return [v.replace(Separator.MULTI_VALUED_FIELD_ESCAPED_DELIMITER, Separator.MULTI_VALUED_FIELD_DELIMITER) for v in values]
         
+class TokenMappings:
+    
+    def __init__(self, id_token='~id', label_token='~label', from_token='~from', to_token='~to'):
+        self.id_token = id_token
+        self.label_token = label_token
+        self.from_token = from_token
+        self.to_token = to_token
+        
+    def is_id_token(self, s):
+        return s == self.id_token
+        
+    def is_label_token(self, s):
+        return s == self.label_token
+        
+    def is_from_token(self, s):
+        return s == self.from_token
+        
+    def is_to_token(self, s):
+        return s == self.to_token
+        
+    def is_token(self, s):
+        return self.is_id_token(s) or self.is_label_token(s) or self.is_from_token(s) or self.is_to_token(s)
+        
+        
 
 class Mapping:
     
-    def __init__(self, key, name, datatype='string', cardinality='set', is_multi_valued=False, converter=lambda x:x, separator=None):
+    def __init__(self, key, name, datatype='string', cardinality='set', is_multi_valued=False, converter=lambda x:x, separator=None, token_mappings=None):
         self.key = key
         self.name = name
         self.datatype = datatype
@@ -47,11 +71,29 @@ class Mapping:
         self.is_multi_valued = is_multi_valued
         self.converter = converter
         self.separator = separator
+        self.token_mappings = token_mappings
         
         if self.is_multi_valued and not self.separator:
             raise Exception('No separator specified for multi-valued property: {}'.format(self.key))
+            
+    def is_id_token(self):
+        return self.token_mappings.is_id_token(self.key) if self.token_mappings else False
+        
+    def is_label_token(self):
+        return self.token_mappings.is_label_token(self.key) if self.token_mappings else False
+        
+    def is_from_token(self):
+        return self.token_mappings.is_from_token(self.key) if self.token_mappings else False
+        
+    def is_to_token(self):
+        return self.token_mappings.is_to_token(self.key) if self.token_mappings else False
+        
+    def is_token(self):
+        return True if self.token_mappings else False
         
     def convert(self, v):
+        if self.token_mappings:
+            raise Exception('Invalid operation for token mapping')
         if self.is_multi_valued:
             return [self.converter(s) for s in self.separator.split(v)]
         else:
@@ -59,8 +101,9 @@ class Mapping:
         
 class Mappings:
     
-    def __init__(self, mappings={}, separator=Separator(), datetime_formatter=DateTimeFormatter()):
+    def __init__(self, mappings={}, token_mappings=TokenMappings(), separator=Separator(), datetime_formatter=DateTimeFormatter()):
         self.mappings = mappings
+        self.token_mappings = token_mappings
         self.separator = separator
         self.datetime_formatter = datetime_formatter
         
@@ -75,6 +118,15 @@ class Mappings:
             
         kwargs = {}
         kwargs['key'] = key
+        
+        if self.token_mappings.is_token(key):
+            kwargs['name'] = key
+            kwargs['datatype'] = None
+            kwargs['cardinality'] = None
+            kwargs['token_mappings'] = self.token_mappings
+            mapping = Mapping(**kwargs)
+            self.add(mapping)
+            return mapping
 
         parts = key.rsplit(':', 1)
         
@@ -135,6 +187,18 @@ class Mappings:
         self.add(mapping)
         
         return mapping
+        
+    def get_id(self, row):
+        return row[self.token_mappings.id_token] if self.token_mappings.id_token in row else None
+        
+    def get_label(self, row):
+        return row[self.token_mappings.label_token] if self.token_mappings.label_token in row else None
+        
+    def get_from(self, row):
+        return row[self.token_mappings.from_token] if self.token_mappings.from_token in row else None
+        
+    def get_to(self, row):
+        return row[self.token_mappings.to_token] if self.token_mappings.to_token in row else None
         
 import unittest
 
