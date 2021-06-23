@@ -12,6 +12,8 @@ With _neptune-python-utils_ you can:
  - Get Neptune connection information from the Glue Data Catalog
  - Create label and node and edge ID columns in DynamicFrames, named in accordance with the Neptune CSV bulk load format for property graphs
  - Write from DynamicFrames directly to Neptune 
+ - **[New June 2021]** Create batch insert and upsert operations for lists of data
+ - **[New June 2021]** Update single cardinality properties, update all properties, and replace all properties when upserting batches
  
 ## Build
 
@@ -25,7 +27,7 @@ When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket.
 
 ### Querying
 
-The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_PORT` environment variables to create a connection to the Gremlin endpoint. It automatically uses the credntial provider chain to connect to the database if IAM DB Auth is enabled.
+The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_PORT` environment variables to create a connection to the Gremlin endpoint. It automatically uses the credential provider chain to connect to the database if IAM DB Auth is enabled.
 
 ```
 from neptune_python_utils.gremlin_utils import GremlinUtils
@@ -85,6 +87,126 @@ g = gremlin_utils.traversal_source(connection=conn)
 print(g.V().limit(10).valueMap().toList())
 
 conn.close()
+```
+
+### Batch inserts and upserts
+
+The `BatchUtils` object allows you to create batch insert and upsert operations for lists of data. Data to be inserted or upserted should be formatted as a list of maps. By default, the field naming follows the Gremlin load data format [column header syntax](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html#bulk-load-tutorial-format-gremlin-propheaders), including datatype, cardinality and multi-value elements.
+
+Parallel inserts and upserts can sometimes trigger a `ConcurrentModificationException`. `BatchUtils` will attempt 5 retries for each batch should such exceptions occur. If you supply a `job_name` when creating a `BatchUtils` object, the batch operation will publish a custom CloudWatch `Retries` metric (namespace `awslabs/amazon-neptune-tools/neptune-python-utils`) indicating the number of retries per batch query.
+
+When you use the upsert operations (`batch.upsert_vertices()` and batch.upsert_edges()) you can supply an optional `on_upsert` parameter that specifies how properties on _existing_ vertices and edges should be handled:
+
+  - `updateSingleCardinalityProperties` – Single cardinality properties (as specified using the column header syntax `(single)`) on existing vertices or edges will be updated with the values in the data supplied to the operation. (For edges, this means that _all_ properties, irrespective of whether they are marked as `single` or `set`, or not marked at all, will be updated.)
+  - `updateAllProperties` – All properties on existing vertices or edges will be updated with the new values in the data supplied to the operation. Set cardinality properties will have new values _added_ to the current set of values for that property.
+  - `replaceAllProperties` – This will cause the operation to first drop all properties for an edge or vertex, before adding the properties in the data supplied to the operation. This means that if there are fewer properties in the supplied data than were originally present on the vertex or edge, the vertex or edge will lose those properties missing from the supplied data.
+
+The following example creates requests that insert batches of vertices (3 vertices per batch) based on a list of supplied data:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+
+rows = [
+    {'~id': 'person-1', '~label': 'Person', 'name': 'test-1-name'}, 
+    {'~id': 'person-2', '~label': 'Person', 'name': 'test-2-name'},
+    {'~id': 'person-3', '~label': 'Person', 'name': 'test-3-name'},
+    {'~id': 'person-4', '~label': 'Person', 'name': 'test-4-name'},
+    {'~id': 'person-5', '~label': 'Person', 'name': 'test-5-name'},
+    {'~id': 'person-6', '~label': 'Person', 'name': 'test-6-name'},
+    {'~id': 'person-7', '~label': 'Person', 'name': 'test-7-name'}
+]
+
+batch = BatchUtils(Endpoints())
+batch.add_vertices(batch_size=3, rows=rows)
+
+```
+
+The following example creates requests that _upsert_ batches of vertices (3 vertices per batch) based on a list of supplied data:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+
+rows = [
+    {'~id': 'person-1', '~label': 'Person', 'name': 'test-1-name'}, 
+    {'~id': 'person-2', '~label': 'Person', 'name': 'test-2-name'},
+    {'~id': 'person-3', '~label': 'Person', 'name': 'test-3-name'},
+    {'~id': 'person-4', '~label': 'Person', 'name': 'test-4-name'},
+    {'~id': 'person-5', '~label': 'Person', 'name': 'test-5-name'},
+    {'~id': 'person-6', '~label': 'Person', 'name': 'test-6-name'},
+    {'~id': 'person-7', '~label': 'Person', 'name': 'test-7-name'}
+]
+
+batch = BatchUtils(Endpoints())
+batch.upsert_vertices(batch_size=3, rows=rows)
+
+```
+
+The following example creates requests that _upsert_ batches of vertices (3 vertices per batch) based on a list of supplied data. The upserts update the value of any existing single-cardinality properties (i.e. `score`):
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+
+rows = [
+    {'~id': 'person-1', '~label': 'Person', 'score:int(single)': 10, 'name': 'test-1-name'}, 
+    {'~id': 'person-2', '~label': 'Person', 'score:int(single)': 5, 'name': 'test-2-name'},
+    {'~id': 'person-3', '~label': 'Person', 'score:int(single)': 7, 'name': 'test-3-name'},
+    {'~id': 'person-4', '~label': 'Person', 'score:int(single)': 1, 'name': 'test-4-name'},
+    {'~id': 'person-5', '~label': 'Person', 'score:int(single)': 12, 'name': 'test-5-name'},
+    {'~id': 'person-6', '~label': 'Person', 'score:int(single)': 8, 'name': 'test-6-name'},
+    {'~id': 'person-7', '~label': 'Person', 'score:int(single)': 8, 'name': 'test-7-name'}
+]
+
+batch = BatchUtils(Endpoints())
+batch.upsert_vertices(batch_size=3, rows=rows, on_upsert='updateSingleCardinalityProperties')
+
+```
+
+The following example creates requests that _upsert_ batches of edges (3 edges per batch) based on a list of supplied data. The upserts replace the properties on any existing edges properties:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+
+rows = [
+    {'~id': 'e-1', '~label': 'FOLLOWS', '~from': 'person-3', '~to': 'person-7', 'strength': 10}, 
+    {'~id': 'e-2', '~label': 'FOLLOWS', '~from': 'person-7', '~to': 'person-1', 'strength': 5},
+    {'~id': 'e-3', '~label': 'FOLLOWS', '~from': 'person-7', '~to': 'person-2', 'strength': 7},
+    {'~id': 'e-4', '~label': 'FOLLOWS', '~from': 'person-1', '~to': 'person-5', 'strength': 1},
+    {'~id': 'e-5', '~label': 'FOLLOWS', '~from': 'person-5', '~to': 'person-1', 'strength': 12},
+    {'~id': 'e-6', '~label': 'FOLLOWS', '~from': 'person-5', '~to': 'person-6', 'strength': 8},
+    {'~id': 'e-7', '~label': 'FOLLOWS', '~from': 'person-4', '~to': 'person-6', 'strength': 8}
+]
+
+batch = BatchUtils(Endpoints())
+batch.upsert_edges(batch_size=3, rows=rows, on_upsert='replaceAllProperties')
+
+```
+
+The following example creates requests that add batches of edges (3 edges per batch) based on a list of supplied data. The supplied data is not formatted according to the Gremlin load format, so the operation includes a `TokenMapping` object.
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+from neptune_python_utils.mappings import TokenMappings
+
+rows = [
+    {'ID': 'e-1', 'Label': 'FOLLOWS', 'FromVertex': 'person-3', 'ToVertex': 'person-7', 'strength': 10}, 
+    {'ID': 'e-2', 'Label': 'FOLLOWS', 'FromVertex': 'person-7', 'ToVertex': 'person-1', 'strength': 5},
+    {'ID': 'e-3', 'Label': 'FOLLOWS', 'FromVertex': 'person-7', 'ToVertex': 'person-2', 'strength': 7},
+    {'ID': 'e-4', 'Label': 'FOLLOWS', 'FromVertex': 'person-1', 'ToVertex': 'person-5', 'strength': 1},
+    {'ID': 'e-5', 'Label': 'FOLLOWS', 'FromVertex': 'person-5', 'ToVertex': 'person-1', 'strength': 12},
+    {'ID': 'e-6', 'Label': 'FOLLOWS', 'FromVertex': 'person-5', 'ToVertex': 'person-6', 'strength': 8},
+    {'ID': 'e-7', 'Label': 'FOLLOWS', 'FromVertex': 'person-4', 'ToVertex': 'person-6', 'strength': 8}
+]
+
+tokens = TokenMappings(id_token='ID', label_token='Label', from_token='FromVertex', to_token='ToVertex')
+
+batch = BatchUtils(Endpoints())
+batch.add_edges(batch_size=3, rows=rows, token_mappings=tokens)
+
 ```
 
 ### Sessioned client
@@ -286,7 +408,9 @@ endpoints = GlueNeptuneConnectionInfo(region, role_arn).neptune_endpoints('neptu
 
 The code below, taken from the sample Glue job [export-from-mysql-to-neptune.py](https://github.com/aws-samples/amazon-neptune-samples/blob/master/gremlin/glue-neptune/glue-jobs/mysql-neptune/export-from-mysql-to-neptune.py), shows extracting data from several tables in an RDBMS, formatting the dynamic frame columns according to the Neptune bulk load CSV column headings format, and then bulk loading direct into Neptune.
 
-Parallel inserts and upserts can sometimes trigger a `ConcurrentModifcationException`. _neptune-python-utils_ will attempt 5 retries for each batch should such exceptions occur. 
+Parallel inserts and upserts can sometimes trigger a `ConcurrentModificationException`. _neptune-python-utils_ will attempt 5 retries for each batch should such exceptions occur. 
+
+The bulk insert and upsert methods on the `GlueGremlinClient` object accept the same `on_upsert` and `token_mappings` parameters as the `BatchUtils` methods detailed above.
 
 ```
 import sys, boto3, os
@@ -343,7 +467,7 @@ datasource2 = datasource0.join( ["CATEGORY_ID"],["CATEGORY_ID"], datasource1, tr
 # 2. Map fields to bulk load CSV column headings format
 applymapping1 = ApplyMapping.apply(frame = datasource2, mappings = [("NAME", "string", "name:String", "string"), ("UNIT_PRICE", "decimal(10,2)", "unitPrice", "string"), ("PRODUCT_ID", "int", "productId", "int"), ("QUANTITY_PER_UNIT", "int", "quantityPerUnit:Int", "int"), ("CATEGORY_ID", "int", "category_id", "int"), ("SUPPLIER_ID", "int", "supplierId", "int"), ("CATEGORY_NAME", "string", "category:String", "string"), ("DESCRIPTION", "string", "description:String", "string"), ("IMAGE_URL", "string", "imageUrl:String", "string")], transformation_ctx = "applymapping1")
 
-# 3. Append prefixes to values in ID columns (ensures vertices for diffferent types have unique IDs across graph)
+# 3. Append prefixes to values in ID columns (ensures vertices for different types have unique IDs across graph)
 applymapping1 = GlueGremlinCsvTransforms.create_prefixed_columns(applymapping1, [('~id', 'productId', 'p'),('~to', 'supplierId', 's')])
 
 # 4. Select fields for upsert
