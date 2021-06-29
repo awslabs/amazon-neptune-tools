@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletionException;
 
 @Command(name = "nesvc", description = "neptune-export service", hidden = true)
 public class RunNeptuneExportSvc extends NeptuneExportBaseCommand implements Runnable {

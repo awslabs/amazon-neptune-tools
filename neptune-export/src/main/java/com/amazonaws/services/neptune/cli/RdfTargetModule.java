@@ -57,7 +57,7 @@ public class RdfTargetModule implements CommandWriter {
     @AllowedEnumValues(LargeStreamRecordHandlingStrategy.class)
     private LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy = LargeStreamRecordHandlingStrategy.splitAndShred;
 
-    @Option(name = {"--export-id"}, description = "Export ID", hidden = true)
+    @Option(name = {"--export-id"}, description = "Export ID")
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 

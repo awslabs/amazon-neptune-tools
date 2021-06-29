@@ -60,6 +60,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     private final String localOutputPath;
     private final String outputS3Path;
+    private final String s3Region;
     private final boolean createExportSubdirectory;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
@@ -69,6 +70,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     public ExportToS3NeptuneExportEventHandler(String localOutputPath,
                                                String outputS3Path,
+                                               String s3Region,
                                                boolean createExportSubdirectory,
                                                String completionFileS3Path,
                                                ObjectNode completionFilePayload,
@@ -76,6 +78,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
                                                Collection<String> profiles) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
+        this.s3Region = s3Region;
         this.createExportSubdirectory = createExportSubdirectory;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
@@ -102,7 +105,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             return;
         }
 
-        try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+        try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
 
             File outputDirectory = outputPath.toFile();
             S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
@@ -140,7 +143,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length()).sum();
             logger.warn("Total size of failed export files: {}", FileUtils.byteCountToDisplaySize(size));
 
-            try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+            try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
 
                 String s3Suffix = UUID.randomUUID().toString().replace("-", "");
 

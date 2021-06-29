@@ -19,13 +19,11 @@ import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
-import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
-import com.github.rvesse.airline.annotations.restrictions.Once;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.concurrent.CompletionException;
 
 public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand implements NeptuneExportEventHandler, NeptuneExportEventHandlerHost {
 
@@ -53,7 +51,7 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
         eventHandler.onExportComplete(outputPath, stats);
     }
 
-    public void onError(){
+    public void onError() {
         eventHandler.onError();
     }
 

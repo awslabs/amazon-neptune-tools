@@ -63,7 +63,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
 
-    @Option(name = {"-q", "--queries"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\").",
+    @Option(name = {"-q", "--queries", "--query", "--gremlin"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\" OR \"semi-colon-separated list of queries\").",
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)
     private List<NamedQueries> queries = new ArrayList<>();
 

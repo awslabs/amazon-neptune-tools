@@ -53,6 +53,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandlerV1.class);
 
     private final String outputS3Path;
+    private final String s3Region;
     private final Args args;
     private final Collection<TrainingDataWriterConfigV1> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
@@ -60,6 +61,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
     private final PrinterOptions printerOptions;
 
     public NeptuneMachineLearningExportEventHandlerV1(String outputS3Path,
+                                                      String s3Region,
                                                       boolean createExportSubdirectory,
                                                       ObjectNode additionalParams,
                                                       Args args,
@@ -75,6 +77,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
                 .build();
 
         this.outputS3Path = outputS3Path;
+        this.s3Region = s3Region;
         this.createExportSubdirectory = createExportSubdirectory;
         this.args = args;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
@@ -96,25 +99,29 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
 
     @Override
     public void onBeforeExport(Args args) {
-        if (!args.contains("--exclude-type-definitions")) {
-            args.addFlag("--exclude-type-definitions");
-        }
 
-        if (args.contains("export-pg") &&
-                args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")) {
-            args.replace("export-pg", "export-pg-from-config");
+        if (args.contains("export-pg")) {
+
+            if (!args.contains("--exclude-type-definitions")) {
+                args.addFlag("--exclude-type-definitions");
+            }
+
+            if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
+                args.removeOptions("--edge-label-strategy");
+            }
+
+            if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
+                args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
+            }
+
+
+            if (args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")){
+                args.replace("export-pg", "export-pg-from-config");
+            }
         }
 
         if (!args.contains("--merge-files")) {
             args.addFlag("--merge-files");
-        }
-
-        if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
-            args.removeOptions("--edge-label-strategy");
-        }
-
-        if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
-            args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
         }
 
         if (args.contains("--export-id")) {
@@ -141,7 +148,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
                 PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
                 PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITH_DATATYPE;
 
-        try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+        try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
             for (TrainingDataWriterConfigV1 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
                 createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
             }

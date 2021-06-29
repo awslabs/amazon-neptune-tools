@@ -20,6 +20,7 @@ import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.Logger;
@@ -29,8 +30,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.Callable;
 
-public class QueryTask implements Runnable {
+public class QueryTask implements Callable<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryTask.class);
 
@@ -60,7 +62,7 @@ public class QueryTask implements Runnable {
     }
 
     @Override
-    public void run() {
+    public Object call() throws Exception {
 
         QueriesWriterFactory writerFactory = new QueriesWriterFactory();
         Map<Label, LabelWriter<Map<?, ?>>> labelWriters = new HashMap<>();
@@ -83,7 +85,7 @@ public class QueryTask implements Runnable {
                         }
 
                         Timer.timedActivity(String.format("executing query [%s]", namedQuery.query()),
-                                (Activity.Runnable) () ->
+                                (CheckedActivity.Runnable) () ->
                                         executeQuery(namedQuery, writerFactory, labelWriters, graphElementSchemas));
 
                     } else {
@@ -95,8 +97,6 @@ public class QueryTask implements Runnable {
                 }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             for (LabelWriter<Map<?, ?>> labelWriter : labelWriters.values()) {
                 try {
@@ -106,6 +106,8 @@ public class QueryTask implements Runnable {
                 }
             }
         }
+
+        return null;
 
     }
 

@@ -56,6 +56,7 @@ public class NeptuneExportService {
     private final ObjectNode completionFilePayload;
     private final ObjectNode additionalParams;
     private final int maxConcurrency;
+    private final String s3Region;
 
     public NeptuneExportService(String cmd,
                                 String localOutputPath,
@@ -69,7 +70,8 @@ public class NeptuneExportService {
                                 String completionFileS3Path,
                                 ObjectNode completionFilePayload,
                                 ObjectNode additionalParams,
-                                int maxConcurrency) {
+                                int maxConcurrency,
+                                String s3Region) {
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
         this.cleanOutputPath = cleanOutputPath;
@@ -83,6 +85,7 @@ public class NeptuneExportService {
         this.completionFilePayload = completionFilePayload;
         this.additionalParams = additionalParams;
         this.maxConcurrency = maxConcurrency;
+        this.s3Region = s3Region;
     }
 
     public S3ObjectInfo execute() throws IOException {
@@ -115,7 +118,7 @@ public class NeptuneExportService {
             throw new RuntimeException(e);
         }
 
-        try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+        try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
 
             if (cleanOutputPath) {
                 clearTempFiles();
@@ -144,6 +147,7 @@ public class NeptuneExportService {
         ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
+                s3Region,
                 createExportSubdirectory,
                 completionFileS3Path,
                 completionFilePayload,
@@ -163,6 +167,7 @@ public class NeptuneExportService {
                 NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
                         new NeptuneMachineLearningExportEventHandlerV2(
                                 outputS3Path,
+                                s3Region,
                                 createExportSubdirectory,
                                 additionalParams,
                                 args,
@@ -172,6 +177,7 @@ public class NeptuneExportService {
                 NeptuneMachineLearningExportEventHandlerV1 neptuneMlEventHandler =
                         new NeptuneMachineLearningExportEventHandlerV1(
                                 outputS3Path,
+                                s3Region,
                                 createExportSubdirectory,
                                 additionalParams,
                                 args,

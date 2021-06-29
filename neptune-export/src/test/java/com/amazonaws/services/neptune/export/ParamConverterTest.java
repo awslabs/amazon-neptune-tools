@@ -29,6 +29,7 @@ public class ParamConverterTest {
     public void shouldSingularizeValue(){
         assertEquals("endpoint", ParamConverter.singularize("endpoints"));
         assertEquals("name", ParamConverter.singularize("name"));
+        assertEquals("query", ParamConverter.singularize("queries"));
     }
 
     @Test

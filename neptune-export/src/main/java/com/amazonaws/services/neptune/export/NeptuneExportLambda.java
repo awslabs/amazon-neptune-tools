@@ -69,12 +69,12 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         boolean overwriteExisting = Boolean.parseBoolean(
                 json.has("overwriteExisting") ?
-                        json.path("overwriteExisting").toString():
+                        json.path("overwriteExisting").toString() :
                         EnvironmentVariableUtils.getOptionalEnv("OVERWRITE_EXISTING", "false"));
 
         boolean uploadToS3OnError = Boolean.parseBoolean(
                 json.has("uploadToS3OnError") ?
-                        json.path("uploadToS3OnError").toString():
+                        json.path("uploadToS3OnError").toString() :
                         EnvironmentVariableUtils.getOptionalEnv("UPLOAD_TO_S3_ON_ERROR", "true"));
 
         String configFileS3Path = json.has("configFileS3Path") ?
@@ -88,6 +88,11 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         String completionFileS3Path = json.has("completionFileS3Path") ?
                 json.path("completionFileS3Path").textValue() :
                 EnvironmentVariableUtils.getOptionalEnv("COMPLETION_FILE_S3_PATH", "");
+
+        String s3Region = json.has("s3Region") ?
+                json.path("s3Region").textValue() :
+                EnvironmentVariableUtils.getOptionalEnv("S3_REGION",
+                        EnvironmentVariableUtils.getOptionalEnv("AWS_REGION", ""));
 
         ObjectNode completionFilePayload = json.has("completionFilePayload") ?
                 json.path("completionFilePayload").deepCopy() :
@@ -114,6 +119,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         logger.log("configFileS3Path          : " + configFileS3Path);
         logger.log("queriesFileS3Path         : " + queriesFileS3Path);
         logger.log("completionFileS3Path      : " + completionFileS3Path);
+        logger.log("s3Region                  : " + s3Region);
         logger.log("completionFilePayload     : " + completionFilePayload.toPrettyString());
         logger.log("additionalParams          : " + additionalParams.toPrettyString());
 
@@ -136,7 +142,8 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 completionFileS3Path,
                 completionFilePayload,
                 additionalParams,
-                maxConcurrency);
+                maxConcurrency,
+                s3Region);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 

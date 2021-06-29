@@ -45,6 +45,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneMachineLearningExportEventHandlerV2.class);
 
     private final String outputS3Path;
+    private final String s3Region;
     private final Args args;
     private final Collection<TrainingDataWriterConfigV2> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
@@ -52,6 +53,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     private final PrinterOptions printerOptions;
 
     public NeptuneMachineLearningExportEventHandlerV2(String outputS3Path,
+                                                      String s3Region,
                                                       boolean createExportSubdirectory,
                                                       ObjectNode additionalParams,
                                                       Args args,
@@ -67,6 +69,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
                 .build();
 
         this.outputS3Path = outputS3Path;
+        this.s3Region = s3Region;
         this.createExportSubdirectory = createExportSubdirectory;
         this.args = args;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
@@ -89,8 +92,6 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     @Override
     public void onBeforeExport(Args args) {
 
-        args.addOption("--export-id", new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
-
         if (args.contains("export-rdf")) {
             args.removeOptions("--format");
             args.addOption("--format", RdfExportFormat.ntriples.name());
@@ -99,32 +100,36 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
             args.addOption("--rdf-export-scope", RdfExportScope.edges.name());
         } else {
 
+            if (args.contains("export-pg")) {
 
-            if (!args.contains("--exclude-type-definitions")) {
-                args.addFlag("--exclude-type-definitions");
-            }
+                if (!args.contains("--exclude-type-definitions")) {
+                    args.addFlag("--exclude-type-definitions");
+                }
 
-            if (args.contains("export-pg") &&
-                    args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")) {
-                args.replace("export-pg", "export-pg-from-config");
+                if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
+                    args.removeOptions("--edge-label-strategy");
+                }
+
+                if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
+                    args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
+                }
+
+
+                if (args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")){
+                    args.replace("export-pg", "export-pg-from-config");
+                }
             }
 
             if (!args.contains("--merge-files")) {
                 args.addFlag("--merge-files");
             }
-
-            if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
-                args.removeOptions("--edge-label-strategy");
-            }
-
-            if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
-                args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
-            }
-
-            if (args.contains("--export-id")) {
-                args.removeOptions("--export-id");
-            }
         }
+
+        if (args.contains("--export-id")) {
+            args.removeOptions("--export-id");
+        }
+
+        args.addOption("--export-id", new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
     }
 
     @Override
@@ -144,7 +149,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
                 PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE :
                 PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITH_DATATYPE;
 
-        try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+        try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
             for (TrainingDataWriterConfigV2 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
                 createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
             }
