@@ -157,6 +157,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
                 writeFileName(graphElementType, outputId);
                 writeCommaSeparator();
                 writeEdgeType(labelSchema);
+                writeEdgeFeatures(labelSchema);
                 writeEdgeLabels(labelSchema);
 
                 generator.writeEndObject();
@@ -199,30 +200,70 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
 
         generator.writeArrayFieldStart("features");
 
+        ElementConfig nodeConfig = config.nodeConfig();
+
         for (PropertySchema propertySchema : propertySchemas) {
             String column = propertySchema.nameWithoutDataType();
-            if (config.hasNodeClassificationSpecificationForNodeProperty(label, column)) {
+            if (nodeConfig.hasClassificationSpecificationForProperty(label, column)) {
                 continue;
             }
-            if (config.allowAutoInferNodeFeature(label, column)) {
-                writeAutoInferredNodeFeature(propertySchema);
+            if (nodeConfig.allowAutoInferFeature(label, column)) {
+                writeAutoInferredFeature(propertySchema);
             }
-            if (config.hasTfIdfSpecification(label, column)) {
-                writeTfIdfNodeFeature(propertySchema, config.getTfIdfSpecification(label, column));
+            if (nodeConfig.hasTfIdfSpecification(label, column)) {
+                writeTfIdfFeature(propertySchema, nodeConfig.getTfIdfSpecification(label, column));
             }
-            if (config.hasDatetimeSpecification(label, column)) {
-                writeDatetimeNodeFeature(propertySchema, config.getDatetimeSpecification(label, column));
+            if (nodeConfig.hasDatetimeSpecification(label, column)) {
+                writeDatetimeFeature(propertySchema, nodeConfig.getDatetimeSpecification(label, column));
             }
-            if (config.hasWord2VecSpecification(label, column)) {
-                writeWord2VecNodeFeature(propertySchema, config.getWord2VecSpecification(label, column));
+            if (nodeConfig.hasWord2VecSpecification(label, column)) {
+                writeWord2VecFeature(propertySchema, nodeConfig.getWord2VecSpecification(label, column));
             }
-            if (config.hasNumericalBucketSpecification(label, column)) {
-                writeNumericalBucketNodeFeature(propertySchema, config.getNumericalBucketSpecification(label, column));
+            if (nodeConfig.hasNumericalBucketSpecification(label, column)) {
+                writeNumericalBucketFeature(propertySchema, nodeConfig.getNumericalBucketSpecification(label, column));
             }
         }
 
-        for (FeatureOverrideConfigV2 featureOverride : config.getNodeFeatureOverrides(label)) {
-            writeNodeFeatureOverride(labelSchema, featureOverride);
+        for (FeatureOverrideConfigV2 featureOverride : nodeConfig.getFeatureOverrides(label)) {
+            writeFeatureOverride(labelSchema, featureOverride, nodeConfig);
+        }
+
+        generator.writeEndArray();
+    }
+
+    private void writeEdgeFeatures(LabelSchema labelSchema) throws IOException {
+
+        Label label = labelSchema.label();
+        Collection<PropertySchema> propertySchemas = labelSchema.propertySchemas();
+
+        generator.writeArrayFieldStart("features");
+
+        ElementConfig edgeConfig = config.edgeConfig();
+
+        for (PropertySchema propertySchema : propertySchemas) {
+            String column = propertySchema.nameWithoutDataType();
+            if (edgeConfig.hasClassificationSpecificationForProperty(label, column)) {
+                continue;
+            }
+            if (edgeConfig.allowAutoInferFeature(label, column)) {
+                writeAutoInferredFeature(propertySchema);
+            }
+            if (edgeConfig.hasTfIdfSpecification(label, column)) {
+                writeTfIdfFeature(propertySchema, edgeConfig.getTfIdfSpecification(label, column));
+            }
+            if (edgeConfig.hasDatetimeSpecification(label, column)) {
+                writeDatetimeFeature(propertySchema, edgeConfig.getDatetimeSpecification(label, column));
+            }
+            if (edgeConfig.hasWord2VecSpecification(label, column)) {
+                writeWord2VecFeature(propertySchema, edgeConfig.getWord2VecSpecification(label, column));
+            }
+            if (edgeConfig.hasNumericalBucketSpecification(label, column)) {
+                writeNumericalBucketFeature(propertySchema, edgeConfig.getNumericalBucketSpecification(label, column));
+            }
+        }
+
+        for (FeatureOverrideConfigV2 featureOverride : edgeConfig.getFeatureOverrides(label)) {
+            writeFeatureOverride(labelSchema, featureOverride, edgeConfig);
         }
 
         generator.writeEndArray();
@@ -231,9 +272,11 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
     private void writeNodeLabels(LabelSchema labelSchema) throws IOException {
         Label label = labelSchema.label();
 
-        if (config.hasNodeClassificationSpecificationsForNode(label)) {
+        ElementConfig nodeConfig = config.nodeConfig();
+
+        if (nodeConfig.hasClassificationSpecificationsFor(label)) {
             generator.writeArrayFieldStart("labels");
-            for (LabelConfigV2 labelConfig : config.getNodeClassificationSpecificationsForNode(label)) {
+            for (LabelConfigV2 labelConfig : nodeConfig.getClassificationSpecifications(label)) {
                 if (labelSchema.containsProperty(labelConfig.property())) {
                     PropertySchema propertySchema = labelSchema.getPropertySchema(labelConfig.property());
                     writeLabel(propertySchema, labelConfig);
@@ -261,9 +304,11 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
     private void writeEdgeLabels(LabelSchema labelSchema) throws IOException {
         Label label = labelSchema.label();
 
-        if (config.hasEdgeClassificationSpecificationsForEdge(label)) {
+        ElementConfig edgeConfig = config.edgeConfig();
+
+        if (edgeConfig.hasClassificationSpecificationsFor(label)) {
             generator.writeArrayFieldStart("labels");
-            for (LabelConfigV2 labelConfig : config.getEdgeClassificationSpecificationsForEdge(label)) {
+            for (LabelConfigV2 labelConfig : edgeConfig.getClassificationSpecifications(label)) {
                 if (StringUtils.isEmpty(labelConfig.property())) {
                     writeLabel(new PropertySchema(""), labelConfig);
                 } else if (labelSchema.containsProperty(labelConfig.property())) {
@@ -287,7 +332,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeEndArray();
     }
 
-    private void writeNodeFeatureOverride(LabelSchema labelSchema, FeatureOverrideConfigV2 featureOverride) throws IOException {
+    private void writeFeatureOverride(LabelSchema labelSchema, FeatureOverrideConfigV2 featureOverride, ElementConfig elementConfig) throws IOException {
 
         FeatureTypeV2 featureType = featureOverride.featureType();
 
@@ -295,7 +340,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
 
         Collection<PropertySchema> propertySchemas = labelSchema.propertySchemas().stream()
                 .filter(p -> featureOverride.properties().contains(p.nameWithoutDataType()) &&
-                        !config.hasNodeClassificationSpecificationForNodeProperty(label, p.nameWithoutDataType()))
+                        !elementConfig.hasClassificationSpecificationForProperty(label, p.nameWithoutDataType()))
                 .collect(Collectors.toList());
 
         Collection<String> propertyNames = propertySchemas.stream()
@@ -312,9 +357,9 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         }
 
         if (FeatureTypeV2.category == featureType) {
-            writeCategoricalNodeFeature(propertySchemas, featureOverride);
+            writeCategoricalFeature(propertySchemas, featureOverride);
         } else if (FeatureTypeV2.numerical == featureType) {
-            writeNumericalNodeFeature(propertySchemas, featureOverride);
+            writeNumericalFeature(propertySchemas, featureOverride);
         } else if (FeatureTypeV2.auto == featureType) {
             writeAutoFeature(propertySchemas, featureOverride);
         } else if (FeatureTypeV2.none == featureType) {
@@ -322,17 +367,15 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         } else {
             warnings.add(String.format("Unsupported feature type override for node: %s.", featureType.name()));
         }
-
-
     }
 
-    private void writeAutoInferredNodeFeature(Collection<PropertySchema> propertySchemas) throws IOException {
+    private void writeAutoInferredFeature(Collection<PropertySchema> propertySchemas) throws IOException {
         for (PropertySchema propertySchema : propertySchemas) {
-            writeAutoInferredNodeFeature(propertySchema);
+            writeAutoInferredFeature(propertySchema);
         }
     }
 
-    private void writeAutoInferredNodeFeature(PropertySchema propertySchema) throws IOException {
+    private void writeAutoInferredFeature(PropertySchema propertySchema) throws IOException {
 
         if (propertySchema.dataType() == DataType.String ||
                 propertySchema.dataType() == DataType.Boolean) {
@@ -348,7 +391,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
             if (propertySchema.isMultiValue()) {
                 writeAutoFeature(Collections.singletonList(propertySchema), ImputerTypeV2.median);
             } else {
-                writeNumericalNodeFeature(
+                writeNumericalFeature(
                         Collections.singletonList(propertySchema),
                         Norm.min_max,
                         ImputerTypeV2.median);
@@ -356,7 +399,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         }
 
         if (propertySchema.dataType() == DataType.Date) {
-            writeDatetimeNodeFeature(
+            writeDatetimeFeature(
                     Collections.singletonList(propertySchema),
                     Arrays.asList(
                             DatetimePartV2.year,
@@ -374,11 +417,11 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeEndArray();
     }
 
-    private void writeTfIdfNodeFeature(PropertySchema propertySchema, TfIdfConfigV2 tfIdfSpecification) throws IOException {
+    private void writeTfIdfFeature(PropertySchema propertySchema, TfIdfConfigV2 tfIdfSpecification) throws IOException {
 
         if (propertySchema.isMultiValue()) {
             warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_tfidf, propertySchema.nameWithoutDataType()));
-            writeAutoInferredNodeFeature(propertySchema);
+            writeAutoInferredFeature(propertySchema);
             return;
         }
 
@@ -410,11 +453,11 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeEndObject();
     }
 
-    private void writeNumericalBucketNodeFeature(PropertySchema propertySchema, NumericalBucketFeatureConfigV2 numericalBucketSpecification) throws IOException {
+    private void writeNumericalBucketFeature(PropertySchema propertySchema, NumericalBucketFeatureConfigV2 numericalBucketSpecification) throws IOException {
 
         if (propertySchema.isMultiValue()) {
             warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.bucket_numerical, propertySchema.nameWithoutDataType()));
-            writeAutoInferredNodeFeature(propertySchema);
+            writeAutoInferredFeature(propertySchema);
             return;
         }
 
@@ -454,11 +497,11 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeEndObject();
     }
 
-    private void writeWord2VecNodeFeature(PropertySchema propertySchema, Word2VecConfig word2VecSpecification) throws IOException {
+    private void writeWord2VecFeature(PropertySchema propertySchema, Word2VecConfig word2VecSpecification) throws IOException {
 
         if (propertySchema.isMultiValue()) {
             warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_word2vec, propertySchema.nameWithoutDataType()));
-            writeAutoInferredNodeFeature(propertySchema);
+            writeAutoInferredFeature(propertySchema);
             return;
         }
 
@@ -488,11 +531,11 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeEndObject();
     }
 
-    private void writeDatetimeNodeFeature(PropertySchema propertySchema, DatetimeConfigV2 datetimeConfig) throws IOException {
-        writeDatetimeNodeFeature(Collections.singletonList(propertySchema), datetimeConfig.datetimeParts());
+    private void writeDatetimeFeature(PropertySchema propertySchema, DatetimeConfigV2 datetimeConfig) throws IOException {
+        writeDatetimeFeature(Collections.singletonList(propertySchema), datetimeConfig.datetimeParts());
     }
 
-    private void writeDatetimeNodeFeature(Collection<PropertySchema> propertySchemas, Collection<DatetimePartV2> datetimeParts) throws IOException {
+    private void writeDatetimeFeature(Collection<PropertySchema> propertySchemas, Collection<DatetimePartV2> datetimeParts) throws IOException {
 
         for (PropertySchema propertySchema : propertySchemas) {
 
@@ -518,15 +561,15 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         }
     }
 
-    private void writeNumericalNodeFeature(Collection<PropertySchema> propertySchemas, FeatureOverrideConfigV2 featureOverride) throws IOException {
-        writeNumericalNodeFeature(propertySchemas, featureOverride.norm(), featureOverride.imputer(), featureOverride.separator());
+    private void writeNumericalFeature(Collection<PropertySchema> propertySchemas, FeatureOverrideConfigV2 featureOverride) throws IOException {
+        writeNumericalFeature(propertySchemas, featureOverride.norm(), featureOverride.imputer(), featureOverride.separator());
     }
 
-    private void writeNumericalNodeFeature(Collection<PropertySchema> propertySchemas, Norm norm, ImputerTypeV2 imputer) throws IOException {
-        writeNumericalNodeFeature(propertySchemas, norm, imputer, new Separator());
+    private void writeNumericalFeature(Collection<PropertySchema> propertySchemas, Norm norm, ImputerTypeV2 imputer) throws IOException {
+        writeNumericalFeature(propertySchemas, norm, imputer, new Separator());
     }
 
-    private void writeNumericalNodeFeature(Collection<PropertySchema> propertySchemas, Norm norm, ImputerTypeV2 imputer, Separator separator) throws IOException {
+    private void writeNumericalFeature(Collection<PropertySchema> propertySchemas, Norm norm, ImputerTypeV2 imputer, Separator separator) throws IOException {
 
         for (PropertySchema propertySchema : propertySchemas) {
             generator.writeStartObject();
@@ -545,7 +588,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         }
     }
 
-    private void writeCategoricalNodeFeature(Collection<PropertySchema> propertySchemas, FeatureOverrideConfigV2 featureOverride) throws IOException {
+    private void writeCategoricalFeature(Collection<PropertySchema> propertySchemas, FeatureOverrideConfigV2 featureOverride) throws IOException {
         for (PropertySchema propertySchema : propertySchemas) {
             generator.writeStartObject();
 

@@ -31,7 +31,7 @@ public class PropertyGraphTrainingDataConfigWriterV2FeatureTest {
     }
 
     @Test
-    public void shouldNodeAndEdgeObjectForEachFile() throws IOException {
+    public void shouldAddNodeAndEdgeObjectForEachFile() throws IOException {
         runTest("t2.json");
     }
 

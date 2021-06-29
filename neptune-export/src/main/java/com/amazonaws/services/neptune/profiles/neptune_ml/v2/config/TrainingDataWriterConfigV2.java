@@ -17,7 +17,6 @@ import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseSp
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseFeaturesV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseLabelsV2;
-import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -68,7 +67,11 @@ public class TrainingDataWriterConfigV2 {
         Collection<TfIdfConfigV2> tfIdfNodeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeNodeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
-        Collection<NumericalBucketFeatureConfigV2> numericalBucketFeatures = new ArrayList<>();
+        Collection<NumericalBucketFeatureConfigV2> numericalBucketNodeFeatures = new ArrayList<>();
+        Collection<TfIdfConfigV2> tfIdfEdgeFeatures = new ArrayList<>();
+        Collection<DatetimeConfigV2> datetimeEdgeFeatures = new ArrayList<>();
+        Collection<Word2VecConfig> word2VecEdgeFeatures = new ArrayList<>();
+        Collection<NumericalBucketFeatureConfigV2> numericalBucketEdgeFeatures = new ArrayList<>();
         Collection<FeatureOverrideConfigV2> nodeFeatureOverrides = new ArrayList<>();
         Collection<FeatureOverrideConfigV2> edgeFeatureOverrides = new ArrayList<>();
 
@@ -105,240 +108,69 @@ public class TrainingDataWriterConfigV2 {
 
             parseFeatures.validate();
 
-            tfIdfNodeFeatures.addAll(parseFeatures.parseTfIdfNodeFeatures());
-            datetimeNodeFeatures.addAll(parseFeatures.parseDatetimeFeatures());
-            word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecNodeFeatures());
-            numericalBucketFeatures.addAll(parseFeatures.parseNumericalBucketFeatures());
+            tfIdfNodeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            datetimeNodeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            numericalBucketNodeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+
+            tfIdfEdgeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            datetimeEdgeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            word2VecEdgeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            numericalBucketEdgeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+
             nodeFeatureOverrides.addAll(parseFeatures.parseNodeFeatureOverrides());
             edgeFeatureOverrides.addAll(parseFeatures.parseEdgeFeatureOverrides());
 
         }
 
+        ElementConfig nodeConfig = new ElementConfig(nodeClassLabels, tfIdfNodeFeatures, datetimeNodeFeatures, word2VecNodeFeatures, numericalBucketNodeFeatures, nodeFeatureOverrides);
+        ElementConfig edgeConfig = new ElementConfig(edgeClassLabels, tfIdfEdgeFeatures, datetimeEdgeFeatures, word2VecEdgeFeatures, numericalBucketEdgeFeatures, edgeFeatureOverrides);
 
         return new TrainingDataWriterConfigV2(name,
                 defaultSplitRates,
-                nodeClassLabels,
-                edgeClassLabels,
-                tfIdfNodeFeatures,
-                datetimeNodeFeatures,
-                word2VecNodeFeatures,
-                numericalBucketFeatures,
-                nodeFeatureOverrides,
-                edgeFeatureOverrides);
+                nodeConfig,
+                edgeConfig);
     }
 
     private final String name;
     private final Collection<Double> defaultSplitRates;
-    private final Collection<LabelConfigV2> nodeClassLabels;
-    private final Collection<LabelConfigV2> edgeClassLabels;
-    private final Collection<TfIdfConfigV2> tfIdfNodeFeatures;
-    private final Collection<DatetimeConfigV2> datetimeNodeFeatures;
-    private final Collection<Word2VecConfig> word2VecNodeFeatures;
-    private final Collection<NumericalBucketFeatureConfigV2> numericalBucketFeatures;
-    private final Collection<FeatureOverrideConfigV2> nodeFeatureOverrides;
-    private final Collection<FeatureOverrideConfigV2> edgeFeatureOverrides;
+    private final ElementConfig nodeConfig;
+    private final ElementConfig edgeConfig;
 
     public TrainingDataWriterConfigV2() {
-        this(DEFAULT_NAME_V2,
-                DEFAULT_SPLIT_RATES_V2,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList());
+        this(DEFAULT_NAME_V2, DEFAULT_SPLIT_RATES_V2, ElementConfig.EMPTY_CONFIG,  ElementConfig.EMPTY_CONFIG);
     }
 
-    public TrainingDataWriterConfigV2(String name,
-                                      Collection<Double> defaultSplitRates,
-                                      Collection<LabelConfigV2> nodeClassLabels,
-                                      Collection<LabelConfigV2> edgeClassLabels,
-                                      Collection<TfIdfConfigV2> tfIdfNodeFeatures,
-                                      Collection<DatetimeConfigV2> datetimeNodeFeatures,
-                                      Collection<Word2VecConfig> word2VecNodeFeatures,
-                                      Collection<NumericalBucketFeatureConfigV2> numericalBucketFeatures,
-                                      Collection<FeatureOverrideConfigV2> nodeFeatureOverrides,
-                                      Collection<FeatureOverrideConfigV2> edgeFeatureOverrides) {
+    public TrainingDataWriterConfigV2(String name, Collection<Double> defaultSplitRates, ElementConfig nodeConfig, ElementConfig edgeConfig) {
         this.name = name;
         this.defaultSplitRates = defaultSplitRates;
-        this.nodeClassLabels = nodeClassLabels;
-        this.edgeClassLabels = edgeClassLabels;
-        this.tfIdfNodeFeatures = tfIdfNodeFeatures;
-        this.datetimeNodeFeatures = datetimeNodeFeatures;
-        this.word2VecNodeFeatures = word2VecNodeFeatures;
-        this.numericalBucketFeatures = numericalBucketFeatures;
-        this.nodeFeatureOverrides = nodeFeatureOverrides;
-        this.edgeFeatureOverrides = edgeFeatureOverrides;
-    }
-
-    public Collection<Double> defaultSplitRates() {
-        return defaultSplitRates;
-    }
-
-    public boolean allowAutoInferNodeFeature(Label nodeType, String property){
-        if (hasNodeClassificationSpecificationForNodeProperty(nodeType, property)) {
-            return false;
-        }
-        if (hasTfIdfSpecification(nodeType, property)){
-            return false;
-        }
-        if (hasDatetimeSpecification(nodeType, property)){
-            return false;
-        }
-        if (hasWord2VecSpecification(nodeType, property)){
-            return false;
-        }
-        if (hasNumericalBucketSpecification(nodeType, property)){
-            return false;
-        }
-        if (hasNodeFeatureOverrideForNodeProperty(nodeType, property)){
-            return false;
-        }
-        return true;
-    }
-
-    public boolean hasNodeClassificationSpecificationsForNode(Label nodeType) {
-        return !getNodeClassificationSpecificationsForNode(nodeType).isEmpty();
-    }
-
-    public Collection<LabelConfigV2> getNodeClassificationSpecificationsForNode(Label nodeType) {
-        return nodeClassLabels.stream().filter(c -> c.label().equals(nodeType)).collect(Collectors.toList());
-    }
-
-    public boolean hasNodeClassificationSpecificationForNodeProperty(Label nodeType, String property) {
-        return getNodeClassificationSpecificationsForNode(nodeType).stream().anyMatch(s -> s.property().equals(property));
-    }
-
-    public boolean hasEdgeClassificationSpecificationsForEdge(Label edgeType) {
-        return !getEdgeClassificationSpecificationsForEdge(edgeType).isEmpty();
-    }
-
-    public Collection<LabelConfigV2> getEdgeClassificationSpecificationsForEdge(Label edgeType) {
-        return edgeClassLabels.stream().filter(c -> c.label().equals(edgeType)).collect(Collectors.toList());
-    }
-
-    public boolean hasEdgeClassificationPropertyForEdge(Label edgeType, String property) {
-        return getEdgeClassificationSpecificationsForEdge(edgeType).stream().anyMatch(s -> s.property().equals(property));
-    }
-
-    public boolean hasTfIdfSpecification(Label nodeType, String property) {
-        return getTfIdfSpecification(nodeType, property) != null;
-    }
-
-    public TfIdfConfigV2 getTfIdfSpecification(Label nodeType, String property) {
-        return tfIdfNodeFeatures.stream()
-                .filter(config ->
-                        config.label().equals(nodeType) &&
-                                config.property().equals(property))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public boolean hasDatetimeSpecification(Label nodeType, String property) {
-        return getDatetimeSpecification(nodeType, property) != null;
-    }
-
-    public DatetimeConfigV2 getDatetimeSpecification(Label nodeType, String property) {
-        return datetimeNodeFeatures.stream()
-                .filter(config ->
-                        config.label().equals(nodeType) &&
-                                config.property().equals(property))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public boolean hasWord2VecSpecification(Label nodeType, String property) {
-        return getWord2VecSpecification(nodeType, property) != null;
-    }
-
-    public Word2VecConfig getWord2VecSpecification(Label nodeType, String property) {
-        return word2VecNodeFeatures.stream()
-                .filter(config ->
-                        config.label().equals(nodeType) &&
-                                config.property().equals(property))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public boolean hasNumericalBucketSpecification(Label nodeType, String property) {
-        return getNumericalBucketSpecification(nodeType, property) != null;
-    }
-
-    public NumericalBucketFeatureConfigV2 getNumericalBucketSpecification(Label nodeType, String property) {
-        return numericalBucketFeatures.stream()
-                .filter(config ->
-                        config.label().equals(nodeType) &&
-                                config.property().equals(property))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public boolean hasNodeFeatureOverrideForNodeProperty(Label nodeType, String property) {
-        return nodeFeatureOverrides.stream()
-                .anyMatch(override ->
-                        override.label().equals(nodeType) &&
-                                override.properties().contains(property));
-    }
-
-    public Collection<FeatureOverrideConfigV2> getNodeFeatureOverrides(Label nodeType) {
-        return nodeFeatureOverrides.stream()
-                .filter(c -> c.label().equals(nodeType))
-                .collect(Collectors.toList());
-    }
-
-    public FeatureOverrideConfigV2 getNodeFeatureOverride(Label nodeType, String property) {
-        return nodeFeatureOverrides.stream()
-                .filter(config ->
-                        config.label().equals(nodeType) &&
-                                config.properties().contains(property))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public boolean hasEdgeFeatureOverrideForEdgeProperty(Label edgeType, String property) {
-        return edgeFeatureOverrides.stream()
-                .anyMatch(override ->
-                        override.label().equals(edgeType) &&
-                                override.properties().contains(property));
-    }
-
-    public Collection<FeatureOverrideConfigV2> getEdgeFeatureOverrides(Label edgeType) {
-        return edgeFeatureOverrides.stream()
-                .filter(c -> c.label().equals(edgeType))
-                .collect(Collectors.toList());
-    }
-
-    public FeatureOverrideConfigV2 getEdgeFeatureOverride(Label edgeType, String property) {
-        return edgeFeatureOverrides.stream()
-                .filter(config ->
-                        config.label().equals(edgeType) &&
-                                config.properties().contains(property))
-                .findFirst()
-                .orElse(null);
+        this.nodeConfig = nodeConfig;
+        this.edgeConfig = edgeConfig;
     }
 
     public String name() {
         return name;
     }
 
-    public String getName() {
-        return name;
+    public Collection<Double> defaultSplitRates() {
+        return defaultSplitRates;
+    }
+
+    public ElementConfig nodeConfig() {
+        return nodeConfig;
+    }
+
+    public ElementConfig edgeConfig() {
+        return edgeConfig;
     }
 
     @Override
     public String toString() {
-        return "TrainingJobWriterConfig{" +
-                "nodeClassLabels=" + nodeClassLabels +
-                ", edgeClassLabels=" + edgeClassLabels +
-                ", tfIdfNodeFeatures=" + tfIdfNodeFeatures +
-                ", datetimeNodeFeatures=" + datetimeNodeFeatures +
-                ", word2VecNodeFeatures=" + word2VecNodeFeatures +
-                ", numericalBucketFeatures=" + numericalBucketFeatures +
-                ", nodeFeatureOverrides=" + nodeFeatureOverrides +
-                ", edgeFeatureOverrides=" + edgeFeatureOverrides +
+        return "TrainingDataWriterConfigV2{" +
+                "name='" + name + '\'' +
+                ", defaultSplitRates=" + defaultSplitRates +
+                ", nodeConfig=" + nodeConfig +
+                ", edgeConfig=" + edgeConfig +
                 '}';
     }
-
 }

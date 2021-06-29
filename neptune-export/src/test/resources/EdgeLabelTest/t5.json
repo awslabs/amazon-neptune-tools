@@ -35,6 +35,9 @@
         "source" : [ "~from", "Person" ],
         "relation" : [ "", "knows" ],
         "dest" : [ "~to", "Person" ],
+        "features" : [ {
+          "feature" : [ "metAtLocation", "metAtLocation", "auto" ]
+        } ],
         "labels" : [ {
           "label" : [ "", "link_prediction" ],
           "split_rate" : [ 0.9, 0.1, 0.0 ]

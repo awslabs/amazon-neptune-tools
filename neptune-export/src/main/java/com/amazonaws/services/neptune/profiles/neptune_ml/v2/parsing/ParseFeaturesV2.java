@@ -32,12 +32,28 @@ public class ParseFeaturesV2 {
         this.features = features;
     }
 
+    public interface ElementFeatureFilter{
+        boolean isCorrectType(JsonNode json);
+    }
+
+    public interface LabelSupplier{
+        Label getLabel(JsonNode json, ParsingContext context);
+    }
+
+    public static ElementFeatureFilter NodeFeatureFilter = json -> json.has("node") && json.has("type");
+
+    public static ElementFeatureFilter EdgeFeatureFilter = json -> json.has("edge") && json.has("type");
+
+    public static LabelSupplier NodeLabelSupplier =  (json, context) -> new ParseNodeType(json, context).parseNodeType();
+
+    public static LabelSupplier EdgeLabelSupplier =  (json, context) -> new ParseEdgeType(json, context).parseEdgeType();
+
     public void validate() {
         for (JsonNode feature : features) {
-            if (!isTfIdfNodeFeature(feature) &&
-                    !isDatetimeNodeFeature(feature) &&
-                    !isAutoNodeFeature(feature) &&
-                    !isWord2VecNodeFeature(feature) &&
+            if (!isTfIdfFeature(feature) &&
+                    !isDatetimeFeature(feature) &&
+                    !isAutoFeature(feature) &&
+                    !isWord2VecFeature(feature) &&
                     !isNumericalBucketFeature(feature) &&
                     !isNodeFeatureOverride(feature) &&
                     !isEdgeFeatureOverride(feature)) {
@@ -52,71 +68,71 @@ public class ParseFeaturesV2 {
         }
     }
 
-    public Collection<TfIdfConfigV2> parseTfIdfNodeFeatures() {
+    public Collection<TfIdfConfigV2> parseTfIdfFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
         Collection<TfIdfConfigV2> tfIdfFeatures = new ArrayList<>();
         for (JsonNode json : features) {
-            if (isTfIdfNodeFeature(json)) {
+            if (filter.isCorrectType(json) && isTfIdfFeature(json)) {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.text_tfidf.name() + " feature");
-                Label nodeType = new ParseNodeType(json, context).parseNodeType();
-                String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
-                ParsingContext propertyContext = context.withLabel(nodeType).withProperty(property);
+                Label label = supplier.getLabel(json, context);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
+                ParsingContext propertyContext = context.withLabel(label).withProperty(property);
                 Range ngramRange = new ParseRange(json, "ngram_range", propertyContext).parseRange();
                 int minDf = new ParseMinDfV2(json, propertyContext).parseMinDf();
                 int maxFeatures = new ParseMaxFeaturesV2(json, propertyContext).parseMaxFeatures();
-                TfIdfConfigV2 config = new TfIdfConfigV2(nodeType, property, ngramRange, minDf, maxFeatures);
+                TfIdfConfigV2 config = new TfIdfConfigV2(label, property, ngramRange, minDf, maxFeatures);
                 tfIdfFeatures.add(config);
             }
         }
         return tfIdfFeatures;
     }
 
-    public Collection<DatetimeConfigV2> parseDatetimeFeatures() {
+    public Collection<DatetimeConfigV2> parseDatetimeFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
         Collection<DatetimeConfigV2> datetimeFeatures = new ArrayList<>();
         for (JsonNode json : features) {
-            if (isDatetimeNodeFeature(json)) {
+            if (filter.isCorrectType(json) && isDatetimeFeature(json)) {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.datetime.name() + " feature");
-                Label nodeType = new ParseNodeType(json, context).parseNodeType();
-                String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
-                Collection<DatetimePartV2> datetimeParts = new ParseDatetimePartsV2(json, context.withLabel(nodeType).withProperty(property)).parseDatetimeParts();
-                DatetimeConfigV2 config = new DatetimeConfigV2(nodeType, property, datetimeParts);
+                Label label = supplier.getLabel(json, context);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
+                Collection<DatetimePartV2> datetimeParts = new ParseDatetimePartsV2(json, context.withLabel(label).withProperty(property)).parseDatetimeParts();
+                DatetimeConfigV2 config = new DatetimeConfigV2(label, property, datetimeParts);
                 datetimeFeatures.add(config);
             }
         }
         return datetimeFeatures;
     }
 
-    public Collection<Word2VecConfig> parseWord2VecNodeFeatures() {
+    public Collection<Word2VecConfig> parseWord2VecFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
         Collection<Word2VecConfig> word2VecFeatures = new ArrayList<>();
         for (JsonNode json : features) {
-            if (isWord2VecNodeFeature(json)) {
+            if (filter.isCorrectType(json) && isWord2VecFeature(json)) {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.text_word2vec.name() + " feature");
-                Label nodeType = new ParseNodeType(json, context).parseNodeType();
-                String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
+                Label label = supplier.getLabel(json, context);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
                 Collection<String> language = new ParseLanguage(json).parseLanguage();
-                Word2VecConfig config = new Word2VecConfig(nodeType, property, language);
+                Word2VecConfig config = new Word2VecConfig(label, property, language);
                 word2VecFeatures.add(config);
             }
         }
         return word2VecFeatures;
     }
 
-    public Collection<NumericalBucketFeatureConfigV2> parseNumericalBucketFeatures() {
+    public Collection<NumericalBucketFeatureConfigV2> parseNumericalBucketFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
         Collection<NumericalBucketFeatureConfigV2> numericalBucketFeatures = new ArrayList<>();
         for (JsonNode json : features) {
-            if (isNumericalBucketFeature(json)) {
+            if (filter.isCorrectType(json) && isNumericalBucketFeature(json)) {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.bucket_numerical.name() + " feature");
 
-                Label nodeType = new ParseNodeType(json, context).parseNodeType();
+                Label label = supplier.getLabel(json, context);
                 FeatureTypeV2.bucket_numerical.validateOverride(json, context);
 
-                String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
-                ParsingContext propertyContext = context.withLabel(nodeType).withProperty(property);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
+                ParsingContext propertyContext = context.withLabel(label).withProperty(property);
                 Range range = new ParseRange(json, "range", propertyContext).parseRange();
                 int bucketCount = new ParseBucketCountV2(json, propertyContext).parseBucketCount();
                 int slideWindowSize = new ParseSlideWindowSize(json, propertyContext).parseSlideWindowSize();
                 ImputerTypeV2 imputerType = new ParseImputerTypeV2(json, propertyContext).parseImputerType();
 
-                NumericalBucketFeatureConfigV2 config = new NumericalBucketFeatureConfigV2(nodeType, property, range, bucketCount, slideWindowSize, imputerType);
+                NumericalBucketFeatureConfigV2 config = new NumericalBucketFeatureConfigV2(label, property, range, bucketCount, slideWindowSize, imputerType);
 
                 numericalBucketFeatures.add(config);
             }
@@ -153,39 +169,45 @@ public class ParseFeaturesV2 {
         Collection<FeatureOverrideConfigV2> featureOverrides = new ArrayList<>();
         for (JsonNode node : features) {
             if (isEdgeFeatureOverride(node)) {
+
                 ParsingContext context = new ParsingContext("edge feature");
                 Label edgeType = new ParseEdgeType(node, context).parseEdgeType();
                 Collection<String> properties = new ParseProperty(node, context.withLabel(edgeType)).parseMultipleProperties();
                 ParsingContext propertiesContext = context.withLabel(edgeType).withProperties(properties);
                 FeatureTypeV2 type = new ParseFeatureTypeV2(node, propertiesContext).parseFeatureType();
+
                 type.validateOverride(node, context);
+
                 Norm norm = new ParseNorm(node, propertiesContext).parseNorm();
                 Separator separator = new ParseSeparator(node).parseSeparator();
                 ImputerTypeV2 imputerType = new ParseImputerTypeV2(node, context).parseImputerType();
-                featureOverrides.add(new FeatureOverrideConfigV2(edgeType, properties, type, norm, separator, imputerType));
+
+                FeatureOverrideConfigV2 config = new FeatureOverrideConfigV2(edgeType, properties, type, norm, separator, imputerType);
+
+                featureOverrides.add(config);
             }
         }
         return featureOverrides;
     }
 
-    private boolean isTfIdfNodeFeature(JsonNode node) {
-        return isNodeFeature(node) && isTfIdfType(node.get("type").textValue());
+    private boolean isTfIdfFeature(JsonNode node) {
+        return isTfIdfType(node.get("type").textValue());
     }
 
-    private boolean isDatetimeNodeFeature(JsonNode node) {
-        return isNodeFeature(node) && isDatetimeType(node.get("type").textValue());
+    private boolean isDatetimeFeature(JsonNode node) {
+        return isDatetimeType(node.get("type").textValue());
     }
 
-    private boolean isAutoNodeFeature(JsonNode node) {
-        return isNodeFeature(node) && isAutoType(node.get("type").textValue());
+    private boolean isAutoFeature(JsonNode node) {
+        return isAutoType(node.get("type").textValue());
     }
 
-    private boolean isWord2VecNodeFeature(JsonNode node) {
-        return isNodeFeature(node) && isWord2VecType(node.get("type").textValue());
+    private boolean isWord2VecFeature(JsonNode node) {
+        return isWord2VecType(node.get("type").textValue());
     }
 
     private boolean isNumericalBucketFeature(JsonNode node) {
-        return isNodeFeature(node) && isBucketNumericalType(node.get("type").textValue());
+        return isBucketNumericalType(node.get("type").textValue());
     }
 
     private boolean isNodeFeatureOverride(JsonNode node) {

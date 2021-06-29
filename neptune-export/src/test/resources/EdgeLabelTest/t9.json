@@ -36,6 +36,7 @@
         "source" : [ "~from", "Admin;Person" ],
         "relation" : [ "", "edited" ],
         "dest" : [ "~to", "Content;Post" ],
+        "features": [],
         "labels" : [ {
           "label" : [ "reason", "classification" ],
           "split_rate" : [ 0.9, 0.1, 0.0 ]
