@@ -27,23 +27,26 @@ public class ElementConfig {
             Collections.emptyList(),
             Collections.emptyList(),
             Collections.emptyList(),
+            Collections.emptyList(),
             Collections.emptyList());
 
     private final Collection<LabelConfigV2> classLabels;
+    private final Collection<NoneFeatureConfig> noneFeatures;
     private final Collection<TfIdfConfigV2> tfIdfFeatures;
     private final Collection<DatetimeConfigV2> datetimeFeatures;
     private final Collection<Word2VecConfig> word2VecFeatures;
     private final Collection<NumericalBucketFeatureConfigV2> numericalBucketFeatures;
     private final Collection<FeatureOverrideConfigV2> featureOverrides;
 
-
     public ElementConfig(Collection<LabelConfigV2> classLabels,
+                         Collection<NoneFeatureConfig> noneFeatures,
                          Collection<TfIdfConfigV2> tfIdfFeatures,
                          Collection<DatetimeConfigV2> datetimeFeatures,
                          Collection<Word2VecConfig> word2VecFeatures,
                          Collection<NumericalBucketFeatureConfigV2> numericalBucketFeatures,
                          Collection<FeatureOverrideConfigV2> featureOverrides) {
         this.classLabels = classLabels;
+        this.noneFeatures = noneFeatures;
         this.tfIdfFeatures = tfIdfFeatures;
         this.datetimeFeatures = datetimeFeatures;
         this.word2VecFeatures = word2VecFeatures;
@@ -53,6 +56,9 @@ public class ElementConfig {
 
     public boolean allowAutoInferFeature(Label label, String property){
         if (hasClassificationSpecificationForProperty(label, property)) {
+            return false;
+        }
+        if (hasNoneFeatureSpecification(label, property)){
             return false;
         }
         if (hasTfIdfSpecification(label, property)){
@@ -83,6 +89,19 @@ public class ElementConfig {
 
     public boolean hasClassificationSpecificationForProperty(Label label, String property) {
         return getClassificationSpecifications(label).stream().anyMatch(s -> s.property().equals(property));
+    }
+
+    public boolean hasNoneFeatureSpecification(Label label, String property) {
+        return getNoneFeatureSpecification(label, property) != null;
+    }
+
+    public NoneFeatureConfig getNoneFeatureSpecification(Label label, String property) {
+        return noneFeatures.stream()
+                .filter(config ->
+                        config.label().equals(label) &&
+                                config.property().equals(property))
+                .findFirst()
+                .orElse(null);
     }
 
     public boolean hasTfIdfSpecification(Label label, String property) {

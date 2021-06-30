@@ -20,7 +20,10 @@ import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseLabels
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TrainingDataWriterConfigV2 {
@@ -39,7 +42,7 @@ public class TrainingDataWriterConfigV2 {
                 results.add(getTrainingJobWriterConfig(configNode, index++));
             }
         } else {
-            if (json.has("jobs")){
+            if (json.has("jobs")) {
                 ArrayNode configNodes = (ArrayNode) json.get("jobs");
                 int index = 1;
                 for (JsonNode configNode : configNodes) {
@@ -64,10 +67,12 @@ public class TrainingDataWriterConfigV2 {
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES_V2, new ParsingContext("config")).parseSplitRates();
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
         Collection<LabelConfigV2> edgeClassLabels = new ArrayList<>();
+        Collection<NoneFeatureConfig> noneNodeFeatures = new ArrayList<>();
         Collection<TfIdfConfigV2> tfIdfNodeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeNodeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfigV2> numericalBucketNodeFeatures = new ArrayList<>();
+        Collection<NoneFeatureConfig> noneEdgeFeatures = new ArrayList<>();
         Collection<TfIdfConfigV2> tfIdfEdgeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeEdgeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecEdgeFeatures = new ArrayList<>();
@@ -78,6 +83,16 @@ public class TrainingDataWriterConfigV2 {
         String name = json.has("name") ?
                 json.get("name").textValue() :
                 index > 1 ? String.format("%s-%s", DEFAULT_NAME_V2, index) : DEFAULT_NAME_V2;
+
+        FeatureEncodingFlag featureEncodingFlag = FeatureEncodingFlag.auto;
+
+        if (json.has("feature_encoding")) {
+            try {
+                featureEncodingFlag = FeatureEncodingFlag.valueOf(json.path("feature_encoding").textValue());
+            } catch (IllegalArgumentException e) {
+                // Use default value of auto
+            }
+        }
 
         if (json.has("targets")) {
             JsonNode labels = json.path("targets");
@@ -108,11 +123,13 @@ public class TrainingDataWriterConfigV2 {
 
             parseFeatures.validate();
 
+            noneNodeFeatures.addAll(parseFeatures.parseNoneFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             tfIdfNodeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             datetimeNodeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             numericalBucketNodeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
 
+            noneEdgeFeatures.addAll(parseFeatures.parseNoneFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             tfIdfEdgeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             datetimeEdgeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             word2VecEdgeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
@@ -123,26 +140,29 @@ public class TrainingDataWriterConfigV2 {
 
         }
 
-        ElementConfig nodeConfig = new ElementConfig(nodeClassLabels, tfIdfNodeFeatures, datetimeNodeFeatures, word2VecNodeFeatures, numericalBucketNodeFeatures, nodeFeatureOverrides);
-        ElementConfig edgeConfig = new ElementConfig(edgeClassLabels, tfIdfEdgeFeatures, datetimeEdgeFeatures, word2VecEdgeFeatures, numericalBucketEdgeFeatures, edgeFeatureOverrides);
+        ElementConfig nodeConfig = new ElementConfig(nodeClassLabels, noneNodeFeatures, tfIdfNodeFeatures, datetimeNodeFeatures, word2VecNodeFeatures, numericalBucketNodeFeatures, nodeFeatureOverrides);
+        ElementConfig edgeConfig = new ElementConfig(edgeClassLabels, noneEdgeFeatures, tfIdfEdgeFeatures, datetimeEdgeFeatures, word2VecEdgeFeatures, numericalBucketEdgeFeatures, edgeFeatureOverrides);
 
         return new TrainingDataWriterConfigV2(name,
+                featureEncodingFlag,
                 defaultSplitRates,
                 nodeConfig,
                 edgeConfig);
     }
 
     private final String name;
+    private final FeatureEncodingFlag featureEncodingFlag;
     private final Collection<Double> defaultSplitRates;
     private final ElementConfig nodeConfig;
     private final ElementConfig edgeConfig;
 
     public TrainingDataWriterConfigV2() {
-        this(DEFAULT_NAME_V2, DEFAULT_SPLIT_RATES_V2, ElementConfig.EMPTY_CONFIG,  ElementConfig.EMPTY_CONFIG);
+        this(DEFAULT_NAME_V2, FeatureEncodingFlag.auto, DEFAULT_SPLIT_RATES_V2, ElementConfig.EMPTY_CONFIG, ElementConfig.EMPTY_CONFIG);
     }
 
-    public TrainingDataWriterConfigV2(String name, Collection<Double> defaultSplitRates, ElementConfig nodeConfig, ElementConfig edgeConfig) {
+    public TrainingDataWriterConfigV2(String name, FeatureEncodingFlag featureEncodingFlag, Collection<Double> defaultSplitRates, ElementConfig nodeConfig, ElementConfig edgeConfig) {
         this.name = name;
+        this.featureEncodingFlag = featureEncodingFlag;
         this.defaultSplitRates = defaultSplitRates;
         this.nodeConfig = nodeConfig;
         this.edgeConfig = edgeConfig;
@@ -150,6 +170,10 @@ public class TrainingDataWriterConfigV2 {
 
     public String name() {
         return name;
+    }
+
+    public boolean allowFeatureEncoding() {
+        return featureEncodingFlag == FeatureEncodingFlag.auto;
     }
 
     public Collection<Double> defaultSplitRates() {

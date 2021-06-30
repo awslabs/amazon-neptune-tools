@@ -29,7 +29,9 @@
         "file_name" : "nodes/person-1.csv",
         "separator" : ",",
         "node" : [ "~id", "Person" ],
-        "features" : [  ]
+        "features" : [ {
+          "feature" : [ "created", "created", "none" ]
+        } ]
       } ],
       "edges" : [ ]
     },

@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.JsonFromResource;
 import com.amazonaws.services.neptune.profiles.neptune_ml.Output;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.FeatureEncodingFlag;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.fasterxml.jackson.databind.JsonNode;

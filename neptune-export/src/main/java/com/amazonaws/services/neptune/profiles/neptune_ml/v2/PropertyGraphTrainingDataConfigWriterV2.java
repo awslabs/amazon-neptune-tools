@@ -207,20 +207,27 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
             if (nodeConfig.hasClassificationSpecificationForProperty(label, column)) {
                 continue;
             }
-            if (nodeConfig.allowAutoInferFeature(label, column)) {
-                writeAutoInferredFeature(propertySchema);
-            }
-            if (nodeConfig.hasTfIdfSpecification(label, column)) {
-                writeTfIdfFeature(propertySchema, nodeConfig.getTfIdfSpecification(label, column));
-            }
-            if (nodeConfig.hasDatetimeSpecification(label, column)) {
-                writeDatetimeFeature(propertySchema, nodeConfig.getDatetimeSpecification(label, column));
-            }
-            if (nodeConfig.hasWord2VecSpecification(label, column)) {
-                writeWord2VecFeature(propertySchema, nodeConfig.getWord2VecSpecification(label, column));
-            }
-            if (nodeConfig.hasNumericalBucketSpecification(label, column)) {
-                writeNumericalBucketFeature(propertySchema, nodeConfig.getNumericalBucketSpecification(label, column));
+            if (!config.allowFeatureEncoding()) {
+                writeNoneFeature(propertySchema);
+            } else {
+                if (nodeConfig.allowAutoInferFeature(label, column)) {
+                    writeAutoInferredFeature(propertySchema);
+                }
+                if (nodeConfig.hasNoneFeatureSpecification(label, column)) {
+                    writeNoneFeature(propertySchema);
+                }
+                if (nodeConfig.hasTfIdfSpecification(label, column)) {
+                    writeTfIdfFeature(propertySchema, nodeConfig.getTfIdfSpecification(label, column));
+                }
+                if (nodeConfig.hasDatetimeSpecification(label, column)) {
+                    writeDatetimeFeature(propertySchema, nodeConfig.getDatetimeSpecification(label, column));
+                }
+                if (nodeConfig.hasWord2VecSpecification(label, column)) {
+                    writeWord2VecFeature(propertySchema, nodeConfig.getWord2VecSpecification(label, column));
+                }
+                if (nodeConfig.hasNumericalBucketSpecification(label, column)) {
+                    writeNumericalBucketFeature(propertySchema, nodeConfig.getNumericalBucketSpecification(label, column));
+                }
             }
         }
 
@@ -245,20 +252,27 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
             if (edgeConfig.hasClassificationSpecificationForProperty(label, column)) {
                 continue;
             }
-            if (edgeConfig.allowAutoInferFeature(label, column)) {
-                writeAutoInferredFeature(propertySchema);
-            }
-            if (edgeConfig.hasTfIdfSpecification(label, column)) {
-                writeTfIdfFeature(propertySchema, edgeConfig.getTfIdfSpecification(label, column));
-            }
-            if (edgeConfig.hasDatetimeSpecification(label, column)) {
-                writeDatetimeFeature(propertySchema, edgeConfig.getDatetimeSpecification(label, column));
-            }
-            if (edgeConfig.hasWord2VecSpecification(label, column)) {
-                writeWord2VecFeature(propertySchema, edgeConfig.getWord2VecSpecification(label, column));
-            }
-            if (edgeConfig.hasNumericalBucketSpecification(label, column)) {
-                writeNumericalBucketFeature(propertySchema, edgeConfig.getNumericalBucketSpecification(label, column));
+            if (!config.allowFeatureEncoding()) {
+                writeNoneFeature(propertySchema);
+            } else {
+                if (edgeConfig.allowAutoInferFeature(label, column)) {
+                    writeAutoInferredFeature(propertySchema);
+                }
+                if (edgeConfig.hasNoneFeatureSpecification(label, column)) {
+                    writeNoneFeature(propertySchema);
+                }
+                if (edgeConfig.hasTfIdfSpecification(label, column)) {
+                    writeTfIdfFeature(propertySchema, edgeConfig.getTfIdfSpecification(label, column));
+                }
+                if (edgeConfig.hasDatetimeSpecification(label, column)) {
+                    writeDatetimeFeature(propertySchema, edgeConfig.getDatetimeSpecification(label, column));
+                }
+                if (edgeConfig.hasWord2VecSpecification(label, column)) {
+                    writeWord2VecFeature(propertySchema, edgeConfig.getWord2VecSpecification(label, column));
+                }
+                if (edgeConfig.hasNumericalBucketSpecification(label, column)) {
+                    writeNumericalBucketFeature(propertySchema, edgeConfig.getNumericalBucketSpecification(label, column));
+                }
             }
         }
 
@@ -366,12 +380,6 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
             // Do nothing
         } else {
             warnings.add(String.format("Unsupported feature type override for node: %s.", featureType.name()));
-        }
-    }
-
-    private void writeAutoInferredFeature(Collection<PropertySchema> propertySchemas) throws IOException {
-        for (PropertySchema propertySchema : propertySchemas) {
-            writeAutoInferredFeature(propertySchema);
         }
     }
 
@@ -529,6 +537,19 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         }
 
         generator.writeEndObject();
+    }
+
+    private void writeNoneFeature(PropertySchema propertySchema) throws IOException {
+        writeNoneFeature(Collections.singletonList(propertySchema));
+    }
+
+    private void writeNoneFeature(Collection<PropertySchema> propertySchemas) throws IOException {
+
+        for (PropertySchema propertySchema : propertySchemas) {
+            generator.writeStartObject();
+            writeFeature(propertySchema, FeatureTypeV2.none);
+            generator.writeEndObject();
+        }
     }
 
     private void writeDatetimeFeature(PropertySchema propertySchema, DatetimeConfigV2 datetimeConfig) throws IOException {

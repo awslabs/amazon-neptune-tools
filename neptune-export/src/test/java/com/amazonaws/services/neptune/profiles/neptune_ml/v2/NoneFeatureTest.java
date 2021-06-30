@@ -32,6 +32,11 @@ public class NoneFeatureTest {
         runTest("t1.json");
     }
 
+    @Test
+    public void settingFeatureEncodingToNoneResultsInNoneFeatureTypeForAllFeatures() throws IOException {
+        runTest("t2.json");
+    }
+
     private void runTest(String jsonFile) throws IOException {
         JsonNode json = JsonFromResource.get(jsonFile, getClass());
 

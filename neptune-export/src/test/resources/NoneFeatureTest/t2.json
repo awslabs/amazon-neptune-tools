@@ -1,0 +1,56 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [
+        {
+        "property" : "created",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+        },
+        {
+          "property" : "firstName",
+          "dataType" : "String",
+          "isMultiValue" : false,
+          "isNullable" : false
+        },
+        {
+          "property" : "lastName",
+          "dataType" : "String",
+          "isMultiValue" : false,
+          "isNullable" : false
+        }
+      ],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "feature_encoding": "none"
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [
+          {
+            "feature": ["created", "created", "none"]
+          },
+          {
+            "feature": ["firstName", "firstName", "none"]
+          },
+          {
+            "feature": ["lastName", "lastName", "none"]
+          }
+        ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}

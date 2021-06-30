@@ -32,11 +32,11 @@ public class ParseFeaturesV2 {
         this.features = features;
     }
 
-    public interface ElementFeatureFilter{
+    public interface ElementFeatureFilter {
         boolean isCorrectType(JsonNode json);
     }
 
-    public interface LabelSupplier{
+    public interface LabelSupplier {
         Label getLabel(JsonNode json, ParsingContext context);
     }
 
@@ -44,13 +44,14 @@ public class ParseFeaturesV2 {
 
     public static ElementFeatureFilter EdgeFeatureFilter = json -> json.has("edge") && json.has("type");
 
-    public static LabelSupplier NodeLabelSupplier =  (json, context) -> new ParseNodeType(json, context).parseNodeType();
+    public static LabelSupplier NodeLabelSupplier = (json, context) -> new ParseNodeType(json, context).parseNodeType();
 
-    public static LabelSupplier EdgeLabelSupplier =  (json, context) -> new ParseEdgeType(json, context).parseEdgeType();
+    public static LabelSupplier EdgeLabelSupplier = (json, context) -> new ParseEdgeType(json, context).parseEdgeType();
 
     public void validate() {
         for (JsonNode feature : features) {
-            if (!isTfIdfFeature(feature) &&
+            if (!isNoneFeature(feature) &&
+                    !isTfIdfFeature(feature) &&
                     !isDatetimeFeature(feature) &&
                     !isAutoFeature(feature) &&
                     !isWord2VecFeature(feature) &&
@@ -66,6 +67,20 @@ public class ParseFeaturesV2 {
                 }
             }
         }
+    }
+
+    public Collection<NoneFeatureConfig> parseNoneFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
+        Collection<NoneFeatureConfig> noneFeatures = new ArrayList<>();
+        for (JsonNode json : features) {
+            if (filter.isCorrectType(json) && isNoneFeature(json)) {
+                ParsingContext context = new ParsingContext(FeatureTypeV2.none.name() + " feature");
+                Label label = supplier.getLabel(json, context);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
+                NoneFeatureConfig config = new NoneFeatureConfig(label, property);
+                noneFeatures.add(config);
+            }
+        }
+        return noneFeatures;
     }
 
     public Collection<TfIdfConfigV2> parseTfIdfFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
@@ -190,6 +205,10 @@ public class ParseFeaturesV2 {
         return featureOverrides;
     }
 
+    private boolean isNoneFeature(JsonNode node) {
+        return isNoneFeatureType(node.get("type").textValue());
+    }
+
     private boolean isTfIdfFeature(JsonNode node) {
         return isTfIdfType(node.get("type").textValue());
     }
@@ -232,6 +251,10 @@ public class ParseFeaturesV2 {
 
     private boolean isEdgeFeature(JsonNode node) {
         return node.has("edge") && node.has("type");
+    }
+
+    private boolean isNoneFeatureType(String type) {
+        return isOfType(FeatureTypeV2.none, type);
     }
 
     private boolean isTfIdfType(String type) {
