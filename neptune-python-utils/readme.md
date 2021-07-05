@@ -119,6 +119,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.add_vertices(batch_size=3, rows=rows)
+batch.close()
 
 ```
 
@@ -140,6 +141,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.upsert_vertices(batch_size=3, rows=rows)
+batch.close()
 
 ```
 
@@ -161,6 +163,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.upsert_vertices(batch_size=3, rows=rows, on_upsert='updateSingleCardinalityProperties')
+batch.close()
 
 ```
 
@@ -182,6 +185,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.upsert_edges(batch_size=3, rows=rows, on_upsert='replaceAllProperties')
+batch.close()
 
 ```
 
@@ -206,6 +210,7 @@ tokens = TokenMappings(id_token='ID', label_token='Label', from_token='FromVerte
 
 batch = BatchUtils(Endpoints())
 batch.add_edges(batch_size=3, rows=rows, token_mappings=tokens)
+batch.close()
 
 ```
 
