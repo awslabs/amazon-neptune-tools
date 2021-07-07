@@ -84,6 +84,10 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
     }
 
     public void write() throws IOException {
+        write(true);
+    }
+
+    public void write(boolean includeEdgeFeatures) throws IOException {
 
         generator.writeStartObject();
 
@@ -92,7 +96,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
 
         generator.writeObjectFieldStart("graph");
         writeNodes();
-        writeEdges();
+        writeEdges(includeEdgeFeatures);
         generator.writeEndObject();
 
         generator.writeArrayFieldStart("warnings");
@@ -139,7 +143,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
     }
 
 
-    private void writeEdges() throws IOException {
+    private void writeEdges(boolean includeEdgeFeatures) throws IOException {
 
         GraphElementType graphElementType = GraphElementType.edges;
         GraphElementSchemas graphElementSchemas = graphSchema.graphElementSchemasFor(graphElementType);
@@ -157,7 +161,9 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
                 writeFileName(graphElementType, outputId);
                 writeCommaSeparator();
                 writeEdgeType(labelSchema);
-                writeEdgeFeatures(labelSchema);
+                if (includeEdgeFeatures){
+                    writeEdgeFeatures(labelSchema);
+                }
                 writeEdgeLabels(labelSchema);
 
                 generator.writeEndObject();

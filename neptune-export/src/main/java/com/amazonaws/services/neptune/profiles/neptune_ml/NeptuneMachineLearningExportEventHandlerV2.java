@@ -2,6 +2,7 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
+import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.PropertyGraphTrainingDataConfigWriterV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.RdfTrainingDataConfigWriter;
@@ -186,12 +187,15 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
                         createJsonGenerator(writer),
                         trainingDataWriterConfig).write();
             } else {
+
+                boolean includeEdgeFeatures = args.contains("--feature-toggle", FeatureToggle.Edge_Features.name());
+
                 new PropertyGraphTrainingDataConfigWriterV2(
                         graphSchema,
                         createJsonGenerator(writer),
                         propertyName,
                         printerOptions,
-                        trainingDataWriterConfig).write();
+                        trainingDataWriterConfig).write(includeEdgeFeatures);
             }
         }
 
