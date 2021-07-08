@@ -191,7 +191,9 @@ class BatchUtils:
       'ReadOnlyViolationException',
       'Server disconnected',
       'Connection refused',
-      'Connection was closed by server'
+      'Connection was closed by server',
+      'Received error on read',
+      'Connection was already closed'
     ]
     
     retriable_err_msgs = ['ConcurrentModificationException'] + reconnectable_err_msgs
@@ -238,15 +240,16 @@ class BatchUtils:
         print('is_reconnectable: {}'.format(is_reconnectable))
           
         if is_reconnectable:
-            batch_utils.conn.close()
-            batch_utils.conn = batch_utils.gremlin_utils.remote_connection(pool_size=batch_utils.pool_size, **batch_utils.kwargs)
-            batch_utils.g = batch_utils.gremlin_utils.traversal_source(connection=batch_utils.conn)
+            try:
+                batch_utils.conn.close()
+            finally:
+                batch_utils.conn = None
     
     def __init__(self, endpoints, job_name=None, to_dict=lambda x: x, pool_size=1, **kwargs):
         
         self.gremlin_utils = GremlinUtils(endpoints)
-        self.conn = self.gremlin_utils.remote_connection(pool_size=pool_size, **kwargs)
-        self.g = self.gremlin_utils.traversal_source(connection=self.conn) 
+        self.conn = None
+        self.g = None
         self.region = endpoints.region
         self.job_name = job_name
         self.to_dict = to_dict
@@ -258,11 +261,12 @@ class BatchUtils:
         
     def publish_metrics(invocation_details):
         
+        batch_utils = invocation_details['args'][0]
         number_tries = invocation_details['tries']
+         
         retries = number_tries - 1
-        kwargs = invocation_details['kwargs']
-        job_name = kwargs['job_name']
-        region = kwargs['region']
+        job_name = batch_utils.job_name
+        region = batch_utils.region
         
         if retries > 0:
             logger.info('Retries: {}, Elapsed: {}s'.format(retries, invocation_details['elapsed']))
@@ -284,7 +288,7 @@ class BatchUtils:
                     },
                 ],
                 Namespace='awslabs/amazon-neptune-tools/neptune-python-utils'
-            )    
+            )   
          
     @backoff.on_exception(backoff.constant,
                           tuple(retriable_errors),
@@ -295,15 +299,17 @@ class BatchUtils:
                           on_giveup=publish_metrics,
                           interval=2,
                           jitter=backoff.full_jitter)
-    def retry_query(self, **kwargs):      
-        q = kwargs['query']
-        q.next()
+    def __execute_batch_internal(self, rows, operations, **kwargs):
         
-    def __execute_batch_internal(self, t, rows, operations, **kwargs):
+        if not self.conn:
+            self.conn = self.gremlin_utils.remote_connection(pool_size=self.pool_size, **self.kwargs)
+            self.g = self.gremlin_utils.traversal_source(connection=self.conn) 
+            
+        t = self.g
         for operation in operations:
             for row in rows:
                 t = operation(t, row, **kwargs)
-        self.retry_query(query=t, job_name=self.job_name, region=self.region)
+        t.next()
         
     def execute_batch(self, rows, operations=[], batch_size=50, **kwargs):
           
@@ -315,11 +321,11 @@ class BatchUtils:
         for row in rows:
             rows_list.append(self.to_dict(row))
             if len(rows_list) == batch_size:
-                self.__execute_batch_internal(self.g, rows_list, operations, **kwargs)
+                self.__execute_batch_internal(rows_list, operations, **kwargs)
                 rows_list = []
                 
         if rows_list:
-            self.__execute_batch_internal(self.g, rows_list, operations, **kwargs)
+            self.__execute_batch_internal(rows_list, operations, **kwargs)
  
     def add_vertices(self, batch_size=50, rows=None, **kwargs):
         def batch_op(rows):
