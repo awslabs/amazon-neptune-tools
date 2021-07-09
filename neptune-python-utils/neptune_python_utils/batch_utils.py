@@ -18,6 +18,7 @@ import backoff
 import logging
 import boto3
 import itertools
+import traceback
 from gremlin_python import statics
 from gremlin_python.structure.graph import Graph
 from gremlin_python.process.graph_traversal import __
@@ -183,67 +184,101 @@ def add_properties_to_edge(t, row, **kwargs):
             if not mapping.is_token():
                 t = t.property(mapping.name, mapping.convert(value))
 
-    return t 
+    return t
+    
+reconnectable_err_msgs = [ 
+  'ReadOnlyViolationException',
+  'Server disconnected',
+  'Connection refused',
+  'Connection was closed by server',
+  'Received error on read',
+  'Connection was already closed'
+]
+
+retriable_err_msgs = ['ConcurrentModificationException'] + reconnectable_err_msgs
+
+network_errors = [OSError]
+
+retriable_errors = [GremlinServerError, RuntimeError] + network_errors   
+
+def is_non_retriable_error(e):
+    def is_retriable_error(e):
+        is_retriable = False
+        err_msg = str(e)
+      
+        if isinstance(e, tuple(network_errors)):
+            is_retriable = True
+        else:
+            for retriable_err_msg in retriable_err_msgs:
+                if retriable_err_msg in err_msg:
+                    is_retriable = True
+        
+        print('error: [{}] {}'.format(type(e), err_msg))
+        print('is_retriable: {}'.format(is_retriable))
+                
+        return is_retriable
+    
+    return not is_retriable_error(e)
+
+def reset_connection_if_connection_issue(params):
+    
+    batch_utils = params['args'][0]
+    
+    is_reconnectable = False
+    
+    e = sys.exc_info()[1]
+    err_msg = str(e)
+    
+    if isinstance(e, tuple(network_errors)):
+        is_reconnectable = True
+    else:
+        for reconnectable_err_msg in reconnectable_err_msgs:
+            if reconnectable_err_msg in err_msg:
+                is_reconnectable = True
+    
+    print('is_reconnectable: {}, num_tries: {}'.format(is_reconnectable, params['tries']))
+      
+    if is_reconnectable:
+        try:
+            batch_utils.conn.close()
+        except:
+            print('[{}] Error closing connection: {}'.format(pid, traceback.format_exc()))
+        finally:
+            batch_utils.conn = None
+            batch_utils.g = None
+
+def publish_metrics(invocation_details):
+    
+    batch_utils = invocation_details['args'][0]
+    number_tries = invocation_details['tries']
+     
+    retries = number_tries - 1
+    job_name = batch_utils.job_name
+    region = batch_utils.region
+    
+    if retries > 0:
+        print('Retries: {}, Elapsed: {}s'.format(retries, invocation_details['elapsed']))
+    
+    if job_name and retries > 0:
+        cloudwatch = boto3.client('cloudwatch', region_name=region)
+        cloudwatch.put_metric_data(
+            MetricData = [
+                {
+                    'MetricName': 'Retries',
+                    'Dimensions': [
+                        {
+                            'Name': 'client',
+                            'Value': job_name
+                        }
+                    ],
+                    'Unit': 'Count',
+                    'Value': float(retries)
+                },
+            ],
+            Namespace='awslabs/amazon-neptune-tools/neptune-python-utils'
+        ) 
 
 class BatchUtils:
-    
-    reconnectable_err_msgs = [ 
-      'ReadOnlyViolationException',
-      'Server disconnected',
-      'Connection refused',
-      'Connection was closed by server',
-      'Received error on read',
-      'Connection was already closed'
-    ]
-    
-    retriable_err_msgs = ['ConcurrentModificationException'] + reconnectable_err_msgs
-    
-    network_errors = [OSError]
-    
-    retriable_errors = [GremlinServerError, RuntimeError] + network_errors   
-    
-    def is_non_retriable_error(e):
-        def is_retriable_error(e):
-            is_retriable = False
-            err_msg = str(e)
-          
-            if isinstance(e, tuple(BatchUtils.network_errors)):
-                is_retriable = True
-            else:
-                for retriable_err_msg in BatchUtils.retriable_err_msgs:
-                    if retriable_err_msg in err_msg:
-                        is_retriable = True
-            
-            print('error: [{}] {}'.format(type(e), err_msg))
-            print('is_retriable: {}'.format(is_retriable))
-            
-            return is_retriable
-    
-        return not is_retriable_error(e)
-    
-    def reset_connection_if_connection_issue(params):
-        
-        batch_utils = params['args'][0]
-        
-        is_reconnectable = False
-        
-        e = sys.exc_info()[1]
-        err_msg = str(e)
-        
-        if isinstance(e, tuple(BatchUtils.network_errors)):
-            is_reconnectable = True
-        else:
-            for reconnectable_err_msg in BatchUtils.reconnectable_err_msgs:
-                if reconnectable_err_msg in err_msg:
-                    is_reconnectable = True
-            
-        print('is_reconnectable: {}'.format(is_reconnectable))
-          
-        if is_reconnectable:
-            try:
-                batch_utils.conn.close()
-            finally:
-                batch_utils.conn = None
     
     def __init__(self, endpoints, job_name=None, to_dict=lambda x: x, pool_size=1, **kwargs):
         
@@ -257,59 +292,33 @@ class BatchUtils:
         self.kwargs = kwargs
         
     def close(self):
-        self.gremlin_utils.close()
-        
-    def publish_metrics(invocation_details):
-        
-        batch_utils = invocation_details['args'][0]
-        number_tries = invocation_details['tries']
+        try:
+            self.gremlin_utils.close()
+        except:
+            pass 
          
-        retries = number_tries - 1
-        job_name = batch_utils.job_name
-        region = batch_utils.region
-        
-        if retries > 0:
-            logger.info('Retries: {}, Elapsed: {}s'.format(retries, invocation_details['elapsed']))
-        
-        if job_name and retries > 0:
-            cloudwatch = boto3.client('cloudwatch', region_name=region)
-            cloudwatch.put_metric_data(
-                MetricData = [
-                    {
-                        'MetricName': 'Retries',
-                        'Dimensions': [
-                            {
-                                'Name': 'client',
-                                'Value': job_name
-                            }
-                        ],
-                        'Unit': 'Count',
-                        'Value': float(retries)
-                    },
-                ],
-                Namespace='awslabs/amazon-neptune-tools/neptune-python-utils'
-            )   
-         
-    @backoff.on_exception(backoff.constant,
-                          tuple(retriable_errors),
-                          max_tries=5,
-                          giveup=is_non_retriable_error,
-                          on_backoff=reset_connection_if_connection_issue,
-                          on_success=publish_metrics,
-                          on_giveup=publish_metrics,
-                          interval=2,
-                          jitter=backoff.full_jitter)
     def __execute_batch_internal(self, rows, operations, **kwargs):
+        @backoff.on_exception(backoff.constant,
+            tuple(retriable_errors),
+            max_tries=5,
+            giveup=is_non_retriable_error,
+            on_backoff=reset_connection_if_connection_issue,
+            on_success=publish_metrics,
+            interval=2,
+            jitter=backoff.full_jitter)
+        def execute(self, rows, operations, **kwargs):
         
-        if not self.conn:
-            self.conn = self.gremlin_utils.remote_connection(pool_size=self.pool_size, **self.kwargs)
-            self.g = self.gremlin_utils.traversal_source(connection=self.conn) 
+            if not self.conn:
+                self.conn = self.gremlin_utils.remote_connection(pool_size=self.pool_size, **self.kwargs)
+                self.g = self.gremlin_utils.traversal_source(connection=self.conn) 
             
-        t = self.g
-        for operation in operations:
-            for row in rows:
-                t = operation(t, row, **kwargs)
-        t.next()
+            t = self.g
+            for operation in operations:
+                for row in rows:
+                    t = operation(t, row, **kwargs)
+            t.next()
+        
+        return execute(self, rows, operations, **kwargs)
         
     def execute_batch(self, rows, operations=[], batch_size=50, **kwargs):
           
