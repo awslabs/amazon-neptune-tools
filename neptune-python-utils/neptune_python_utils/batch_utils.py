@@ -13,10 +13,12 @@
 # and limitations under the License.
 
 import sys
+import os
 import backoff
 import logging
 import boto3
 import itertools
+import traceback
 from gremlin_python import statics
 from gremlin_python.structure.graph import Graph
 from gremlin_python.process.graph_traversal import __
@@ -168,90 +170,171 @@ def replace_edge_properties(t, row, **kwargs):
 
     return t
 
+def add_properties_to_edge(t, row, **kwargs):
+    mappings = kwargs['mappings']
     
+    edge_id = mappings.get_id(row)
+    from_id = mappings.get_from(row)
+    label = mappings.get_label(row)
+    
+    if edge_id and from_id:
+        t = t.V(from_id).outE(label).hasId(edge_id)
+        for key, value in row.items(): 
+            mapping = mappings.mapping_for(key) 
+            if not mapping.is_token():
+                t = t.property(mapping.name, mapping.convert(value))
+
+    return t
+    
+reconnectable_err_msgs = [ 
+  'ReadOnlyViolationException',
+  'Server disconnected',
+  'Connection refused',
+  'Connection was closed by server',
+  'Received error on read',
+  'Connection was already closed'
+]
+
+retriable_err_msgs = ['ConcurrentModificationException'] + reconnectable_err_msgs
+
+network_errors = [OSError]
+
+retriable_errors = [GremlinServerError, RuntimeError] + network_errors   
+
+def is_non_retriable_error(e):
+    def is_retriable_error(e):
+        is_retriable = False
+        err_msg = str(e)
+      
+        if isinstance(e, tuple(network_errors)):
+            is_retriable = True
+        else:
+            for retriable_err_msg in retriable_err_msgs:
+                if retriable_err_msg in err_msg:
+                    is_retriable = True
+        
+        print('error: [{}] {}'.format(type(e), err_msg))
+        print('is_retriable: {}'.format(is_retriable))
+                
+        return is_retriable
+    
+    return not is_retriable_error(e)
+
+def reset_connection_if_connection_issue(params):
+    
+    batch_utils = params['args'][0]
+    
+    is_reconnectable = False
+    
+    e = sys.exc_info()[1]
+    err_msg = str(e)
+    
+    if isinstance(e, tuple(network_errors)):
+        is_reconnectable = True
+    else:
+        for reconnectable_err_msg in reconnectable_err_msgs:
+            if reconnectable_err_msg in err_msg:
+                is_reconnectable = True
+    
+    print('is_reconnectable: {}, num_tries: {}'.format(is_reconnectable, params['tries']))
+      
+    if is_reconnectable:
+        try:
+            batch_utils.conn.close()
+        except:
+            print('[{}] Error closing connection: {}'.format(pid, traceback.format_exc()))
+        finally:
+            batch_utils.conn = None
+            batch_utils.g = None
+
+def publish_metrics(invocation_details):
+    
+    batch_utils = invocation_details['args'][0]
+    number_tries = invocation_details['tries']
+     
+    retries = number_tries - 1
+    job_name = batch_utils.job_name
+    region = batch_utils.region
+    
+    if retries > 0:
+        print('Retries: {}, Elapsed: {}s'.format(retries, invocation_details['elapsed']))
+    
+    if job_name and retries > 0:
+        cloudwatch = boto3.client('cloudwatch', region_name=region)
+        cloudwatch.put_metric_data(
+            MetricData = [
+                {
+                    'MetricName': 'Retries',
+                    'Dimensions': [
+                        {
+                            'Name': 'client',
+                            'Value': job_name
+                        }
+                    ],
+                    'Unit': 'Count',
+                    'Value': float(retries)
+                },
+            ],
+            Namespace='awslabs/amazon-neptune-tools/neptune-python-utils'
+        ) 
 
 class BatchUtils:
     
-    def __init__(self, endpoints, job_name=None, to_dict=lambda x: x):
+    def __init__(self, endpoints, job_name=None, to_dict=lambda x: x, pool_size=1, **kwargs):
         
         self.gremlin_utils = GremlinUtils(endpoints)
+        self.conn = None
+        self.g = None
         self.region = endpoints.region
         self.job_name = job_name
         self.to_dict = to_dict
+        self.pool_size = pool_size
+        self.kwargs = kwargs
         
-    def publish_metrics(invocation_details):
+    def close(self):
+        try:
+            self.gremlin_utils.close()
+        except:
+            pass 
+         
+    def __execute_batch_internal(self, rows, operations, **kwargs):
+        @backoff.on_exception(backoff.constant,
+            tuple(retriable_errors),
+            max_tries=5,
+            giveup=is_non_retriable_error,
+            on_backoff=reset_connection_if_connection_issue,
+            on_success=publish_metrics,
+            interval=2,
+            jitter=backoff.full_jitter)
+        def execute(self, rows, operations, **kwargs):
         
-        number_tries = invocation_details['tries']
-        retries = number_tries - 1
-        kwargs = invocation_details['kwargs']
-        job_name = kwargs['job_name']
-        region = kwargs['region']
+            if not self.conn:
+                self.conn = self.gremlin_utils.remote_connection(pool_size=self.pool_size, **self.kwargs)
+                self.g = self.gremlin_utils.traversal_source(connection=self.conn) 
+            
+            t = self.g
+            for operation in operations:
+                for row in rows:
+                    t = operation(t, row, **kwargs)
+            t.next()
         
-        if retries > 0:
-            logger.info('Retries: {}, Elapsed: {}s'.format(retries, invocation_details['elapsed']))
-        
-        if job_name and retries > 0:
-            cloudwatch = boto3.client('cloudwatch', region_name=region)
-            cloudwatch.put_metric_data(
-                MetricData = [
-                    {
-                        'MetricName': 'Retries',
-                        'Dimensions': [
-                            {
-                                'Name': 'client',
-                                'Value': job_name
-                            }
-                        ],
-                        'Unit': 'Count',
-                        'Value': float(retries)
-                    },
-                ],
-                Namespace='awslabs/amazon-neptune-tools/neptune-python-utils'
-            )
-        
-        
-    def not_cme(e):
-        return '"code":"ConcurrentModificationException"' not in str(e)
-     
-    @backoff.on_exception(backoff.expo,
-                          GremlinServerError,
-                          max_tries=5,
-                          giveup=not_cme,
-                          on_success=publish_metrics,
-                          on_giveup=publish_metrics)
-    def retry_query(self, **kwargs):      
-        q = kwargs['query']
-        q.next()
-        
-    def __execute_batch_internal(self, conn, t, rows, operations, **kwargs):
-        for operation in operations:
-            for row in rows:
-                t = operation(t, row, **kwargs)
-        self.retry_query(query=t, job_name=self.job_name, region=self.region)
+        return execute(self, rows, operations, **kwargs)
         
     def execute_batch(self, rows, operations=[], batch_size=50, **kwargs):
           
-        conn = self.gremlin_utils.remote_connection()
-        
         if 'mappings' not in kwargs:
             kwargs['mappings'] = Mappings()
+
+        rows_list = []
         
-        try:
-            g = self.gremlin_utils.traversal_source(connection=conn)           
-            
-            rows_list = []
-            
-            for row in rows:
-                rows_list.append(self.to_dict(row))
-                if len(rows_list) == batch_size:
-                    self.__execute_batch_internal(conn, g, rows_list, operations, **kwargs)
-                    rows_list = []
-                    
-            if rows_list:
-                self.__execute_batch_internal(conn, g, rows_list, operations, **kwargs)
-            
-        finally:
-            conn.close()
+        for row in rows:
+            rows_list.append(self.to_dict(row))
+            if len(rows_list) == batch_size:
+                self.__execute_batch_internal(rows_list, operations, **kwargs)
+                rows_list = []
+                
+        if rows_list:
+            self.__execute_batch_internal(rows_list, operations, **kwargs)
  
     def add_vertices(self, batch_size=50, rows=None, **kwargs):
         def batch_op(rows):
@@ -279,4 +362,9 @@ class BatchUtils:
             if on_upsert and on_upsert == 'replaceAllProperties':
                 operations.append(replace_edge_properties)
             self.execute_batch(rows, operations=operations, batch_size=batch_size, **kwargs)
+        return batch_op(rows) if rows else batch_op
+    
+    def add_edge_properties(self, batch_size=50, rows=None, **kwargs):
+        def batch_op(rows):
+            self.execute_batch(rows, operations=[add_properties_to_edge], batch_size=batch_size, **kwargs)
         return batch_op(rows) if rows else batch_op

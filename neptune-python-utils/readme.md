@@ -95,7 +95,7 @@ The `BatchUtils` object allows you to create batch insert and upsert operations 
 
 Parallel inserts and upserts can sometimes trigger a `ConcurrentModificationException`. `BatchUtils` will attempt 5 retries for each batch should such exceptions occur. If you supply a `job_name` when creating a `BatchUtils` object, the batch operation will publish a custom CloudWatch `Retries` metric (namespace `awslabs/amazon-neptune-tools/neptune-python-utils`) indicating the number of retries per batch query.
 
-When you use the upsert operations (`batch.upsert_vertices()` and batch.upsert_edges()) you can supply an optional `on_upsert` parameter that specifies how properties on _existing_ vertices and edges should be handled:
+When you use the upsert operations (`batch.upsert_vertices()` and `batch.upsert_edges()`) you can supply an optional `on_upsert` parameter that specifies how properties on _existing_ vertices and edges should be handled:
 
   - `updateSingleCardinalityProperties` – Single cardinality properties (as specified using the column header syntax `(single)`) on existing vertices or edges will be updated with the values in the data supplied to the operation. (For edges, this means that _all_ properties, irrespective of whether they are marked as `single` or `set`, or not marked at all, will be updated.)
   - `updateAllProperties` – All properties on existing vertices or edges will be updated with the new values in the data supplied to the operation. Set cardinality properties will have new values _added_ to the current set of values for that property.
@@ -119,6 +119,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.add_vertices(batch_size=3, rows=rows)
+batch.close()
 
 ```
 
@@ -140,6 +141,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.upsert_vertices(batch_size=3, rows=rows)
+batch.close()
 
 ```
 
@@ -161,10 +163,11 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.upsert_vertices(batch_size=3, rows=rows, on_upsert='updateSingleCardinalityProperties')
+batch.close()
 
 ```
 
-The following example creates requests that _upsert_ batches of edges (3 edges per batch) based on a list of supplied data. The upserts replace the properties on any existing edges properties:
+The following example creates requests that _upsert_ batches of edges (3 edges per batch) based on a list of supplied data. The upserts replace the properties on any existing edge properties:
 
 ```
 from neptune_python_utils.endpoints import Endpoints
@@ -182,6 +185,7 @@ rows = [
 
 batch = BatchUtils(Endpoints())
 batch.upsert_edges(batch_size=3, rows=rows, on_upsert='replaceAllProperties')
+batch.close()
 
 ```
 
@@ -206,6 +210,7 @@ tokens = TokenMappings(id_token='ID', label_token='Label', from_token='FromVerte
 
 batch = BatchUtils(Endpoints())
 batch.add_edges(batch_size=3, rows=rows, token_mappings=tokens)
+batch.close()
 
 ```
 
