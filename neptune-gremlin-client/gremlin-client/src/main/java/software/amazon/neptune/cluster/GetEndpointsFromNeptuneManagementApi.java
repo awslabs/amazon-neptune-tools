@@ -12,11 +12,16 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.utils.EnvironmentVariableUtils;
+import software.amazon.utils.RegionUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,11 +34,17 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
     private static final Map<String, Map<String, String>> instanceTags = new HashMap<>();
 
     private final String clusterId;
+    private final String region;
     private final Collection<EndpointsSelector> selectors;
     private final AtomicReference<Map<EndpointsSelector, Collection<String>>> previousResults = new AtomicReference<>();
 
     public GetEndpointsFromNeptuneManagementApi(String clusterId, Collection<EndpointsSelector> selectors) {
+        this(clusterId, RegionUtils.getCurrentRegionName(), selectors);
+    }
+
+    public GetEndpointsFromNeptuneManagementApi(String clusterId, String region, Collection<EndpointsSelector> selectors) {
         this.clusterId = clusterId;
+        this.region = region;
         this.selectors = selectors;
     }
 
@@ -41,9 +52,9 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
     public Map<EndpointsSelector, Collection<String>> getAddresses() {
 
         try {
-
-
-            AmazonNeptune neptune = AmazonNeptuneClientBuilder.defaultClient();
+            AmazonNeptune neptune = StringUtils.isEmpty(region) ?
+                    AmazonNeptuneClientBuilder.defaultClient() :
+                    AmazonNeptuneClientBuilder.standard().withRegion(region).build();
 
             DescribeDBClustersResult describeDBClustersResult = neptune
                     .describeDBClusters(new DescribeDBClustersRequest().withDBClusterIdentifier(clusterId));
