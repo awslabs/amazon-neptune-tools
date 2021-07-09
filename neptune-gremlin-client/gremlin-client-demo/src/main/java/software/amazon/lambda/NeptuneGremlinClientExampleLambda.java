@@ -23,6 +23,7 @@ import org.apache.tinkerpop.gremlin.driver.GremlinClient;
 import org.apache.tinkerpop.gremlin.driver.GremlinCluster;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
+import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.T;
@@ -84,7 +85,8 @@ public class NeptuneGremlinClientExampleLambda implements RequestStreamHandler {
                 .withExponentialBackoff()
                 .build();
 
-        this.executor = new CallExecutorBuilder<>()
+
+        this.executor = new CallExecutorBuilder<Object>()
                 .config(retryConfig)
                 .afterFailedTryListener(this::afterFailedTry)
                 .build();
@@ -127,6 +129,13 @@ public class NeptuneGremlinClientExampleLambda implements RequestStreamHandler {
             StringWriter stringWriter = new StringWriter();
             e.printStackTrace(new PrintWriter(stringWriter));
             String message = stringWriter.toString();
+
+            Class<? extends Exception> exceptionClass = e.getClass();
+
+            if (RemoteConnectionException.class.isAssignableFrom(exceptionClass)){
+                System.out.println("Retrying because RemoteConnectionException");
+                return true;
+            }
 
             // Check for connection issues
             if (message.contains("Timed out while waiting for an available host") ||

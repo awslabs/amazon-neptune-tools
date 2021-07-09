@@ -23,6 +23,8 @@ import com.evanlennick.retry4j.CallExecutorBuilder;
 import com.evanlennick.retry4j.Status;
 import com.evanlennick.retry4j.config.RetryConfig;
 import com.evanlennick.retry4j.config.RetryConfigBuilder;
+import org.apache.commons.lang.StringUtils;
+import software.amazon.utils.RegionUtils;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -38,19 +40,30 @@ public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrateg
     private final AWSLambda lambdaClient;
     private final RetryConfig retryConfig;
 
+    public GetEndpointsFromLambdaProxy(EndpointsType endpointsType, String lambdaName) {
+        this(endpointsType, RegionUtils.getCurrentRegionName(), lambdaName);
+    }
+
     public GetEndpointsFromLambdaProxy(EndpointsType endpointsType, String region, String lambdaName) {
         this.endpointsType = endpointsType;
         this.lambdaName = lambdaName;
-        this.lambdaClient = AWSLambdaClientBuilder.standard()
-                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
-                .withRegion(region)
-                .build();
+        this.lambdaClient = createLambdaClient(region);
         this.retryConfig = new RetryConfigBuilder()
                 .retryOnSpecificExceptions(TooManyRequestsException.class)
                 .withMaxNumberOfTries(10)
                 .withDelayBetweenTries(10, ChronoUnit.MILLIS)
                 .withExponentialBackoff()
                 .build();
+    }
+
+    private AWSLambda createLambdaClient(String region) {
+        AWSLambdaClientBuilder builder = AWSLambdaClientBuilder.standard()
+                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance());
+        if (StringUtils.isNotEmpty(region)){
+            return builder.withRegion(region).build();
+        } else {
+            return builder.build();
+        }
     }
 
     @Override
