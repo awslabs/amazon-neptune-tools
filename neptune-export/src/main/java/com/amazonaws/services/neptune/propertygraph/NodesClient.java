@@ -103,6 +103,9 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
         traversal.forEachRemaining(m -> {
             try {
+                if (featureToggles.containsFeature(FeatureToggle.Inject_Fault)){
+                    throw new IllegalStateException("Simulated fault in NodesClient");
+                }
                 handler.handle(m, false);
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -83,7 +83,7 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
 
         try {
             Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
@@ -93,7 +93,7 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config(), graphSchema.allowInferSchema());
 
-                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {

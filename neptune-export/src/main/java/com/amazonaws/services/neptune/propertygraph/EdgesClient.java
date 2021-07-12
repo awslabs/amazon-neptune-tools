@@ -106,6 +106,9 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
 
         traversal.forEachRemaining(p -> {
             try {
+                if (featureToggles.containsFeature(FeatureToggle.Inject_Fault)){
+                    throw new IllegalStateException("Simulated fault in EdgesClient");
+                }
                 handler.handle(p, false);
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -70,12 +70,12 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
 
         try {
             Timer.timedActivity("creating property graph config", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     ExportStats stats = new ExportStats();
                     Directories directories = target.createDirectories(DirectoryStructure.Config);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, featureToggles());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {

@@ -88,7 +88,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
         try {
             Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
                     JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?

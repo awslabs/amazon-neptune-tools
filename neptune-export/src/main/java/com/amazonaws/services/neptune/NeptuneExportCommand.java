@@ -23,7 +23,6 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
-import java.util.concurrent.CompletionException;
 
 public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand implements NeptuneExportEventHandler, NeptuneExportEventHandlerHost {
 
@@ -68,7 +67,7 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
         }
     }
 
-    FeatureToggles labModeFeatures() {
+    FeatureToggles featureToggles() {
         return featureToggleModule.featureToggles();
     }
 }
