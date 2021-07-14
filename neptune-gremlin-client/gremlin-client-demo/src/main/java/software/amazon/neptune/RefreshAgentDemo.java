@@ -12,10 +12,9 @@ permissions and limitations under the License.
 
 package software.amazon.neptune;
 
-import software.amazon.neptune.cluster.ClusterEndpointsRefreshAgent;
-import software.amazon.neptune.cluster.EndpointsSelector;
-import software.amazon.neptune.cluster.EndpointsType;
-import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
+import org.apache.commons.lang.StringUtils;
+import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
+import software.amazon.neptune.cluster.*;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
@@ -29,7 +28,9 @@ import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.utils.RegionUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +66,14 @@ public class RefreshAgentDemo implements Runnable {
     @Once
     private String logLevel = "info";
 
+    @Option(name = {"--profile"}, description = "Credentials profile")
+    @Once
+    private String profile = IamAuthConfig.DEFAULT_PROFILE;
+
+    @Option(name = {"--service-region"}, description = "Neptune service region")
+    @Once
+    private String serviceRegion = null;
+
     @Option(name = {"--interval"}, description = "Interval (in seconds) between refreshing addresses")
     @Once
     private int intervalSeconds = 15;
@@ -76,18 +85,28 @@ public class RefreshAgentDemo implements Runnable {
 
             EndpointsSelector endpointsSelector = EndpointsType.ReadReplicas;
 
-            ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
+            GetEndpointsFromNeptuneManagementApi fetchStrategy = new GetEndpointsFromNeptuneManagementApi(
                     clusterId,
-                    endpointsSelector);
+                    Collections.singletonList(endpointsSelector), RegionUtils.getCurrentRegionName(),
+                    profile
+            );
 
-            GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
+            ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(fetchStrategy);
+
+            NeptuneGremlinClusterBuilder builder = NeptuneGremlinClusterBuilder.build()
                     .enableSsl(enableSsl)
                     .enableIamAuth(enableIam)
+                    .iamProfile(profile)
                     .addContactPoints(refreshAgent.getAddresses().get(endpointsSelector))
                     .minConnectionPoolSize(3)
                     .maxConnectionPoolSize(3)
-                    .port(neptunePort)
-                    .create();
+                    .port(neptunePort);
+
+            if (StringUtils.isNotEmpty(serviceRegion)){
+                builder = builder.serviceRegion(serviceRegion);
+            }
+
+            GremlinCluster cluster = builder.create();
 
             GremlinClient client = cluster.connect();
 

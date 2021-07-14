@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package software.amazon.neptune;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import software.amazon.neptune.cluster.EndpointsSelector;
 import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
 import com.github.rvesse.airline.annotations.Command;
@@ -69,18 +71,31 @@ public class RollingSubsetOfEndpointDemo implements Runnable {
     @Once
     private int intervalSeconds = 60;
 
+    @Option(name = {"--profile"}, description = "Credentials profile")
+    @Once
+    private String profile = IamAuthConfig.DEFAULT_PROFILE;
+
+    @Option(name = {"--service-region"}, description = "Neptune service region")
+    @Once
+    private String serviceRegion = null;
 
     @Override
     public void run() {
 
         try {
 
-            GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
+            NeptuneGremlinClusterBuilder builder = NeptuneGremlinClusterBuilder.build()
                     .enableSsl(enableSsl)
                     .enableIamAuth(enableIam)
                     .addContactPoints(nextSetOfAddresses())
                     .port(neptunePort)
-                    .create();
+                    .iamProfile(profile);
+
+            if (StringUtils.isNotEmpty(serviceRegion)){
+                builder = builder.serviceRegion(serviceRegion);
+            }
+
+            GremlinCluster cluster = builder.create();
 
             GremlinClient client = cluster.connect();
 

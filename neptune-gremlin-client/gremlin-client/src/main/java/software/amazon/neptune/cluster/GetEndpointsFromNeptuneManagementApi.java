@@ -12,15 +12,15 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.utils.EnvironmentVariableUtils;
 import software.amazon.utils.RegionUtils;
 
 import java.util.*;
@@ -35,26 +35,64 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
 
     private final String clusterId;
     private final String region;
+    private final String iamProfile;
+    private final AWSCredentialsProvider credentials;
     private final Collection<EndpointsSelector> selectors;
     private final AtomicReference<Map<EndpointsSelector, Collection<String>>> previousResults = new AtomicReference<>();
 
     public GetEndpointsFromNeptuneManagementApi(String clusterId, Collection<EndpointsSelector> selectors) {
-        this(clusterId, RegionUtils.getCurrentRegionName(), selectors);
+        this(clusterId, selectors, RegionUtils.getCurrentRegionName());
     }
 
-    public GetEndpointsFromNeptuneManagementApi(String clusterId, String region, Collection<EndpointsSelector> selectors) {
+    public GetEndpointsFromNeptuneManagementApi(String clusterId,
+                                                Collection<EndpointsSelector> selectors,
+                                                String region) {
+        this(clusterId, selectors, region, IamAuthConfig.DEFAULT_PROFILE);
+    }
+
+    public GetEndpointsFromNeptuneManagementApi(String clusterId,
+                                                Collection<EndpointsSelector> selectors,
+                                                String region,
+                                                String iamProfile) {
+        this(clusterId, selectors, region, iamProfile, null);
+    }
+
+    public GetEndpointsFromNeptuneManagementApi(String clusterId,
+                                                Collection<EndpointsSelector> selectors,
+                                                String region,
+                                                AWSCredentialsProvider credentials) {
+        this(clusterId, selectors, region, IamAuthConfig.DEFAULT_PROFILE, credentials);
+    }
+
+    private GetEndpointsFromNeptuneManagementApi(String clusterId,
+                                                Collection<EndpointsSelector> selectors,
+                                                String region,
+                                                String iamProfile,
+                                                AWSCredentialsProvider credentials) {
         this.clusterId = clusterId;
-        this.region = region;
         this.selectors = selectors;
+        this.region = region;
+        this.iamProfile = iamProfile;
+        this.credentials = credentials;
     }
 
     @Override
     public Map<EndpointsSelector, Collection<String>> getAddresses() {
 
         try {
-            AmazonNeptune neptune = StringUtils.isEmpty(region) ?
-                    AmazonNeptuneClientBuilder.defaultClient() :
-                    AmazonNeptuneClientBuilder.standard().withRegion(region).build();
+            AmazonNeptuneClientBuilder builder = AmazonNeptuneClientBuilder.standard();
+
+            if (StringUtils.isNotEmpty(region)){
+                builder = builder.withRegion(region);
+            }
+
+            if (credentials != null){
+                builder = builder.withCredentials(credentials);
+            } else if (!iamProfile.equals(IamAuthConfig.DEFAULT_PROFILE)){
+                builder = builder.withCredentials(new ProfileCredentialsProvider(iamProfile));
+            }
+
+            AmazonNeptune neptune = builder.build();
 
             DescribeDBClustersResult describeDBClustersResult = neptune
                     .describeDBClusters(new DescribeDBClustersRequest().withDBClusterIdentifier(clusterId));

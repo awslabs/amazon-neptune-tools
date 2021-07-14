@@ -12,8 +12,10 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
+import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.utils.RegionUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,9 +28,24 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
 
     public static ClusterEndpointsRefreshAgent lambdaProxy(
             EndpointsType endpointsType,
-            String region,
             String lambdaName){
-        return new ClusterEndpointsRefreshAgent(new GetEndpointsFromLambdaProxy(endpointsType, region, lambdaName));
+        return lambdaProxy(endpointsType, lambdaName, RegionUtils.getCurrentRegionName());
+    }
+
+    public static ClusterEndpointsRefreshAgent lambdaProxy(
+            EndpointsType endpointsType,
+            String lambdaName,
+            String region){
+        return lambdaProxy(endpointsType, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE);
+    }
+
+    public static ClusterEndpointsRefreshAgent lambdaProxy(
+            EndpointsType endpointsType,
+            String lambdaName,
+            String region,
+            String iamProfile){
+        return new ClusterEndpointsRefreshAgent(
+                new GetEndpointsFromLambdaProxy(endpointsType, lambdaName, region, iamProfile));
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ClusterEndpointsRefreshAgent.class);
