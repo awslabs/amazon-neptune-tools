@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package org.apache.tinkerpop.gremlin.driver;
 
 import org.apache.tinkerpop.gremlin.driver.exception.ConnectionException;
+import org.apache.tinkerpop.gremlin.driver.exception.NoHostAvailableException;
 import org.apache.tinkerpop.gremlin.driver.message.RequestMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,6 +254,9 @@ public class GremlinClient extends Client implements AutoCloseable {
                 return connection;
             } catch (NullPointerException e) {
                 logger.warn("NullPointerException: {}", host, e);
+                return null;
+            } catch (NoHostAvailableException e){
+                logger.warn("No connection available: {}", host, e);
                 return null;
             }
         }

@@ -12,7 +12,9 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
 import com.amazonaws.services.lambda.model.InvokeRequest;
@@ -24,6 +26,7 @@ import com.evanlennick.retry4j.Status;
 import com.evanlennick.retry4j.config.RetryConfig;
 import com.evanlennick.retry4j.config.RetryConfigBuilder;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import software.amazon.utils.RegionUtils;
 
 import java.time.temporal.ChronoUnit;
@@ -41,13 +44,35 @@ public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrateg
     private final RetryConfig retryConfig;
 
     public GetEndpointsFromLambdaProxy(EndpointsType endpointsType, String lambdaName) {
-        this(endpointsType, RegionUtils.getCurrentRegionName(), lambdaName);
+        this(endpointsType, lambdaName, RegionUtils.getCurrentRegionName());
     }
 
-    public GetEndpointsFromLambdaProxy(EndpointsType endpointsType, String region, String lambdaName) {
+    public GetEndpointsFromLambdaProxy(EndpointsType endpointsType, String lambdaName, String region) {
+        this(endpointsType, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE);
+    }
+
+    public GetEndpointsFromLambdaProxy(EndpointsType endpointsType,
+                                       String lambdaName,
+                                       String region,
+                                       String iamProfile) {
+        this(endpointsType, lambdaName, region, iamProfile, null);
+    }
+
+    public GetEndpointsFromLambdaProxy(EndpointsType endpointsType,
+                                       String lambdaName,
+                                       String region,
+                                       AWSCredentialsProvider credentials) {
+        this(endpointsType, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE, credentials);
+    }
+
+    private GetEndpointsFromLambdaProxy(EndpointsType endpointsType,
+                                        String lambdaName,
+                                        String region,
+                                        String iamProfile,
+                                        AWSCredentialsProvider credentials) {
         this.endpointsType = endpointsType;
         this.lambdaName = lambdaName;
-        this.lambdaClient = createLambdaClient(region);
+        this.lambdaClient = createLambdaClient(region, iamProfile, credentials);
         this.retryConfig = new RetryConfigBuilder()
                 .retryOnSpecificExceptions(TooManyRequestsException.class)
                 .withMaxNumberOfTries(10)
@@ -56,14 +81,25 @@ public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrateg
                 .build();
     }
 
-    private AWSLambda createLambdaClient(String region) {
-        AWSLambdaClientBuilder builder = AWSLambdaClientBuilder.standard()
-                .withCredentials(DefaultAWSCredentialsProviderChain.getInstance());
-        if (StringUtils.isNotEmpty(region)){
-            return builder.withRegion(region).build();
+    private AWSLambda createLambdaClient(String region, String iamProfile, AWSCredentialsProvider credentials) {
+        AWSLambdaClientBuilder builder = AWSLambdaClientBuilder.standard();
+
+        if (credentials != null){
+            builder = builder.withCredentials(credentials);
         } else {
-            return builder.build();
+
+            if (!iamProfile.equals(IamAuthConfig.DEFAULT_PROFILE)) {
+                builder = builder.withCredentials(new ProfileCredentialsProvider(iamProfile));
+            } else {
+                builder = builder.withCredentials(DefaultAWSCredentialsProviderChain.getInstance());
+            }
         }
+
+        if (StringUtils.isNotEmpty(region)) {
+            builder = builder.withRegion(region);
+        }
+
+        return builder.build();
     }
 
     @Override

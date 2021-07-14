@@ -69,6 +69,7 @@ public class GremlinClusterBuilder {
     private AuthProperties authProps = new AuthProperties();
     private int refreshOnErrorThreshold = -1;
     private Supplier<Collection<String>> refreshOnErrorEventHandler = null;
+    private HandshakeInterceptor interceptor = HandshakeInterceptor.NO_OP;
 
     private GremlinClusterBuilder() {
     }
@@ -364,6 +365,7 @@ public class GremlinClusterBuilder {
      * for that session to close before timing out where the default value is 3000. Note that the server will
      * eventually clean up dead sessions itself on expiration of the session or during shutdown.
      */
+    @Deprecated
     public GremlinClusterBuilder maxWaitForSessionClose(final int maxWait) {
         this.maxWaitForSessionClose = maxWait;
         return this;
@@ -493,6 +495,15 @@ public class GremlinClusterBuilder {
         return this;
     }
 
+    /**
+     * Specifies an {@link HandshakeInterceptor} that will allow manipulation of the
+     * {@code FullHttpRequest} prior to its being sent over the websocket.
+     */
+    public GremlinClusterBuilder handshakeInterceptor(final HandshakeInterceptor interceptor) {
+        this.interceptor = interceptor;
+        return this;
+    }
+
     List<InetSocketAddress> getContactPoints() {
         return addresses.stream().map(addy -> new InetSocketAddress(addy, port)).collect(Collectors.toList());
     }
@@ -530,7 +541,8 @@ public class GremlinClusterBuilder {
                     .serializer(serializer)
                     .path(path)
                     .workerPoolSize(workerPoolSize)
-                    .nioPoolSize(nioPoolSize);
+                    .nioPoolSize(nioPoolSize)
+                    .handshakeInterceptor(interceptor);
             if (s != null) {
                 builder = builder.addContactPoint(s);
             }

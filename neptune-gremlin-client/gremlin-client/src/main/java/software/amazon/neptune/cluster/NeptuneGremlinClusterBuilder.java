@@ -17,6 +17,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package software.amazon.neptune.cluster;
 
+import com.amazon.neptune.gremlin.driver.sigv4.ChainedSigV4PropertiesProvider;
+import com.amazonaws.auth.AWSCredentialsProvider;
 import io.netty.handler.ssl.SslContext;
 import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
@@ -40,6 +42,10 @@ public class NeptuneGremlinClusterBuilder {
     private boolean enableIamAuth = false;
     private int port = 8182;
     private int loadBalancerPort = 80;
+    private String iamProfile = IamAuthConfig.DEFAULT_PROFILE;
+    private String serviceRegion = "";
+    private HandshakeInterceptor interceptor = null;
+    private AWSCredentialsProvider credentials = null;
 
     private NeptuneGremlinClusterBuilder() {
     }
@@ -179,6 +185,7 @@ public class NeptuneGremlinClusterBuilder {
         return this;
     }
 
+    @Deprecated
     public NeptuneGremlinClusterBuilder maxWaitForSessionClose(final int maxWait) {
         innerBuilder.maxWaitForSessionClose(maxWait);
         return this;
@@ -275,9 +282,31 @@ public class NeptuneGremlinClusterBuilder {
         return this;
     }
 
+    public NeptuneGremlinClusterBuilder serviceRegion(final String serviceRegion) {
+        this.serviceRegion = serviceRegion;
+        return this;
+    }
+
+    public NeptuneGremlinClusterBuilder iamProfile(final String iamProfile) {
+        this.iamProfile = iamProfile;
+        return this;
+    }
+
+
+    public NeptuneGremlinClusterBuilder handshakeInterceptor(final HandshakeInterceptor interceptor) {
+        this.interceptor = interceptor;
+        return this;
+    }
+
+    public NeptuneGremlinClusterBuilder credentials(final AWSCredentialsProvider credentials) {
+        this.credentials = credentials;
+        return this;
+    }
+
     private boolean isDirectConnection() {
         return networkLoadBalancerEndpoint == null && applicationLoadBalancerEndpoint == null;
     }
+
 
     public GremlinCluster create() {
 
@@ -303,28 +332,30 @@ public class NeptuneGremlinClusterBuilder {
             }
         }
 
-        if (enableIamAuth) {
+        if (interceptor != null) {
+            innerBuilder.handshakeInterceptor(interceptor);
+        } else if (enableIamAuth) {
 
-            if (isDirectConnection()) {
-                innerBuilder.channelizer(SigV4WebSocketChannelizer.class);
-            } else {
+            IamAuthConfig.IamAuthConfigBuilder iamAuthConfigBuilder =
+                    IamAuthConfig.builder()
+                            .addNeptuneEndpoints(addresses)
+                            .setNeptunePort(port)
+                            .setServiceRegion(serviceRegion)
+                            .setIamProfile(iamProfile)
+                            .setCredentials(credentials);
 
-                HandshakeRequestConfig.HandshakeRequestConfigBuilder handshakeRequestConfigBuilder =
-                        HandshakeRequestConfig.builder()
-                                .addNeptuneEndpoints(addresses)
-                                .setNeptunePort(port);
-
-                if (applicationLoadBalancerEndpoint != null) {
-                    handshakeRequestConfigBuilder.removeHostHeaderAfterSigning();
-                }
-
-                HandshakeRequestConfig handshakeRequestConfig = handshakeRequestConfigBuilder.build();
-
-                innerBuilder
-                        // We're using the JAAS_ENTRY auth property to tunnel Host header info to the channelizer
-                        .jaasEntry(handshakeRequestConfig.value())
-                        .channelizer(LBAwareSigV4WebSocketChannelizer.class);
+            if (!isDirectConnection()) {
+                iamAuthConfigBuilder.connectViaLoadBalancer();
             }
+
+            if (applicationLoadBalancerEndpoint != null) {
+                iamAuthConfigBuilder.removeHostHeaderAfterSigning();
+            }
+
+            IamAuthConfig iamAuthConfig = iamAuthConfigBuilder.build();
+
+            innerBuilder.handshakeInterceptor(
+                    new LBAwareHandshakeInterceptor(iamAuthConfig, new ChainedSigV4PropertiesProvider()));
         }
 
         return innerBuilder.create();

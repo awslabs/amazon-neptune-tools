@@ -57,8 +57,8 @@ public class NeptuneGremlinClientExampleLambda implements RequestStreamHandler {
 
         this.refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
                 ENDPOINT_TYPE,
-                System.getenv("AWS_REGION"),
-                System.getenv("neptuneEndpointsInfoLambda"));
+                System.getenv("neptuneEndpointsInfoLambda"),
+                System.getenv("AWS_REGION"));
 
         GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
                 .enableSsl(true)
