@@ -46,7 +46,9 @@ class LazyHttpHeaders:
         
     def items(self):
         return self.lazy_headers().items()
-   
+        
+    def __iter__(self):
+        return iter(self.items())   
         
 class RequestParameters:
     
