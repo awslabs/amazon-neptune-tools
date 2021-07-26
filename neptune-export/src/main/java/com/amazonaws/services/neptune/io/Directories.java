@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +26,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class Directories {
 
@@ -41,26 +44,49 @@ public class Directories {
     private static final String CONFIG_FILE = "config.json";
     private static final String QUERIES_FILE = "queries.json";
 
-    public static Directories createFor(DirectoryStructure directoryStructure, File root, String exportId, String tag) throws IOException {
+    public static Directories createFor(DirectoryStructure directoryStructure,
+                                        File root,
+                                        String exportId,
+                                        String tag,
+                                        String partitionDirectories) throws IOException {
         if (root == null) {
             throw new IllegalArgumentException("You must supply a directory");
         }
 
-        String directoryName = tag.isEmpty() ?
-                exportId :
-                String.format("%s-%s", tag, exportId);
         Path rootDirectory = root.toPath();
+        Path directory;
 
-        Path directory = rootDirectory.resolve(directoryName);
-        Path nodesDirectory = directory.resolve("nodes");
-        Path edgesDirectory = directory.
-                resolve("edges");
-        Path statementsDirectory = directory.resolve("statements");
-        Path resultsDirectory = directory.resolve("results");
+        if (StringUtils.isNotEmpty(partitionDirectories)){
+            directory = rootDirectory;
+        } else {
+            String directoryName = tag.isEmpty() ?
+                    exportId :
+                    String.format("%s-%s", tag, exportId);
+
+            directory = rootDirectory.resolve(directoryName);
+        }
+
+        Path nodesDirectory = createElementDirectory("nodes", directory, partitionDirectories);
+        Path edgesDirectory = createElementDirectory("edges", directory, partitionDirectories);
+        Path statementsDirectory = createElementDirectory("statements", directory, partitionDirectories);
+        Path resultsDirectory = createElementDirectory("results", directory, partitionDirectories);
 
         directoryStructure.createDirectories(directory, nodesDirectory, edgesDirectory, statementsDirectory, resultsDirectory);
 
         return new Directories(directory, nodesDirectory, edgesDirectory, statementsDirectory, resultsDirectory, tag);
+    }
+
+    private static Path createElementDirectory(String name, Path directory, String partitionDirectories){
+        Path elementDirectory = directory.resolve(name);
+        if (StringUtils.isNotEmpty(partitionDirectories)){
+            String[] partitions = partitionDirectories.split("/");
+            for (String partition : partitions) {
+                if (StringUtils.isNotEmpty(partition)){
+                    elementDirectory = elementDirectory.resolve(partition);
+                }
+            }
+        }
+        return elementDirectory;
     }
 
     private final String tag;
@@ -87,6 +113,19 @@ public class Directories {
         Path path = directory.toAbsolutePath();
         writer.writeReturnValue(path.toString());
         return path;
+    }
+
+    public Path rootDirectory() {
+        return directory.toAbsolutePath();
+    }
+
+    public Collection<Path> subdirectories(){
+        List<Path> paths = new ArrayList<>();
+        paths.add(nodesDirectory.toAbsolutePath());
+        paths.add(edgesDirectory.toAbsolutePath());
+        paths.add(statementsDirectory.toAbsolutePath());
+        paths.add(resultsDirectory.toAbsolutePath());
+        return paths;
     }
 
     public Path writeConfigFilePathAsReturnValue(CommandWriter writer){

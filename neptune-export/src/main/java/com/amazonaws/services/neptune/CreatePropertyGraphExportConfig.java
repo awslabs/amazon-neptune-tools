@@ -87,8 +87,8 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
                         configFileResource.writeResourcePathAsMessage(target);
                     }
 
-                    Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
-                    onExportComplete(outputPath, stats);
+                    directories.writeConfigFilePathAsReturnValue(target);
+                    onExportComplete(directories, stats);
 
                 }
             });

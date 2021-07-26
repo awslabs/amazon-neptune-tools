@@ -4,6 +4,7 @@ import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.PropertyGraphTrainingDataConfigWriterV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.RdfTrainingDataConfigWriter;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
@@ -34,10 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_ML_PROFILE_NAME;
 
@@ -91,7 +89,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     }
 
     @Override
-    public void onBeforeExport(Args args) {
+    public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
 
         if (args.contains("export-rdf")) {
             args.removeOptions("--format");
@@ -139,12 +137,12 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-        onExportComplete(outputPath, stats, new GraphSchema());
+    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
+        onExportComplete(directories, stats, new GraphSchema());
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
                 PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE :
@@ -152,7 +150,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
             for (TrainingDataWriterConfigV2 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
-                createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
+                createTrainingJobConfigurationFile(trainingJobWriterConfig, directories.rootDirectory(), graphSchema, propertyName, transferManager);
             }
         }
     }

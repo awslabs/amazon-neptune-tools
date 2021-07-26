@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.PropertyGraphTrainingDataConfigWriterV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.TrainingDataWriterConfigV1;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
@@ -98,7 +99,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
     }
 
     @Override
-    public void onBeforeExport(Args args) {
+    public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
 
         if (args.contains("export-pg")) {
 
@@ -137,12 +138,12 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
         //Do nothing
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
                 PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :
@@ -150,7 +151,7 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
 
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
             for (TrainingDataWriterConfigV1 trainingJobWriterConfig : trainingJobWriterConfigCollection) {
-                createTrainingJobConfigurationFile(trainingJobWriterConfig, outputPath, graphSchema, propertyName, transferManager);
+                createTrainingJobConfigurationFile(trainingJobWriterConfig, directories.rootDirectory(), graphSchema, propertyName, transferManager);
             }
         }
     }

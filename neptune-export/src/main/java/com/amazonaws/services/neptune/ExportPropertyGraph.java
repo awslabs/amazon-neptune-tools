@@ -117,8 +117,8 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                     System.err.println();
                     System.err.println(stats.formatStats(graphSchema));
 
-                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, stats, graphSchema);
+                    directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(directories, stats, graphSchema);
 
                 }
             });

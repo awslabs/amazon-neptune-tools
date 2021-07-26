@@ -61,8 +61,12 @@ public class RdfTargetModule implements CommandWriter {
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 
+    @Option(name = {"--partition-directories"}, description = "Partition directory path (e.g. 'year=2021/month=07/day=21').")
+    @Once
+    private String partitionDirectories = "";
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
-        return Directories.createFor(directoryStructure, directory, exportId, tag );
+        return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
 
     public RdfTargetConfig config(Directories directories) {

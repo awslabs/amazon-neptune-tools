@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
+import com.amazonaws.services.neptune.propertygraph.TokenPrefix;
 import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.JsonPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
@@ -36,16 +37,22 @@ public class PrinterOptionsModule {
     @Once
     private String multiValueSeparator = ";";
 
+    @Option(name = {"--token-prefix"}, description = "Token prefix (optional, default '~').")
+    @Once
+    private String tokenPrefix = "~";
+
     public PrinterOptions config(){
 
         CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder()
                 .setMultiValueSeparator(multiValueSeparator)
                 .setIncludeTypeDefinitions(!excludeTypeDefinitions)
                 .setEscapeCsvHeaders(escapeCsvHeaders)
+                .setTokenPrefix(new TokenPrefix(tokenPrefix))
                 .build();
 
         JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder()
                 .setStrictCardinality(strictCardinality)
+                .setTokenPrefix(new TokenPrefix(tokenPrefix))
                 .build();
 
         return new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);

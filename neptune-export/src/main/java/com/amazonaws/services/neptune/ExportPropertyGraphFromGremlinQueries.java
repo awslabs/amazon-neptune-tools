@@ -121,8 +121,8 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
                     queriesResource.writeResourcePathAsMessage(target);
 
-                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, new ExportStats());
+                    directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(directories, new ExportStats());
 
                 }
             });

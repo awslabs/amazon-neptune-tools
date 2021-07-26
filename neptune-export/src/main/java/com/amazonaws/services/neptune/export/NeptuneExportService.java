@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.services.neptune.profiles.incremental_export.IncrementalExportEventHandler;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV2;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
@@ -31,9 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 
 public class NeptuneExportService {
@@ -42,6 +41,7 @@ public class NeptuneExportService {
 
     public static final List<Tag> NEPTUNE_EXPORT_TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
     public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
+    public static final String INCREMENTAL_EXPORT_PROFILE_NAME = "incremental_export";
 
     private final String cmd;
     private final String localOutputPath;
@@ -144,15 +144,22 @@ public class NeptuneExportService {
 
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection();
 
+        Collection<CompletionFileWriter> completionFileWriters = new ArrayList<>();
+        ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams =
+                new ExportToS3NeptuneExportEventHandler.S3UploadParams()
+                .setCreateExportSubdirectory(createExportSubdirectory)
+                .setOverwriteExisting(overwriteExisting);
+
         ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
                 s3Region,
-                createExportSubdirectory,
                 completionFileS3Path,
                 completionFilePayload,
                 uploadToS3OnError,
-                profiles);
+                s3UploadParams,
+                profiles,
+                completionFileWriters);
 
         eventHandlerCollection.addHandler(eventHandler);
 
@@ -187,7 +194,14 @@ public class NeptuneExportService {
 
         }
 
-        eventHandlerCollection.onBeforeExport(args);
+        if (profiles.contains(INCREMENTAL_EXPORT_PROFILE_NAME)) {
+
+            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler();
+            completionFileWriters.add(incrementalExportEventHandler);
+            eventHandlerCollection.addHandler(incrementalExportEventHandler);
+        }
+
+        eventHandlerCollection.onBeforeExport(args, s3UploadParams);
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 

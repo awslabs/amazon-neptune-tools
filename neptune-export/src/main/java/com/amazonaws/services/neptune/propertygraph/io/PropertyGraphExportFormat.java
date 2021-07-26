@@ -158,6 +158,33 @@ public enum PropertyGraphExportFormat implements FileExtension {
         public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
             return RewriteCommand.NULL_COMMAND;
         }
+    },
+    neptuneStreamsSimpleJson {
+        @Override
+        public String extension() {
+            return "json";
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            JsonGenerator generator = createJsonGenerator(writer, "");
+            return new NeptuneStreamsSimpleJsonPropertyGraphPrinter(writer, generator);
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            return createPrinter(writer, labelSchema, printerOptions);
+        }
+
+        @Override
+        public String description() {
+            return "JSON (Neptune Streams simple format)";
+        }
+
+        @Override
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+            return RewriteCommand.NULL_COMMAND;
+        }
     };
 
     private static JsonGenerator createJsonGenerator(OutputWriter writer, String s) throws IOException {

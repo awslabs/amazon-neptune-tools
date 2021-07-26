@@ -25,9 +25,9 @@ public class EdgesWriterFactory implements WriterFactory<Map<String, Object>> {
         PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForEdges(name, labelSchema);
 
         if (labelSchema.label().hasFromAndToLabels()){
-            propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to", "~fromLabels", "~toLabels");
+            propertyGraphPrinter.printHeaderMandatoryColumns("id", "label", "from", "to", "fromLabels", "toLabels");
         } else {
-            propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label", "~from", "~to");
+            propertyGraphPrinter.printHeaderMandatoryColumns("id", "label", "from", "to");
         }
 
         propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());

@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -47,6 +48,37 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHandler {
 
+    public static class S3UploadParams {
+        private boolean createExportSubdirectory = true;
+        private boolean overwriteExisting = false;
+
+        public boolean createExportSubdirectory() {
+            return createExportSubdirectory;
+        }
+
+        public S3UploadParams setCreateExportSubdirectory(boolean createExportSubdirectory) {
+            this.createExportSubdirectory = createExportSubdirectory;
+            return this;
+        }
+
+        public boolean overwriteExisting() {
+            return overwriteExisting;
+        }
+
+        public S3UploadParams setOverwriteExisting(boolean overwriteExisting) {
+            this.overwriteExisting = overwriteExisting;
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "{" +
+                    "createExportSubdirectory=" + createExportSubdirectory +
+                    ", overwriteExisting=" + overwriteExisting +
+                    '}';
+        }
+    }
+
     public static ObjectTagging createObjectTags(Collection<String> profiles) {
         List<Tag> tags = new ArrayList<>(NEPTUNE_EXPORT_TAGS);
         if (!profiles.isEmpty()) {
@@ -61,41 +93,44 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     private final String localOutputPath;
     private final String outputS3Path;
     private final String s3Region;
-    private final boolean createExportSubdirectory;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
     private final boolean uploadToS3OnError;
+    private final S3UploadParams s3UploadParams;
     private final Collection<String> profiles;
+    private final Collection<CompletionFileWriter> completionFileWriters;
     private final AtomicReference<S3ObjectInfo> result = new AtomicReference<>();
 
     public ExportToS3NeptuneExportEventHandler(String localOutputPath,
                                                String outputS3Path,
                                                String s3Region,
-                                               boolean createExportSubdirectory,
                                                String completionFileS3Path,
                                                ObjectNode completionFilePayload,
                                                boolean uploadToS3OnError,
-                                               Collection<String> profiles) {
+                                               S3UploadParams s3UploadParams,
+                                               Collection<String> profiles,
+                                               Collection<CompletionFileWriter> completionFileWriters) {
         this.localOutputPath = localOutputPath;
         this.outputS3Path = outputS3Path;
         this.s3Region = s3Region;
-        this.createExportSubdirectory = createExportSubdirectory;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
         this.uploadToS3OnError = uploadToS3OnError;
+        this.s3UploadParams = s3UploadParams;
         this.profiles = profiles;
+        this.completionFileWriters = completionFileWriters;
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-        onExportComplete(outputPath, stats, new GraphSchema());
+    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
+        onExportComplete(directories, stats, new GraphSchema());
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
 
         try {
-            long size = Files.walk(outputPath).mapToLong(p -> p.toFile().length()).sum();
+            long size = Files.walk(directories.rootDirectory()).mapToLong(p -> p.toFile().length()).sum();
             logger.info("Total size of exported files: {}", FileUtils.byteCountToDisplaySize(size));
         } catch (Exception e) {
             // Ignore
@@ -105,12 +140,15 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             return;
         }
 
+        logger.info("S3 upload params: {}", s3UploadParams);
+
         try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
 
-            File outputDirectory = outputPath.toFile();
+            File outputDirectory = directories.rootDirectory().toFile();
             S3ObjectInfo outputS3ObjectInfo = calculateOutputS3Path(outputDirectory);
 
             Timer.timedActivity("uploading files to S3", (CheckedActivity.Runnable) () -> {
+                deleteS3Directories(directories, outputS3ObjectInfo);
                 uploadExportFilesToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo);
                 uploadCompletionFileToS3(transferManager.get(), outputDirectory, outputS3ObjectInfo, stats, graphSchema);
             });
@@ -126,7 +164,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     @Override
     public void onError() {
 
-        if (!uploadToS3OnError){
+        if (!uploadToS3OnError) {
             return;
         }
 
@@ -165,13 +203,13 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     }
 
     private void uploadGcLogToS3(TransferManager transferManager,
-                                          File directory,
-                                          S3ObjectInfo outputS3ObjectInfo) throws IOException {
+                                 File directory,
+                                 S3ObjectInfo outputS3ObjectInfo) throws IOException {
 
 
         File gcLog = new File(directory, "./../gc.log");
 
-        if (!gcLog.exists()){
+        if (!gcLog.exists()) {
             logger.warn("Ignoring request to upload GC log to S3 because GC log does not exist");
             return;
         }
@@ -201,7 +239,8 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
     private S3ObjectInfo calculateOutputS3Path(File outputDirectory) {
         S3ObjectInfo outputBaseS3ObjectInfo = new S3ObjectInfo(outputS3Path);
-        if (createExportSubdirectory) {
+
+        if (s3UploadParams.createExportSubdirectory()) {
             return outputBaseS3ObjectInfo.withNewKeySuffix(outputDirectory.getName());
         } else {
             return outputBaseS3ObjectInfo;
@@ -223,12 +262,19 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             return;
         }
 
-        File completionFile = new File(localOutputPath, directory.getName() + ".json");
+        String completionFilename = s3UploadParams.createExportSubdirectory() ?
+                directory.getName() :
+                String.valueOf(System.currentTimeMillis());
+        File completionFile = new File(localOutputPath, completionFilename + ".json");
 
         ObjectNode neptuneExportNode = JsonNodeFactory.instance.objectNode();
         completionFilePayload.set("neptuneExport", neptuneExportNode);
         neptuneExportNode.put("outputS3Path", outputS3ObjectInfo.toString());
         stats.addTo(neptuneExportNode, graphSchema);
+
+        for (CompletionFileWriter completionFileWriter : completionFileWriters) {
+            completionFileWriter.updateCompletionFile(completionFilePayload);
+        }
 
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(completionFile), UTF_8))) {
             ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -270,7 +316,10 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             return;
         }
 
+
         try {
+
+            //deleteS3Directories(directory, outputS3ObjectInfo);
 
             ObjectMetadataProvider metadataProvider = (file, objectMetadata) -> {
                 objectMetadata.setContentLength(file.length());
@@ -278,6 +327,8 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             };
 
             ObjectTaggingProvider taggingProvider = uploadContext -> createObjectTags(profiles);
+
+            logger.info("Uploading export files to {}", outputS3ObjectInfo.key());
 
             MultipleFileUpload upload = transferManager.uploadDirectory(
                     outputS3ObjectInfo.bucket(),
@@ -293,4 +344,20 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             Thread.currentThread().interrupt();
         }
     }
+
+    private void deleteS3Directories(Directories directories, S3ObjectInfo outputS3ObjectInfo) {
+
+        if (!s3UploadParams.overwriteExisting()) {
+            return;
+        }
+
+        List<S3ObjectInfo> leafS3Directories = new ArrayList<>();
+
+        Path rootDirectory = directories.rootDirectory();
+        for (Path subdirectory : directories.subdirectories()) {
+            String newKey = rootDirectory.relativize(subdirectory).toString();
+            leafS3Directories.add(outputS3ObjectInfo.withNewKeySuffix(newKey));
+        }
+    }
+
 }

@@ -67,8 +67,8 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
                         job.execute();
                     }
 
-                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, new ExportStats());
+                    directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(directories, new ExportStats());
 
                 }
             });

@@ -12,11 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -46,12 +46,12 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
         boolean error = false;
 
         for (NeptuneExportEventHandler handler : exportHandlers) {
             try {
-                handler.onExportComplete(outputPath, stats);
+                handler.onExportComplete(directories, stats);
             } catch (Exception e) {
                 error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);
@@ -64,12 +64,12 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
         boolean error = false;
 
         for (NeptuneExportEventHandler handler : exportHandlers) {
             try {
-                handler.onExportComplete(outputPath, stats, graphSchema);
+                handler.onExportComplete(directories, stats, graphSchema);
             } catch (Exception e) {
                 error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);
@@ -82,12 +82,12 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
-    public void onBeforeExport(Args args) {
+    public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
         boolean error = false;
 
         for (NeptuneExportServiceEventHandler handler : serviceHandlers) {
             try {
-                handler.onBeforeExport(args);
+                handler.onBeforeExport(args, s3UploadParams);
             } catch (Exception e) {
                 error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);

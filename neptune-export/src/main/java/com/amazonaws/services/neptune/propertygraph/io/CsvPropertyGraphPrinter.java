@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.propertygraph.TokenPrefix;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
@@ -56,9 +57,10 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
         if (printerOptions.csv().includeHeaders() && writer.isNewTarget()) {
+            TokenPrefix tokenPrefix = printerOptions.csv().tokenPrefix();
             for (String column : columns) {
                 commaPrinter.printComma();
-                writer.print(column);
+                writer.print(tokenPrefix.format(column));
             }
         }
     }

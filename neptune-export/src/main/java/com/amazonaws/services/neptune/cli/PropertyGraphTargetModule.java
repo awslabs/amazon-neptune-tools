@@ -70,8 +70,12 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private boolean perLabelDirectories = false;
 
+    @Option(name = {"--partition-directories"}, description = "Partition directory path (e.g. 'year=2021/month=07/day=21').")
+    @Once
+    private String partitionDirectories = "";
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
-        return Directories.createFor(directoryStructure, directory, exportId, tag );
+        return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
 
     public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions, boolean inferSchema){

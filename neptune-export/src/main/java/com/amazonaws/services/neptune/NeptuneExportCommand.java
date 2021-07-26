@@ -17,12 +17,12 @@ import com.amazonaws.services.neptune.cli.FeatureToggleModule;
 import com.amazonaws.services.neptune.cli.ProfilesModule;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 
 public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand implements NeptuneExportEventHandler, NeptuneExportEventHandlerHost {
 
@@ -42,12 +42,12 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
         this.eventHandler = eventHandler;
     }
 
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
-        eventHandler.onExportComplete(outputPath, stats, graphSchema);
+    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
+        eventHandler.onExportComplete(directories, stats, graphSchema);
     }
 
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-        eventHandler.onExportComplete(outputPath, stats);
+    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
+        eventHandler.onExportComplete(directories, stats);
     }
 
     public void onError() {

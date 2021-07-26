@@ -1,5 +1,5 @@
 /*
-Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -10,10 +10,21 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
+package com.amazonaws.services.neptune.propertygraph;
 
-package com.amazonaws.services.neptune.export;
+public class TokenPrefix {
 
-public interface NeptuneExportServiceEventHandler extends NeptuneExportEventHandler
-{
-    void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams);
+    private final String prefix;
+
+    public TokenPrefix() {
+        this("~");
+    }
+
+    public TokenPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String format(String s) {
+        return String.format("%s%s", prefix, s);
+    }
 }
