@@ -150,7 +150,7 @@ public class NeptuneExportService {
                 .setCreateExportSubdirectory(createExportSubdirectory)
                 .setOverwriteExisting(overwriteExisting);
 
-        ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
+        ExportToS3NeptuneExportEventHandler exportToS3EventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
                 s3Region,
@@ -161,7 +161,7 @@ public class NeptuneExportService {
                 profiles,
                 completionFileWriters);
 
-        eventHandlerCollection.addHandler(eventHandler);
+        eventHandlerCollection.addHandler(exportToS3EventHandler);
 
         if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)) {
 
@@ -201,13 +201,14 @@ public class NeptuneExportService {
             eventHandlerCollection.addHandler(incrementalExportEventHandler);
         }
 
+
         eventHandlerCollection.onBeforeExport(args, s3UploadParams);
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 
-        return eventHandler.result();
+        return exportToS3EventHandler.result();
     }
 
     private void checkS3OutputIsEmpty() {

@@ -1,5 +1,6 @@
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.FeatureToggle;
@@ -137,12 +138,12 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
-        onExportComplete(directories, stats, new GraphSchema());
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
+        onExportComplete(directories, stats, cluster, new GraphSchema());
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
                 PropertyGraphTrainingDataConfigWriterV2.COLUMN_NAME_WITHOUT_DATATYPE :

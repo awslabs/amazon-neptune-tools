@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -32,7 +32,6 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,7 +87,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
         try {
             Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
                     JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?
@@ -103,13 +102,13 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
                     directories.createResultsSubdirectories(namedQueries.names());
 
-                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          NeptuneGremlinClient.QueryClient queryClient = client.queryClient()) {
 
                         QueryJob queryJob = new QueryJob(
                                 namedQueries.flatten(),
                                 queryClient,
-                                clusterStrategy.concurrencyConfig(),
+                                cluster.concurrencyConfig(),
                                 targetConfig,
                                 twoPassAnalysis,
                                 timeoutMillis);
@@ -122,7 +121,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
                     queriesResource.writeResourcePathAsMessage(target);
 
                     directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(directories, new ExportStats());
+                    onExportComplete(directories, new ExportStats(), cluster);
 
                 }
             });

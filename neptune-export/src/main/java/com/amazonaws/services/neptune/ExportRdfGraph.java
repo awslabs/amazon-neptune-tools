@@ -16,7 +16,7 @@ import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
 import com.amazonaws.services.neptune.cli.RdfExportScopeModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
@@ -29,7 +29,6 @@ import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.help.Examples;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output "},
@@ -57,18 +56,18 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
 
         try {
             Timer.timedActivity(String.format("exporting rdf %s", exportScope.scope()), (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.Rdf);
 
-                    try (NeptuneSparqlClient client = NeptuneSparqlClient.create(clusterStrategy.connectionConfig())) {
+                    try (NeptuneSparqlClient client = NeptuneSparqlClient.create(cluster.connectionConfig())) {
 
                         ExportRdfJob job = exportScope.createJob(client, target.config(directories));
                         job.execute();
                     }
 
                     directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(directories, new ExportStats());
+                    onExportComplete(directories, new ExportStats(), cluster);
 
                 }
             });

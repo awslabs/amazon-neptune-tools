@@ -77,10 +77,10 @@ public class CloneClusterModule {
         this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
-    public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, FeatureToggles featureToggles) throws Exception {
+    public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, FeatureToggles featureToggles) throws Exception {
         if (cloneCluster){
             if (featureToggles.containsFeature(FeatureToggle.Simulate_Cloned_Cluster)){
-                return new SimulatedCloneCluster().cloneCluster(connectionConfig, concurrencyConfig);
+                return new SimulatedCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);
             } else {
 
                 CloneCluster command = new CloneCluster(
@@ -92,7 +92,7 @@ public class CloneClusterModule {
                 return command.cloneCluster(connectionConfig, concurrencyConfig);
             }
         } else {
-            return new DoNotCloneCluster().cloneCluster(connectionConfig, concurrencyConfig);
+            return new DoNotCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);
         }
     }
 }

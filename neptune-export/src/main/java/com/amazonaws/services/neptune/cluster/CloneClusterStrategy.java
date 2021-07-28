@@ -14,6 +14,6 @@ package com.amazonaws.services.neptune.cluster;
 
 public interface CloneClusterStrategy {
 
-    ClusterStrategy cloneCluster(ConnectionConfig connectionConfig,
-                                 ConcurrencyConfig concurrencyConfig) throws Exception;
+    Cluster cloneCluster(ConnectionConfig connectionConfig,
+                         ConcurrencyConfig concurrencyConfig) throws Exception;
 }

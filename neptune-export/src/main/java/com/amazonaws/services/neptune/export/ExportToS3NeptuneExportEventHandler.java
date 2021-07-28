@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -122,12 +123,12 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
-        onExportComplete(directories, stats, new GraphSchema());
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
+        onExportComplete(directories, stats, cluster, new GraphSchema());
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
 
         try {
             long size = Files.walk(directories.rootDirectory()).mapToLong(p -> p.toFile().length()).sum();

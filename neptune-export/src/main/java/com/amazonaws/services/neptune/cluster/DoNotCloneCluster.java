@@ -12,10 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.services.neptune.AmazonNeptune;
+
+import java.util.function.Supplier;
+
 public class DoNotCloneCluster implements CloneClusterStrategy {
+
+    private final Supplier<AmazonNeptune> clientSupplier;
+
+    public DoNotCloneCluster(Supplier<AmazonNeptune> clientSupplier) {
+        this.clientSupplier = clientSupplier;
+    }
+
     @Override
-    public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
-        return new ClusterStrategy() {
+    public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
+        return new Cluster() {
             @Override
             public ConnectionConfig connectionConfig() {
                 return connectionConfig;
@@ -24,6 +35,11 @@ public class DoNotCloneCluster implements CloneClusterStrategy {
             @Override
             public ConcurrencyConfig concurrencyConfig() {
                 return concurrencyConfig;
+            }
+
+            @Override
+            public Supplier<AmazonNeptune> clientSupplier() {
+                return clientSupplier;
             }
 
             @Override

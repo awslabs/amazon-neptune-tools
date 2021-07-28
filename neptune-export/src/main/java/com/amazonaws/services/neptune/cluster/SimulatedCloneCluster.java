@@ -12,13 +12,24 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
+import com.amazonaws.services.neptune.AmazonNeptune;
+
+import java.util.function.Supplier;
+
 public class SimulatedCloneCluster implements CloneClusterStrategy {
+
+    private final Supplier<AmazonNeptune> clientSupplier;
+
+    public SimulatedCloneCluster(Supplier<AmazonNeptune> clientSupplier) {
+        this.clientSupplier = clientSupplier;
+    }
+
     @Override
-    public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
+    public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
 
         System.err.println("Simulating creating cloned cluster (original cluster will be used)...");
 
-        return new ClusterStrategy() {
+        return new Cluster() {
             @Override
             public ConnectionConfig connectionConfig() {
                 return connectionConfig;
@@ -27,6 +38,11 @@ public class SimulatedCloneCluster implements CloneClusterStrategy {
             @Override
             public ConcurrencyConfig concurrencyConfig() {
                 return concurrencyConfig;
+            }
+
+            @Override
+            public Supplier<AmazonNeptune> clientSupplier() {
+                return clientSupplier;
             }
 
             @Override

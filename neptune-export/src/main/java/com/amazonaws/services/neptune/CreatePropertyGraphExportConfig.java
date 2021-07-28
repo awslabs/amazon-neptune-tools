@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -29,7 +29,6 @@ import com.github.rvesse.airline.annotations.help.Examples;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 import java.util.Collection;
 
 @Examples(examples = {
@@ -70,14 +69,14 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
 
         try {
             Timer.timedActivity("creating property graph config", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     ExportStats stats = new ExportStats();
                     Directories directories = target.createDirectories(DirectoryStructure.Config);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
                     Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, featureToggles());
 
-                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
 
                         CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
@@ -88,7 +87,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
                     }
 
                     directories.writeConfigFilePathAsReturnValue(target);
-                    onExportComplete(directories, stats);
+                    onExportComplete(directories, stats, cluster);
 
                 }
             });

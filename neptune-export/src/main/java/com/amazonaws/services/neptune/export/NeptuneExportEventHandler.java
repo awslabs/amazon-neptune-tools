@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -26,19 +27,19 @@ public interface NeptuneExportEventHandler {
         }
 
         @Override
-        public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
+        public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
             //Do nothing
         }
 
         @Override
-        public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
+        public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
             //Do nothing
         }
     };
 
     void onError();
 
-    void onExportComplete(Directories directories, ExportStats stats) throws Exception;
+    void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception;
 
-    void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception;
+    void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception;
 }

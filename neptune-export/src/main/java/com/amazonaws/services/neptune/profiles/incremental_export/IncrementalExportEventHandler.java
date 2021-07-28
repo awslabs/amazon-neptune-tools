@@ -12,6 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.incremental_export;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.CompletionFileWriter;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
@@ -20,13 +24,24 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.util.CheckedActivity;
+import com.amazonaws.services.neptune.util.Timer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class IncrementalExportEventHandler implements NeptuneExportServiceEventHandler, CompletionFileWriter {
 
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IncrementalExportEventHandler.class);
+
     private final long timestamp;
+    private final AtomicLong commitNum = new AtomicLong(0);
+    private final AtomicLong opNum = new AtomicLong(0);
 
     public IncrementalExportEventHandler() {
         this.timestamp = System.currentTimeMillis();
@@ -41,10 +56,14 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
         partition.put("value", String.valueOf(timestamp));
         partitions.add(partition);
 
+        ObjectNode lastEventId = JsonNodeFactory.instance.objectNode();
+        lastEventId.put("commitNum", commitNum.get());
+        lastEventId.put("opNum", opNum.get());
 
         ObjectNode incrementalExportNode = JsonNodeFactory.instance.objectNode();
         completionFilePayload.set("incrementalExport", incrementalExportNode);
-        incrementalExportNode.put("partitions", partitions);
+        incrementalExportNode.set("partitions", partitions);
+        incrementalExportNode.set("lastEventId", lastEventId);
     }
 
     @Override
@@ -76,12 +95,49 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
         // Do nothing
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
-        // Do nothing
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
+        NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(cluster.connectionConfig().clusterId(), cluster.clientSupplier());
+
+        if (clusterMetadata.isStreamEnabled()) {
+            Timer.timedActivity("getting LastEventId from stream", (CheckedActivity.Runnable) () -> getLastEventIdFromStream(clusterMetadata));
+        }
+    }
+
+    private void getLastEventIdFromStream(NeptuneClusterMetadata clusterMetadata) {
+        String streamsEndpoint = String.format("https://%s:%s/gremlin/stream", clusterMetadata.endpoints().get(0), clusterMetadata.port());
+        logger.info("Streams endpoint: {}", streamsEndpoint);
+
+        try {
+
+            String region = new DefaultAwsRegionProviderChain().getRegion();
+            NeptuneHttpsClient neptuneHttpsClient = new NeptuneHttpsClient(streamsEndpoint, region);
+
+            Map<String, String> params = new HashMap<>();
+            params.put("commitNum", String.valueOf(Long.MAX_VALUE));
+            params.put("limit", "1");
+
+            HttpResponse httpResponse = neptuneHttpsClient.get(params);
+
+            logger.info(httpResponse.getContent());
+
+        } catch (AmazonServiceException e) {
+
+            if (e.getErrorCode().equals("StreamRecordsNotFoundException")){
+                StreamRecordsNotFoundExceptionParser.LastEventId lastEventId = StreamRecordsNotFoundExceptionParser.parseLastEventId(e.getErrorMessage());
+                commitNum.set(lastEventId.commitNum());
+                opNum.set(lastEventId.opNum());
+                logger.info("LastEventId: {}", lastEventId);
+            } else {
+                logger.error("Error while accessing Neptune Streams endpoint", e);
+            }
+
+        } catch (Exception e){
+            logger.error("Error while accessing Neptune Streams endpoint", e);
+        }
     }
 }

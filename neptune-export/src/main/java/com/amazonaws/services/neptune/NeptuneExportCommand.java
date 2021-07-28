@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune;
 import com.amazonaws.services.neptune.cli.AwsCliModule;
 import com.amazonaws.services.neptune.cli.FeatureToggleModule;
 import com.amazonaws.services.neptune.cli.ProfilesModule;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.export.NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.io.Directories;
@@ -42,12 +43,12 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
         this.eventHandler = eventHandler;
     }
 
-    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
-        eventHandler.onExportComplete(directories, stats, graphSchema);
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
+        eventHandler.onExportComplete(directories, stats, cluster, graphSchema);
     }
 
-    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
-        eventHandler.onExportComplete(directories, stats);
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
+        eventHandler.onExportComplete(directories, stats, cluster);
     }
 
     public void onError() {

@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
@@ -138,12 +139,12 @@ public class NeptuneMachineLearningExportEventHandlerV1 implements NeptuneExport
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
         //Do nothing
     }
 
     @Override
-    public void onExportComplete(Directories directories, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
 
         PropertyName propertyName = args.contains("--exclude-type-definitions") ?
                 PropertyGraphTrainingDataConfigWriterV1.COLUMN_NAME_WITHOUT_DATATYPE :

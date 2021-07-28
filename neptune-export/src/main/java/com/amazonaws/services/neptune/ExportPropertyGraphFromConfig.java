@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -30,7 +30,6 @@ import com.github.rvesse.airline.annotations.help.Examples;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 import java.util.Collection;
 
 @Examples(examples = {
@@ -75,7 +74,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
         try {
             Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
@@ -87,7 +86,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
                     Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
 
-                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
 
                         ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
@@ -95,7 +94,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                                 graphSchema,
                                 g,
                                 range.config(),
-                                clusterStrategy.concurrencyConfig(),
+                                cluster.concurrencyConfig(),
                                 targetConfig);
 
                         graphSchema = exportJob.execute();
@@ -110,7 +109,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                     System.err.println(stats.formatStats(graphSchema));
 
                     directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(directories, stats, graphSchema);
+                    onExportComplete(directories, stats, cluster, graphSchema);
                 }
             });
         } catch (Exception e) {
