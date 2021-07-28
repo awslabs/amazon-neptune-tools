@@ -28,7 +28,10 @@ public class ParamConverter {
     }
 
     public static String singularize(String v) {
-        if (v.endsWith("s")) {
+        if (v.endsWith("ies")) {
+            return String.format("%sy", v.substring(0, v.length() - 3));
+        }
+        else if (v.endsWith("s")) {
             return v.substring(0, v.length() - 1);
         } else {
             return v;

@@ -21,14 +21,21 @@ import com.amazonaws.services.neptune.util.Timer;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.Reader;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class RewriteAndMergeCsv implements RewriteCommand {
+
+    private static final Logger logger = LoggerFactory.getLogger(RewriteAndMergeCsv.class);
 
     private final PropertyGraphTargetConfig targetConfig;
     private final ConcurrencyConfig concurrencyConfig;
@@ -40,7 +47,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
     @Override
     public MasterLabelSchemas execute(MasterLabelSchemas masterLabelSchemas) throws Exception {
-        GraphElementType<?> graphElementType = masterLabelSchemas.graphElementType();
+        GraphElementType graphElementType = masterLabelSchemas.graphElementType();
 
         System.err.println(String.format("Rewriting and merging %s files...", graphElementType.name()));
 
@@ -50,7 +57,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
     }
 
     private MasterLabelSchemas rewriteFiles(MasterLabelSchemas masterLabelSchemas,
-                                            GraphElementType<?> graphElementType,
+                                            GraphElementType graphElementType,
                                             PropertyGraphTargetConfig targetConfig) throws Exception {
 
         Map<Label, MasterLabelSchema> updatedSchemas = new HashMap<>();
@@ -85,24 +92,23 @@ public class RewriteAndMergeCsv implements RewriteCommand {
     }
 
     private MasterLabelSchema rewriteAndMerge(PropertyGraphTargetConfig targetConfig,
-                                              GraphElementType<?> graphElementType,
+                                              GraphElementType graphElementType,
                                               MasterLabelSchema masterLabelSchema) throws Exception {
 
         LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
         masterSchema.initStats();
 
-        String filename = Directories.fileName(String.format("%s.%s",
-                masterSchema.label().fullyQualifiedLabel(),
-                targetConfig.format().suffix()));
+        String targetFilename = Directories.fileName(String.format("%s.consolidated",
+                masterSchema.label().fullyQualifiedLabel()));
 
-        RenameableFiles renameableFiles = new RenameableFiles();
+        Collection<String> renamedFiles = new ArrayList<>();
 
         try (PropertyGraphPrinter printer = graphElementType.writerFactory().createPrinter(
-                filename,
+                targetFilename,
                 masterSchema,
                 targetConfig.forFileConsolidation())) {
 
-            renameableFiles.add(new File(printer.outputId()), filename);
+            renamedFiles.add(printer.outputId());
 
             for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
 
@@ -125,6 +131,8 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                             graphElementType.tokenNames().toArray(new String[]{}),
                             ArrayUtils.addAll(additionalElementHeaders, filePropertyHeaders));
 
+                    logger.info("File: {}, Headers: [{}]", fileSpecificLabelSchema.outputId(), fileHeaders);
+
                     try (Reader in = file.reader()) {
 
                         CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
@@ -133,7 +141,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                         for (CSVRecord record : records) {
                             printer.printStartRow();
 
-                            if (graphElementType.equals(GraphElementTypes.Nodes)) {
+                            if (graphElementType.equals(GraphElementType.nodes)) {
                                 printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                             } else {
                                 if (label.hasFromAndToLabels()) {
@@ -153,17 +161,19 @@ public class RewriteAndMergeCsv implements RewriteCommand {
                             printer.printEndRow();
                         }
 
+                    } catch (Exception e) {
+                        logger.error("Error while rewriting file: {}", fileSpecificLabelSchema.outputId(), e);
+                        file.doNotDelete();
+                        throw e;
                     }
                 }
             }
 
         }
 
-        renameableFiles.rename();
-
         return new MasterLabelSchema(
                 masterSchema,
-                Collections.singletonList(new FileSpecificLabelSchema(filename, targetConfig.format(), masterSchema)));
+                renamedFiles.stream().map(f -> new FileSpecificLabelSchema(f, targetConfig.format(), masterSchema)).collect(Collectors.toList()));
     }
 
 }

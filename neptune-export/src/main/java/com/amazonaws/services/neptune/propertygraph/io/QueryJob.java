@@ -13,18 +13,18 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.NamedQuery;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.util.Activity;
+import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class QueryJob {
     private final Queue<NamedQuery> queries;
@@ -49,16 +49,18 @@ public class QueryJob {
     }
 
     public void execute() throws Exception {
-        Timer.timedActivity("exporting results from queries", (Activity.Runnable) this::export);
+        Timer.timedActivity("exporting results from queries", (CheckedActivity.Runnable) this::export);
     }
 
-    private void export() {
+    private void export() throws ExecutionException, InterruptedException {
 
         System.err.println("Writing query results to " + targetConfig.output().name() + " as " + targetConfig.format().description());
 
-        Status status = new Status();
+        Status status = new Status(StatusOutputFormat.Description, "query results");
 
         ExecutorService taskExecutor = Executors.newFixedThreadPool(concurrencyConfig.concurrency());
+
+        Collection<Future<Object>> futures = new ArrayList<>();
 
         for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
             QueryTask queryTask = new QueryTask(
@@ -69,7 +71,7 @@ public class QueryJob {
                     timeoutMillis,
                     status,
                     index);
-            taskExecutor.execute(queryTask);
+            futures.add(taskExecutor.submit(queryTask));
         }
 
         taskExecutor.shutdown();
@@ -79,6 +81,16 @@ public class QueryJob {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
+        }
+
+        for (Future<Object> future : futures) {
+            if (future.isCancelled()) {
+                throw new IllegalStateException("Unable to complete job because at least one task was cancelled");
+            }
+            if (!future.isDone()) {
+                throw new IllegalStateException("Unable to complete job because at least one task has not completed");
+            }
+            future.get();
         }
     }
 }

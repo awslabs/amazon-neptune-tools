@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -48,20 +48,29 @@ public class RdfTargetModule implements CommandWriter {
     @Once
     private String streamName;
 
-    @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
+    @Option(name = {"--region", "--stream-region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
     @Once
     private String region;
 
-    @Option(name = {"--export-id"}, description = "Export ID", hidden = true)
+    @Option(name = {"--stream-large-record-strategy"}, description = "Strategy for dealing with records to be sent to Amazon Kinesis that are larger than 1 MB.")
+    @Once
+    @AllowedEnumValues(LargeStreamRecordHandlingStrategy.class)
+    private LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy = LargeStreamRecordHandlingStrategy.splitAndShred;
+
+    @Option(name = {"--export-id"}, description = "Export ID")
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 
+    @Option(name = {"--partition-directories"}, description = "Partition directory path (e.g. 'year=2021/month=07/day=21').")
+    @Once
+    private String partitionDirectories = "";
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
-        return Directories.createFor(directoryStructure, directory, exportId, tag );
+        return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
 
     public RdfTargetConfig config(Directories directories) {
-        return new RdfTargetConfig(directories, new KinesisConfig(streamName, region), output, format);
+        return new RdfTargetConfig(directories, new KinesisConfig(streamName, region, largeStreamRecordHandlingStrategy), output, format);
     }
 
     @Override

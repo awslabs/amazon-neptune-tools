@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -14,21 +14,21 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cli.CommonConnectionModule;
+import com.amazonaws.services.neptune.cli.RdfExportScopeModule;
 import com.amazonaws.services.neptune.cli.RdfTargetModule;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
-import com.amazonaws.services.neptune.rdf.io.ExportRdfGraphJob;
+import com.amazonaws.services.neptune.rdf.ExportRdfJob;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.help.Examples;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 
 @Examples(examples = {
         "bin/neptune-export.sh export-rdf -e neptunedbcluster-xxxxxxxxxxxx.cluster-yyyyyyyyyyyy.us-east-1.neptune.amazonaws.com -d /home/ec2-user/output "},
@@ -36,8 +36,8 @@ import java.nio.file.Path;
         descriptions = {
                 "Export all data to the /home/ec2-user/output directory"
         })
-@Command(name = "export-rdf", description = "Export RDF graph from Neptune to Turtle.")
-public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable {
+@Command(name = "export-rdf", description = "Export RDF graph from Neptune.")
+public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
@@ -48,23 +48,26 @@ public class ExportRdfGraph extends NeptuneExportBaseCommand implements Runnable
     @Inject
     private RdfTargetModule target = new RdfTargetModule();
 
+    @Inject
+    private RdfExportScopeModule exportScope = new RdfExportScopeModule();
+
     @Override
     public void run() {
 
         try {
-            Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1))) {
+            Timer.timedActivity(String.format("exporting rdf %s", exportScope.scope()), (CheckedActivity.Runnable) () -> {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.Rdf);
 
-                    try (NeptuneSparqlClient client = NeptuneSparqlClient.create(clusterStrategy.connectionConfig())) {
+                    try (NeptuneSparqlClient client = NeptuneSparqlClient.create(cluster.connectionConfig())) {
 
-                        ExportRdfGraphJob job = new ExportRdfGraphJob(client, target.config(directories));
+                        ExportRdfJob job = exportScope.createJob(client, target.config(directories));
                         job.execute();
                     }
 
-                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, new ExportStats());
+                    directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(directories, new ExportStats(), cluster);
 
                 }
             });

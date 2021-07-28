@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileToStreamOutputWriter implements OutputWriter {
 
-
     private final OutputWriter innerOutputWriter;
     private final Path filePath;
     private final Stream stream;
@@ -35,6 +34,11 @@ public class FileToStreamOutputWriter implements OutputWriter {
         this.stream = kinesisConfig.stream();
         this.listener = new ExportListener(stream);
         this.tailer = Tailer.create(filePath.toFile(), listener);
+    }
+
+    @Override
+    public boolean isNewTarget() {
+        return false;
     }
 
     @Override
@@ -71,6 +75,11 @@ public class FileToStreamOutputWriter implements OutputWriter {
     @Override
     public void endOp() {
         innerOutputWriter.endOp();
+    }
+
+    @Override
+    public String lineSeparator() {
+        return innerOutputWriter.lineSeparator();
     }
 
     @Override

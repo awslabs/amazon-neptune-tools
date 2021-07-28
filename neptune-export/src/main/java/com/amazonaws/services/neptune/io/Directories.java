@@ -12,53 +12,81 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.UUID;
+import java.util.List;
 
 public class Directories {
 
-    private final static String REPLACE_REGEX = "[^0-9a-zA-Z\\/\\!\\-_\\.\\*'\\(\\)]";
-
-    public static String fileName(String name, int index){
+    public static String fileName(String name, int index) throws UnsupportedEncodingException {
         String filename = String.format("%s-%s", name, index);
-        return filename.replaceAll(REPLACE_REGEX, "_");
+        return URLEncoder.encode(filename, StandardCharsets.UTF_8.toString());
     }
 
-    public static String fileName(String name){
-        return name.replaceAll(REPLACE_REGEX, "_");
+    public static String fileName(String filename) throws UnsupportedEncodingException {
+        return URLEncoder.encode(filename, StandardCharsets.UTF_8.toString());
     }
 
     private static final String CONFIG_FILE = "config.json";
     private static final String QUERIES_FILE = "queries.json";
 
-    public static Directories createFor(DirectoryStructure directoryStructure, File root, String exportId, String tag) throws IOException {
+    public static Directories createFor(DirectoryStructure directoryStructure,
+                                        File root,
+                                        String exportId,
+                                        String tag,
+                                        String partitionDirectories) throws IOException {
         if (root == null) {
             throw new IllegalArgumentException("You must supply a directory");
         }
 
-        String directoryName = tag.isEmpty() ?
-                exportId :
-                String.format("%s-%s", tag, exportId);
         Path rootDirectory = root.toPath();
+        Path directory;
 
-        Path directory = rootDirectory.resolve(directoryName);
-        Path nodesDirectory = directory.resolve("nodes");
-        Path edgesDirectory = directory.
-                resolve("edges");
-        Path statementsDirectory = directory.resolve("statements");
-        Path resultsDirectory = directory.resolve("results");
+        if (StringUtils.isNotEmpty(partitionDirectories)){
+            directory = rootDirectory;
+        } else {
+            String directoryName = tag.isEmpty() ?
+                    exportId :
+                    String.format("%s-%s", tag, exportId);
+
+            directory = rootDirectory.resolve(directoryName);
+        }
+
+        Path nodesDirectory = createElementDirectory("nodes", directory, partitionDirectories);
+        Path edgesDirectory = createElementDirectory("edges", directory, partitionDirectories);
+        Path statementsDirectory = createElementDirectory("statements", directory, partitionDirectories);
+        Path resultsDirectory = createElementDirectory("results", directory, partitionDirectories);
 
         directoryStructure.createDirectories(directory, nodesDirectory, edgesDirectory, statementsDirectory, resultsDirectory);
 
         return new Directories(directory, nodesDirectory, edgesDirectory, statementsDirectory, resultsDirectory, tag);
+    }
+
+    private static Path createElementDirectory(String name, Path directory, String partitionDirectories){
+        Path elementDirectory = directory.resolve(name);
+        if (StringUtils.isNotEmpty(partitionDirectories)){
+            String[] partitions = partitionDirectories.split("/");
+            for (String partition : partitions) {
+                if (StringUtils.isNotEmpty(partition)){
+                    elementDirectory = elementDirectory.resolve(partition);
+                }
+            }
+        }
+        return elementDirectory;
     }
 
     private final String tag;
@@ -87,6 +115,19 @@ public class Directories {
         return path;
     }
 
+    public Path rootDirectory() {
+        return directory.toAbsolutePath();
+    }
+
+    public Collection<Path> subdirectories(){
+        List<Path> paths = new ArrayList<>();
+        paths.add(nodesDirectory.toAbsolutePath());
+        paths.add(edgesDirectory.toAbsolutePath());
+        paths.add(statementsDirectory.toAbsolutePath());
+        paths.add(resultsDirectory.toAbsolutePath());
+        return paths;
+    }
+
     public Path writeConfigFilePathAsReturnValue(CommandWriter writer){
         Path path = configFilePath().toAbsolutePath();
         writer.writeReturnValue(path.toString());
@@ -97,12 +138,44 @@ public class Directories {
         writer.writeMessage(fileType + " files : " + resultsDirectory.toAbsolutePath().toString());
     }
 
-    public Path createNodesFilePath(String name, FileExtension extension){
-        return createFilePath(nodesDirectory, name, extension);
+    public Path createNodesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories)  {
+        if (perLabelDirectories){
+            File labelDirectory = new File(nodesDirectory.toFile(), label.labelsAsString());
+            if (!labelDirectory.exists()){
+                synchronized(this){
+                    if (!labelDirectory.exists()){
+                        try {
+                            Files.createDirectories(labelDirectory.toPath());
+                        } catch (IOException e) {
+                            throw new RuntimeException(String.format("Unable to create nodes directory for %s", label.labelsAsString()));
+                        }
+                    }
+                }
+            }
+            return createFilePath(labelDirectory.toPath(), name, extension);
+        } else {
+            return createFilePath(nodesDirectory, name, extension);
+        }
     }
 
-    public Path createEdgesFilePath(String name, FileExtension extension){
-        return createFilePath(edgesDirectory, name, extension);
+    public Path createEdgesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories){
+        if (perLabelDirectories){
+            File labelDirectory = new File(edgesDirectory.toFile(), label.labelsAsString());
+            if (!labelDirectory.exists()){
+                synchronized(this){
+                    if (!labelDirectory.exists()){
+                        try {
+                            Files.createDirectories(labelDirectory.toPath());
+                        } catch (IOException e) {
+                            throw new RuntimeException(String.format("Unable to create edges directory for %s", label.labelsAsString()));
+                        }
+                    }
+                }
+            }
+            return createFilePath(labelDirectory.toPath(), name, extension);
+        } else {
+            return createFilePath(edgesDirectory, name, extension);
+        }
     }
 
     public Path createStatementsFilePath(String name, FileExtension extension){
@@ -135,8 +208,8 @@ public class Directories {
 
     private Path createFilePath(Path directory, String name, FileExtension extension) {
         String filename = tag.isEmpty() ?
-                String.format("%s.%s", name, extension.suffix()) :
-                String.format("%s-%s.%s", tag, name, extension.suffix());
+                String.format("%s.%s", name, extension.extension()) :
+                String.format("%s-%s.%s", tag, name, extension.extension());
         return directory.resolve(filename);
     }
 

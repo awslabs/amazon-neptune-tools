@@ -1,0 +1,46 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "bio",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "bio",
+        "type": "text_tfidf",
+        "ngram_range": [1, "ten"],
+        "min_df": 5,
+        "max_features": 1000
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "bio", "bio", "text_tfidf" ],
+          "ngram_range" : [ 1, 10 ],
+          "min_df" : 5,
+          "max_features" : 1000
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}

@@ -12,26 +12,27 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
 public class PropertySchema {
 
     private final Object property;
-    private boolean isNullable = false;
-    private DataType dataType = DataType.None;
-    private boolean isMultiValue = false;
+    private final boolean inferDataType;
+    private boolean isNullable;
+    private DataType dataType;
+    private boolean isMultiValue;
 
     public PropertySchema(Object property) {
-        this.property = property;
+        this(property, false, DataType.None, false);
     }
 
-    public PropertySchema(String property,
+    public PropertySchema(Object property,
                           boolean isNullable,
                           DataType dataType,
                           boolean isMultiValue) {
         this.property = property;
+        this.inferDataType = dataType == DataType.None;
         this.isNullable = isNullable;
         this.dataType = dataType;
         this.isMultiValue = isMultiValue;
@@ -43,6 +44,12 @@ public class PropertySchema {
 
     public int accept(Object value, boolean updateDataType) {
 
+        /*
+        What should we do of the user specifies a datatype in a filter, but the actual values cannot be cast to that type?
+        At present, neptune-export will respect the user-specified type in the output schema (config.json), and in CSV headers (if appropriate for export format).
+        But perhaps the tool should seek to guarantee that the output schema allows for all values in the exported dataset?
+        */
+
         int size = 1;
         if (isList(value)) {
             List<?> values = (List<?>) value;
@@ -50,13 +57,13 @@ public class PropertySchema {
             if (size != 1) {
                 isMultiValue = true;
             }
-            if (updateDataType){
+            if (inferDataType || updateDataType) {
                 for (Object v : values) {
                     dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(v.getClass()));
                 }
             }
         } else {
-            if (updateDataType){
+            if (inferDataType || updateDataType) {
                 dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
             }
         }
@@ -64,7 +71,7 @@ public class PropertySchema {
         return size;
     }
 
-    public void makeNullable(){
+    public void makeNullable() {
         isNullable = true;
     }
 
@@ -115,7 +122,7 @@ public class PropertySchema {
         if (key.equals(org.apache.tinkerpop.gremlin.structure.T.value)) {
             return "~value";
         }
-        if (escapeCharacters){
+        if (escapeCharacters) {
             return String.valueOf(key).replace(":", "\\:");
         } else {
             return String.valueOf(key);

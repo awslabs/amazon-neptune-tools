@@ -15,5 +15,5 @@ package com.amazonaws.services.neptune.export;
 
 public interface NeptuneExportServiceEventHandler extends NeptuneExportEventHandler
 {
-    void onBeforeExport(Args args);
+    void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams);
 }

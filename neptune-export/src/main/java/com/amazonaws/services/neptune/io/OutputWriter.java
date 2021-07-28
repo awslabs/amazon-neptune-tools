@@ -16,6 +16,8 @@ import java.io.Writer;
 
 public interface OutputWriter extends AutoCloseable {
 
+    boolean isNewTarget();
+
     String outputId();
 
     void startCommit();
@@ -29,6 +31,8 @@ public interface OutputWriter extends AutoCloseable {
     void startOp();
 
     void endOp();
+
+    String lineSeparator();
 
     void close() throws Exception;
 }

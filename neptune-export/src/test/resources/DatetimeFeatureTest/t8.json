@@ -1,0 +1,33 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "created",
+        "dataType" : "Date",
+        "isMultiValue" : true,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {},
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "created", "created", "auto" ],
+          "separator" : ";"
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ "Unable to add datetime feature for 'created'. Multi-value datetime features not currently supported. Adding an auto feature instead." ]
+  }
+}

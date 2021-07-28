@@ -14,12 +14,5 @@ package com.amazonaws.services.neptune.io;
 
 public interface FileExtension {
 
-    FileExtension TEMP_FILE = new FileExtension() {
-        @Override
-        public String suffix() {
-            return "tmp";
-        }
-    };
-
-    String suffix();
+    String extension();
 }

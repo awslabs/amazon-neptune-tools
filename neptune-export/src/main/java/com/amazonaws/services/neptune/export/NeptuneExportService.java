@@ -12,7 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandler;
+import com.amazonaws.services.neptune.profiles.incremental_export.IncrementalExportEventHandler;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV2;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.AmazonS3;
@@ -22,6 +24,7 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.transfer.Download;
 import com.amazonaws.services.s3.transfer.TransferManager;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -29,17 +32,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandler.NEPTUNE_ML_PROFILE_NAME;
 
 public class NeptuneExportService {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NeptuneExportService.class);
 
     public static final List<Tag> NEPTUNE_EXPORT_TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
+    public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
+    public static final String INCREMENTAL_EXPORT_PROFILE_NAME = "incremental_export";
 
     private final String cmd;
     private final String localOutputPath;
@@ -47,12 +49,14 @@ public class NeptuneExportService {
     private final String outputS3Path;
     private final boolean createExportSubdirectory;
     private final boolean overwriteExisting;
+    private final boolean uploadToS3OnError;
     private final String configFileS3Path;
     private final String queriesFileS3Path;
     private final String completionFileS3Path;
     private final ObjectNode completionFilePayload;
     private final ObjectNode additionalParams;
     private final int maxConcurrency;
+    private final String s3Region;
 
     public NeptuneExportService(String cmd,
                                 String localOutputPath,
@@ -60,24 +64,28 @@ public class NeptuneExportService {
                                 String outputS3Path,
                                 boolean createExportSubdirectory,
                                 boolean overwriteExisting,
+                                boolean uploadToS3OnError,
                                 String configFileS3Path,
                                 String queriesFileS3Path,
                                 String completionFileS3Path,
                                 ObjectNode completionFilePayload,
                                 ObjectNode additionalParams,
-                                int maxConcurrency) {
+                                int maxConcurrency,
+                                String s3Region) {
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
         this.cleanOutputPath = cleanOutputPath;
         this.outputS3Path = outputS3Path;
         this.createExportSubdirectory = createExportSubdirectory;
         this.overwriteExisting = overwriteExisting;
+        this.uploadToS3OnError = uploadToS3OnError;
         this.configFileS3Path = configFileS3Path;
         this.queriesFileS3Path = queriesFileS3Path;
         this.completionFileS3Path = completionFileS3Path;
         this.completionFilePayload = completionFilePayload;
         this.additionalParams = additionalParams;
         this.maxConcurrency = maxConcurrency;
+        this.s3Region = s3Region;
     }
 
     public S3ObjectInfo execute() throws IOException {
@@ -106,14 +114,13 @@ public class NeptuneExportService {
                     args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
                 }
             }
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        try (TransferManagerWrapper transferManager = new TransferManagerWrapper()) {
+        try (TransferManagerWrapper transferManager = new TransferManagerWrapper(s3Region)) {
 
-            if (cleanOutputPath){
+            if (cleanOutputPath) {
                 clearTempFiles();
             }
 
@@ -125,46 +132,83 @@ public class NeptuneExportService {
             }
         }
 
-        if (additionalParams.has(NEPTUNE_ML_PROFILE_NAME) && (!args.contains("--profile", NEPTUNE_ML_PROFILE_NAME))){
+        if (additionalParams.has(NEPTUNE_ML_PROFILE_NAME) && (!args.contains("--profile", NEPTUNE_ML_PROFILE_NAME))) {
             args.addOption("--profile", NEPTUNE_ML_PROFILE_NAME);
         }
 
         Collection<String> profiles = args.getOptionValues("--profile");
 
-        if (!createExportSubdirectory && !overwriteExisting){
+        if (!createExportSubdirectory && !overwriteExisting) {
             checkS3OutputIsEmpty();
         }
 
         EventHandlerCollection eventHandlerCollection = new EventHandlerCollection();
 
-        ExportToS3NeptuneExportEventHandler eventHandler = new ExportToS3NeptuneExportEventHandler(
+        Collection<CompletionFileWriter> completionFileWriters = new ArrayList<>();
+        ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams =
+                new ExportToS3NeptuneExportEventHandler.S3UploadParams()
+                .setCreateExportSubdirectory(createExportSubdirectory)
+                .setOverwriteExisting(overwriteExisting);
+
+        ExportToS3NeptuneExportEventHandler exportToS3EventHandler = new ExportToS3NeptuneExportEventHandler(
                 localOutputPath,
                 outputS3Path,
-                createExportSubdirectory,
+                s3Region,
                 completionFileS3Path,
                 completionFilePayload,
-                profiles);
+                uploadToS3OnError,
+                s3UploadParams,
+                profiles,
+                completionFileWriters);
 
-        eventHandlerCollection.addHandler(eventHandler);
+        eventHandlerCollection.addHandler(exportToS3EventHandler);
 
-        if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)){
-            NeptuneMachineLearningExportEventHandler neptuneMlEventHandler =
-                    new NeptuneMachineLearningExportEventHandler(
-                            outputS3Path,
-                            createExportSubdirectory,
-                            additionalParams,
-                            args,
-                            profiles);
-            eventHandlerCollection.addHandler(neptuneMlEventHandler);
+        if (profiles.contains(NEPTUNE_ML_PROFILE_NAME)) {
+
+            JsonNode neptuneMlNode = additionalParams.path(NEPTUNE_ML_PROFILE_NAME);
+
+            boolean useV2 =  args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name()) ||
+                    (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v2."));
+
+            if (useV2) {
+                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV2(
+                                outputS3Path,
+                                s3Region,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            } else {
+                NeptuneMachineLearningExportEventHandlerV1 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV1(
+                                outputS3Path,
+                                s3Region,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            }
+
         }
 
-        eventHandlerCollection.onBeforeExport(args);
+        if (profiles.contains(INCREMENTAL_EXPORT_PROFILE_NAME)) {
+
+            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler();
+            completionFileWriters.add(incrementalExportEventHandler);
+            eventHandlerCollection.addHandler(incrementalExportEventHandler);
+        }
+
+
+        eventHandlerCollection.onBeforeExport(args, s3UploadParams);
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
         new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
 
-        return eventHandler.result();
+        return exportToS3EventHandler.result();
     }
 
     private void checkS3OutputIsEmpty() {
@@ -177,7 +221,7 @@ public class NeptuneExportService {
                         null,
                         null,
                         1));
-        if (!listing.getObjectSummaries().isEmpty()){
+        if (!listing.getObjectSummaries().isEmpty()) {
             throw new IllegalStateException(String.format("S3 destination contains existing objects: %s. Set 'overwriteExisting' parameter to 'true' to allow overwriting existing objects.", outputS3Path));
         }
     }

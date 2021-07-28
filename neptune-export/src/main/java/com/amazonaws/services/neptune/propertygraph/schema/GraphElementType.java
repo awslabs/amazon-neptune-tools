@@ -12,20 +12,56 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
+import com.amazonaws.services.neptune.propertygraph.EdgesClient;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.GraphClient;
+import com.amazonaws.services.neptune.propertygraph.NodesClient;
+import com.amazonaws.services.neptune.propertygraph.io.EdgesWriterFactory;
+import com.amazonaws.services.neptune.propertygraph.io.NodesWriterFactory;
 import com.amazonaws.services.neptune.propertygraph.io.WriterFactory;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
-public interface GraphElementType<T> {
-    String name();
+public enum GraphElementType {
 
-    Collection<String> tokenNames();
+    nodes {
+        @Override
+        public Collection<String> tokenNames() {
+            return Arrays.asList("~id", "~label");
+        }
 
-    GraphClient<T> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, LabModeFeatures labModeFeatures);
+        @Override
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, FeatureToggles featureToggles) {
+            return new NodesClient(g, tokensOnly, stats, featureToggles);
+        }
 
-    WriterFactory<T> writerFactory();
+        @Override
+        public WriterFactory<Map<String, Object>> writerFactory() {
+            return new NodesWriterFactory();
+        }
+    },
+    edges {
+        @Override
+        public Collection<String> tokenNames() {
+            return Arrays.asList("~id", "~label", "~from", "~to");
+        }
+
+        @Override
+        public GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, FeatureToggles featureToggles) {
+            return new EdgesClient(g, tokensOnly, stats, featureToggles);
+        }
+
+        @Override
+        public WriterFactory<Map<String, Object>> writerFactory() {
+            return new EdgesWriterFactory();
+        }
+    };
+
+    public abstract Collection<String> tokenNames();
+    public abstract GraphClient<Map<String, Object>> graphClient(GraphTraversalSource g, boolean tokensOnly, ExportStats stats, FeatureToggles featureToggles);
+    public abstract WriterFactory<Map<String, Object>> writerFactory();
 }

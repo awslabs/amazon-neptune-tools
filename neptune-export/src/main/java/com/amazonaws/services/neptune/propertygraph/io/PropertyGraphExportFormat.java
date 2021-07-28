@@ -19,13 +19,14 @@ import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
 
 public enum PropertyGraphExportFormat implements FileExtension {
     json {
         @Override
-        public String suffix() {
+        public String extension() {
             return "json";
         }
 
@@ -53,7 +54,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     csv {
         @Override
-        public String suffix() {
+        public String extension() {
             return "csv";
         }
 
@@ -93,7 +94,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     csvNoHeaders {
         @Override
-        public String suffix() {
+        public String extension() {
             return "csv";
         }
 
@@ -133,7 +134,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
     },
     neptuneStreamsJson {
         @Override
-        public String suffix() {
+        public String extension() {
             return "json";
         }
 
@@ -157,6 +158,33 @@ public enum PropertyGraphExportFormat implements FileExtension {
         public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
             return RewriteCommand.NULL_COMMAND;
         }
+    },
+    neptuneStreamsSimpleJson {
+        @Override
+        public String extension() {
+            return "json";
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            JsonGenerator generator = createJsonGenerator(writer, "");
+            return new NeptuneStreamsSimpleJsonPropertyGraphPrinter(writer, generator);
+        }
+
+        @Override
+        PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
+            return createPrinter(writer, labelSchema, printerOptions);
+        }
+
+        @Override
+        public String description() {
+            return "JSON (Neptune Streams simple format)";
+        }
+
+        @Override
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+            return RewriteCommand.NULL_COMMAND;
+        }
     };
 
     private static JsonGenerator createJsonGenerator(OutputWriter writer, String s) throws IOException {
@@ -173,4 +201,9 @@ public enum PropertyGraphExportFormat implements FileExtension {
     public abstract String description();
 
     public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema);
+
+    public String replaceExtension(String filename, String replacement){
+        return String.format("%s.%s",  FilenameUtils.removeExtension(filename), replacement);
+    }
+
 }

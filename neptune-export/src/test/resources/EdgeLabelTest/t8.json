@@ -1,0 +1,29 @@
+{
+  "schema": {
+    "edges" : [ {
+      "label" : {
+        "~label" : "knows",
+        "~fromLabels" : [ "Person" ],
+        "~toLabels" : [ "Person" ]
+      },
+      "properties" : [ {
+        "property" : "metAtLocation",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "knows-1.csv" ]
+    } ],
+    "nodes" : [ ]
+  },
+  "label": {
+    "targets": [
+      {
+        "edge": ["Person", "knows", "Person"],
+        "type": "invalid"
+      }
+    ]
+  },
+  "config": {
+  }
+}

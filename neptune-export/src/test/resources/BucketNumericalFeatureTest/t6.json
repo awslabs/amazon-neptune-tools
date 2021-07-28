@@ -1,0 +1,47 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "age",
+        "dataType" : "Integer",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "age",
+        "type": "bucket_numerical",
+        "range": [1, 10],
+        "bucket_cnt": 5,
+        "imputer": "median"
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "age", "age", "bucket_numerical" ],
+          "range" : [ 1, 10 ],
+          "bucket_cnt" : 5,
+          "slide_window_size" : 0,
+          "imputer" : "median"
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}

@@ -12,25 +12,44 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Status {
+
+    private static final Logger logger = LoggerFactory.getLogger(Status.class);
+
     private final AtomicInteger counter = new AtomicInteger();
     private final AtomicBoolean allowContinue = new AtomicBoolean(true);
+    private final StatusOutputFormat outputFormat;
+    private final String description;
 
-    public void update(){
+    public Status(StatusOutputFormat outputFormat) {
+        this(outputFormat, "");
+    }
+
+    public Status(StatusOutputFormat outputFormat, String description) {
+        this.outputFormat = outputFormat;
+        this.description = description;
+    }
+
+    public void update() {
         int counterValue = counter.incrementAndGet();
-        if (counterValue % 10000 == 0){
+        if (counterValue % 10000 == 0 && outputFormat == StatusOutputFormat.Dot) {
             System.err.print(".");
+        } else if (counterValue % 100000 == 0 && outputFormat == StatusOutputFormat.Description) {
+            logger.info("{} ({})", counterValue, description);
         }
     }
 
-    public boolean allowContinue(){
+    public boolean allowContinue() {
         return allowContinue.get();
     }
 
-    public void halt(){
+    public void halt() {
         allowContinue.set(false);
     }
 }

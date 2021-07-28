@@ -13,20 +13,22 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
-import com.amazonaws.services.neptune.propertygraph.*;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
-import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.propertygraph.schema.CreateGraphSchemaCommand;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
-import com.amazonaws.services.neptune.io.Directories;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.help.Examples;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 import java.util.Collection;
 
 @Examples(examples = {
@@ -39,7 +41,7 @@ import java.util.Collection;
         "Create config file containing schema for User nodes and FOLLOWS edges"
 })
 @Command(name = "create-pg-config", description = "Create a property graph schema config file.")
-public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand implements Runnable {
+public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
@@ -48,7 +50,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(false);
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
@@ -67,14 +69,14 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
 
         try {
             Timer.timedActivity("creating property graph config", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     ExportStats stats = new ExportStats();
                     Directories directories = target.createDirectories(DirectoryStructure.Config);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(stats, labModeFeatures());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, featureToggles());
 
-                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
 
                         CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
@@ -84,8 +86,8 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportBaseCommand im
                         configFileResource.writeResourcePathAsMessage(target);
                     }
 
-                    Path outputPath = directories.writeConfigFilePathAsReturnValue(target);
-                    onExportComplete(outputPath, stats);
+                    directories.writeConfigFilePathAsReturnValue(target);
+                    onExportComplete(directories, stats, cluster);
 
                 }
             });

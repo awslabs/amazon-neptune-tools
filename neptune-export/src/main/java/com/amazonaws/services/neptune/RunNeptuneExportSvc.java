@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Command(name = "nesvc", description = "neptune-export service", hidden = true)
-public class RunNeptuneExportSvc implements Runnable {
+public class RunNeptuneExportSvc extends NeptuneExportBaseCommand implements Runnable {
 
     @Option(name = {"--json"}, description = "JSON")
     @Once

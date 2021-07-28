@@ -14,25 +14,23 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.io;
 
 import com.amazonaws.services.kinesis.producer.*;
-import com.google.common.util.concurrent.FutureCallback;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class KinesisConfig {
 
     private final Stream stream;
 
-    public KinesisConfig(String streamName, String region) {
-
+    public KinesisConfig(String streamName, String region, LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy) {
         this.stream = (StringUtils.isNotEmpty(region) && StringUtils.isNotEmpty(streamName)) ?
                 new Stream(
                         new KinesisProducer(new KinesisProducerConfiguration()
                                 .setRegion(region)
                                 .setRateLimit(100)
-                                .setRecordTtl(Integer.MAX_VALUE)), streamName) :
+                                .setConnectTimeout(12000)
+                                .setRequestTimeout(12000)
+                                .setRecordTtl(Integer.MAX_VALUE)),
+                        streamName,
+                        largeStreamRecordHandlingStrategy) :
                 null;
     }
 

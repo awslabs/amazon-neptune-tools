@@ -1,0 +1,33 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "created",
+        "dataType" : "Date",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {},
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "created", "created", "datetime" ],
+          "datetime_parts" : [ "year", "month", "weekday", "hour" ]
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}

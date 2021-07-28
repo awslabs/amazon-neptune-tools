@@ -48,7 +48,7 @@ public class Label {
                     ArrayNode fromLabelsArrays = (ArrayNode) fromLabelsNode;
                     fromLabelsArrays.forEach(l -> fromLabels.add(l.textValue()));
                 } else {
-                    fromLabels.add(fromLabelsNode.textValue());
+                    fromLabels.addAll(SemicolonUtils.split(fromLabelsNode.textValue()));
                 }
             }
 
@@ -59,7 +59,7 @@ public class Label {
                     ArrayNode toLabelsArray = (ArrayNode) toLabelsNode;
                     toLabelsArray.forEach(l -> toLabels.add(l.textValue()));
                 } else {
-                    toLabels.add(toLabelsNode.textValue());
+                    toLabels.addAll(SemicolonUtils.split(toLabelsNode.textValue()));
                 }
             }
 
@@ -94,7 +94,8 @@ public class Label {
         this(SemicolonUtils.split(label));
     }
 
-    public Label(Collection<String> labels) {
+    public
+    Label(Collection<String> labels) {
         this(labels, Collections.emptyList(), Collections.emptyList());
     }
 
@@ -133,6 +134,13 @@ public class Label {
         return results;
     }
 
+    public boolean isAssignableFrom(Label l){
+        boolean allLabelsFound = l.labels.containsAll(labels);
+        boolean allFromLabelsFound = l.fromLabels.containsAll(fromLabels);
+        boolean allToLabelsFound = l.toLabels.containsAll(toLabels);
+        return allLabelsFound && allFromLabelsFound && allToLabelsFound;
+    }
+
     public List<String> label() {
         return labels;
     }
@@ -165,6 +173,12 @@ public class Label {
 
     public String fullyQualifiedLabel() {
         return fullyQualifiedLabel;
+    }
+
+    public String allLabelsAsArrayString(){
+        return hasFromLabels() || hasToLabels() ?
+                String.format("[%s, %s, %s]", fromLabelsAsString(), labelsAsString(), toLabelsAsString()):
+                labelsAsString();
     }
 
     public boolean hasFromAndToLabels() {

@@ -30,7 +30,15 @@ public class FileSpecificLabelSchemas {
             fileSpecificLabelSchemas.put(labelSchema.label(), new ArrayList<>());
         }
 
-        fileSpecificLabelSchemas.get(labelSchema.label()).add(new FileSpecificLabelSchema(outputId, format, labelSchema));
+        Collection<FileSpecificLabelSchema> schemas = fileSpecificLabelSchemas.get(labelSchema.label());
+
+        for (FileSpecificLabelSchema schema : schemas) {
+            if (schema.outputId().equals(outputId)){
+                return;
+            }
+        }
+
+        schemas.add(new FileSpecificLabelSchema(outputId, format, labelSchema));
     }
 
     public Collection<Label> labels() {

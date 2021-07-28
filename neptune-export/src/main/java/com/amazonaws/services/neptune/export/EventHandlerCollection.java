@@ -12,18 +12,21 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class EventHandlerCollection implements NeptuneExportServiceEventHandler {
 
-    private final Collection<NeptuneExportEventHandler> exportHandlers = new ArrayList<>();
-    private final Collection<NeptuneExportServiceEventHandler> serviceHandlers = new ArrayList<>();
+    private final List<NeptuneExportEventHandler> exportHandlers = new ArrayList<>();
+    private final List<NeptuneExportServiceEventHandler> serviceHandlers = new ArrayList<>();
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(EventHandlerCollection.class);
 
@@ -35,12 +38,24 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats) throws Exception {
-        boolean error = false;
-
+    public void onError() {
         for (NeptuneExportEventHandler handler : exportHandlers) {
             try {
-                handler.onExportComplete(outputPath, stats);
+                handler.onError();
+            } catch (Exception e) {
+                logger.warn("Error while handling export error with {}", handler.getClass().getSimpleName(), e);
+            }
+        }
+    }
+
+    @Override
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
+        boolean error = false;
+
+        for (int i = exportHandlers.size(); i-- > 0; ) {
+            NeptuneExportEventHandler handler = exportHandlers.get(i);
+            try {
+                handler.onExportComplete(directories, stats, cluster);
             } catch (Exception e) {
                 error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);
@@ -53,12 +68,13 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
-    public void onExportComplete(Path outputPath, ExportStats stats, GraphSchema graphSchema) throws Exception {
+    public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
         boolean error = false;
 
-        for (NeptuneExportEventHandler handler : exportHandlers) {
+        for (int i = exportHandlers.size(); i-- > 0; ) {
+            NeptuneExportEventHandler handler = exportHandlers.get(i);
             try {
-                handler.onExportComplete(outputPath, stats, graphSchema);
+                handler.onExportComplete(directories, stats, cluster, graphSchema);
             } catch (Exception e) {
                 error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);
@@ -71,12 +87,12 @@ public class EventHandlerCollection implements NeptuneExportServiceEventHandler 
     }
 
     @Override
-    public void onBeforeExport(Args args) {
+    public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
         boolean error = false;
 
         for (NeptuneExportServiceEventHandler handler : serviceHandlers) {
             try {
-                handler.onBeforeExport(args);
+                handler.onBeforeExport(args, s3UploadParams);
             } catch (Exception e) {
                 error = true;
                 logger.error("Error while executing {}", handler.getClass().getSimpleName(), e);

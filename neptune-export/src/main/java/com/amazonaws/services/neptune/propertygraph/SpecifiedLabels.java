@@ -12,9 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeature;
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
@@ -39,10 +40,12 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures) {
+    public GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, FeatureToggles featureToggles, GraphElementType graphElementType) {
 
+        boolean simpleEdgeLabels = graphElementType == GraphElementType.edges &&
+                labels.stream().allMatch(l -> !l.hasFromLabels() && !l.hasToLabels());
 
-        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)) {
+        if (simpleEdgeLabels || featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
 
             List<String> labelList = labels.stream()
                     .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
@@ -156,11 +159,13 @@ public class SpecifiedLabels implements LabelsFilter {
     }
 
     @Override
-    public LabelsFilter union(Collection<Label> others) {
-        Collection<Label> results = new ArrayList<>();
+    public LabelsFilter intersection(Collection<Label> others) {
+        Collection<Label> results = new HashSet<>();
         for (Label label : labels) {
-            if (others.contains(label)) {
-                results.add(label);
+            for (Label other : others) {
+                if (label.isAssignableFrom(other)){
+                    results.add(other);
+                }
             }
         }
         return new SpecifiedLabels(results, labelStrategy);
@@ -173,7 +178,10 @@ public class SpecifiedLabels implements LabelsFilter {
 
     @Override
     public String description(String element) {
-        String labelList = labels.stream().map(l -> String.format("'%s'", l.labelsAsString())).collect(Collectors.joining(" or "));
+        if (isEmpty()){
+            return String.format("%s with zero labels", element);
+        }
+        String labelList = labels.stream().map(l -> String.format("'%s'", l.fullyQualifiedLabel())).collect(Collectors.joining(" or "));
         return String.format("%s with label(s) %s", element, labelList);
     }
 

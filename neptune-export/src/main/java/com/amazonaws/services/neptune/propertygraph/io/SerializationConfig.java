@@ -12,27 +12,42 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import org.apache.tinkerpop.gremlin.driver.Cluster;
+import org.apache.tinkerpop.gremlin.driver.MessageSerializer;
+import org.apache.tinkerpop.gremlin.driver.ser.GraphBinaryMessageSerializerV1;
+import org.apache.tinkerpop.gremlin.driver.ser.GraphSONMessageSerializerV3d0;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class SerializationConfig {
 
     private final String serializer;
     private final int maxContentLength;
     private final int batchSize;
+    private final boolean useJanusSerializer;
 
-    public SerializationConfig(String serializer, int maxContentLength, int batchSize) {
+    public SerializationConfig(String serializer, int maxContentLength, int batchSize, boolean useJanusSerializer) {
         this.serializer = serializer;
         this.maxContentLength = maxContentLength;
         this.batchSize = batchSize;
+        this.useJanusSerializer = useJanusSerializer;
     }
 
-    public String serializer() {
-        return serializer;
-    }
+    public Cluster.Builder apply(Cluster.Builder builder) {
+        Cluster.Builder b = builder.resultIterationBatchSize(batchSize)
+                .maxContentLength(maxContentLength);
 
-    public int maxContentLength() {
-        return maxContentLength;
-    }
-
-    public int batchSize() {
-        return batchSize;
+        if (useJanusSerializer) {
+            Map<String, Object> config = new HashMap<>();
+            config.put("ioRegistries", Collections.singletonList("org.janusgraph.graphdb.tinkerpop.JanusGraphIoRegistry"));
+            MessageSerializer s = new GraphSONMessageSerializerV3d0();
+            s.configure(config, null);
+            return b.serializer(s);
+        } else {
+            return b.serializer(serializer);
+        }
     }
 }

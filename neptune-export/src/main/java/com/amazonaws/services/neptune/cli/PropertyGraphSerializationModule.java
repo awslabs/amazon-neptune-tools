@@ -14,16 +14,23 @@ package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.SerializationConfig;
+import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
 import com.github.rvesse.airline.annotations.Option;
+import com.github.rvesse.airline.annotations.restrictions.AllowedEnumValues;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 
 public class PropertyGraphSerializationModule {
 
-    @Option(name = {"--serializer"}, description = "Message serializer – either 'GRAPHBINARY_V1D0' or 'GRYO_V3D0' (optional, default 'GRAPHBINARY_V1D0').")
-    @AllowedValues(allowedValues = {"GRAPHBINARY_V1D0", "GRYO_V3D0"})
+    @Option(name = {"--serializer"}, description = "Message serializer – (optional, default 'GRAPHBINARY_V1D0').")
+    @AllowedEnumValues(Serializers.class)
     @Once
-    private String serializer = "GRAPHBINARY_V1D0";
+    private String serializer = Serializers.GRAPHBINARY_V1D0.name();
+
+    @Option(name = {"--janus"}, description = "Use JanusGraph serializer.")
+    @Once
+    private boolean useJanusSerializer = false;
 
     @Option(name = {"--max-content-length"}, description = "Max content length (optional, default 50000000).")
     @Once
@@ -34,7 +41,7 @@ public class PropertyGraphSerializationModule {
     private int batchSize = NeptuneGremlinClient.DEFAULT_BATCH_SIZE;
 
     public SerializationConfig config(){
-        return new SerializationConfig(serializer, maxContentLength, batchSize);
+        return new SerializationConfig(serializer, maxContentLength, batchSize, useJanusSerializer);
     }
 }
 

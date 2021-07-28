@@ -16,9 +16,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 public enum Target implements CommandWriter {
 
@@ -26,7 +24,8 @@ public enum Target implements CommandWriter {
         @Override
         public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
             File file = pathSupplier.get().toFile();
-            return new PrintOutputWriter(file.getAbsolutePath(), new FileWriter(file));
+            boolean isNewTarget = !(file.exists());
+            return new PrintOutputWriter(file.getAbsolutePath(), isNewTarget, new FileWriter(file));
         }
 
         @Override

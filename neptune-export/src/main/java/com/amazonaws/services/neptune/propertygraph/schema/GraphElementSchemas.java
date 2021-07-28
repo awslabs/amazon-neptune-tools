@@ -31,7 +31,15 @@ public class GraphElementSchemas {
         for (JsonNode node : arrayNode) {
             Label label = Label.fromJson(node.path("label"));
 
-            graphElementSchemas.addLabelSchema(new LabelSchema(label));
+            Collection<String> filenames = new ArrayList<>();
+            if (node.has("files")) {
+                ArrayNode filenamesArray = (ArrayNode) node.path("files");
+                for (JsonNode jsonNode : filenamesArray) {
+                    filenames.add(jsonNode.textValue());
+                }
+            }
+
+            graphElementSchemas.addLabelSchema(new LabelSchema(label), filenames);
 
             if (node.has("properties")) {
                 ArrayNode propertiesArray = (ArrayNode) node.path("properties");
@@ -145,7 +153,10 @@ public class GraphElementSchemas {
     }
 
     public ArrayNode toJson() {
+        return toJson(false);
+    }
 
+    public ArrayNode toJson(boolean includeFilenames) {
         ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 
         for (Map.Entry<Label, LabelSchemaContainer> entry : labelSchemas.entrySet()) {
@@ -155,9 +166,9 @@ public class GraphElementSchemas {
             ObjectNode labelNode = JsonNodeFactory.instance.objectNode();
             labelNode.set("label", label.toJson());
 
-            ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
-
             LabelSchema labelSchema = entry.getValue().labelSchema();
+
+            ArrayNode propertiesNode = JsonNodeFactory.instance.arrayNode();
 
             for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
@@ -170,6 +181,14 @@ public class GraphElementSchemas {
             }
 
             labelNode.set("properties", propertiesNode);
+
+            if (includeFilenames){
+                ArrayNode filesNode = JsonNodeFactory.instance.arrayNode();
+                for (String outputId : entry.getValue().outputIds()) {
+                    filesNode.add(outputId);
+                }
+                labelNode.set("files", filesNode);
+            }
 
             arrayNode.add(labelNode);
         }

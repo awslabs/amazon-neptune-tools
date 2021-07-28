@@ -62,7 +62,7 @@ public class PropertyGraphSchemaInferencingModule {
         return this;
     }
 
-    public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification<?>> exportSpecifications,
+    public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification> exportSpecifications,
                                                         GraphTraversalSource g){
         return new SchemaSamplingSpecification(sample, sampleSize).createSchemaCommand(exportSpecifications, g);
     }

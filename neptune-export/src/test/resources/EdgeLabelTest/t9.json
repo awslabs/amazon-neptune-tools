@@ -1,0 +1,48 @@
+{
+  "schema": {
+    "edges" : [ {
+      "label" : {
+        "~label" : "edited",
+        "~fromLabels" : [ "Person", "Admin" ],
+        "~toLabels" : [ "Post", "Content" ]
+      },
+      "properties" : [ {
+        "property" : "reason",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "edited-1.csv" ]
+    } ],
+    "nodes" : [ ]
+  },
+  "label": {
+    "targets": [
+      {
+        "edge": [["Person", "Admin"], "edited", ["Post", "Content"]],
+        "type": "classification",
+        "property": "reason"
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ ],
+      "edges" : [ {
+        "file_name" : "edges/edited-1.csv",
+        "separator" : ",",
+        "source" : [ "~from", "Admin;Person" ],
+        "relation" : [ "", "edited" ],
+        "dest" : [ "~to", "Content;Post" ],
+        "features": [],
+        "labels" : [ {
+          "label" : [ "reason", "classification" ],
+          "split_rate" : [ 0.9, 0.1, 0.0 ]
+        } ]
+      } ]
+    },
+    "warnings" : [ ]
+  }
+}

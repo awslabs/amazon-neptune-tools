@@ -25,7 +25,7 @@ public enum RdfExportFormat implements FileExtension {
         }
 
         @Override
-        public String suffix() {
+        public String extension() {
             return "ttl";
         }
 
@@ -43,13 +43,32 @@ public enum RdfExportFormat implements FileExtension {
 
 
         @Override
-        public String suffix() {
+        public String extension() {
             return "nq";
         }
 
         @Override
         public String description() {
             return "NQUADS";
+        }
+
+
+    },
+    ntriples {
+        @Override
+        RDFWriter createWriter(OutputWriter writer, Prefixes prefixes) {
+            return new EnhancedNTriplesWriter(writer, prefixes);
+        }
+
+
+        @Override
+        public String extension() {
+            return "nt";
+        }
+
+        @Override
+        public String description() {
+            return "NTRIPLES";
         }
 
 
@@ -61,7 +80,7 @@ public enum RdfExportFormat implements FileExtension {
         }
 
         @Override
-        public String suffix() {
+        public String extension() {
             return "json";
         }
 

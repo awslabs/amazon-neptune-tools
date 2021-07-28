@@ -12,8 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
 
@@ -22,7 +23,7 @@ import java.util.Map;
 
 public interface LabelsFilter {
 
-    GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, LabModeFeatures labModeFeatures);
+    GraphTraversal<? extends Element, ?> apply(GraphTraversal<? extends Element, ?> traversal, FeatureToggles featureToggles, GraphElementType graphElementType);
 
     Collection<Label> getLabelsUsing(GraphClient<?> graphClient);
 
@@ -36,7 +37,7 @@ public interface LabelsFilter {
 
     LabelsFilter filterFor(Label label);
 
-    LabelsFilter union(Collection<Label> labels);
+    LabelsFilter intersection(Collection<Label> labels);
 
     boolean isEmpty();
 

@@ -24,7 +24,7 @@ public class NodesWriterFactory implements WriterFactory<Map<String, Object>> {
     public PropertyGraphPrinter createPrinter(String name, LabelSchema labelSchema, PropertyGraphTargetConfig targetConfig) throws IOException {
         PropertyGraphPrinter propertyGraphPrinter = targetConfig.createPrinterForNodes(name, labelSchema);
 
-        propertyGraphPrinter.printHeaderMandatoryColumns("~id", "~label");
+        propertyGraphPrinter.printHeaderMandatoryColumns("id", "label");
         propertyGraphPrinter.printHeaderRemainingColumns(labelSchema.propertySchemas());
 
         return propertyGraphPrinter;

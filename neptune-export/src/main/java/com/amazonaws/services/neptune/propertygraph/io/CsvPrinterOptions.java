@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.TokenPrefix;
+
 public class CsvPrinterOptions {
 
     public static Builder builder(){
@@ -23,13 +25,19 @@ public class CsvPrinterOptions {
     private final boolean escapeCsvHeaders;
     private final boolean includeHeaders;
     private final boolean isSemicolonSeparator;
+    private final TokenPrefix tokenPrefix;
 
-    private CsvPrinterOptions(String multiValueSeparator, boolean includeTypeDefinitions, boolean escapeCsvHeaders, boolean includeHeaders) {
+    private CsvPrinterOptions(String multiValueSeparator,
+                              boolean includeTypeDefinitions,
+                              boolean escapeCsvHeaders,
+                              boolean includeHeaders,
+                              TokenPrefix tokenPrefix) {
         this.multiValueSeparator = multiValueSeparator;
         this.includeTypeDefinitions = includeTypeDefinitions;
         this.escapeCsvHeaders = escapeCsvHeaders;
         this.includeHeaders = includeHeaders;
         this.isSemicolonSeparator = multiValueSeparator.equalsIgnoreCase(";");
+        this.tokenPrefix = tokenPrefix;
     }
 
     public String multiValueSeparator() {
@@ -52,12 +60,17 @@ public class CsvPrinterOptions {
         return isSemicolonSeparator;
     }
 
+    public TokenPrefix tokenPrefix() {
+        return tokenPrefix;
+    }
+
     public Builder copy(){
         return new Builder()
                 .setMultiValueSeparator(multiValueSeparator)
                 .setIncludeTypeDefinitions(includeTypeDefinitions)
                 .setEscapeCsvHeaders(escapeCsvHeaders)
-                .setIncludeHeaders(includeHeaders);
+                .setIncludeHeaders(includeHeaders)
+                .setTokenPrefix(tokenPrefix);
     }
 
     public static class Builder {
@@ -66,6 +79,7 @@ public class CsvPrinterOptions {
         private boolean includeTypeDefinitions = false;
         private boolean escapeCsvHeaders = false;
         private boolean includeHeaders = false;
+        private TokenPrefix tokenPrefix = new TokenPrefix();
 
         public Builder setMultiValueSeparator(String multiValueSeparator) {
             this.multiValueSeparator = multiValueSeparator;
@@ -87,8 +101,13 @@ public class CsvPrinterOptions {
             return this;
         }
 
+        public Builder setTokenPrefix(TokenPrefix tokenPrefix){
+            this.tokenPrefix = tokenPrefix;
+            return this;
+        }
+
         public CsvPrinterOptions build(){
-            return new CsvPrinterOptions(multiValueSeparator, includeTypeDefinitions, escapeCsvHeaders, includeHeaders);
+            return new CsvPrinterOptions(multiValueSeparator, includeTypeDefinitions, escapeCsvHeaders, includeHeaders, tokenPrefix);
         }
 
     }

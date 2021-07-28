@@ -13,9 +13,10 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.schema;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
-import com.amazonaws.services.neptune.export.LabModeFeature;
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphTask;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
@@ -23,31 +24,27 @@ import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class ExportSpecification<T extends Map<?, ?>> {
-    private final GraphElementType<T> graphElementType;
+public class ExportSpecification {
+    private final GraphElementType graphElementType;
     private final LabelsFilter labelsFilter;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final LabModeFeatures labModeFeatures;
+    private final FeatureToggles featureToggles;
 
-    public ExportSpecification(GraphElementType<T> graphElementType,
-                               LabelsFilter labelsFilter,
-                               ExportStats stats){
-        this(graphElementType, labelsFilter, stats, false, new LabModeFeatures(Collections.emptyList()));
-    }
 
-                               public ExportSpecification(GraphElementType<T> graphElementType,
+    public ExportSpecification(GraphElementType graphElementType,
                                LabelsFilter labelsFilter,
                                ExportStats stats,
                                boolean tokensOnly,
-                               LabModeFeatures labModeFeatures) {
+                               FeatureToggles featureToggles) {
         this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
-        this.labModeFeatures = labModeFeatures;
+        this.featureToggles = featureToggles;
     }
 
     public void scan(GraphSchema graphSchema, GraphTraversalSource g) {
@@ -55,7 +52,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
             return;
         }
 
-        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
+        GraphClient<Map<String, Object>> graphClient = graphElementType.graphClient(g, tokensOnly, stats, featureToggles);
 
         graphClient.queryForSchema(
                 new CreateSchemaHandler(graphElementType, graphSchema),
@@ -68,7 +65,7 @@ public class ExportSpecification<T extends Map<?, ?>> {
             return;
         }
 
-        GraphClient<T> graphClient = graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures);
+        GraphClient<Map<String, Object>> graphClient = graphElementType.graphClient(g, tokensOnly, stats, featureToggles);
         Collection<Label> labels = labelsFilter.getLabelsUsing(graphClient);
 
         for (Label label : labels) {
@@ -87,27 +84,29 @@ public class ExportSpecification<T extends Map<?, ?>> {
                                            RangeConfig rangeConfig,
                                            ConcurrencyConfig concurrencyConfig) {
         return RangeFactory.create(
-                graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
+                graphElementType.graphClient(g, tokensOnly, stats, featureToggles),
                 labelsFilter,
                 rangeConfig,
                 concurrencyConfig);
     }
 
-    public ExportPropertyGraphTask<T> createExportTask(GraphSchema graphSchema,
-                                                       GraphTraversalSource g,
-                                                       PropertyGraphTargetConfig targetConfig,
-                                                       RangeFactory rangeFactory,
-                                                       Status status,
-                                                       int index) {
+    public ExportPropertyGraphTask<Map<String, Object>> createExportTask(GraphSchema graphSchema,
+                                                                         GraphTraversalSource g,
+                                                                         PropertyGraphTargetConfig targetConfig,
+                                                                         RangeFactory rangeFactory,
+                                                                         Status status,
+                                                                         int index,
+                                                                         AtomicInteger fileDescriptorCount) {
         return new ExportPropertyGraphTask<>(
                 graphSchema.copyOfGraphElementSchemasFor(graphElementType),
                 labelsFilter,
-                graphElementType.graphClient(g, tokensOnly, stats, labModeFeatures),
+                graphElementType.graphClient(g, tokensOnly, stats, featureToggles),
                 graphElementType.writerFactory(),
                 targetConfig,
                 rangeFactory,
                 status,
-                index
+                index,
+                fileDescriptorCount
         );
     }
 
@@ -144,26 +143,28 @@ public class ExportSpecification<T extends Map<?, ?>> {
         return new MasterLabelSchemas(masterLabelSchemas, graphElementType);
     }
 
-    public Collection<ExportSpecification<T>> splitByLabel() {
+    public Collection<ExportSpecification> splitByLabel() {
 
-        if (labModeFeatures.containsFeature(LabModeFeature.LegacyLabelFiltering)) {
-            return Collections.singletonList(this);
-        } else {
+        if (graphElementType == GraphElementType.edges || featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
             return labelsFilter.split().stream()
-                    .map(l -> new ExportSpecification<>(graphElementType, l, stats, tokensOnly, labModeFeatures))
+                    .map(l -> new ExportSpecification(graphElementType, l, stats, tokensOnly, featureToggles))
                     .collect(Collectors.toList());
+
+        } else {
+            return Collections.singletonList(this);
         }
     }
 
     private static class CreateSchemaHandler implements GraphElementHandler<Map<?, Object>> {
 
-        private final GraphElementType<?> graphElementType;
+        private final GraphElementType graphElementType;
         private final GraphSchema graphSchema;
-        private final Status status = new Status();
+        private final Status status;
 
-        private CreateSchemaHandler(GraphElementType<?> graphElementType, GraphSchema graphSchema) {
+        private CreateSchemaHandler(GraphElementType graphElementType, GraphSchema graphSchema) {
             this.graphElementType = graphElementType;
             this.graphSchema = graphSchema;
+            this.status = new Status(StatusOutputFormat.Dot);
         }
 
         @Override

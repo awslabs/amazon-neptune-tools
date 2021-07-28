@@ -20,11 +20,11 @@ import java.util.Collection;
 
 public class CreateGraphSchemaFromSample implements CreateGraphSchemaCommand {
 
-    private final Collection<ExportSpecification<?>> exportSpecifications;
+    private final Collection<ExportSpecification> exportSpecifications;
     private final GraphTraversalSource g;
     private final long sampleSize;
 
-    public CreateGraphSchemaFromSample(Collection<ExportSpecification<?>> exportSpecifications,
+    public CreateGraphSchemaFromSample(Collection<ExportSpecification> exportSpecifications,
                                        GraphTraversalSource g,
                                        long sampleSize) {
         this.exportSpecifications = exportSpecifications;
@@ -36,7 +36,7 @@ public class CreateGraphSchemaFromSample implements CreateGraphSchemaCommand {
     public GraphSchema execute() {
 
         GraphSchema graphSchema = new GraphSchema();
-        for (ExportSpecification<?> exportSpecification : exportSpecifications) {
+        for (ExportSpecification exportSpecification : exportSpecifications) {
 
             Timer.timedActivity("creating " + exportSpecification.description() + " schema from sampling graph",
                     (Activity.Runnable) () -> {

@@ -12,9 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
-import com.amazonaws.services.neptune.propertygraph.schema.GraphElementTypes;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
 
@@ -26,48 +26,50 @@ public enum Scope {
 
     all {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(GraphSchema graphSchema,
-                                                                       Collection<Label> nodeLabels,
-                                                                       Collection<Label> edgeLabels,
-                                                                       TokensOnly tokensOnly,
-                                                                       EdgeLabelStrategy edgeLabelStrategy,
-                                                                       ExportStats stats,
-                                                                       LabModeFeatures labModeFeatures) {
+        public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
+                                                                    Collection<Label> nodeLabels,
+                                                                    Collection<Label> edgeLabels,
+                                                                    TokensOnly tokensOnly,
+                                                                    EdgeLabelStrategy edgeLabelStrategy,
+                                                                    ExportStats stats,
+                                                                    FeatureToggles featureToggles) {
 
-            Collection<ExportSpecification<?>> results = new ArrayList<>();
+            Collection<ExportSpecification> results = new ArrayList<>();
 
             if (graphSchema.isEmpty()) {
-                results.add(new ExportSpecification<>(
-                        GraphElementTypes.Nodes,
+                results.add(new ExportSpecification(
+                        GraphElementType.nodes,
                         Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                         stats, tokensOnly.nodeTokensOnly(),
-                        labModeFeatures));
-                results.add(new ExportSpecification<>(
-                        GraphElementTypes.Edges,
+                        featureToggles));
+                results.add(new ExportSpecification(
+                        GraphElementType.edges,
                         Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                         stats, tokensOnly.edgeTokensOnly(),
-                        labModeFeatures));
+                        featureToggles));
             } else {
                 if (graphSchema.hasNodeSchemas()) {
                     LabelsFilter labelsFilter = Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly)
-                            .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes).labels());
+                            .intersection(graphSchema.graphElementSchemasFor(GraphElementType.nodes).labels());
                     if (!labelsFilter.isEmpty()) {
-                        results.add(new ExportSpecification<>(
-                                GraphElementTypes.Nodes,
+                        results.add(new ExportSpecification(
+                                GraphElementType.nodes,
                                 labelsFilter,
-                                stats, tokensOnly.nodeTokensOnly(),
-                                labModeFeatures));
+                                stats,
+                                tokensOnly.nodeTokensOnly(),
+                                featureToggles));
                     }
                 }
                 if (graphSchema.hasEdgeSchemas()) {
                     LabelsFilter labelsFilter = Scope.labelsFilter(edgeLabels, edgeLabelStrategy)
-                            .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Edges).labels());
+                            .intersection(graphSchema.graphElementSchemasFor(GraphElementType.edges).labels());
                     if (!labelsFilter.isEmpty()) {
-                        results.add(new ExportSpecification<>(
-                                GraphElementTypes.Edges,
+                        results.add(new ExportSpecification(
+                                GraphElementType.edges,
                                 labelsFilter,
-                                stats, tokensOnly.edgeTokensOnly(),
-                                labModeFeatures));
+                                stats,
+                                tokensOnly.edgeTokensOnly(),
+                                featureToggles));
                     }
                 }
             }
@@ -77,31 +79,31 @@ public enum Scope {
     },
     nodes {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(GraphSchema graphSchema,
-                                                                       Collection<Label> nodeLabels,
-                                                                       Collection<Label> edgeLabels,
-                                                                       TokensOnly tokensOnly,
-                                                                       EdgeLabelStrategy edgeLabelStrategy,
-                                                                       ExportStats stats,
-                                                                       LabModeFeatures labModeFeatures) {
+        public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
+                                                                    Collection<Label> nodeLabels,
+                                                                    Collection<Label> edgeLabels,
+                                                                    TokensOnly tokensOnly,
+                                                                    EdgeLabelStrategy edgeLabelStrategy,
+                                                                    ExportStats stats,
+                                                                    FeatureToggles featureToggles) {
             if (graphSchema.isEmpty()) {
                 return Collections.singletonList(
-                        new ExportSpecification<>(
-                                GraphElementTypes.Nodes,
+                        new ExportSpecification(
+                                GraphElementType.nodes,
                                 Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
                                 stats, tokensOnly.nodeTokensOnly(),
-                                labModeFeatures)
+                                featureToggles)
                 );
             } else if (graphSchema.hasNodeSchemas()) {
                 LabelsFilter labelsFilter = Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly)
-                        .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Nodes).labels());
+                        .intersection(graphSchema.graphElementSchemasFor(GraphElementType.nodes).labels());
                 if (!labelsFilter.isEmpty()) {
                     return Collections.singletonList(
-                            new ExportSpecification<>(
-                                    GraphElementTypes.Nodes,
+                            new ExportSpecification(
+                                    GraphElementType.nodes,
                                     labelsFilter,
                                     stats, tokensOnly.nodeTokensOnly(),
-                                    labModeFeatures)
+                                    featureToggles)
                     );
                 } else {
                     return Collections.emptyList();
@@ -115,31 +117,31 @@ public enum Scope {
     },
     edges {
         @Override
-        public Collection<ExportSpecification<?>> exportSpecifications(GraphSchema graphSchema,
-                                                                       Collection<Label> nodeLabels,
-                                                                       Collection<Label> edgeLabels,
-                                                                       TokensOnly tokensOnly,
-                                                                       EdgeLabelStrategy edgeLabelStrategy,
-                                                                       ExportStats stats,
-                                                                       LabModeFeatures labModeFeatures) {
+        public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
+                                                                    Collection<Label> nodeLabels,
+                                                                    Collection<Label> edgeLabels,
+                                                                    TokensOnly tokensOnly,
+                                                                    EdgeLabelStrategy edgeLabelStrategy,
+                                                                    ExportStats stats,
+                                                                    FeatureToggles featureToggles) {
             if (graphSchema.isEmpty()) {
                 return Collections.singletonList(
-                        new ExportSpecification<>(
-                                GraphElementTypes.Edges,
+                        new ExportSpecification(
+                                GraphElementType.edges,
                                 Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
                                 stats, tokensOnly.edgeTokensOnly(),
-                                labModeFeatures)
+                                featureToggles)
                 );
             } else if (graphSchema.hasEdgeSchemas()) {
                 LabelsFilter labelsFilter = Scope.labelsFilter(edgeLabels, edgeLabelStrategy)
-                        .union(graphSchema.graphElementSchemasFor(GraphElementTypes.Edges).labels());
+                        .intersection(graphSchema.graphElementSchemasFor(GraphElementType.edges).labels());
                 if (!labelsFilter.isEmpty()) {
                     return Collections.singletonList(
-                            new ExportSpecification<>(
-                                    GraphElementTypes.Edges,
+                            new ExportSpecification(
+                                    GraphElementType.edges,
                                     labelsFilter,
                                     stats, tokensOnly.edgeTokensOnly(),
-                                    labModeFeatures)
+                                    featureToggles)
                     );
                 } else {
                     return Collections.emptyList();
@@ -158,13 +160,13 @@ public enum Scope {
         return new SpecifiedLabels(labels, labelStrategy);
     }
 
-    public abstract Collection<ExportSpecification<?>> exportSpecifications(
+    public abstract Collection<ExportSpecification> exportSpecifications(
             GraphSchema graphSchema,
             Collection<Label> nodeLabels,
             Collection<Label> edgeLabels,
             TokensOnly tokensOnly,
             EdgeLabelStrategy edgeLabelStrategy,
             ExportStats stats,
-            LabModeFeatures labModeFeatures);
+            FeatureToggles featureToggles);
 
 }

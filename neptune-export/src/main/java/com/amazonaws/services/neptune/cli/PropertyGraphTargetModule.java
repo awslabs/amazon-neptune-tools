@@ -49,31 +49,38 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private String streamName;
 
-    @Option(name = {"--region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
+    @Option(name = {"--region", "--stream-region"}, description = "AWS Region in which your Amazon Kinesis Data Stream is located.")
     @Once
     private String region;
+
+    @Option(name = {"--stream-large-record-strategy"}, description = "Strategy for dealing with records to be sent to Amazon Kinesis that are larger than 1 MB.")
+    @Once
+    @AllowedEnumValues(LargeStreamRecordHandlingStrategy.class)
+    private LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy = LargeStreamRecordHandlingStrategy.splitAndShred;
 
     @Option(name = {"--merge-files"}, description = "Merge files for each vertex or edge label.")
     @Once
     private boolean mergeFiles = false;
 
-    @Option(name = {"--export-id"}, description = "Export id", hidden = true)
+    @Option(name = {"--export-id"}, description = "Export id")
     @Once
     private String exportId = UUID.randomUUID().toString().replace("-", "");
 
-    private final boolean inferSchema;
+    @Option(name = {"--per-label-directories"}, description = "Create a subdirectory for each distinct vertex or edge label.")
+    @Once
+    private boolean perLabelDirectories = false;
 
-    public PropertyGraphTargetModule(boolean inferSchema) {
-        this.inferSchema = inferSchema;
-    }
+    @Option(name = {"--partition-directories"}, description = "Partition directory path (e.g. 'year=2021/month=07/day=21').")
+    @Once
+    private String partitionDirectories = "";
 
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
-        return Directories.createFor(directoryStructure, directory, exportId, tag );
+        return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
 
-    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions){
-        KinesisConfig kinesisConfig = new KinesisConfig(streamName, region);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, inferSchema, mergeFiles);
+    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions, boolean inferSchema){
+        KinesisConfig kinesisConfig = new KinesisConfig(streamName, region, largeStreamRecordHandlingStrategy);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, inferSchema, format, output, mergeFiles, perLabelDirectories);
     }
 
     public String description(){

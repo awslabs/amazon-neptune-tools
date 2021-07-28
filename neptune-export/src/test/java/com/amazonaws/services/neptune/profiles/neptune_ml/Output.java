@@ -24,7 +24,13 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
-class Output {
+public class Output {
+
+    public static String format(JsonNode json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+    }
+
     private final StringWriter writer = new StringWriter();
     private final JsonGenerator generator;
 
@@ -34,6 +40,10 @@ class Output {
 
     public JsonGenerator generator(){
         return generator;
+    }
+
+    public JsonNode allOutput() throws JsonProcessingException {
+        return new ObjectMapper().readTree(writer.toString());
     }
 
     public JsonNode graph() throws JsonProcessingException {

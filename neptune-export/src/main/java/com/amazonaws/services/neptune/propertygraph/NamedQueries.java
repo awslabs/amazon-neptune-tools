@@ -16,23 +16,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class NamedQueries {
 
     public static NamedQueries fromJson(JsonNode json) {
         String name = json.path("name").textValue();
-        ArrayNode queries = (ArrayNode) json.path("queries");
 
-        List<String> collection = new ArrayList<>();
+        if (json.has("query")){
+            String query = json.path("query").textValue();
+            return new NamedQueries(name, Collections.singletonList(query));
+        } else {
 
-        for (JsonNode query : queries) {
-            collection.add(query.textValue());
+            ArrayNode queries = (ArrayNode) json.path("queries");
+
+            List<String> collection = new ArrayList<>();
+
+            for (JsonNode query : queries) {
+                collection.add(query.textValue());
+            }
+
+            return new NamedQueries(name, collection);
         }
-
-        return new NamedQueries(name, collection);
     }
 
     private final String name;

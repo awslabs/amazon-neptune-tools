@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.io;
 
+import com.amazonaws.services.neptune.propertygraph.TokenPrefix;
+
 public class JsonPrinterOptions {
 
     public static Builder builder(){
@@ -19,29 +21,44 @@ public class JsonPrinterOptions {
     }
 
     private final boolean strictCardinality;
+    private final TokenPrefix tokenPrefix;
 
-    private JsonPrinterOptions(boolean strictCardinality) {
+    private JsonPrinterOptions(boolean strictCardinality,
+                               TokenPrefix tokenPrefix) {
         this.strictCardinality = strictCardinality;
+        this.tokenPrefix = tokenPrefix;
     }
 
     public boolean strictCardinality() {
         return strictCardinality;
     }
 
+    public TokenPrefix tokenPrefix() {
+        return tokenPrefix;
+    }
+
     public Builder copy(){
-        return new Builder().setStrictCardinality(strictCardinality);
+        return new Builder()
+                .setStrictCardinality(strictCardinality)
+                .setTokenPrefix(tokenPrefix);
     }
 
     public static class Builder{
         private boolean strictCardinality = false;
+        private TokenPrefix tokenPrefix = new TokenPrefix();
 
         public Builder setStrictCardinality(boolean strictCardinality) {
             this.strictCardinality = strictCardinality;
             return this;
         }
 
+        public Builder setTokenPrefix(TokenPrefix tokenPrefix){
+            this.tokenPrefix = tokenPrefix;
+            return this;
+        }
+
         public JsonPrinterOptions build(){
-            return new JsonPrinterOptions(strictCardinality);
+            return new JsonPrinterOptions(strictCardinality, tokenPrefix);
         }
 
     }

@@ -1,0 +1,50 @@
+{
+  "input": [
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 1
+      },
+      "data": {
+        "stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"
+      },
+      "op": "ADD"
+    },
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 2
+      },
+      "data": {
+        "stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"
+      },
+      "op": "ADD"
+    },
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 3
+      },
+      "data": {
+        "stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"
+      },
+      "op": "ADD"
+    },
+    {
+      "eventId": {
+        "commitNum": 1,
+        "opNum": 4
+      },
+      "data": {
+        "stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"
+      },
+      "op": "ADD"
+    }
+  ],
+  "output": [
+    [{"eventId":{"commitNum":1,"opNum":1},"data":{"stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":2},"data":{"stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":3},"data":{"stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"},"op":"ADD"}],
+    [{"eventId":{"commitNum":1,"opNum":4},"data":{"stmt": "<https://test.com/s> <https://test.com/p> <https://test.com/o> .\n"},"op":"ADD"}]
+  ]
+}

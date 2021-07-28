@@ -13,6 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.airline;
 
 import com.amazonaws.services.neptune.propertygraph.NamedQueries;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rvesse.airline.model.ArgumentsMetadata;
 import com.github.rvesse.airline.model.OptionMetadata;
 import com.github.rvesse.airline.parser.ParseState;
@@ -28,14 +31,28 @@ public class NameQueriesTypeConverter implements TypeConverter, TypeConverterPro
     @Override
     public Object convert(String s, Class<?> aClass, String value) {
 
-        int i = value.indexOf("=");
-
-        if (i < 0){
-            throw new IllegalArgumentException("Invalid named query format");
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            JsonNode jsonNode = objectMapper.readTree(value);
+            return NamedQueries.fromJson(jsonNode);
+        } catch (JsonProcessingException e) {
+            // Not JSON representation of queries, so continue
         }
 
-        String name = value.substring(0, i).trim();
-        List<String> queries = Arrays.stream(value.substring(i + 1).split(";")).
+        int i = value.indexOf("=");
+
+        String name;
+        String gremlinQueries;
+
+        if (i < 0){
+            name = "query";
+            gremlinQueries = value;
+        } else {
+            name = value.substring(0, i).trim();
+            gremlinQueries = value.substring(i + 1);
+        }
+
+        List<String> queries = Arrays.stream(gremlinQueries.split(";")).
                 map(String::trim).
                 collect(Collectors.toList());
 

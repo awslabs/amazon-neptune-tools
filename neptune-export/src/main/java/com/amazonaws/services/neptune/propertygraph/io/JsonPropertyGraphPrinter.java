@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.propertygraph.TokenPrefix;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
@@ -32,6 +33,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     private final boolean allowUpdateSchema;
     private final PrinterOptions printerOptions;
     private boolean isNullable = false;
+    private final TokenPrefix tokenPrefix;
 
     public JsonPropertyGraphPrinter(OutputWriter writer, JsonGenerator generator, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
         this(writer, generator, labelSchema, printerOptions, false);
@@ -44,6 +46,7 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
         this.labelSchema = labelSchema;
         this.allowUpdateSchema = allowUpdateSchema;
         this.printerOptions = printerOptions;
+        this.tokenPrefix = printerOptions.json().tokenPrefix();
     }
 
     @Override
@@ -167,22 +170,22 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printEdge(String id, String label, String from, String to, Collection<String> fromLabels, Collection<String> toLabels) throws IOException {
-        generator.writeStringField("~id", id);
-        generator.writeStringField("~label", label);
-        generator.writeStringField("~from", from);
-        generator.writeStringField("~to", to);
+        generator.writeStringField( tokenPrefix.format("id"), id);
+        generator.writeStringField(tokenPrefix.format("label"), label);
+        generator.writeStringField(tokenPrefix.format("from"), from);
+        generator.writeStringField(tokenPrefix.format("to"), to);
         if (fromLabels != null) {
-            printProperty(fromLabels, DataType.String, "~fromLabels", true);
+            printProperty(fromLabels, DataType.String, tokenPrefix.format("fromLabels"), true);
         }
         if (toLabels != null) {
-            printProperty(toLabels, DataType.String, "~toLabels", true);
+            printProperty(toLabels, DataType.String, tokenPrefix.format("toLabels"), true);
         }
     }
 
     @Override
     public void printNode(String id, List<String> labels) throws IOException {
-        generator.writeStringField("~id", id);
-        printProperty(labels, DataType.String, "~label", true);
+        generator.writeStringField(tokenPrefix.format("id"), id);
+        printProperty(labels, DataType.String, tokenPrefix.format("label"), true);
     }
 
     @Override

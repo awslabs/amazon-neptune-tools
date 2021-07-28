@@ -1,0 +1,42 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "bio",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "bio",
+        "type": "text_word2vec",
+        "language": ["unsupported_language"]
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "bio", "bio", "text_word2vec" ],
+          "language" : [ "unsupported_language" ]
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ "Unsupported language for text_word2vec feature for 'bio': 'unsupported_language'. Supported languages are: 'en_core_web_lg', 'fr_core_news_lg'. The output embedding is not guaranteed to be valid if you supply another language."  ]
+  }
+}

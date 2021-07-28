@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.propertygraph.TokenPrefix;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
@@ -55,17 +56,18 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printHeaderMandatoryColumns(String... columns) {
-        if (printerOptions.csv().includeHeaders()) {
+        if (printerOptions.csv().includeHeaders() && writer.isNewTarget()) {
+            TokenPrefix tokenPrefix = printerOptions.csv().tokenPrefix();
             for (String column : columns) {
                 commaPrinter.printComma();
-                writer.print(column);
+                writer.print(tokenPrefix.format(column));
             }
         }
     }
 
     @Override
     public void printHeaderRemainingColumns(Collection<PropertySchema> remainingColumns) {
-        if (printerOptions.csv().includeHeaders()) {
+        if (printerOptions.csv().includeHeaders() && writer.isNewTarget()) {
             for (PropertySchema property : remainingColumns) {
                 commaPrinter.printComma();
                 if (printerOptions.csv().includeTypeDefinitions()) {
@@ -74,7 +76,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
                     writer.print(property.nameWithoutDataType(printerOptions.csv().escapeCsvHeaders()));
                 }
             }
-            writer.print(System.lineSeparator());
+            writer.print(writer.lineSeparator());
         }
     }
 
@@ -178,7 +180,7 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
     @Override
     public void printEndRow() {
-        writer.print(System.lineSeparator());
+        writer.print(writer.lineSeparator());
         writer.endCommit();
     }
 

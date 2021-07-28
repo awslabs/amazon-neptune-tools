@@ -14,13 +14,15 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
-import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,17 +32,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExportPropertyGraphJob {
 
-    private final Collection<ExportSpecification<?>> exportSpecifications;
+    private static final Logger logger = LoggerFactory.getLogger(ExportPropertyGraphJob.class);
+
+    private final Collection<ExportSpecification> exportSpecifications;
     private final GraphSchema graphSchema;
     private final GraphTraversalSource g;
     private final RangeConfig rangeConfig;
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
 
-    public ExportPropertyGraphJob(Collection<ExportSpecification<?>> exportSpecifications,
+    public ExportPropertyGraphJob(Collection<ExportSpecification> exportSpecifications,
                                   GraphSchema graphSchema,
                                   GraphTraversalSource g,
                                   RangeConfig rangeConfig,
@@ -55,9 +60,9 @@ public class ExportPropertyGraphJob {
     }
 
     public GraphSchema execute() throws Exception {
-        Map<GraphElementType<?>, GraphElementSchemas> revisedGraphElementSchemas = new HashMap<>();
+        Map<GraphElementType, GraphElementSchemas> revisedGraphElementSchemas = new HashMap<>();
 
-        for (ExportSpecification<?> exportSpecification : exportSpecifications) {
+        for (ExportSpecification exportSpecification : exportSpecifications) {
             MasterLabelSchemas masterLabelSchemas =
                     Timer.timedActivity("exporting " + exportSpecification.description(),
                             (CheckedActivity.Callable<MasterLabelSchemas>) () -> export(exportSpecification));
@@ -67,14 +72,16 @@ public class ExportPropertyGraphJob {
         return new GraphSchema(revisedGraphElementSchemas);
     }
 
-    private MasterLabelSchemas export(ExportSpecification<?> exportSpecification) throws Exception {
+    private MasterLabelSchemas export(ExportSpecification exportSpecification) throws Exception {
         Collection<FileSpecificLabelSchemas> fileSpecificLabelSchemas = new ArrayList<>();
 
+        AtomicInteger fileDescriptorCount = new AtomicInteger();
 
-        for (ExportSpecification<?> labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
+
+        for (ExportSpecification labelSpecificExportSpecification : exportSpecification.splitByLabel()) {
             Collection<Future<FileSpecificLabelSchemas>> futures = new ArrayList<>();
             RangeFactory rangeFactory = labelSpecificExportSpecification.createRangeFactory(g, rangeConfig, concurrencyConfig);
-            Status status = new Status();
+            Status status = new Status(StatusOutputFormat.Description, String.format("%s: %s total", labelSpecificExportSpecification.description(), rangeFactory.numberOfItemsToExport()));
 
             String description = String.format("writing %s as %s to %s",
                     labelSpecificExportSpecification.description(),
@@ -93,7 +100,8 @@ public class ExportPropertyGraphJob {
                             targetConfig,
                             rangeFactory,
                             status,
-                            index
+                            index,
+                            fileDescriptorCount
                     );
                     futures.add(taskExecutor.submit(exportTask));
                 }
@@ -101,7 +109,9 @@ public class ExportPropertyGraphJob {
                 taskExecutor.shutdown();
 
                 try {
-                    taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                    if (!taskExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
+                        logger.warn("Timeout expired with uncompleted tasks");
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(e);

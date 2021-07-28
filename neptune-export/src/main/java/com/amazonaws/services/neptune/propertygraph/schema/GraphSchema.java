@@ -26,9 +26,9 @@ public class GraphSchema implements Jsonizable {
 
     public static GraphSchema fromJson(JsonNode json) {
 
-        Map<GraphElementType<?>, GraphElementSchemas> graphElementsSchemas = new HashMap<>();
+        Map<GraphElementType, GraphElementSchemas> graphElementsSchemas = new HashMap<>();
 
-        for (GraphElementType<?> graphElementType : GraphElementTypes.values()) {
+        for (GraphElementType graphElementType : GraphElementType.values()) {
             JsonNode node = json.path(graphElementType.name());
             if (!node.isMissingNode() && node.isArray()) {
                 graphElementsSchemas.put(graphElementType, GraphElementSchemas.fromJson((ArrayNode) node));
@@ -38,25 +38,29 @@ public class GraphSchema implements Jsonizable {
         return new GraphSchema(graphElementsSchemas);
     }
 
-    private final Map<GraphElementType<?>, GraphElementSchemas> graphElementsSchemas;
+    private final Map<GraphElementType, GraphElementSchemas> graphElementsSchemas;
 
     public GraphSchema() {
         this(new HashMap<>());
     }
 
-    public GraphSchema(Map<GraphElementType<?>, GraphElementSchemas> graphElementsSchemas) {
+    public boolean allowInferSchema(){
+        return graphElementsSchemas.isEmpty();
+    }
+
+    public GraphSchema(Map<GraphElementType, GraphElementSchemas> graphElementsSchemas) {
         this.graphElementsSchemas = graphElementsSchemas;
     }
 
-    public void update(GraphElementType<?> graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
+    public void update(GraphElementType graphElementType, Map<?, Object> properties, boolean allowStructuralElements) {
         graphElementSchemasFor(graphElementType).update(properties, allowStructuralElements);
     }
 
-    public GraphElementSchemas copyOfGraphElementSchemasFor(GraphElementType<?> graphElementType) {
+    public GraphElementSchemas copyOfGraphElementSchemasFor(GraphElementType graphElementType) {
         return graphElementSchemasFor(graphElementType).createCopy();
     }
 
-    public GraphElementSchemas graphElementSchemasFor(GraphElementType<?> graphElementType) {
+    public GraphElementSchemas graphElementSchemasFor(GraphElementType graphElementType) {
         if (!graphElementsSchemas.containsKey(graphElementType)) {
             graphElementsSchemas.put(graphElementType, new GraphElementSchemas());
         }
@@ -72,20 +76,24 @@ public class GraphSchema implements Jsonizable {
     }
 
     public boolean hasNodeSchemas() {
-        return graphElementsSchemas.containsKey(GraphElementTypes.Nodes);
+        return graphElementsSchemas.containsKey(GraphElementType.nodes);
     }
 
     public boolean hasEdgeSchemas() {
-        return graphElementsSchemas.containsKey(GraphElementTypes.Edges);
+        return graphElementsSchemas.containsKey(GraphElementType.edges);
     }
 
     @Override
     public JsonNode toJson() {
+        return toJson(false);
+    }
+
+    public JsonNode toJson(boolean includeFilenames) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
-        for (Map.Entry<GraphElementType<?>, GraphElementSchemas> entry : graphElementsSchemas.entrySet()) {
+        for (Map.Entry<GraphElementType, GraphElementSchemas> entry : graphElementsSchemas.entrySet()) {
             String key = entry.getKey().name();
-            ArrayNode arrayNode = entry.getValue().toJson();
+            ArrayNode arrayNode = entry.getValue().toJson(includeFilenames);
             json.set(key, arrayNode);
         }
         return json;

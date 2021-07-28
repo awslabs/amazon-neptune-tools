@@ -13,7 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -30,7 +30,6 @@ import com.github.rvesse.airline.annotations.help.Examples;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 import java.util.Collection;
 
 @Examples(examples = {
@@ -49,7 +48,7 @@ import java.util.Collection;
         "Parallel export using 2 threads, with each thread processing batches of 1000 nodes or edges"
 })
 @Command(name = "export-pg", description = "Export property graph from Neptune to CSV or JSON.")
-public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Runnable {
+public class ExportPropertyGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
     private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
@@ -61,7 +60,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(true);
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
 
     @Inject
     private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
@@ -83,19 +82,19 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
 
         try {
             Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
-                try (ClusterStrategy clusterStrategy = cloneStrategy.cloneCluster(connection.config(), concurrency.config())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
-
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
 
-                    Collection<ExportSpecification<?>> exportSpecifications = scope.exportSpecifications(graphSchema, stats, labModeFeatures());
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config(), graphSchema.allowInferSchema());
 
-                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(clusterStrategy, serialization.config());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
+
+                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
 
                         ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
@@ -103,7 +102,7 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                                 graphSchema,
                                 g,
                                 range.config(),
-                                clusterStrategy.concurrencyConfig(),
+                                cluster.concurrencyConfig(),
                                 targetConfig);
 
                         graphSchema = exportJob.execute();
@@ -117,8 +116,8 @@ public class ExportPropertyGraph extends NeptuneExportBaseCommand implements Run
                     System.err.println();
                     System.err.println(stats.formatStats(graphSchema));
 
-                    Path outputPath = directories.writeRootDirectoryPathAsReturnValue(target);
-                    onExportComplete(outputPath, stats, graphSchema);
+                    directories.writeRootDirectoryPathAsReturnValue(target);
+                    onExportComplete(directories, stats, cluster, graphSchema);
 
                 }
             });

@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.rdf.io;
 
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.io.Status;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.eclipse.rdf4j.model.Statement;
@@ -28,7 +29,7 @@ import java.util.Collection;
 public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
 
     private final JsonGenerator generator;
-    private final Status status = new Status();
+    private final Status status = new Status(StatusOutputFormat.Description,"statements");
     private final OutputWriter outputWriter;
 
     public NeptuneStreamsJsonNQuadsWriter(OutputWriter outputWriter) {

@@ -12,7 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.propertygraph.schema.*;
+import com.amazonaws.services.neptune.propertygraph.schema.CreateGraphSchemaCommand;
+import com.amazonaws.services.neptune.propertygraph.schema.CreateGraphSchemaFromSample;
+import com.amazonaws.services.neptune.propertygraph.schema.CreateGraphSchemaFromScan;
+import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 
 import java.util.Collection;
@@ -27,7 +30,7 @@ public class SchemaSamplingSpecification {
         this.sampleSize = sampleSize;
     }
 
-    public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification<?>> exportSpecifications,
+    public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification> exportSpecifications,
                                                         GraphTraversalSource g) {
         if (sample) {
             return new CreateGraphSchemaFromSample(exportSpecifications, g, sampleSize);

@@ -1,0 +1,43 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "credit",
+        "dataType" : "Integer",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "label": {
+    "split_rate" : [ 0.3, 0.3, 0.4 ],
+    "targets": [
+      {
+        "node": "Person",
+        "property": "credit",
+        "type": "regression"
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ ],
+        "labels" : [ {
+          "label" : [ "credit", "regression" ],
+          "split_rate" : [ 0.3, 0.3, 0.4 ]
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}

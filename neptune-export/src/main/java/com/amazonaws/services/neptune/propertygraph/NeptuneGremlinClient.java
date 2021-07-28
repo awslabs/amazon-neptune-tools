@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
+import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.propertygraph.io.SerializationConfig;
@@ -20,7 +20,6 @@ import org.apache.tinkerpop.gremlin.driver.*;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,21 +29,20 @@ public class NeptuneGremlinClient implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(NeptuneGremlinClient.class);
 
-    public static NeptuneGremlinClient create(ClusterStrategy clusterStrategy, SerializationConfig serializationConfig) {
-        ConnectionConfig connectionConfig = clusterStrategy.connectionConfig();
-        ConcurrencyConfig concurrencyConfig = clusterStrategy.concurrencyConfig();
+    public static NeptuneGremlinClient create(Cluster cluster, SerializationConfig serializationConfig) {
+        ConnectionConfig connectionConfig = cluster.connectionConfig();
+        ConcurrencyConfig concurrencyConfig = cluster.concurrencyConfig();
 
         if (!connectionConfig.useSsl()){
             logger.warn("SSL has been disabled");
         }
 
-        Cluster.Builder builder = Cluster.build()
+        org.apache.tinkerpop.gremlin.driver.Cluster.Builder builder = org.apache.tinkerpop.gremlin.driver.Cluster.build()
                 .port(connectionConfig.port())
                 .enableSsl(connectionConfig.useSsl())
-                .serializer(serializationConfig.serializer())
-                .maxWaitForConnection(10000)
-                .resultIterationBatchSize(serializationConfig.batchSize())
-                .maxContentLength(serializationConfig.maxContentLength());
+                .maxWaitForConnection(10000);
+
+        builder = serializationConfig.apply(builder);
 
         if (connectionConfig.useIamAuth()) {
             if (connectionConfig.isDirectConnection()) {
@@ -66,9 +64,9 @@ public class NeptuneGremlinClient implements AutoCloseable {
         return new NeptuneGremlinClient(concurrencyConfig.applyTo(builder, numberOfEndpoints).create());
     }
 
-    private final Cluster cluster;
+    private final org.apache.tinkerpop.gremlin.driver.Cluster cluster;
 
-    private NeptuneGremlinClient(Cluster cluster) {
+    private NeptuneGremlinClient(org.apache.tinkerpop.gremlin.driver.Cluster cluster) {
         this.cluster = cluster;
     }
 

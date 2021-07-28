@@ -13,7 +13,6 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -39,7 +38,7 @@ public class CloneCluster implements CloneClusterStrategy {
     }
 
     @Override
-    public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
+    public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
 
         if (!connectionConfig.isDirectConnection()) {
             throw new IllegalStateException("neptune-export does not support cloning a Neptune cluster accessed via a load balancer");
@@ -72,10 +71,9 @@ public class CloneCluster implements CloneClusterStrategy {
         System.err.println(String.format("Max concurrency : %s", maxConcurrency));
         System.err.println(String.format("Concurrency     : %s", newConcurrency));
 
-        return new ClonedClusterStrategy(
-                targetClusterId,
+        return new ClonedCluster(
                 new ConnectionConfig(
-                        clusterId,
+                        targetClusterId,
                         targetClusterMetadata.endpoints(),
                         connectionConfig.port(),
                         connectionConfig.nlbEndpoint(),
@@ -88,18 +86,15 @@ public class CloneCluster implements CloneClusterStrategy {
                 amazonNeptuneClientSupplier);
     }
 
-    private static class ClonedClusterStrategy implements ClusterStrategy {
+    private static class ClonedCluster implements Cluster {
 
-        private final String clusterId;
         private final ConnectionConfig connectionConfig;
         private final ConcurrencyConfig concurrencyConfig;
         private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
-        private ClonedClusterStrategy(String clusterId,
-                                      ConnectionConfig connectionConfig,
-                                      ConcurrencyConfig concurrencyConfig,
-                                      Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
-            this.clusterId = clusterId;
+        private ClonedCluster(ConnectionConfig connectionConfig,
+                              ConcurrencyConfig concurrencyConfig,
+                              Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
             this.connectionConfig = connectionConfig;
             this.concurrencyConfig = concurrencyConfig;
             this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
@@ -116,10 +111,15 @@ public class CloneCluster implements CloneClusterStrategy {
         }
 
         @Override
+        public Supplier<AmazonNeptune> clientSupplier() {
+            return amazonNeptuneClientSupplier;
+        }
+
+        @Override
         public void close() throws Exception {
 
             RemoveCloneTask removeCloneTask = new RemoveCloneTask(
-                    clusterId,
+                    connectionConfig.clusterId(),
                     amazonNeptuneClientSupplier);
 
             removeCloneTask.execute();

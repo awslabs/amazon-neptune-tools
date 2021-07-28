@@ -12,10 +12,11 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph;
 
-import com.amazonaws.services.neptune.export.LabModeFeature;
-import com.amazonaws.services.neptune.export.LabModeFeatures;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.io.GraphElementHandler;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphElementSchemas;
+import com.amazonaws.services.neptune.propertygraph.schema.GraphElementType;
 import com.amazonaws.services.neptune.util.Activity;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -42,16 +43,16 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     private final GraphTraversalSource g;
     private final boolean tokensOnly;
     private final ExportStats stats;
-    private final LabModeFeatures labModeFeatures;
+    private final FeatureToggles featureToggles;
 
     public NodesClient(GraphTraversalSource g,
                        boolean tokensOnly,
                        ExportStats stats,
-                       LabModeFeatures labModeFeatures) {
+                       FeatureToggles featureToggles) {
         this.g = g;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
-        this.labModeFeatures = labModeFeatures;
+        this.featureToggles = featureToggles;
     }
 
     @Override
@@ -102,6 +103,9 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
         traversal.forEachRemaining(m -> {
             try {
+                if (featureToggles.containsFeature(FeatureToggle.Inject_Fault)){
+                    throw new IllegalStateException("Simulated fault in NodesClient");
+                }
                 handler.handle(m, false);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -112,7 +116,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     private GraphTraversal<? extends Element, ?> filterByPropertyKeys(GraphTraversal<? extends Element, ?> traversal,
                                                                       LabelsFilter labelsFilter,
                                                                       GraphElementSchemas graphElementSchemas) {
-        if (!labModeFeatures.containsFeature(LabModeFeature.FilterByPropertyKeys)) {
+        if (!featureToggles.containsFeature(FeatureToggle.FilterByPropertyKeys)) {
             return traversal;
         }
 
@@ -161,7 +165,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<Vertex, Vertex> t = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).V() :
                 g.V();
-        return range.applyRange(labelsFilter.apply(t, labModeFeatures));
+        return range.applyRange(labelsFilter.apply(t, featureToggles, GraphElementType.nodes));
     }
 
 }

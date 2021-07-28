@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.rdf.io;
 
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.OutputWriter;
+import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.rdf.Prefixes;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -26,7 +27,7 @@ public class EnhancedTurtleWriter extends TurtleWriter {
 
     private final OutputWriter writer;
     private final Prefixes prefixes;
-    private final Status status = new Status();
+    private final Status status = new Status(StatusOutputFormat.Description, "statements");
 
     public EnhancedTurtleWriter(OutputWriter writer, Prefixes prefixes) {
         super(writer.writer());

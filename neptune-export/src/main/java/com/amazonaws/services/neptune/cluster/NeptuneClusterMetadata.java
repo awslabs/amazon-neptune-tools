@@ -12,15 +12,14 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.neptune.AmazonNeptune;
-import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NeptuneClusterMetadata {
 
@@ -57,6 +56,16 @@ public class NeptuneClusterMetadata {
         boolean isIAMDatabaseAuthenticationEnabled = dbCluster.isIAMDatabaseAuthenticationEnabled();
         Integer port = dbCluster.getPort();
         String dbClusterParameterGroup = dbCluster.getDBClusterParameterGroup();
+
+        DescribeDBClusterParametersResult describeDBClusterParametersResult = neptune.describeDBClusterParameters(
+                new DescribeDBClusterParametersRequest()
+                        .withDBClusterParameterGroupName(dbClusterParameterGroup));
+        Optional<Parameter> neptuneStreamsParameter = describeDBClusterParametersResult.getParameters().stream()
+                .filter(parameter -> parameter.getParameterName().equals("neptune_streams"))
+                .findFirst();
+        boolean isStreamEnabled = neptuneStreamsParameter.isPresent() &&
+                neptuneStreamsParameter.get().getParameterValue().equals("1");
+
         String dbSubnetGroup = dbCluster.getDBSubnetGroup();
         List<VpcSecurityGroupMembership> vpcSecurityGroups = dbCluster.getVpcSecurityGroups();
         List<String> vpcSecurityGroupIds = vpcSecurityGroups.stream()
@@ -99,6 +108,7 @@ public class NeptuneClusterMetadata {
                 port,
                 dbClusterParameterGroup,
                 isIAMDatabaseAuthenticationEnabled,
+                isStreamEnabled,
                 dbSubnetGroup,
                 vpcSecurityGroupIds,
                 primary,
@@ -112,6 +122,7 @@ public class NeptuneClusterMetadata {
     private final int port;
     private final String dbClusterParameterGroupName;
     private final Boolean isIAMDatabaseAuthenticationEnabled;
+    private final Boolean isStreamEnabled;
     private final String dbSubnetGroupName;
     private final Collection<String> vpcSecurityGroupIds;
     private final String primary;
@@ -123,6 +134,7 @@ public class NeptuneClusterMetadata {
                                    int port,
                                    String dbClusterParameterGroupName,
                                    Boolean isIAMDatabaseAuthenticationEnabled,
+                                   Boolean isStreamEnabled,
                                    String dbSubnetGroupName,
                                    List<String> vpcSecurityGroupIds,
                                    String primary,
@@ -132,8 +144,8 @@ public class NeptuneClusterMetadata {
         this.clusterId = clusterId;
         this.port = port;
         this.dbClusterParameterGroupName = dbClusterParameterGroupName;
-
         this.isIAMDatabaseAuthenticationEnabled = isIAMDatabaseAuthenticationEnabled;
+        this.isStreamEnabled = isStreamEnabled;
         this.dbSubnetGroupName = dbSubnetGroupName;
         this.vpcSecurityGroupIds = vpcSecurityGroupIds;
         this.primary = primary;
@@ -156,6 +168,10 @@ public class NeptuneClusterMetadata {
 
     public Boolean isIAMDatabaseAuthenticationEnabled() {
         return isIAMDatabaseAuthenticationEnabled;
+    }
+
+    public Boolean isStreamEnabled() {
+        return isStreamEnabled;
     }
 
     public String dbSubnetGroupName() {

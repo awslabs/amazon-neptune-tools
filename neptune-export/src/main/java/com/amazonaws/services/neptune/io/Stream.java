@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -34,53 +36,67 @@ public class Stream {
 
     private final KinesisProducer kinesisProducer;
     private final String streamName;
+    private final StreamThrottle streamThrottle;
+    private final LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy;
+    private final RecordSplitter splitter;
     private final AtomicLong counter = new AtomicLong();
-    private volatile long currentWindowLength = 0;
-    private volatile long maxRecordCount = 10000;
 
     private static final Logger logger = LoggerFactory.getLogger(Stream.class);
+    private static final int MAX_SIZE_BYTES = 1000000;
 
-    public Stream(KinesisProducer kinesisProducer, String streamName) {
+    public Stream(KinesisProducer kinesisProducer,
+                  String streamName,
+                  LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy) {
         this.kinesisProducer = kinesisProducer;
         this.streamName = streamName;
+        this.streamThrottle = new StreamThrottle(kinesisProducer);
+        this.largeStreamRecordHandlingStrategy = largeStreamRecordHandlingStrategy;
+        this.splitter = new RecordSplitter(MAX_SIZE_BYTES, largeStreamRecordHandlingStrategy);
     }
 
-    private static final long QUEUE_SIZE_BYTES = 10000000;
-    private static final long MAX_WINDOW_SIZE = 1000;
-
     public synchronized void publish(String s) {
+
         if (StringUtils.isNotEmpty(s) && s.length() > 2) {
 
             try {
                 long partitionKeyValue = counter.incrementAndGet();
-
                 byte[] bytes = s.getBytes(StandardCharsets.UTF_8.name());
-                ByteBuffer data = ByteBuffer.wrap(bytes);
 
-                currentWindowLength += bytes.length;
-                if (partitionKeyValue % MAX_WINDOW_SIZE == 0){
-                    maxRecordCount = QUEUE_SIZE_BYTES / (currentWindowLength /MAX_WINDOW_SIZE);
-                    logger.info("{} bytes per {} records – maxRecordCount: {}", currentWindowLength, MAX_WINDOW_SIZE, maxRecordCount);
-                    currentWindowLength = 0;
-                }
-
-                if (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
-                    long start = System.currentTimeMillis();
-                    while (kinesisProducer.getOutstandingRecordsCount() > (maxRecordCount)) {
-                        Thread.sleep(1);
+                if (bytes.length > MAX_SIZE_BYTES && largeStreamRecordHandlingStrategy.allowSplit()) {
+                    Collection<String> splitRecords = splitter.split(s);
+                    for (String splitRecord : splitRecords) {
+                        publish(partitionKeyValue, splitRecord.getBytes(StandardCharsets.UTF_8.name()));
                     }
-                    long end = System.currentTimeMillis();
-                    logger.trace("Paused adding records to stream for {} millis", end - start);
+                } else {
+                    publish(partitionKeyValue, bytes);
                 }
 
-                ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
-                Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
-            } catch (InterruptedException e) {
-                logger.error(e.getMessage());
-                Thread.currentThread().interrupt();
+
             } catch (UnsupportedEncodingException e) {
                 logger.error(e.getMessage());
             }
+        }
+    }
+
+    private void publish(long partitionKeyValue, byte[] bytes) {
+
+        if (bytes.length > MAX_SIZE_BYTES) {
+            logger.warn("Dropping record because it is larger than 1 MB: [{}] '{}...'", bytes.length, new String(Arrays.copyOfRange(bytes, 0, 256)));
+            return;
+        }
+
+        try {
+            ByteBuffer data = ByteBuffer.wrap(bytes);
+
+            streamThrottle.recalculateMaxBufferSize(partitionKeyValue, bytes.length);
+            streamThrottle.throttle();
+
+            ListenableFuture<UserRecordResult> future = kinesisProducer.addUserRecord(streamName, String.valueOf(partitionKeyValue), data);
+            Futures.addCallback(future, CALLBACK, MoreExecutors.directExecutor());
+
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+            Thread.currentThread().interrupt();
         }
     }
 

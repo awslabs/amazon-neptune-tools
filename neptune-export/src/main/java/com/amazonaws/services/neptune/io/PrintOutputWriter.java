@@ -17,45 +17,63 @@ import java.io.*;
 public class PrintOutputWriter extends PrintWriter implements OutputWriter {
 
     private final String outputId;
+    private final boolean isNewTarget;
 
     public PrintOutputWriter(String outputId, Writer out) {
+        this(outputId, true, out);
+    }
+
+    public PrintOutputWriter(String outputId, boolean isNewTarget, Writer out) {
         super(out);
         this.outputId = outputId;
+        this.isNewTarget = isNewTarget;
     }
 
     PrintOutputWriter(String outputId, Writer out, boolean autoFlush) {
         super(out, autoFlush);
         this.outputId = outputId;
+        this.isNewTarget = false;
     }
 
     PrintOutputWriter(String outputId, OutputStream out) {
         super(out);
         this.outputId = outputId;
+        this.isNewTarget = false;
     }
 
     PrintOutputWriter(String outputId, OutputStream out, boolean autoFlush) {
         super(out, autoFlush);
         this.outputId = outputId;
+        this.isNewTarget = false;
     }
 
     PrintOutputWriter(String fileName) throws FileNotFoundException {
         super(fileName);
         this.outputId = fileName;
+        this.isNewTarget = false;
     }
 
     PrintOutputWriter(String fileName, String csn) throws FileNotFoundException, UnsupportedEncodingException {
         super(fileName, csn);
         this.outputId = fileName;
+        this.isNewTarget = false;
     }
 
     PrintOutputWriter(File file) throws FileNotFoundException {
         super(file);
         this.outputId = file.getAbsolutePath();
+        this.isNewTarget = false;
     }
 
     PrintOutputWriter(File file, String csn) throws FileNotFoundException, UnsupportedEncodingException {
         super(file, csn);
         this.outputId = file.getAbsolutePath();
+        this.isNewTarget = false;
+    }
+
+    @Override
+    public boolean isNewTarget() {
+        return isNewTarget;
     }
 
     @Override
@@ -87,4 +105,10 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
     public void endOp() {
         // Do nothing
     }
+
+    @Override
+    public String lineSeparator() {
+        return System.lineSeparator();
+    }
+
 }

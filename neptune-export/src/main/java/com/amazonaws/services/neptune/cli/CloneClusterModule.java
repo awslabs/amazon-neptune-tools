@@ -13,11 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
-import com.amazonaws.services.neptune.cluster.ConnectionConfig;
-import com.amazonaws.services.neptune.cluster.CloneCluster;
-import com.amazonaws.services.neptune.cluster.ClusterStrategy;
-import com.amazonaws.services.neptune.cluster.DoNotCloneCluster;
-import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.cluster.*;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
@@ -79,17 +77,22 @@ public class CloneClusterModule {
         this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
-    public ClusterStrategy cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
+    public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, FeatureToggles featureToggles) throws Exception {
         if (cloneCluster){
-            CloneCluster command = new CloneCluster(
-                    cloneClusterInstanceType,
-                    replicaCount,
-                    maxConcurrency,
-                    engineVersion,
-                    amazonNeptuneClientSupplier);
-            return command.cloneCluster(connectionConfig, concurrencyConfig);
+            if (featureToggles.containsFeature(FeatureToggle.Simulate_Cloned_Cluster)){
+                return new SimulatedCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);
+            } else {
+
+                CloneCluster command = new CloneCluster(
+                        cloneClusterInstanceType,
+                        replicaCount,
+                        maxConcurrency,
+                        engineVersion,
+                        amazonNeptuneClientSupplier);
+                return command.cloneCluster(connectionConfig, concurrencyConfig);
+            }
         } else {
-            return new DoNotCloneCluster().cloneCluster(connectionConfig, concurrencyConfig);
+            return new DoNotCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);
         }
     }
 }

@@ -21,6 +21,10 @@ public class Args {
 
     private final List<String> args = new ArrayList<>();
 
+    public Args(String[] args){
+        this.args.addAll(Arrays.asList(args));
+    }
+
     public Args(String cmd) {
         String[] values;
         try {
