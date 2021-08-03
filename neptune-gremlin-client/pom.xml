@@ -7,7 +7,7 @@
     <groupId>software.amazon.neptune</groupId>
     <artifactId>neptune-gremlin-client</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <licenses>
         <license>
@@ -21,13 +21,26 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <javac.target>1.8</javac.target>
-        <aws.sdk.version>1.12.9</aws.sdk.version>
-        <gremlin.driver.version>3.4.11</gremlin.driver.version>
+        <aws.sdk.version>1.12.38</aws.sdk.version>
+        <gremlin.driver.version>3.4.12</gremlin.driver.version>
+        <jackson.databind.version>2.12.3</jackson.databind.version>
         <sigv4.version>2.4.0</sigv4.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.databind.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-cbor</artifactId>
+                <version>${jackson.databind.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.tinkerpop</groupId>
@@ -38,12 +51,6 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>amazon-neptune-sigv4-signer</artifactId>
-                <version>${sigv4.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>amazon-neptune-gremlin-java-sigv4</artifactId>
                 <version>${sigv4.version}</version>
             </dependency>
 
