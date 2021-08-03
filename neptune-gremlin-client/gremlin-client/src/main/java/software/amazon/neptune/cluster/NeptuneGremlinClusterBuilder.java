@@ -17,7 +17,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package software.amazon.neptune.cluster;
 
-import com.amazon.neptune.gremlin.driver.sigv4.ChainedSigV4PropertiesProvider;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import io.netty.handler.ssl.SslContext;
 import org.apache.tinkerpop.gremlin.driver.*;
@@ -354,8 +353,7 @@ public class NeptuneGremlinClusterBuilder {
 
             IamAuthConfig iamAuthConfig = iamAuthConfigBuilder.build();
 
-            innerBuilder.handshakeInterceptor(
-                    new LBAwareHandshakeInterceptor(iamAuthConfig, new ChainedSigV4PropertiesProvider()));
+            innerBuilder.handshakeInterceptor(new LBAwareHandshakeInterceptor(iamAuthConfig));
         }
 
         return innerBuilder.create();

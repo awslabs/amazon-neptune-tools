@@ -17,9 +17,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package org.apache.tinkerpop.gremlin.driver;
 
-import com.amazon.neptune.gremlin.driver.exception.SigV4PropertiesNotFoundException;
-import com.amazon.neptune.gremlin.driver.sigv4.ChainedSigV4PropertiesProvider;
-import com.amazon.neptune.gremlin.driver.sigv4.SigV4Properties;
 import com.amazonaws.neptune.auth.NeptuneNettyHttpSigV4Signer;
 import com.amazonaws.neptune.auth.NeptuneSigV4SignerException;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -33,18 +30,18 @@ public class LBAwareHandshakeInterceptor implements HandshakeInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(LBAwareHandshakeInterceptor.class);
 
     private final IamAuthConfig iamAuthConfig;
-    private final SigV4Properties sigV4Properties;
+    private final String serviceRegion;
 
-    public LBAwareHandshakeInterceptor(IamAuthConfig iamAuthConfig, ChainedSigV4PropertiesProvider sigV4PropertiesProvider) {
+    public LBAwareHandshakeInterceptor(IamAuthConfig iamAuthConfig) {
         this.iamAuthConfig = iamAuthConfig;
-        this.sigV4Properties = loadProperties(sigV4PropertiesProvider);
+        this.serviceRegion = getServiceRegion();
     }
 
     @Override
     public FullHttpRequest apply(FullHttpRequest request) {
         logger.trace("IamAuthConfig: {}", iamAuthConfig);
 
-        if (iamAuthConfig.connectViaLoadBalancer()){
+        if (iamAuthConfig.connectViaLoadBalancer()) {
             request.headers().remove("Host");
             request.headers().add("Host", iamAuthConfig.chooseHostHeader());
         }
@@ -52,7 +49,7 @@ public class LBAwareHandshakeInterceptor implements HandshakeInterceptor {
         try {
 
             NeptuneNettyHttpSigV4Signer sigV4Signer = new NeptuneNettyHttpSigV4Signer(
-                    sigV4Properties.getServiceRegion(),
+                    serviceRegion,
                     iamAuthConfig.credentialsProviderChain());
 
             sigV4Signer.signRequest(request);
@@ -68,22 +65,26 @@ public class LBAwareHandshakeInterceptor implements HandshakeInterceptor {
         }
     }
 
-    private SigV4Properties loadProperties(ChainedSigV4PropertiesProvider sigV4PropertiesProvider) {
+    private String getServiceRegion() {
 
         if (StringUtils.isNotEmpty(iamAuthConfig.serviceRegion())) {
-            return new SigV4Properties(iamAuthConfig.serviceRegion());
-        }
-
-        try {
-            return sigV4PropertiesProvider.getSigV4Properties();
-        } catch (SigV4PropertiesNotFoundException e) {
+            logger.debug("Using service region supplied in config");
+            return iamAuthConfig.serviceRegion();
+        } else if (StringUtils.isNotEmpty(System.getenv("SERVICE_REGION"))) {
+            logger.debug("Using using SERVICE_REGION environment variable as service region");
+            return StringUtils.trim(System.getenv("SERVICE_REGION"));
+        } else if (StringUtils.isNotEmpty(System.getProperty("SERVICE_REGION"))) {
+            logger.debug("Using using SERVICE_REGION system property as service region");
+            return StringUtils.trim(System.getProperty("SERVICE_REGION"));
+        } else {
             String currentRegionName = RegionUtils.getCurrentRegionName();
             if (currentRegionName != null) {
-                logger.info("Creating SigV4 properties using current region");
-                return new SigV4Properties(currentRegionName);
+                logger.debug("Using current region as service region");
+                return currentRegionName;
             } else {
                 throw new IllegalStateException("Unable to determine Neptune service region. Use the SERVICE_REGION environment variable or system property, or the NeptuneGremlinClusterBuilder.serviceRegion() method to specify the Neptune service region.");
             }
         }
+
     }
 }
