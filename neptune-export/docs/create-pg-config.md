@@ -13,14 +13,15 @@
                     {-d | --dir} <directory> [ --disable-ssl ]
                     [ {-e | --endpoint} <endpoint>... ]
                     [ --edge-label-strategy <edgeLabelStrategy> ]
-                    [ {-el | --edge-label} <edgeLabels>... ] [ --format <format> ]
-                    [ --janus ] [ --lb-port <loadBalancerPort> ]
-                    [ --log-level <log level> ]
+                    [ {-el | --edge-label} <edgeLabels>... ]
+                    [ --export-id <exportId> ] [ --format <format> ] [ --janus ]
+                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ --max-content-length <maxContentLength> ] [ --merge-files ]
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
-                    [ --profile <profiles>... ]
+                    [ --partition-directories <partitionDirectories> ]
+                    [ --per-label-directories ] [ --profile <profiles>... ]
                     [ {--region | --stream-region} <region> ]
                     [ {-s | --scope} <scope> ] [ --sample ]
                     [ --sample-size <sampleSize> ] [ --serializer <serializer> ]
@@ -157,6 +158,12 @@
                 Labels of edges to be included in config (optional, default all
                 labels).
     
+            --export-id <exportId>
+                Export id
+    
+                This option may occur a maximum of 1 times
+    
+    
             --format <format>
                 Output format (optional, default 'csv').
     
@@ -165,6 +172,7 @@
                     csv
                     csvNoHeaders
                     neptuneStreamsJson
+                    neptuneStreamsSimpleJson
     
                 This option may occur a maximum of 1 times
     
@@ -245,6 +253,18 @@
     
                 This options value represents a port and must fall in one of the
                 following port ranges: 1-1023, 1024-49151
+    
+    
+            --partition-directories <partitionDirectories>
+                Partition directory path (e.g. 'year=2021/month=07/day=21').
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --per-label-directories
+                Create a subdirectory for each distinct vertex or edge label.
+    
+                This option may occur a maximum of 1 times
     
     
             --profile <profiles>

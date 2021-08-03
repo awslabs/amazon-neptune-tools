@@ -14,5 +14,6 @@ package com.amazonaws.services.neptune.rdf;
 
 public enum RdfExportScope {
     graph,
-    edges
+    edges,
+    query
 }

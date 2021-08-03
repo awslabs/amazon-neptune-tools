@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.rdf.io.*;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedEnumValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
+import org.apache.commons.lang.StringUtils;
 
 public class RdfExportScopeModule {
 
@@ -25,16 +26,26 @@ public class RdfExportScopeModule {
     @AllowedEnumValues(RdfExportScope.class)
     private RdfExportScope scope = RdfExportScope.graph;
 
+    @Option(name = {"--sparql"}, description = "SPARQL query.")
+    @Once
+    private String query;
+
     public ExportRdfJob createJob(NeptuneSparqlClient client, RdfTargetConfig targetConfig){
         if (scope == RdfExportScope.graph){
             return new ExportRdfGraphJob(client, targetConfig);
         } else if (scope == RdfExportScope.edges){
             return new ExportRdfEdgesJob(client, targetConfig);
+        } else if (scope == RdfExportScope.query){
+            if (StringUtils.isEmpty(query)){
+                throw new IllegalStateException("You must supply a SPARQL query if exporting from a query");
+            }
+            return new ExportRdfFromQuery(client, targetConfig, query);
         }
-        throw new IllegalStateException(String .format("Unknown export scope: %s", scope));
+        throw new IllegalStateException(String.format("Unknown export scope: %s", scope));
     }
 
     public String scope(){
         return scope.name();
     }
 }
+
