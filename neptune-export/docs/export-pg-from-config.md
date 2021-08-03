@@ -19,7 +19,7 @@
                     [ --edge-label-strategy <edgeLabelStrategy> ]
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ --escape-csv-headers ] [ --exclude-type-definitions ]
-                    [ --format <format> ] [ --janus ]
+                    [ --export-id <exportId> ] [ --format <format> ] [ --janus ]
                     [ --lb-port <loadBalancerPort> ] [ --limit <limit> ]
                     [ --log-level <log level> ]
                     [ --max-content-length <maxContentLength> ] [ --merge-files ]
@@ -27,15 +27,16 @@
                     [ {-nl | --node-label} <nodeLabels>... ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
-                    [ --profile <profiles>... ]
+                    [ --partition-directories <partitionDirectories> ]
+                    [ --per-label-directories ] [ --profile <profiles>... ]
                     [ {-r | --range | --range-size} <rangeSize> ]
                     [ {--region | --stream-region} <region> ]
                     [ {-s | --scope} <scope> ] [ --serializer <serializer> ]
                     [ --skip <skip> ]
                     [ --stream-large-record-strategy <largeStreamRecordHandlingStrategy> ]
                     [ --stream-name <streamName> ] [ --strict-cardinality ]
-                    [ {-t | --tag} <tag> ] [ --tokens-only <tokensOnly> ]
-                    [ --use-iam-auth ] [ --use-ssl ]
+                    [ {-t | --tag} <tag> ] [ --token-prefix <tokenPrefix> ]
+                    [ --tokens-only <tokensOnly> ] [ --use-iam-auth ] [ --use-ssl ]
     
     OPTIONS
             --alb-endpoint <applicationLoadBalancerEndpoint>
@@ -208,6 +209,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --export-id <exportId>
+                Export id
+    
+                This option may occur a maximum of 1 times
+    
+    
             --format <format>
                 Output format (optional, default 'csv').
     
@@ -216,6 +223,7 @@
                     csv
                     csvNoHeaders
                     neptuneStreamsJson
+                    neptuneStreamsSimpleJson
     
                 This option may occur a maximum of 1 times
     
@@ -311,6 +319,18 @@
                 following port ranges: 1-1023, 1024-49151
     
     
+            --partition-directories <partitionDirectories>
+                Partition directory path (e.g. 'year=2021/month=07/day=21').
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --per-label-directories
+                Create a subdirectory for each distinct vertex or edge label.
+    
+                This option may occur a maximum of 1 times
+    
+    
             --profile <profiles>
                 Name of an export profile.
     
@@ -387,6 +407,12 @@
     
             -t <tag>, --tag <tag>
                 Directory prefix (optional).
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --token-prefix <tokenPrefix>
+                Token prefix (optional, default '~').
     
                 This option may occur a maximum of 1 times
     

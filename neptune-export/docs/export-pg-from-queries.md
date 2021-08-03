@@ -11,14 +11,16 @@
                     [ {--cluster-id | --cluster | --clusterid} <clusterId> ]
                     [ {-cn | --concurrency} <concurrency> ]
                     {-d | --dir} <directory> [ --disable-ssl ]
-                    [ {-e | --endpoint} <endpoint>... ]
+                    [ {-e | --endpoint} <endpoint>... ] [ --export-id <exportId> ]
                     [ {-f | --queries-file} <queriesFile> ] [ --format <format> ]
                     [ --include-type-definitions ] [ --janus ]
                     [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ --max-content-length <maxContentLength> ] [ --merge-files ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
-                    [ --profile <profiles>... ] [ {-q | --queries} <queries>... ]
+                    [ --partition-directories <partitionDirectories> ]
+                    [ --per-label-directories ] [ --profile <profiles>... ]
+                    [ {-q | --queries | --query | --gremlin} <queries>... ]
                     [ {--region | --stream-region} <region> ]
                     [ --serializer <serializer> ]
                     [ --stream-large-record-strategy <largeStreamRecordHandlingStrategy> ]
@@ -139,6 +141,12 @@
                 at least one option must be specified
     
     
+            --export-id <exportId>
+                Export id
+    
+                This option may occur a maximum of 1 times
+    
+    
             -f <queriesFile>, --queries-file <queriesFile>
                 Path to JSON queries file (file path, or 'https' or 's3' URI).
     
@@ -153,6 +161,7 @@
                     csv
                     csvNoHeaders
                     neptuneStreamsJson
+                    neptuneStreamsSimpleJson
     
                 This option may occur a maximum of 1 times
     
@@ -238,12 +247,25 @@
                 following port ranges: 1-1023, 1024-49151
     
     
+            --partition-directories <partitionDirectories>
+                Partition directory path (e.g. 'year=2021/month=07/day=21').
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --per-label-directories
+                Create a subdirectory for each distinct vertex or edge label.
+    
+                This option may occur a maximum of 1 times
+    
+    
             --profile <profiles>
                 Name of an export profile.
     
-            -q <queries>, --queries <queries>
+            -q <queries>, --queries <queries>, --query <queries>, --gremlin
+            <queries>
                 Gremlin queries (format: name="semi-colon-separated list of
-                queries").
+                queries" OR "semi-colon-separated list of queries").
     
             --region <region>, --stream-region <region>
                 AWS Region in which your Amazon Kinesis Data Stream is located.
