@@ -4,6 +4,7 @@ _neptune-python-utils_ is a Python 3 library that simplifies using [Gremlin-Pyth
 
 You can use _neptune-python-utils_ in AWS Lambda functions, Jupyter notebooks, AWS Glue PySpark and Python shell jobs, and in your own Python applications.
 
+
 With _neptune-python-utils_ you can:
 
  - Connect to Neptune using [IAM DB Authentication](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html)
@@ -22,6 +23,10 @@ With _neptune-python-utils_ you can:
 This creates a zip file: `target/neptune_python_utils.zip`. 
 
 When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket. You can then refer to _neptune-python-utils_ from your Glue Development Endpoint or Glue job. See [Using Python Libraries with AWS Glue](https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-libraries.html). 
+
+### neptune-python-utils and the Neptune Workbench
+
+_neptune-python-utils_ supports Gremlin Python 3.5.x. As such, it is not compatible with the [Neptune Workbench](https://docs.aws.amazon.com/neptune/latest/userguide/graph-notebooks.html), which currently supports 3.4.x.
 
 ## Examples
 
