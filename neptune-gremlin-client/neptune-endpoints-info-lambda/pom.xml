@@ -5,7 +5,7 @@
     <parent>
         <artifactId>neptune-gremlin-client</artifactId>
         <groupId>software.amazon.neptune</groupId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -217,7 +217,7 @@
                         <configuration>
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://aws.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
                 </plugins>
