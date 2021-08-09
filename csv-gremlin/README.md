@@ -43,7 +43,7 @@ By default all rows of  the CSV file will be processed. To process less rows you
 
 For columns that contain `Date` values you can choose to have the values used as-is and output in the form `datetime(<the original date string>)` or converted to the Java Date form of `new Date(<original date converted to an epoch offset>)`. The `-use_java_dates` argument should be specified if Java format date conversions are required. Further, if dates in the CSV file do not include Time Zone information you can choose to have them treated as local time or as UTC. To specify UTC time as the default use the `assume_utc` argument. 
 
-Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. The dafault behavior is to just take the value present in any `Date` column and copy it to the output. To validate `Date` columns you can run the tool with `-java_dates` enabled to check for any erros and then re-run  it without the option specified if you want to generate `datetime()` style dates in the Gremlin output. 
+Dates will also be checked for ISO 8601 conformance if `-java_dates` is used. The default behavior is to just take the value present in any `Date` column and copy it to the output. To validate `Date` columns you can run the tool with `-java_dates` enabled to check for any errors and then re-run  it without the option specified if you want to generate `datetime()` style dates in the Gremlin output. 
 
 <a name="rid"></a>
 ### Repeating IDs
