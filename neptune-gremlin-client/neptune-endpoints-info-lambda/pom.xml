@@ -2,14 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>neptune-gremlin-client</artifactId>
-        <groupId>software.amazon.neptune</groupId>
-        <version>1.0.0</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
 
     <artifactId>neptune-endpoints-info-lambda</artifactId>
+    <groupId>software.amazon.neptune</groupId>
+    <packaging>jar</packaging>
+    <version>1.0.1</version>
+
+    <modelVersion>4.0.0</modelVersion>
 
     <licenses>
         <license>
@@ -41,8 +40,17 @@
         </repository>
     </distributionManagement>
 
+
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <uberjar.name>neptune-endpoints-info-lambda</uberjar.name>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <javac.target>1.8</javac.target>
+        <aws.sdk.version>1.12.38</aws.sdk.version>
+        <gremlin.driver.version>3.4.12</gremlin.driver.version>
+        <jackson.databind.version>2.12.3</jackson.databind.version>
+        <sigv4.version>2.4.0</sigv4.version>
     </properties>
 
     <dependencies>
@@ -50,7 +58,7 @@
         <dependency>
             <groupId>software.amazon.neptune</groupId>
             <artifactId>gremlin-client</artifactId>
-            <version>${project.parent.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
     </dependencies>
