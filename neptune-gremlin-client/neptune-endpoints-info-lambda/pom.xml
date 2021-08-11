@@ -10,6 +10,18 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <name>neptune-endpoints-info-lambda</name>
+    <description>
+        An AWS Lambda function that retrieves details of Amazon Neptune endpoints.
+    </description>
+    <url>https://github.com/awslabs/amazon-neptune-tools.git</url>
+
+    <scm>
+        <connection>scm:git:git@github.com:awslabs/amazon-neptune-tools.git</connection>
+        <developerConnection>scm:git:git@github.com:awslabs/amazon-neptune-tools.git</developerConnection>
+        <url>git@github.com:awslabs/amazon-neptune-tools.git</url>
+    </scm>
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>

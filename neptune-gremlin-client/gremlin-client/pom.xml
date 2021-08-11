@@ -10,6 +10,18 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <name>gremlin-client</name>
+    <description>
+        A Java Gremlin client for Amazon Neptune that allows you to change the endpoints used by the client as it is running.
+    </description>
+    <url>https://github.com/awslabs/amazon-neptune-tools.git</url>
+
+    <scm>
+        <connection>scm:git:git@github.com:awslabs/amazon-neptune-tools.git</connection>
+        <developerConnection>scm:git:git@github.com:awslabs/amazon-neptune-tools.git</developerConnection>
+        <url>git@github.com:awslabs/amazon-neptune-tools.git</url>
+    </scm>
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
