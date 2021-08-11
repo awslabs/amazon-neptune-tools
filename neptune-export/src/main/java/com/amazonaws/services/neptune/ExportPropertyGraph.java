@@ -83,7 +83,7 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
             Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
                 try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
-                    Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    Directories directories = target.createDirectories();
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();

@@ -16,7 +16,6 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
-import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
@@ -70,10 +69,32 @@ public class Directories {
         Path edgesDirectory = createElementDirectory("edges", directory, partitionDirectories);
         Path statementsDirectory = createElementDirectory("statements", directory, partitionDirectories);
         Path resultsDirectory = createElementDirectory("results", directory, partitionDirectories);
+        Path changeEventsDirectory = createElementDirectory("change_events", directory, partitionDirectories);
 
-        directoryStructure.createDirectories(directory, nodesDirectory, edgesDirectory, statementsDirectory, resultsDirectory);
+        directoryStructure.createDirectories(
+                directory,
+                nodesDirectory,
+                edgesDirectory,
+                statementsDirectory,
+                resultsDirectory,
+                changeEventsDirectory);
 
-        return new Directories(directory, nodesDirectory, edgesDirectory, statementsDirectory, resultsDirectory, tag);
+        return new Directories(
+                directory,
+                pathOrNull(nodesDirectory),
+                pathOrNull(edgesDirectory),
+                statementsDirectory,
+                resultsDirectory,
+                pathOrNull(changeEventsDirectory),
+                tag);
+    }
+
+    private static Path pathOrNull(Path path){
+        if (path.toFile().exists()){
+            return path;
+        } else {
+            return null;
+        }
     }
 
     private static Path createElementDirectory(String name, Path directory, String partitionDirectories){
@@ -95,13 +116,21 @@ public class Directories {
     private final Path edgesDirectory;
     private final Path statementsDirectory;
     private final Path resultsDirectory;
+    private final Path changeEventsDirectory;
 
-    private Directories(Path directory, Path nodesDirectory, Path edgesDirectory, Path statementsDirectory, Path resultsDirectory, String tag) {
+    private Directories(Path directory,
+                        Path nodesDirectory,
+                        Path edgesDirectory,
+                        Path statementsDirectory,
+                        Path resultsDirectory,
+                        Path changeEventsDirectory,
+                        String tag) {
         this.directory = directory;
         this.nodesDirectory = nodesDirectory;
         this.edgesDirectory = edgesDirectory;
         this.statementsDirectory = statementsDirectory;
         this.resultsDirectory = resultsDirectory;
+        this.changeEventsDirectory = changeEventsDirectory;
         this.tag = tag;
     }
 
@@ -121,11 +150,18 @@ public class Directories {
 
     public Collection<Path> subdirectories(){
         List<Path> paths = new ArrayList<>();
-        paths.add(nodesDirectory.toAbsolutePath());
-        paths.add(edgesDirectory.toAbsolutePath());
-        paths.add(statementsDirectory.toAbsolutePath());
-        paths.add(resultsDirectory.toAbsolutePath());
+        addIfNotNull(nodesDirectory, paths);
+        addIfNotNull(edgesDirectory, paths);
+        addIfNotNull(statementsDirectory, paths);
+        addIfNotNull(resultsDirectory, paths);
+        addIfNotNull(changeEventsDirectory, paths);
         return paths;
+    }
+
+    private void addIfNotNull(Path path, List<Path> paths){
+        if (path != null){
+            paths.add(path.toAbsolutePath());
+        }
     }
 
     public Path writeConfigFilePathAsReturnValue(CommandWriter writer){
@@ -139,7 +175,10 @@ public class Directories {
     }
 
     public Path createNodesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories)  {
-        if (perLabelDirectories){
+
+        if (nodesDirectory == null && changeEventsDirectory != null){
+            return createFilePath(changeEventsDirectory, String.format("nodes-%s", name), extension);
+        } else if (perLabelDirectories){
             File labelDirectory = new File(nodesDirectory.toFile(), label.labelsAsString());
             if (!labelDirectory.exists()){
                 synchronized(this){
@@ -159,6 +198,9 @@ public class Directories {
     }
 
     public Path createEdgesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories){
+        if (edgesDirectory == null && changeEventsDirectory != null){
+            return createFilePath(changeEventsDirectory, String.format("edges-%s", name), extension);
+        }
         if (perLabelDirectories){
             File labelDirectory = new File(edgesDirectory.toFile(), label.labelsAsString());
             if (!labelDirectory.exists()){
