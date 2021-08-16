@@ -4,9 +4,9 @@ A Java Gremlin client for Amazon Neptune that allows you to change the endpoints
 
 The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
 
-**[New July 2021]** Upgraded to version 3.4.11 of the Java Gremlin driver.
-**[New July 2021]** `ClusterEndpointsRefreshAgent` and `GetEndpointsFromLambdaProxy` allow you to supply a region, and a credentials profile name or `AwsCredentialsProvider` object.
-**[New July 2021]** `NeptuneGremlinClusterBuilder` allows you to supply a Neptune service region, and a credentials profile name or `AwsCredentialsProvider` object. The `NeptuneGremlinClusterBuilder` also allows you to supply your own `HandshakeInterceptor` implementation to override the default load balancer-aware SigV4 request signing process.
+  - **[New July 2021]** Upgraded to version 3.4.12 of the Java Gremlin driver.  
+  - **[New July 2021]** `ClusterEndpointsRefreshAgent` and `GetEndpointsFromLambdaProxy` allow you to supply a region, and a credentials profile name or `AwsCredentialsProvider` object. 
+  - **[New July 2021]** `NeptuneGremlinClusterBuilder` allows you to supply a Neptune service region, and a credentials profile name or `AwsCredentialsProvider` object. The `NeptuneGremlinClusterBuilder` also allows you to supply your own `HandshakeInterceptor` implementation to override the default load balancer-aware SigV4 request signing process.
 
 The Amazon CloudWatch screenshot below shows requests being distributed over 5 instances in a Neptune cluster. The cluster endpoints are being rotated in the client every minute, with 3 endpoints active at any one time. Partway through the run, we deliberately triggered a failover in the cluster.
 
