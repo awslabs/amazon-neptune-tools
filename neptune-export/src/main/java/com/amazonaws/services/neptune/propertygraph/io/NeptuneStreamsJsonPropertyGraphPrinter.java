@@ -144,7 +144,7 @@ public class NeptuneStreamsJsonPropertyGraphPrinter implements PropertyGraphPrin
         generator.writeStringField("key", key);
 
         generator.writeObjectFieldStart("value");
-        dataType.printTo(generator, "value", value);
+        dataType.printAsStringTo(generator, "value", value);
         generator.writeStringField("dataType", dataType.name());
         generator.writeEndObject();
 

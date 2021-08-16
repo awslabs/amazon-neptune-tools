@@ -256,25 +256,21 @@ public enum DataType {
             }
         }
 
-        public String escapeDoubleQuotes(Object value) {
-            String temp = value.toString().replace("\"\"", "\"");
-            return temp.replace("\"", "\"\"");
-        }
-
         private String escapeNewlineChar(String value) {
             return value.replace("\n", "\\n");
         }
 
+
         @Override
         public String formatList(Collection<?> values, CsvPrinterOptions options) {
-            if (values.isEmpty()){
+            if (values.isEmpty()) {
                 return "";
             }
 
             return java.lang.String.format("\"%s\"",
                     values.stream().
                             map(v -> DataType.escapeSeparators(v, options.multiValueSeparator())).
-                            map(this::escapeDoubleQuotes).
+                            map(DataType::escapeDoubleQuotes).
                             map(v -> options.escapeNewline() ? escapeNewlineChar(v) : v).
                             collect(Collectors.joining(options.multiValueSeparator())));
         }
@@ -313,6 +309,11 @@ public enum DataType {
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
+            generator.writeStringField(key, format(value));
+        }
+
+        @Override
+        public void printAsStringTo(JsonGenerator generator, String key, Object value) throws IOException {
             generator.writeStringField(key, format(value));
         }
 
@@ -364,11 +365,16 @@ public enum DataType {
     }
 
     public static String escapeSeparators(Object value, String separator) {
-        if (separator.isEmpty()){
+        if (separator.isEmpty()) {
             return value.toString();
         }
         String temp = value.toString().replace("\\" + separator, separator);
         return temp.replace(separator, "\\" + separator);
+    }
+
+    public static String escapeDoubleQuotes(Object value) {
+        String temp = value.toString().replace("\"\"", "\"");
+        return temp.replace("\"", "\"\"");
     }
 
     public String typeDescription() {
@@ -388,6 +394,10 @@ public enum DataType {
     }
 
     public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
+        generator.writeStringField(key, value.toString());
+    }
+
+    public void printAsStringTo(JsonGenerator generator, String key, Object value) throws IOException {
         generator.writeStringField(key, value.toString());
     }
 

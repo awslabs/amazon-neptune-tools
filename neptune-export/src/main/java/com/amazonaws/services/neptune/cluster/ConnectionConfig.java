@@ -99,6 +99,7 @@ public class ConnectionConfig {
         return lbPort;
     }
 
+
     public String clusterId() {
         return StringUtils.isNotEmpty(clusterId ) ?
                 clusterId :

@@ -42,8 +42,10 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
     private final long timestamp;
     private final AtomicLong commitNum = new AtomicLong(0);
     private final AtomicLong opNum = new AtomicLong(0);
+    private final String exportId;
 
-    public IncrementalExportEventHandler() {
+    public IncrementalExportEventHandler(String exportId) {
+        this.exportId = exportId;
         this.timestamp = System.currentTimeMillis();
     }
 
@@ -62,6 +64,7 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
 
         ObjectNode incrementalExportNode = JsonNodeFactory.instance.objectNode();
         completionFilePayload.set("incrementalExport", incrementalExportNode);
+        incrementalExportNode.put("exportId", exportId);
         incrementalExportNode.set("partitions", partitions);
         incrementalExportNode.set("lastEventId", lastEventId);
     }
