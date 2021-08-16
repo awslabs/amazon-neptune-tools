@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
     <version>1.0.1</version>
 
-
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
