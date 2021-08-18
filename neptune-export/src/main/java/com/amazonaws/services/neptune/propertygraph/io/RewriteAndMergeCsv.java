@@ -135,7 +135,10 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
                     try (Reader in = file.reader()) {
 
-                        CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
+                        CSVFormat format = CSVFormat.RFC4180
+                                .withSkipHeaderRecord()
+                                .withHeader(fileHeaders);
+                        
                         Iterable<CSVRecord> records = format.parse(in);
 
                         for (CSVRecord record : records) {
