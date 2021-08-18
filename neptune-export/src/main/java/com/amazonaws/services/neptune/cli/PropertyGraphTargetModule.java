@@ -58,7 +58,7 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @AllowedEnumValues(LargeStreamRecordHandlingStrategy.class)
     private LargeStreamRecordHandlingStrategy largeStreamRecordHandlingStrategy = LargeStreamRecordHandlingStrategy.splitAndShred;
 
-    @Option(name = {"--merge-files"}, description = "Merge files for each vertex or edge label.")
+    @Option(name = {"--merge-files"}, description = "Merge files for each vertex or edge label (currently only supports CSV files for export-pg).")
     @Once
     private boolean mergeFiles = false;
 
@@ -78,9 +78,15 @@ public class PropertyGraphTargetModule implements CommandWriter {
         return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
 
-    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions, boolean inferSchema){
+    public PropertyGraphTargetConfig config(Directories directories, PrinterOptions printerOptions){
+
+        if (mergeFiles && (format != PropertyGraphExportFormat.csv && format != PropertyGraphExportFormat.csvNoHeaders)){
+            throw new IllegalArgumentException("Merge files is only supported for CSV formats for export-pg");
+        }
+
         KinesisConfig kinesisConfig = new KinesisConfig(streamName, region, largeStreamRecordHandlingStrategy);
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, inferSchema, format, output, mergeFiles, perLabelDirectories);
+        
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, mergeFiles, perLabelDirectories, true);
     }
 
     public String description(){

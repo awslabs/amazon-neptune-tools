@@ -61,7 +61,6 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
     @Inject
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
 
-
     @Option(name = {"-q", "--queries", "--query", "--gremlin"}, description = "Gremlin queries (format: name=\"semi-colon-separated list of queries\" OR \"semi-colon-separated list of queries\").",
             arity = 1, typeConverterProvider = NameQueriesTypeConverter.class)
     private List<NamedQueries> queries = new ArrayList<>();
@@ -97,7 +96,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
                     CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder().setIncludeTypeDefinitions(includeTypeDefinitions).build();
                     JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder().setStrictCardinality(true).build();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(csvPrinterOptions, jsonPrinterOptions), false);
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(csvPrinterOptions, jsonPrinterOptions));
                     NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
 
                     directories.createResultsSubdirectories(namedQueries.names());

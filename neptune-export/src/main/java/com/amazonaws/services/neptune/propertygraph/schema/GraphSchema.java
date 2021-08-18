@@ -44,10 +44,6 @@ public class GraphSchema implements Jsonizable {
         this(new HashMap<>());
     }
 
-    public boolean allowInferSchema(){
-        return graphElementsSchemas.isEmpty();
-    }
-
     public GraphSchema(Map<GraphElementType, GraphElementSchemas> graphElementsSchemas) {
         this.graphElementsSchemas = graphElementsSchemas;
     }

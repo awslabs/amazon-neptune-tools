@@ -103,7 +103,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
             PrinterOptions newPrinterOptions = new PrinterOptions(
                     printerOptions.csv().copy()
-                            .setIncludeHeaders(true)
+                            .setIncludeHeaders(false)
                             .build());
 
             return new CsvPropertyGraphPrinter(writer, labelSchema, newPrinterOptions);
