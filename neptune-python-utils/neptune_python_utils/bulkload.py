@@ -13,12 +13,11 @@
 # and limitations under the License.
 
 import json
-import urllib.request
+import requests
 import os
 import sys
 import time
 from neptune_python_utils.endpoints import Endpoints
-from urllib.error import HTTPError
 
 class BulkLoad:
     
@@ -33,7 +32,10 @@ class BulkLoad:
         base_uri='http://aws.amazon.com/neptune/default',
         named_graph_uri='http://aws.amazon.com/neptune/vocab/v01/DefaultNamedGraph',
         update_single_cardinality_properties=False,
-        endpoints=None):
+        queue_request=False,
+        dependencies=[],
+        endpoints=None,
+        **kwargs):
         
         self.source = source
         self.format = format
@@ -47,13 +49,13 @@ class BulkLoad:
         self.mode = mode
             
         if region is None:
-            assert ('AWS_REGION' in os.environ), 'region is missing.'
-            self.region = os.environ['AWS_REGION']
+            assert ('AWS_REGION' in os.environ or 'SERVICE_REGION' in os.environ), 'region is missing.'
+            self.region = os.environ.get('SERVICE_REGION', os.environ.get('AWS_REGION', None))
         else:
             self.region = region
         
         if endpoints is None:
-            self.endpoints = Endpoints()
+            self.endpoints = Endpoints(region_name=region)
         else:
             self.endpoints = endpoints
             
@@ -62,6 +64,9 @@ class BulkLoad:
         self.base_uri = base_uri
         self.named_graph_uri = named_graph_uri
         self.update_single_cardinality_properties = 'TRUE' if update_single_cardinality_properties else 'FALSE'
+        self.queue_request = 'TRUE' if queue_request else 'FALSE'
+        self.dependencies = dependencies
+        self.kwargs = kwargs
             
     def __load_from(self, source):
         return { 
@@ -76,25 +81,26 @@ class BulkLoad:
                   'baseUri': self.base_uri,
                   'namedGraphUri': self.named_graph_uri
               },
-              'updateSingleCardinalityProperties': self.update_single_cardinality_properties
+              'updateSingleCardinalityProperties': self.update_single_cardinality_properties,
+              'queueRequest': self.queue_request,
+              'dependencies': self.dependencies
             }
     
     def __load(self, loader_endpoint, data):  
         
         json_string = json.dumps(data)
-        json_bytes = json_string.encode('utf8')
+        
         request_parameters = loader_endpoint.prepare_request('POST', json_string, headers={'Content-Type':'application/json'})
-        req = urllib.request.Request(request_parameters.uri, data=json_bytes, headers=request_parameters.headers)
-        try:
-            response = urllib.request.urlopen(req)
-            json_response = json.loads(response.read().decode('utf8'))
-            return json_response['payload']['loadId']
-        except HTTPError as e:
-            exc_info = sys.exc_info()
-            if e.code == 500:
-                raise Exception(json.loads(e.read().decode('utf8'))) from None
-            else:
-                raise exc_info[0].with_traceback(exc_info[1], exc_info[2])
+        
+        response = requests.post(request_parameters.uri, data=json_string, headers=request_parameters.headers, **self.kwargs)
+        response.encoding = 'utf-8'
+        
+        if response.status_code != 200:
+            raise Exception('{}: {}'.format(response.status_code, response.text))
+        
+        json_response = response.json()
+        
+        return json_response['payload']['loadId']
     
     def load_async(self):
         localised_source = self.source.replace('${AWS_REGION}', self.region)
@@ -104,7 +110,7 @@ class BulkLoad:
     -H 'Content-Type: application/json' \\
     {} -d \'{}\''''.format(loader_endpoint, json.dumps(json_payload, indent=4)))
         load_id = self.__load(loader_endpoint, json_payload)
-        return BulkLoadStatus(self.endpoints.load_status_endpoint(load_id))
+        return BulkLoadStatus(self.endpoints.load_status_endpoint(load_id), **self.kwargs)
     
     def load(self, interval=2):
         status = self.load_async()
@@ -113,8 +119,9 @@ class BulkLoad:
 
 class BulkLoadStatus:
     
-    def __init__(self, load_status_endpoint):
+    def __init__(self, load_status_endpoint, **kwargs):
         self.load_status_endpoint = load_status_endpoint
+        self.kwargs = kwargs
         
     def status(self, details=False, errors=False, page=1, errors_per_page=10):
         params = {
@@ -124,18 +131,19 @@ class BulkLoadStatus:
             'errorsPerPage': errors_per_page
         }
         request_parameters = self.load_status_endpoint.prepare_request(querystring=params)
-        req = urllib.request.Request(request_parameters.uri, headers=request_parameters.headers)
-        try:
-            response = urllib.request.urlopen(req)
-            json_response = json.loads(response.read().decode('utf8'))
-            status = json_response['payload']['overallStatus']['status']
-            return (status, json_response)
-        except HTTPError as e:
-            exc_info = sys.exc_info()
-            if e.code == 500:
-                raise Exception(json.loads(e.read().decode('utf8'))) from None
-            else:
-                raise exc_info[0].with_traceback(exc_info[1], exc_info[2])
+        
+        response = requests.get(request_parameters.uri, params=params, headers=request_parameters.headers, **self.kwargs)
+        response.encoding = 'utf-8'
+        
+        if response.status_code != 200:
+            raise Exception('{}: {}'.format(response.status_code, response.text))
+            
+        json_response = response.json()
+
+        status = json_response['payload']['overallStatus']['status']
+        
+        return (status, json_response)
+        
     
     def uri(self):
         return self.load_status_endpoint
