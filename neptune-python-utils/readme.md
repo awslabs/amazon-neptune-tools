@@ -30,6 +30,136 @@ _neptune-python-utils_ supports Gremlin Python 3.5.x. As such, it is not compati
 
 ## Examples
 
+  - [IAM DB Authentication](#iam-db-authentication)
+  - [Querying](#querying)
+  - [Batch inserts and upserts](#batch-inserts-and-upserts)
+  - [Sessioned client](#sessioned-client)
+  - [Bulk loading data into Neptune](#bulk-loading-data-into-neptune)
+  - [Using neptune-python-utils with AWS Glue](#using-neptune-python-utils-with-aws-glue)
+  
+### IAM DB Authentication
+
+_neptune-python-utils_ tries to make the process of submitting requests to an [IAM DB auth-enabled cluster](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth.html) as easy and transparent as possible. To do this, it needs to know the name of the AWS Region in which your Neptune cluster is located, and to sign requests using credentials whose [policy allows access to the cluster](https://docs.aws.amazon.com/neptune/latest/userguide/iam-auth-policy.html).
+
+#### Neptune service region
+
+To determine the AWS Region, _neptune-python-utils_ will attempt to retrieve a region name from first the `SERVICE_REGION` and then the `AWS_REGION` environment variables. Should these environment variables not yield a region name, _neptune-python-utils_ will fall back on using the region name from the current session credentials. You can, however, always supply your own region name to an `Endpoints` instance:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(region_name='eu-west-1')
+```
+
+You can then pass this `Endpoints` object to the constructor of a `GremlinUtils` or `BulkLoad` object.
+
+#### Credentials and role ARN
+
+You can also supply your own credentials, or the ARN of a role that you want _neptune-python-utils_ to assume, to an `Endpoints` instance. 
+
+To supply your own credentials:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from botocore.credentials import ReadOnlyCredentials
+
+access_key = '...'
+secret_key = '...'
+token = '...'
+
+credentials = ReadOnlyCredentials(access_key, secret_key, token)
+
+endpoints = Endpoints(credentials=credentials)
+```
+
+To pass a role ARN:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(role_arn='arn:aws:iam::...')
+```
+
+#### Proxies
+
+If you want to connect to Neptune via a proxy – a bastion host, [application load balancer or network load balancer](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer) – you must supply the proxy DNS and port to an `Endpoints` instance:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(
+    neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com', 
+    region_name='us-west-2',
+    proxy_dns='localhost',
+    proxy_port=8182)
+```
+
+If you are [connecting through an application load balancer](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-application-load-balancer), you should also set the `remove_host_header` parameter to `False`:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(
+    neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com', 
+    region_name='us-west-2',
+    proxy_dns='localhost',
+    proxy_port=8182,
+    remove_host_header=False)
+```
+
+If you connect via a bastion host, you may encounter an SSL certificate verification error. You can skip SSL verification, but understand that this is a security risk. You can read more about encryption in transit [here](https://docs.aws.amazon.com/neptune/latest/userguide/security-ssl.html).
+
+To skip SSL verification when querying using `GremlinUtils`, supply a `ssl=False` parameter to the `remote_connection()` method:
+
+```
+from neptune_python_utils.gremlin_utils import GremlinUtils
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(
+    neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com', 
+    region_name='us-west-2',
+    proxy_dns='localhost',
+    proxy_port=8182,
+    remove_host_header=False)
+    
+GremlinUtils.init_statics(globals())
+    
+gremlin_utils = GremlinUtils(endpoints)
+
+conn = None
+
+try:
+    conn = gremlin_utils.remote_connection(ssl=False)
+    g = gremlin_utils.traversal_source(connection=conn)
+    print(g.V().limit(10).valueMap().toList())
+finally:
+    if conn:
+        conn.close()
+```
+
+To skip SSL verification when bulk loading using the `BulkLoad` object, supply a `verify=False` parameter to the `BulkLoad` constructor:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.bulkload import BulkLoad
+
+endpoints = Endpoints(
+    neptune_endpoint='demo.cluster-111222333.eu-west-2.neptune.amazonaws.com', 
+    region_name='us-west-2',
+    proxy_dns='localhost',
+    proxy_port=8182,
+    remove_host_header=False)
+
+bulkload = BulkLoad(
+	source='s3://...', 
+  role='arn:aws:iam::...',
+  region='us-west-2',
+  endpoints=endpoints,
+  verify=False)
+  
+status = bulkload.load_async()
+```
+
 ### Querying
 
 The following query uses `NEPTUNE_CLUSTER_ENDPOINT` and `NEPTUNE_CLUSTER_PORT` environment variables to create a connection to the Gremlin endpoint. It automatically uses the credential provider chain to connect to the database if IAM DB Auth is enabled.
