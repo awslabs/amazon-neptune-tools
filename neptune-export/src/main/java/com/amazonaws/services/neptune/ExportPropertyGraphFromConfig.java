@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune;
 import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
 import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
@@ -82,7 +81,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
 
-                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config(), graphSchema.allowInferSchema());
+                    PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
                     Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
 

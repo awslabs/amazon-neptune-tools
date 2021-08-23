@@ -34,11 +34,11 @@ public class PropertyGraphTargetConfig {
     public PropertyGraphTargetConfig(Directories directories,
                                      KinesisConfig kinesisConfig,
                                      PrinterOptions printerOptions,
-                                     boolean inferSchema,
                                      PropertyGraphExportFormat format,
                                      Target output,
                                      boolean mergeFiles,
-                                     boolean perLabelDirectories) {
+                                     boolean perLabelDirectories,
+                                     boolean inferSchema) {
         this.directories = directories;
         this.kinesisConfig = kinesisConfig;
         this.printerOptions = printerOptions;
@@ -89,7 +89,7 @@ public class PropertyGraphTargetConfig {
     }
 
     public PropertyGraphTargetConfig forFileConsolidation() {
-        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, false, format, output, mergeFiles, perLabelDirectories);
+        return new PropertyGraphTargetConfig(directories, kinesisConfig, printerOptions, format, output, mergeFiles, perLabelDirectories, false);
     }
 
     private PropertyGraphPrinter createPrinter(LabelSchema labelSchema, OutputWriter outputWriter) throws IOException {
