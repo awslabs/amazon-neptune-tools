@@ -240,7 +240,15 @@ public enum DataType {
     String {
         @Override
         public String format(Object value) {
+            return format(value, false);
+        }
+
+        @Override
+        public String format(Object value, boolean escapeNewline) {
             java.lang.String escaped = escapeDoubleQuotes(value);
+            if (escapeNewline){
+                escaped = escapeNewlineChar(escaped);
+            }
             if (StringUtils.isNotEmpty(escaped)) {
                 return java.lang.String.format("\"%s\"", escaped);
             } else {
@@ -253,6 +261,10 @@ public enum DataType {
             return temp.replace("\"", "\"\"");
         }
 
+        private String escapeNewlineChar(String value) {
+            return value.replace("\n", "\\n");
+        }
+
         @Override
         public String formatList(Collection<?> values, CsvPrinterOptions options) {
             if (values.isEmpty()){
@@ -261,8 +273,9 @@ public enum DataType {
 
             return java.lang.String.format("\"%s\"",
                     values.stream().
-                            map(v-> DataType.escapeSeparators(v, options.multiValueSeparator())).
+                            map(v -> DataType.escapeSeparators(v, options.multiValueSeparator())).
                             map(this::escapeDoubleQuotes).
+                            map(v -> options.escapeNewline() ? escapeNewlineChar(v) : v).
                             collect(Collectors.joining(options.multiValueSeparator())));
         }
 
@@ -366,6 +379,10 @@ public enum DataType {
         return value.toString();
     }
 
+    public String format(Object value, boolean escapeNewline) {
+        return value.toString();
+    }
+
     public void printTo(JsonGenerator generator, Object value) throws IOException {
         generator.writeString(value.toString());
     }
@@ -375,7 +392,7 @@ public enum DataType {
     }
 
     public String formatList(Collection<?> values, CsvPrinterOptions options) {
-        return values.stream().map(this::format).collect(Collectors.joining(options.multiValueSeparator()));
+        return values.stream().map(v -> format(v, options.escapeNewline())).collect(Collectors.joining(options.multiValueSeparator()));
     }
 
     public abstract boolean isNumeric();

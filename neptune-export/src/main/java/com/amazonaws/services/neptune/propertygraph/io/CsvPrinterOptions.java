@@ -25,17 +25,20 @@ public class CsvPrinterOptions {
     private final boolean escapeCsvHeaders;
     private final boolean includeHeaders;
     private final boolean isSemicolonSeparator;
+    private final boolean escapeNewline;
     private final TokenPrefix tokenPrefix;
 
     private CsvPrinterOptions(String multiValueSeparator,
                               boolean includeTypeDefinitions,
                               boolean escapeCsvHeaders,
                               boolean includeHeaders,
+                              boolean escapeNewline,
                               TokenPrefix tokenPrefix) {
         this.multiValueSeparator = multiValueSeparator;
         this.includeTypeDefinitions = includeTypeDefinitions;
         this.escapeCsvHeaders = escapeCsvHeaders;
         this.includeHeaders = includeHeaders;
+        this.escapeNewline = escapeNewline;
         this.isSemicolonSeparator = multiValueSeparator.equalsIgnoreCase(";");
         this.tokenPrefix = tokenPrefix;
     }
@@ -56,6 +59,10 @@ public class CsvPrinterOptions {
         return includeHeaders;
     }
 
+    public boolean escapeNewline() {
+        return escapeNewline;
+    }
+
     public boolean isSemicolonSeparator() {
         return isSemicolonSeparator;
     }
@@ -70,6 +77,7 @@ public class CsvPrinterOptions {
                 .setIncludeTypeDefinitions(includeTypeDefinitions)
                 .setEscapeCsvHeaders(escapeCsvHeaders)
                 .setIncludeHeaders(includeHeaders)
+                .setEscapeNewline(escapeNewline)
                 .setTokenPrefix(tokenPrefix);
     }
 
@@ -79,6 +87,7 @@ public class CsvPrinterOptions {
         private boolean includeTypeDefinitions = false;
         private boolean escapeCsvHeaders = false;
         private boolean includeHeaders = false;
+        private boolean escapeNewline = false;
         private TokenPrefix tokenPrefix = new TokenPrefix();
 
         public Builder setMultiValueSeparator(String multiValueSeparator) {
@@ -101,13 +110,18 @@ public class CsvPrinterOptions {
             return this;
         }
 
+        public Builder setEscapeNewline(boolean escapeNewline) {
+            this.escapeNewline = escapeNewline;
+            return this;
+        }
+
         public Builder setTokenPrefix(TokenPrefix tokenPrefix){
             this.tokenPrefix = tokenPrefix;
             return this;
         }
 
         public CsvPrinterOptions build(){
-            return new CsvPrinterOptions(multiValueSeparator, includeTypeDefinitions, escapeCsvHeaders, includeHeaders, tokenPrefix);
+            return new CsvPrinterOptions(multiValueSeparator, includeTypeDefinitions, escapeCsvHeaders, includeHeaders, escapeNewline, tokenPrefix);
         }
 
     }

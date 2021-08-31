@@ -46,4 +46,28 @@ public class DataTypeTest {
         Object converted = dataType.convert(nowString);
         assertEquals(now, converted);
     }
+
+    @Test
+    public void shouldNotEscapeNewlineChar(){
+        String result = DataType.String.format("A\nB");
+        assertEquals("\"A\nB\"", result);
+    }
+
+    @Test
+    public void shouldNotEscapeNewline(){
+        String result = DataType.String.format("A" + System.lineSeparator() + "B");
+        assertEquals("\"A\nB\"", result);
+    }
+
+    @Test
+    public void shouldEscapeNewlineCharIfEscapeNewlineSetToTrue(){
+        String result = DataType.String.format("A\nB", true);
+        assertEquals("\"A\\nB\"", result);
+    }
+
+    @Test
+    public void shouldEscapeNewlineIfEscapeNewlineSetToTrue(){
+        String result = DataType.String.format("A" + System.lineSeparator() + "B", true);
+        assertEquals("\"A\\nB\"", result);
+    }
 }
