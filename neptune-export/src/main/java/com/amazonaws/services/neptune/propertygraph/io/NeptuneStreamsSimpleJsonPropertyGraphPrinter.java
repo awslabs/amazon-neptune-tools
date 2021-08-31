@@ -140,17 +140,15 @@ public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGra
 
         generator.writeStringField("id", id);
 
-        if (streamOperation.startsWith("e")) {
-            if (from != null) {
-                generator.writeStringField("from", from);
-            } else {
-                generator.writeStringField("from", "");
-            }
-            if (to != null) {
-                generator.writeStringField("to", to);
-            } else {
-                generator.writeStringField("to", "");
-            }
+        if (from != null) {
+            generator.writeStringField("from", from);
+        } else {
+            generator.writeStringField("from", "");
+        }
+        if (to != null) {
+            generator.writeStringField("to", to);
+        } else {
+            generator.writeStringField("to", "");
         }
 
         generator.writeStringField("type", streamOperation);

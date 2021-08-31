@@ -75,7 +75,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
             Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
                 try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
-                    Directories directories = target.createDirectories(DirectoryStructure.PropertyGraph);
+                    Directories directories = target.createDirectories();
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();

@@ -23,7 +23,8 @@ public enum DirectoryStructure {
                                       Path nodesDirectory,
                                       Path edgesDirectory,
                                       Path statementsDirectory,
-                                      Path resultsDirectory) throws IOException {
+                                      Path resultsDirectory,
+                                      Path changeEventsDirectory) throws IOException {
             Files.createDirectories(directory);
         }
     },
@@ -33,7 +34,8 @@ public enum DirectoryStructure {
                                       Path nodesDirectory,
                                       Path edgesDirectory,
                                       Path statementsDirectory,
-                                      Path resultsDirectory) throws IOException {
+                                      Path resultsDirectory,
+                                      Path changeEventsDirectory) throws IOException {
             Files.createDirectories(nodesDirectory);
             Files.createDirectories(edgesDirectory);
         }
@@ -44,7 +46,8 @@ public enum DirectoryStructure {
                                       Path nodesDirectory,
                                       Path edgesDirectory,
                                       Path statementsDirectory,
-                                      Path resultsDirectory) throws IOException {
+                                      Path resultsDirectory,
+                                      Path changeEventsDirectory) throws IOException {
             Files.createDirectories(statementsDirectory);
         }
     },
@@ -54,7 +57,8 @@ public enum DirectoryStructure {
                                       Path nodesDirectory,
                                       Path edgesDirectory,
                                       Path statementsDirectory,
-                                      Path resultsDirectory) throws IOException {
+                                      Path resultsDirectory,
+                                      Path changeEventsDirectory) throws IOException {
             Files.createDirectories(resultsDirectory);
         }
     },
@@ -64,8 +68,20 @@ public enum DirectoryStructure {
                                       Path nodesDirectory,
                                       Path edgesDirectory,
                                       Path statementsDirectory,
-                                      Path resultsDirectory) throws IOException {
+                                      Path resultsDirectory,
+                                      Path changeEventsDirectory) throws IOException {
             Files.createDirectories(resultsDirectory);
+        }
+    },
+    SimpleStreamsOutput {
+        @Override
+        public void createDirectories(Path directory,
+                                      Path nodesDirectory,
+                                      Path edgesDirectory,
+                                      Path statementsDirectory,
+                                      Path resultsDirectory,
+                                      Path changeEventsDirectory) throws IOException {
+            Files.createDirectories(changeEventsDirectory);
         }
     };
 
@@ -73,6 +89,7 @@ public enum DirectoryStructure {
                                            Path nodesDirectory,
                                            Path edgesDirectory,
                                            Path statementsDirectory,
-                                           Path resultsDirectory) throws IOException;
+                                           Path resultsDirectory,
+                                           Path changeEventsDirectory) throws IOException;
 
 }

@@ -74,6 +74,10 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private String partitionDirectories = "";
 
+    public Directories createDirectories() throws IOException {
+        return Directories.createFor(directoryStructure(), directory, exportId, tag, partitionDirectories );
+    }
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
         return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
@@ -91,6 +95,14 @@ public class PropertyGraphTargetModule implements CommandWriter {
 
     public String description(){
         return format.description();
+    }
+
+    private DirectoryStructure directoryStructure(){
+        if (format == PropertyGraphExportFormat.neptuneStreamsSimpleJson){
+            return DirectoryStructure.SimpleStreamsOutput;
+        } else {
+            return DirectoryStructure.PropertyGraph;
+        }
     }
 
     @Override
