@@ -18,8 +18,9 @@
                     [ --disable-ssl ] [ {-e | --endpoint} <endpoint>... ]
                     [ --edge-label-strategy <edgeLabelStrategy> ]
                     [ {-el | --edge-label} <edgeLabels>... ]
-                    [ --escape-csv-headers ] [ --exclude-type-definitions ]
-                    [ --export-id <exportId> ] [ --format <format> ] [ --janus ]
+                    [ --escape-csv-headers ] [ --escape-newline ]
+                    [ --exclude-type-definitions ] [ --export-id <exportId> ]
+                    [ --format <format> ] [ --janus ]
                     [ --lb-port <loadBalancerPort> ] [ --limit <limit> ]
                     [ --log-level <log level> ]
                     [ --max-content-length <maxContentLength> ] [ --merge-files ]
@@ -202,6 +203,12 @@
                 This option may occur a maximum of 1 times
     
     
+            --escape-newline
+                Escape newline characters in CSV files (optional, default 'false').
+    
+                This option may occur a maximum of 1 times
+    
+    
             --exclude-type-definitions
                 Exclude type definitions from CSV column headers (optional, default
                 'false').
@@ -270,7 +277,8 @@
     
     
             --merge-files
-                Merge files for each vertex or edge label.
+                Merge files for each vertex or edge label (currently only supports
+                CSV files for export-pg).
     
                 This option may occur a maximum of 1 times
     
