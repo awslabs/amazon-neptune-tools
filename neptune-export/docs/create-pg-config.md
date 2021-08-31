@@ -213,7 +213,8 @@
     
     
             --merge-files
-                Merge files for each vertex or edge label.
+                Merge files for each vertex or edge label (currently only supports
+                CSV files for export-pg).
     
                 This option may occur a maximum of 1 times
     

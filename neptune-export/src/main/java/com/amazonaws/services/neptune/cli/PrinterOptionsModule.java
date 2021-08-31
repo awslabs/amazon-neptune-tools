@@ -33,6 +33,10 @@ public class PrinterOptionsModule {
     @Once
     private boolean strictCardinality = false;
 
+    @Option(name = {"--escape-newline"}, description = "Escape newline characters in CSV files (optional, default 'false').")
+    @Once
+    private boolean escapeNewline = false;
+
     @Option(name = {"--multi-value-separator"}, description = "Separator for multi-value properties in CSV output (optional, default ';').")
     @Once
     private String multiValueSeparator = ";";
@@ -47,6 +51,7 @@ public class PrinterOptionsModule {
                 .setMultiValueSeparator(multiValueSeparator)
                 .setIncludeTypeDefinitions(!excludeTypeDefinitions)
                 .setEscapeCsvHeaders(escapeCsvHeaders)
+                .setEscapeNewline(escapeNewline)
                 .setTokenPrefix(new TokenPrefix(tokenPrefix))
                 .build();
 
