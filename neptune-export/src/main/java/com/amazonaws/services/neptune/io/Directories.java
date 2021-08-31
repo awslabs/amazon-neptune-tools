@@ -69,7 +69,7 @@ public class Directories {
         Path edgesDirectory = createElementDirectory("edges", directory, partitionDirectories);
         Path statementsDirectory = createElementDirectory("statements", directory, partitionDirectories);
         Path resultsDirectory = createElementDirectory("results", directory, partitionDirectories);
-        Path changeEventsDirectory = createElementDirectory("change_events", directory, partitionDirectories);
+        Path recordsDirectory = createElementDirectory("records", directory, partitionDirectories);
 
         directoryStructure.createDirectories(
                 directory,
@@ -77,7 +77,7 @@ public class Directories {
                 edgesDirectory,
                 statementsDirectory,
                 resultsDirectory,
-                changeEventsDirectory);
+                recordsDirectory);
 
         return new Directories(
                 directory,
@@ -85,7 +85,7 @@ public class Directories {
                 pathOrNull(edgesDirectory),
                 statementsDirectory,
                 resultsDirectory,
-                pathOrNull(changeEventsDirectory),
+                pathOrNull(recordsDirectory),
                 tag);
     }
 
@@ -116,21 +116,21 @@ public class Directories {
     private final Path edgesDirectory;
     private final Path statementsDirectory;
     private final Path resultsDirectory;
-    private final Path changeEventsDirectory;
+    private final Path recordsDirectory;
 
     private Directories(Path directory,
                         Path nodesDirectory,
                         Path edgesDirectory,
                         Path statementsDirectory,
                         Path resultsDirectory,
-                        Path changeEventsDirectory,
+                        Path recordsDirectory,
                         String tag) {
         this.directory = directory;
         this.nodesDirectory = nodesDirectory;
         this.edgesDirectory = edgesDirectory;
         this.statementsDirectory = statementsDirectory;
         this.resultsDirectory = resultsDirectory;
-        this.changeEventsDirectory = changeEventsDirectory;
+        this.recordsDirectory = recordsDirectory;
         this.tag = tag;
     }
 
@@ -154,7 +154,7 @@ public class Directories {
         addIfNotNull(edgesDirectory, paths);
         addIfNotNull(statementsDirectory, paths);
         addIfNotNull(resultsDirectory, paths);
-        addIfNotNull(changeEventsDirectory, paths);
+        addIfNotNull(recordsDirectory, paths);
         return paths;
     }
 
@@ -176,8 +176,8 @@ public class Directories {
 
     public Path createNodesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories)  {
 
-        if (nodesDirectory == null && changeEventsDirectory != null){
-            return createFilePath(changeEventsDirectory, String.format("nodes-%s", name), extension);
+        if (nodesDirectory == null && recordsDirectory != null){
+            return createFilePath(recordsDirectory, String.format("nodes-%s", name), extension);
         } else if (perLabelDirectories){
             File labelDirectory = new File(nodesDirectory.toFile(), label.labelsAsString());
             if (!labelDirectory.exists()){
@@ -198,8 +198,8 @@ public class Directories {
     }
 
     public Path createEdgesFilePath(String name, FileExtension extension, Label label, boolean perLabelDirectories){
-        if (edgesDirectory == null && changeEventsDirectory != null){
-            return createFilePath(changeEventsDirectory, String.format("edges-%s", name), extension);
+        if (edgesDirectory == null && recordsDirectory != null){
+            return createFilePath(recordsDirectory, String.format("edges-%s", name), extension);
         }
         if (perLabelDirectories){
             File labelDirectory = new File(edgesDirectory.toFile(), label.labelsAsString());

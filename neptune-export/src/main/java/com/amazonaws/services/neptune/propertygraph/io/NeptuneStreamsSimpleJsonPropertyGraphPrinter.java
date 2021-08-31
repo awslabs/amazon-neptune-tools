@@ -135,8 +135,8 @@ public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGra
         writer.startOp();
         generator.writeStartObject();
 
-        generator.writeNumberField("commitNum", commitNum);
-        generator.writeNumberField("opNum", opNum++);
+        //generator.writeNumberField("commitNum", commitNum);
+        //generator.writeNumberField("opNum", opNum++);
 
         generator.writeStringField("id", id);
 
@@ -153,11 +153,10 @@ public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGra
 
         generator.writeStringField("type", streamOperation);
         generator.writeStringField("key", key);
-
-        generator.writeStringField("value", dataType.format(value));
+        dataType.printAsStringTo(generator, "value", value);
         generator.writeStringField("dataType", dataType.name());
 
-        generator.writeStringField("op", "ADD");
+        //generator.writeStringField("op", "ADD");
 
         generator.writeEndObject();
         generator.flush();
