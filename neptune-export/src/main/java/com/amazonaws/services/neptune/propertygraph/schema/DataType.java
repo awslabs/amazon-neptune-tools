@@ -293,6 +293,11 @@ public enum DataType {
     Date {
         @Override
         public String format(Object value) {
+            return format(value, false);
+        }
+
+        @Override
+        public String format(Object value, boolean escapeNewline) {
             try {
                 java.util.Date date = (java.util.Date) value;
                 return DateTimeFormatter.ISO_INSTANT.format(date.toInstant());
