@@ -48,6 +48,15 @@ public class DataTypeTest {
     }
 
     @Test
+    public void shouldRoundTripDateWhenCallingFormatWithEscapeNewlineParam() {
+        Date now = new Date();
+        DataType dataType = DataType.dataTypeFor(now.getClass());
+        String nowString = dataType.format(now, false);
+        Object converted = dataType.convert(nowString);
+        assertEquals(now, converted);
+    }
+
+    @Test
     public void shouldNotEscapeNewlineChar(){
         String result = DataType.String.format("A\nB");
         assertEquals("\"A\nB\"", result);
