@@ -60,6 +60,10 @@ class TupleQueryHandler implements TupleQueryResultHandler {
         Value o = bindingSet.getValue("o");
         Value g = bindingSet.getValue("g");
 
+        if (s == null || p == null || o == null || g == null){
+            throw new IllegalArgumentException("SPARQL query must return results with s, p, o and g values. For example: SELECT * FROM NAMED <http://aws.amazon.com/neptune/vocab/v01/DefaultNamedGraph> WHERE { GRAPH ?g {?s a <http://kelvinlawrence.net/air-routes/class/Airport>. ?s ?p ?o}} LIMIT 10");
+        }
+
 
         Resource subject = s.isIRI() ? factory.createIRI(s.stringValue()) : factory.createBNode(s.stringValue());
         IRI predicate = factory.createIRI(p.stringValue());
