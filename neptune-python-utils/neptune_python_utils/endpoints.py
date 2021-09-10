@@ -12,14 +12,16 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 
-import sys, os, base64, datetime, hashlib, hmac, boto3, urllib, uuid, threading
-from botocore.credentials import Credentials
-from botocore.credentials import RefreshableCredentials
+import sys
+import os
+import boto3
+import uuid
+import threading
 import typing
-from typing import (
-    Tuple,
-    Iterable
-)
+from botocore.credentials import RefreshableCredentials
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from typing import Tuple, Iterable
 
 
 def synchronized_method(method):
@@ -59,13 +61,16 @@ class RequestParameters:
 
 class Endpoint:
     
-    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None): 
+    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False): 
         
         self.protocol = protocol
         self.neptune_endpoint = neptune_endpoint
         self.neptune_port = neptune_port
         self.suffix = suffix
         self.region = region
+        self.proxy_dns = proxy_dns
+        self.proxy_port = proxy_port
+        self.remove_host_header = remove_host_header
         
         if role_arn:
             self.role_arn = role_arn
@@ -82,8 +87,7 @@ class Endpoint:
         
     def _get_session_credentials(self):
         session = boto3.session.Session()
-        return session.get_credentials();
-        
+        return session.get_credentials();       
         
     @synchronized_method
     def _get_credentials(self):        
@@ -123,94 +127,50 @@ class Endpoint:
         
     def value(self):
         return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
+     
+    def __proxied_neptune_endpoint_url(self):
+        if self.proxy_dns:
+            return '{}://{}:{}/{}'.format(self.protocol, self.proxy_dns, self.proxy_port, self.suffix)
+        else:
+            return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
         
-    def prepare_request(self, method='GET', payload='', querystring={}, headers={}):
         
-        service = 'neptune-db'
-        algorithm = 'AWS4-HMAC-SHA256'
-        
-        request_parameters = urllib.parse.urlencode(querystring, quote_via=urllib.parse.quote)
-        request_parameters = request_parameters.replace('%27','%22')
-        
-        canonical_querystring = self.__normalize_query_string(request_parameters)
+    def prepare_request(self, method='GET', payload=None, querystring={}, headers={}):
         
         def get_headers():
-            credentials = self._get_credentials()
-            access_key = credentials.access_key
-            secret_key = credentials.secret_key
-            session_token = credentials.token
-        
-            t = datetime.datetime.utcnow()
-            amzdate = t.strftime('%Y%m%dT%H%M%SZ')
-            datestamp = t.strftime('%Y%m%d')      
-            canonical_headers = 'host:{}:{}\nx-amz-date:{}\n'.format(
-                self.neptune_endpoint, 
-                self.neptune_port, 
-                amzdate)
-            signed_headers = 'host;x-amz-date'
-            payload_hash = hashlib.sha256(payload.encode('utf-8')).hexdigest()
-            canonical_request = '{}\n/{}\n{}\n{}\n{}\n{}'.format(
-                method,
-                self.suffix, 
-                canonical_querystring, 
-                canonical_headers, 
-                signed_headers, 
-                payload_hash) 
-            credential_scope = '{}/{}/{}/aws4_request'.format(
-                datestamp, 
-                self.region,
-                service)
-            string_to_sign = '{}\n{}\n{}\n{}'.format(
-                algorithm,
-                amzdate, 
-                credential_scope, 
-                hashlib.sha256(canonical_request.encode('utf-8')).hexdigest())
-            signing_key = self.__get_signature_key(secret_key, datestamp, self.region, service)
-            signature = hmac.new(signing_key, (string_to_sign).encode('utf-8'), hashlib.sha256).hexdigest()
-            authorization_header = '{} Credential={}/{}, SignedHeaders={}, Signature={}'.format(
-                algorithm, 
-                access_key, 
-                credential_scope, 
-                signed_headers, 
-                signature)
-
-            headers['x-amz-date'] = amzdate
-            headers['Authorization'] = authorization_header
-
-            if session_token:
-                headers['x-amz-security-token'] = session_token
             
-            return headers
+            service = 'neptune-db'
+            
+            if 'host' not in headers and 'Host' not in headers:
+                headers['Host'] = self.neptune_endpoint
+
+            request = AWSRequest(method=method, url=self.__proxied_neptune_endpoint_url(), headers=headers, data=payload, params=querystring)
         
+            SigV4Auth(self._get_credentials(), service, self.region).add_auth(request)
+            
+            signed_headers = {}
+            
+            for k,v in request.headers.items():
+                signed_headers[k] = v
+            
+            if self.remove_host_header:
+                if 'host' in signed_headers:
+                    signed_headers.pop('host')
+                if 'Host' in signed_headers:
+                    signed_headers.pop('Host')
+            
+            return signed_headers
+            
         return RequestParameters(
-            '{}?{}'.format(self.value(), canonical_querystring) if canonical_querystring else self.value(),
-            canonical_querystring,
+            self.__proxied_neptune_endpoint_url(),
+            None,
             LazyHttpHeaders(get_headers)
         )
-        
-    def __normalize_query_string(self, query):
-        kv = (list(map(str.strip, s.split("=")))
-              for s in query.split('&')
-              if len(s) > 0)
-
-        normalized = '&'.join('%s=%s' % (p[0], p[1] if len(p) > 1 else '')
-                              for p in sorted(kv))
-        return normalized
-        
-    def __sign(self, key, msg):
-        return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
-
-    def __get_signature_key(self, key, dateStamp, regionName, serviceName):
-        kDate = self.__sign(('AWS4' + key).encode('utf-8'), dateStamp)
-        kRegion = self.__sign(kDate, regionName)
-        kService = self.__sign(kRegion, serviceName)
-        kSigning = self.__sign(kService, 'aws4_request')
-        return kSigning
         
 
 class Endpoints:
     
-    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None, role_arn=None):
+    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False):
         
         if neptune_endpoint is None:
             assert ('NEPTUNE_CLUSTER_ENDPOINT' in os.environ), 'neptune_endpoint is missing.'
@@ -231,6 +191,9 @@ class Endpoints:
             
         self.credentials = credentials
         self.role_arn = role_arn
+        self.proxy_dns = proxy_dns
+        self.proxy_port = proxy_port
+        self.remove_host_header = remove_host_header
             
             
     def gremlin_endpoint(self):
@@ -255,5 +218,5 @@ class Endpoints:
         return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql/stream')
     
     def __endpoint(self, protocol, neptune_endpoint, neptune_port, suffix):
-        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn)
+        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn, self.proxy_dns, self.proxy_port, self.remove_host_header)
   

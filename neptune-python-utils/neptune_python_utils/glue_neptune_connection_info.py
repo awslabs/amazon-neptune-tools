@@ -12,8 +12,9 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 
-import sys, boto3
-from urllib.parse import urlparse
+import sys
+import boto3
+import requests
 from neptune_python_utils.endpoints import Endpoints
 
 class GlueNeptuneConnectionInfo:
@@ -47,7 +48,7 @@ class GlueNeptuneConnectionInfo:
         
         connection = glue.get_connection(Name=connection_name)
         neptune_uri = connection['Connection']['ConnectionProperties']['JDBC_CONNECTION_URL'][5:]
-        parse_result = urlparse(neptune_uri)
+        parse_result = requests.utils.urlparse(neptune_uri)
         netloc_parts = parse_result.netloc.split(':')
         host = netloc_parts[0]
         port = netloc_parts[1]

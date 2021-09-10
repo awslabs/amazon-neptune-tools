@@ -65,9 +65,11 @@ class GremlinUtils:
                           max_workers=None,
                           message_serializer=None,
                           graphson_reader=None,
-                          graphson_writer=None):
+                          graphson_writer=None,
+                          **kwargs):
         
         gremlin_endpoint = self.endpoints.gremlin_endpoint()
+        
         if show_endpoint:
             print('gremlin: {}'.format(gremlin_endpoint))
         
@@ -76,6 +78,7 @@ class GremlinUtils:
         while True:
             try:
                 request_parameters = gremlin_endpoint.prepare_request()
+
                 connection = DriverRemoteConnection(
                     request_parameters.uri, 
                     'g',
@@ -85,8 +88,11 @@ class GremlinUtils:
                     message_serializer=message_serializer,
                     graphson_reader=graphson_reader,
                     graphson_writer=graphson_writer,
-                    headers=request_parameters.headers)
+                    headers=request_parameters.headers,
+                    **kwargs)
+                    
                 self.connections.append(connection)
+                
                 return connection
             except ClientError as e:
                 exc_info = sys.exc_info()
@@ -101,26 +107,32 @@ class GremlinUtils:
             connection = self.remote_connection(show_endpoint)
         return traversal().withRemote(connection)
     
-    def client(self, pool_size=None, max_workers=None):
+    def client(self, pool_size=None, max_workers=None, **kwargs):
+        
         gremlin_endpoint = self.endpoints.gremlin_endpoint()
         request_parameters = gremlin_endpoint.prepare_request()
+            
         return Client(
             request_parameters.uri,
             'g',
             pool_size=pool_size,
             max_workers=max_workers,
-            headers=request_parameters.headers)
+            headers=request_parameters.headers,
+            **kwargs)
         
-    def sessioned_client(self, session_id=None, pool_size=None, max_workers=None):
+    def sessioned_client(self, session_id=None, pool_size=1, max_workers=None, **kwargs):
+        
         gremlin_endpoint = self.endpoints.gremlin_endpoint()
         request_parameters = gremlin_endpoint.prepare_request()
+
         return SessionedClient(
             request_parameters.uri, 
             'g', 
             uuid.uuid4().hex if session_id is None else session_id,
             pool_size=pool_size, 
             max_workers=max_workers,
-            headers=request_parameters.headers)
+            headers=request_parameters.headers,
+            **kwargs)
             
         
 class Session(Processor):
@@ -148,10 +160,10 @@ class SessionedClient(Client):
     def __init__(self, url, traversal_source, session_id, protocol_factory=None,
                  transport_factory=None, pool_size=None, max_workers=None,
                  message_serializer=ExtendedGraphSONSerializersV3d0(), username="", password="",
-                 headers=None):
+                 headers=None, **kwargs):
         super(SessionedClient, self).__init__(url, traversal_source, protocol_factory,
                  transport_factory, pool_size, max_workers,
-                 message_serializer, username, password, headers=headers)
+                 message_serializer, username, password, headers=headers, **kwargs)
         self._session_id = session_id
         
     def __enter__(self):
