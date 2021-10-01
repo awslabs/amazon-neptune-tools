@@ -91,6 +91,10 @@ public class ElementConfig {
         return getClassificationSpecifications(label).stream().anyMatch(s -> s.property().equals(property));
     }
 
+    public Collection<LabelConfigV2> getAllClassificationSpecifications(){
+        return classLabels;
+    }
+
     public boolean hasNoneFeatureSpecification(Label label, String property) {
         return getNoneFeatureSpecification(label, property) != null;
     }

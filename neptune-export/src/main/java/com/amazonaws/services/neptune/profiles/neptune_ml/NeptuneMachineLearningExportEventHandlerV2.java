@@ -95,6 +95,8 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     @Override
     public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
 
+        logger.info("ARGS: {}", args.toString());
+
         dataModel.updateArgsBeforeExport(args);
 
         if (args.contains("--export-id")) {
@@ -139,7 +141,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
 
         try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-            if (args.contains("export-rdf")) {
+            if (dataModel == DataModel.RDF) {
 
                 Collection<String> filenames = new ArrayList<>();
 
@@ -149,7 +151,6 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
                     File[] files = directory.listFiles(File::isFile);
                     for (File file : files) {
                         filenames.add(outputDirectory.toPath().relativize(file.toPath()).toString());
-
                     }
                 }
 

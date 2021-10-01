@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeLabelTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.LabelConfigV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
 import com.fasterxml.jackson.core.JsonGenerator;
 
