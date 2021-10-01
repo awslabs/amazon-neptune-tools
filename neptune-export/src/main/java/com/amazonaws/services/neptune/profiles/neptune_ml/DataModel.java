@@ -18,7 +18,7 @@ import com.amazonaws.services.neptune.rdf.RdfExportScope;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 
 public enum DataModel {
-    PropertyGraph{
+    PropertyGraph {
         @Override
         void updateArgsBeforeExport(Args args) {
             if (!args.contains("--exclude-type-definitions")) {
@@ -42,8 +42,23 @@ public enum DataModel {
                 args.replace("export-pg", "export-pg-from-config");
             }
         }
+
+        @Override
+        public String nodeTypeName() {
+            return "Label";
+        }
+
+        @Override
+        public String nodeAttributeNameSingular() {
+            return "Property";
+        }
+
+        @Override
+        public String nodeAttributeNamePlural() {
+            return "Properties";
+        }
     },
-    RDF{
+    RDF {
         @Override
         void updateArgsBeforeExport(Args args) {
             args.removeOptions("--format");
@@ -53,7 +68,28 @@ public enum DataModel {
             args.addOption("--rdf-export-scope", RdfExportScope.edges.name());
 
         }
+
+        @Override
+        public String nodeTypeName() {
+            return "Class";
+        }
+
+        @Override
+        public String nodeAttributeNameSingular() {
+            return "Predicate";
+        }
+
+        @Override
+        public String nodeAttributeNamePlural() {
+            return "Predicates";
+        }
     };
 
     abstract void updateArgsBeforeExport(Args args);
+
+    public abstract String nodeTypeName();
+
+    public abstract String nodeAttributeNameSingular();
+
+    public abstract String nodeAttributeNamePlural();
 }

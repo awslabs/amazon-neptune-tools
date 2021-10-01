@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.DataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeLabelTypeV2;
@@ -27,19 +28,21 @@ public class ParseLabelsV2 {
 
     private final Collection<JsonNode> config;
     private final Collection<Double> defaultSplitRates;
+    private final DataModel dataModel;
 
-    public ParseLabelsV2(Collection<JsonNode> config, Collection<Double> defaultSplitRates) {
+    public ParseLabelsV2(Collection<JsonNode> config, Collection<Double> defaultSplitRates, DataModel dataModel) {
         this.config = config;
         this.defaultSplitRates = defaultSplitRates;
+        this.dataModel = dataModel;
     }
 
     public Collection<LabelConfigV2> parseNodeClassLabels() {
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
         for (JsonNode json : config) {
             if (isNodeClass(json)) {
-                ParsingContext context = new ParsingContext("node label");
+                ParsingContext context = new ParsingContext(String.format("node %s", dataModel.nodeTypeName().toLowerCase()));
                 Label nodeType = new ParseNodeType(json, context).parseNodeType();
-                String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
+                String property = new ParseProperty(json, context.withLabel(nodeType), dataModel).parseSingleProperty();
                 ParsingContext propertyContext = context.withLabel(nodeType).withProperty(property);
                 NodeLabelTypeV2 labelType = new ParseNodeLabelTypeV2(json, propertyContext).parseLabel();
                 Separator separator = new ParseSeparator(json).parseSeparator();

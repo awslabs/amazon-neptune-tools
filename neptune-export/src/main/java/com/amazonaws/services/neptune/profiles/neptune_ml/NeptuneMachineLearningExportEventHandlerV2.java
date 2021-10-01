@@ -48,11 +48,11 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     private final String outputS3Path;
     private final String s3Region;
     private final Args args;
+    private final DataModel dataModel;
     private final Collection<TrainingDataWriterConfigV2> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
     private final PrinterOptions printerOptions;
-    private final DataModel dataModel;
 
     public NeptuneMachineLearningExportEventHandlerV2(String outputS3Path,
                                                       String s3Region,
@@ -74,10 +74,10 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         this.s3Region = s3Region;
         this.createExportSubdirectory = createExportSubdirectory;
         this.args = args;
+        this.dataModel = args.contains("export-rdf") ? DataModel.RDF : DataModel.PropertyGraph;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
         this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
-        this.dataModel = args.contains("export-rdf") ? DataModel.RDF : DataModel.PropertyGraph;
     }
 
     private Collection<TrainingDataWriterConfigV2> createTrainingJobConfigCollection(ObjectNode additionalParams) {
@@ -86,7 +86,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
             logger.info("No 'neptune_ml' config node in additional params so creating default training config");
             return Collections.singletonList(new TrainingDataWriterConfigV2());
         } else {
-            Collection<TrainingDataWriterConfigV2> trainingJobWriterConfig = TrainingDataWriterConfigV2.fromJson(neptuneMlNode);
+            Collection<TrainingDataWriterConfigV2> trainingJobWriterConfig = TrainingDataWriterConfigV2.fromJson(neptuneMlNode, this.dataModel);
             logger.info("Training job writer config: {}", trainingJobWriterConfig);
             return trainingJobWriterConfig;
         }

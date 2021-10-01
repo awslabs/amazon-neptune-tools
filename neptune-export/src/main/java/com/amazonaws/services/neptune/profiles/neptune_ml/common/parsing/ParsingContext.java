@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.DataModel;
 import com.amazonaws.services.neptune.propertygraph.Label;
 
 import java.util.Collection;
@@ -21,37 +22,39 @@ public class ParsingContext {
     private final String description;
     private final Label label;
     private final Collection<String> properties;
+    private final DataModel dataModel;
 
-    private ParsingContext(String description, Label label, Collection<String> properties) {
+    private ParsingContext(String description, Label label, Collection<String> properties,  DataModel dataModel) {
         this.description = description;
         this.label = label;
         this.properties = properties;
+        this.dataModel = dataModel;
     }
 
     public ParsingContext(String description) {
-        this(description, null, Collections.emptyList());
+        this(description, null, Collections.emptyList(), DataModel.PropertyGraph);
     }
 
     public ParsingContext withLabel(Label label) {
-        return new ParsingContext(description, label, properties);
+        return new ParsingContext(description, label, properties, dataModel);
     }
 
     public ParsingContext withProperties(Collection<String> properties) {
-        return new ParsingContext(description, label, properties);
+        return new ParsingContext(description, label, properties, dataModel);
     }
 
     public ParsingContext withProperty(String property) {
-        return new ParsingContext(description, label, Collections.singleton(property));
+        return new ParsingContext(description, label, Collections.singleton(property), dataModel);
     }
 
     @Override
     public String toString() {
         if (label != null && properties.size() == 1) {
-            return String.format("%s (Label: %s, Property: %s)", description, label.allLabelsAsArrayString(), properties.iterator().next());
+            return String.format("%s (%s: %s, %s: %s)", description, dataModel.nodeTypeName(),  label.allLabelsAsArrayString(), dataModel.nodeAttributeNameSingular(), properties.iterator().next());
         } else if (label != null && !properties.isEmpty()) {
-            return String.format("%s (Label: %s, Properties: [%s])", description, label.allLabelsAsArrayString(), String.join(", ", properties));
+            return String.format("%s (%s: %s, %s: [%s])", description, dataModel.nodeTypeName(), label.allLabelsAsArrayString(), dataModel.nodeAttributeNamePlural(), String.join(", ", properties));
         } else if (label != null) {
-            return String.format("%s (Label: %s)", description, label.allLabelsAsArrayString());
+            return String.format("%s (%s: %s)", description, dataModel.nodeTypeName(), label.allLabelsAsArrayString());
         } else {
             return description;
         }
