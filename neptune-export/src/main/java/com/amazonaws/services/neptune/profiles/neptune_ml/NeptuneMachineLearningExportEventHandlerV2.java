@@ -6,17 +6,15 @@ import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler
 import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.PropertyName;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.PropertyGraphTrainingDataConfigWriterV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.RdfTrainingDataConfigWriter;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
-import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.io.CsvPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.JsonPrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
-import com.amazonaws.services.neptune.rdf.RdfExportScope;
-import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.Timer;
@@ -36,7 +34,10 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.NEPTUNE_ML_PROFILE_NAME;
 
@@ -51,6 +52,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
     private final PrinterOptions printerOptions;
+    private final DataModel dataModel;
 
     public NeptuneMachineLearningExportEventHandlerV2(String outputS3Path,
                                                       String s3Region,
@@ -75,6 +77,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
         this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
+        this.dataModel = args.contains("export-rdf") ? DataModel.RDF : DataModel.PropertyGraph;
     }
 
     private Collection<TrainingDataWriterConfigV2> createTrainingJobConfigCollection(ObjectNode additionalParams) {
@@ -92,38 +95,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     @Override
     public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
 
-        if (args.contains("export-rdf")) {
-            args.removeOptions("--format");
-            args.addOption("--format", RdfExportFormat.ntriples.name());
-
-            args.removeOptions("--rdf-export-scope");
-            args.addOption("--rdf-export-scope", RdfExportScope.edges.name());
-        } else {
-
-            if (args.contains("export-pg")) {
-
-                if (!args.contains("--exclude-type-definitions")) {
-                    args.addFlag("--exclude-type-definitions");
-                }
-
-                if (args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeLabelsOnly.name())) {
-                    args.removeOptions("--edge-label-strategy");
-                }
-
-                if (!args.contains("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name())) {
-                    args.addOption("--edge-label-strategy", EdgeLabelStrategy.edgeAndVertexLabels.name());
-                }
-
-
-                if (args.containsAny("--config", "--filter", "-c", "--config-file", "--filter-config-file")){
-                    args.replace("export-pg", "export-pg-from-config");
-                }
-            }
-
-            if (!args.contains("--merge-files")) {
-                args.addFlag("--merge-files");
-            }
-        }
+        dataModel.updateArgsBeforeExport(args);
 
         if (args.contains("--export-id")) {
             args.removeOptions("--export-id");

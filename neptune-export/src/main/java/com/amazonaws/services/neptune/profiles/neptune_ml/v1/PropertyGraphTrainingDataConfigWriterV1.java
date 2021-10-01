@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v1;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.PropertyName;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Norm;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;

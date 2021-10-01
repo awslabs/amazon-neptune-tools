@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
 import com.amazonaws.services.neptune.export.NeptuneExportServiceEventHandler;
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.PropertyName;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.PropertyGraphTrainingDataConfigWriterV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v1.config.TrainingDataWriterConfigV1;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
