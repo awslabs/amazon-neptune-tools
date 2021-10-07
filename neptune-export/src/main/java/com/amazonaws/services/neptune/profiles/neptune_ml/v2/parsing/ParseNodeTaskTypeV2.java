@@ -14,38 +14,38 @@ package com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing;
 
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.NodeLabelTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.NodeTaskTypeV2;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Arrays;
 
-public class ParseNodeLabelTypeV2 {
+public class ParseNodeTaskTypeV2 {
 
     private final JsonNode json;
     private final ParsingContext context;
 
-    public ParseNodeLabelTypeV2(JsonNode json, ParsingContext context) {
+    public ParseNodeTaskTypeV2(JsonNode json, ParsingContext context) {
 
         this.json = json;
         this.context = context;
     }
 
-    public NodeLabelTypeV2 parseLabel() {
+    public NodeTaskTypeV2 parseTaskType() {
         if (json.has("type") && json.get("type").isTextual()) {
             String type = json.get("type").textValue();
             try {
-                return NodeLabelTypeV2.valueOf(type);
+                return NodeTaskTypeV2.valueOf(type);
             } catch (IllegalArgumentException e){
                 throw ErrorMessageHelper.invalidFieldValue(
                         "type",
                         type,
                         context,
-                        ErrorMessageHelper.enumNames(Arrays.asList(NodeLabelTypeV2.values())));
+                        ErrorMessageHelper.enumNames(Arrays.asList(NodeTaskTypeV2.values())));
             }
         }
         throw ErrorMessageHelper.errorParsingField(
                 "type",
                 context,
-                "one of the following values: " + ErrorMessageHelper.quoteList(Arrays.asList(NodeLabelTypeV2.values())));
+                "one of the following values: " + ErrorMessageHelper.quoteList(Arrays.asList(NodeTaskTypeV2.values())));
     }
 }

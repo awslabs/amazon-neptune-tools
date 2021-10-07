@@ -314,7 +314,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeStartObject();
         generator.writeArrayFieldStart("label");
         generator.writeString(labelConfig.property());
-        generator.writeString(labelConfig.type());
+        generator.writeString(labelConfig.taskType());
         generator.writeEndArray();
         writeSplitRates(labelConfig);
         labelConfig.separator().writeTo(generator, propertySchema.isMultiValue());

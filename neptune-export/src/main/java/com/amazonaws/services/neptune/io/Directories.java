@@ -83,7 +83,7 @@ public class Directories {
                 directory,
                 pathOrNull(nodesDirectory),
                 pathOrNull(edgesDirectory),
-                statementsDirectory,
+                pathOrNull(statementsDirectory),
                 resultsDirectory,
                 pathOrNull(recordsDirectory),
                 tag);
@@ -221,7 +221,11 @@ public class Directories {
     }
 
     public Path createStatementsFilePath(String name, FileExtension extension){
-        return createFilePath(statementsDirectory, name, extension);
+        if (statementsDirectory == null && recordsDirectory != null){
+            return createFilePath(recordsDirectory, name, extension);
+        } else {
+            return createFilePath(statementsDirectory, name, extension);
+        }
     }
 
     public Path createQueryResultsFilePath(String directoryName, String fileName, FileExtension extension){

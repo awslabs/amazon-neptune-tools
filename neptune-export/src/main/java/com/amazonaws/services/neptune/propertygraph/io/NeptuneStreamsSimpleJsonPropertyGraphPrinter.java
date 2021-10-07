@@ -25,13 +25,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
-    private static final AtomicLong COMMIT_NUM_GENERATOR = new AtomicLong(1);
+//    private static final AtomicLong COMMIT_NUM_GENERATOR = new AtomicLong(1);
 
     private final OutputWriter writer;
     private final JsonGenerator generator;
 
-    private long commitNum = 1;
-    private int opNum = 1;
+//    private long commitNum = 1;
+//    private int opNum = 1;
 
     public NeptuneStreamsSimpleJsonPropertyGraphPrinter(OutputWriter writer,
                                                         JsonGenerator generator) throws IOException {
@@ -108,8 +108,8 @@ public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGra
     @Override
     public void printStartRow() throws IOException {
 
-        commitNum = COMMIT_NUM_GENERATOR.getAndIncrement();
-        opNum = 1;
+//        commitNum = COMMIT_NUM_GENERATOR.getAndIncrement();
+//        opNum = 1;
 
         writer.startCommit();
     }
@@ -154,6 +154,12 @@ public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGra
         generator.writeStringField("type", streamOperation);
         generator.writeStringField("key", key);
         dataType.printAsStringTo(generator, "value", value);
+
+        generator.writeStringField("s", "");
+        generator.writeStringField("p", "");
+        generator.writeStringField("o", "");
+        generator.writeStringField("g", "");
+
         generator.writeStringField("dataType", dataType.name());
 
         //generator.writeStringField("op", "ADD");

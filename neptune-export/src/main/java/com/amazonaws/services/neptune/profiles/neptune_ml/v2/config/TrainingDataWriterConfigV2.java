@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.DataModel;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseSplitRate;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
@@ -32,7 +32,7 @@ public class TrainingDataWriterConfigV2 {
     public static final Collection<Double> DEFAULT_SPLIT_RATES_V2 = Arrays.asList(0.9, 0.1, 0.0);
     private static final String DEFAULT_NAME_V2 = "training-data-configuration";
 
-    public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json, DataModel dataModel) {
+    public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json, NeptuneMLSourceDataModel dataModel) {
 
         Collection<TrainingDataWriterConfigV2> results = new ArrayList<>();
 
@@ -63,7 +63,7 @@ public class TrainingDataWriterConfigV2 {
         return results;
     }
 
-    private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index, DataModel dataModel) {
+    private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index, NeptuneMLSourceDataModel dataModel) {
 
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES_V2, new ParsingContext("config")).parseSplitRates();
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();

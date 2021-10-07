@@ -13,11 +13,18 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.profiles.neptune_ml;
 
 import com.amazonaws.services.neptune.export.Args;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseProperty;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.RdfTaskTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseNodeTaskTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseRdfTaskType;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
+import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.rdf.RdfExportScope;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
+import com.fasterxml.jackson.databind.JsonNode;
 
-public enum DataModel {
+public enum NeptuneMLSourceDataModel {
     PropertyGraph {
         @Override
         void updateArgsBeforeExport(Args args) {
@@ -57,6 +64,16 @@ public enum DataModel {
         public String nodeAttributeNamePlural() {
             return "Properties";
         }
+
+        @Override
+        public String parseTaskType(JsonNode json, ParsingContext propertyContext, Label nodeType, String property) {
+            return new ParseNodeTaskTypeV2(json, propertyContext).parseTaskType().name();
+        }
+
+        @Override
+        public String parseProperty(JsonNode json, ParsingContext propertyContext, Label nodeType) {
+            return new ParseProperty(json, propertyContext.withLabel(nodeType), this).parseSingleProperty();
+        }
     },
     RDF {
         @Override
@@ -83,6 +100,18 @@ public enum DataModel {
         public String nodeAttributeNamePlural() {
             return "Predicates";
         }
+
+        @Override
+        public String parseTaskType(JsonNode json, ParsingContext propertyContext, Label nodeType, String property) {
+            RdfTaskTypeV2 taskType = new ParseRdfTaskType(json, propertyContext).parseTaskType();
+            taskType.validate(property, nodeType);
+            return taskType.name();
+        }
+
+        @Override
+        public String parseProperty(JsonNode json, ParsingContext propertyContext, Label nodeType) {
+            return new ParseProperty(json, propertyContext.withLabel(nodeType), this).parseNullableSingleProperty();
+        }
     };
 
     abstract void updateArgsBeforeExport(Args args);
@@ -92,4 +121,8 @@ public enum DataModel {
     public abstract String nodeAttributeNameSingular();
 
     public abstract String nodeAttributeNamePlural();
+
+    public abstract String parseTaskType(JsonNode json, ParsingContext propertyContext, Label nodeType, String property);
+
+    public abstract String parseProperty(JsonNode json, ParsingContext propertyContext, Label nodeType);
 }

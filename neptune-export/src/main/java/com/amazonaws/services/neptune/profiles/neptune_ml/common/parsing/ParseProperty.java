@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.DataModel;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -24,16 +24,16 @@ public class ParseProperty {
 
     private final JsonNode json;
     private final ParsingContext context;
-    private final DataModel dataModel;
+    private final NeptuneMLSourceDataModel dataModel;
 
-    public ParseProperty(JsonNode json, ParsingContext context, DataModel dataModel) {
+    public ParseProperty(JsonNode json, ParsingContext context, NeptuneMLSourceDataModel dataModel) {
         this.json = json;
         this.context = context;
         this.dataModel = dataModel;
     }
 
     public ParseProperty(JsonNode json, ParsingContext context) {
-        this(json, context, DataModel.PropertyGraph);
+        this(json, context, NeptuneMLSourceDataModel.PropertyGraph);
     }
 
     public String parseSingleProperty() {

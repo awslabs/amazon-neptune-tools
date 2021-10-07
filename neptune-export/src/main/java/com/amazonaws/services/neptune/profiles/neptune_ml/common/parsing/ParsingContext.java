@@ -12,8 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.DataModel;
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.propertygraph.Label;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,17 +23,21 @@ public class ParsingContext {
     private final String description;
     private final Label label;
     private final Collection<String> properties;
-    private final DataModel dataModel;
+    private final NeptuneMLSourceDataModel dataModel;
 
-    private ParsingContext(String description, Label label, Collection<String> properties,  DataModel dataModel) {
+    private ParsingContext(String description, Label label, Collection<String> properties,  NeptuneMLSourceDataModel dataModel) {
         this.description = description;
         this.label = label;
         this.properties = properties;
         this.dataModel = dataModel;
     }
 
+    public ParsingContext(String description, NeptuneMLSourceDataModel dataModel) {
+        this(description, null, Collections.emptyList(), dataModel);
+    }
+
     public ParsingContext(String description) {
-        this(description, null, Collections.emptyList(), DataModel.PropertyGraph);
+        this(description, null, Collections.emptyList(), NeptuneMLSourceDataModel.PropertyGraph);
     }
 
     public ParsingContext withLabel(Label label) {
@@ -44,7 +49,11 @@ public class ParsingContext {
     }
 
     public ParsingContext withProperty(String property) {
-        return new ParsingContext(description, label, Collections.singleton(property), dataModel);
+        if (StringUtils.isNotEmpty(property)){
+            return new ParsingContext(description, label, Collections.singleton(property), dataModel);
+        } else {
+            return this;
+        }
     }
 
     @Override

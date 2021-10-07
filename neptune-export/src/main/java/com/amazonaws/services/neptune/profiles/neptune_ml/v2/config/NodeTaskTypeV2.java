@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
-public enum NodeLabelTypeV2 {
+public enum NodeTaskTypeV2 {
     classification,
     regression
 }

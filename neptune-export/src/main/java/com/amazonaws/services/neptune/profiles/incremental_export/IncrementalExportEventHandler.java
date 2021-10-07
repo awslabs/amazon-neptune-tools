@@ -24,6 +24,7 @@ import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -72,20 +73,20 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
     @Override
     public void onBeforeExport(Args args, ExportToS3NeptuneExportEventHandler.S3UploadParams s3UploadParams) {
 
+        if (args.contains("--format")) {
+            args.removeOptions("--format");
+        }
+
+        if (args.contains("--partition-directories")) {
+            args.removeOptions("--partition-directories");
+        }
+
+        args.addOption("--partition-directories", String.format("timestamp=%s", timestamp));
+
         if (args.contains("export-pg")) {
-
-
-            if (args.contains("--format")) {
-                args.removeOptions("--format");
-            }
-
-
-            if (args.contains("--partition-directories")) {
-                args.removeOptions("--partition-directories");
-            }
-
             args.addOption("--format", PropertyGraphExportFormat.neptuneStreamsSimpleJson.name());
-            args.addOption("--partition-directories", String.format("timestamp=%s", timestamp));
+        } else {
+            args.addOption("--format", RdfExportFormat.neptuneStreamsSimpleJson.name());
         }
 
         s3UploadParams.setCreateExportSubdirectory(false).setOverwriteExisting(true);
@@ -99,7 +100,7 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
 
     @Override
     public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster) throws Exception {
-        // Do nothing
+        onExportComplete(directories, stats, cluster, null);
     }
 
     @Override
@@ -107,12 +108,13 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
         NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(cluster.connectionConfig().clusterId(), cluster.clientSupplier());
 
         if (clusterMetadata.isStreamEnabled()) {
-            Timer.timedActivity("getting LastEventId from stream", (CheckedActivity.Runnable) () -> getLastEventIdFromStream(clusterMetadata));
+            String streamEndpointType = graphSchema == null ? "sparql" : "gremlin";
+            Timer.timedActivity("getting LastEventId from stream", (CheckedActivity.Runnable) () -> getLastEventIdFromStream(clusterMetadata, streamEndpointType));
         }
     }
 
-    private void getLastEventIdFromStream(NeptuneClusterMetadata clusterMetadata) {
-        String streamsEndpoint = String.format("https://%s:%s/gremlin/stream", clusterMetadata.endpoints().get(0), clusterMetadata.port());
+    private void getLastEventIdFromStream(NeptuneClusterMetadata clusterMetadata, String streamEndpointType) {
+        String streamsEndpoint = String.format("https://%s:%s/%s/stream", clusterMetadata.endpoints().get(0), clusterMetadata.port(), streamEndpointType);
         logger.info("Streams endpoint: {}", streamsEndpoint);
 
         try {

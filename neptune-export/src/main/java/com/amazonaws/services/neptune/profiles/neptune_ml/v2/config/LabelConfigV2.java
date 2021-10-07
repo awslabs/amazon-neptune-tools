@@ -20,18 +20,18 @@ import java.util.Collection;
 public class LabelConfigV2 {
 
     private final Label nodeType;
-    private final String labelType;
+    private final String taskType;
     private final String property;
     private final Collection<Double> splitRates;
     private final Separator separator;
 
     public LabelConfigV2(Label nodeType,
-                         String labelType,
+                         String taskType,
                          String property,
                          Collection<Double> splitRates,
                          Separator separator) {
         this.nodeType = nodeType;
-        this.labelType = labelType;
+        this.taskType = taskType;
         this.property = property;
         this.splitRates = splitRates;
         this.separator = separator;
@@ -41,8 +41,8 @@ public class LabelConfigV2 {
         return nodeType;
     }
 
-    public String type() {
-        return labelType;
+    public String taskType() {
+        return taskType;
     }
 
     public String property() {

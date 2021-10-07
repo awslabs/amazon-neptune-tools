@@ -48,7 +48,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     private final String outputS3Path;
     private final String s3Region;
     private final Args args;
-    private final DataModel dataModel;
+    private final NeptuneMLSourceDataModel dataModel;
     private final Collection<TrainingDataWriterConfigV2> trainingJobWriterConfigCollection;
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
@@ -74,7 +74,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         this.s3Region = s3Region;
         this.createExportSubdirectory = createExportSubdirectory;
         this.args = args;
-        this.dataModel = args.contains("export-rdf") ? DataModel.RDF : DataModel.PropertyGraph;
+        this.dataModel = args.contains("export-rdf") ? NeptuneMLSourceDataModel.RDF : NeptuneMLSourceDataModel.PropertyGraph;
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
         this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
@@ -141,7 +141,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         File trainingJobConfigurationFile = new File(outputPath.toFile(), filename);
 
         try (Writer writer = new PrintWriter(trainingJobConfigurationFile)) {
-            if (dataModel == DataModel.RDF) {
+            if (dataModel == NeptuneMLSourceDataModel.RDF) {
 
                 Collection<String> filenames = new ArrayList<>();
 

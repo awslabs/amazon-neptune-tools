@@ -12,13 +12,16 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeLabelTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeTaskTypeV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.LabelConfigV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.RdfTaskTypeV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RdfTrainingDataConfigWriter {
 
@@ -53,27 +56,91 @@ public class RdfTrainingDataConfigWriter {
     private void writeRdfs() throws IOException {
         generator.writeArrayFieldStart("rdfs");
 
-        for (String filename : filenames) {
-            generator.writeStartObject();
-            generator.writeStringField("file_name", filename);
+        Collection<LabelConfigV2> classificationSpecifications = config.nodeConfig().getAllClassificationSpecifications();
 
-            generator.writeObjectFieldStart("label");
-            generator.writeStringField("task_type", EdgeLabelTypeV2.link_prediction.name());
+        if (classificationSpecifications.isEmpty()){
+            for (String filename : filenames) {
+                generator.writeStartObject();
+                generator.writeStringField("file_name", filename);
 
-            generator.writeArrayFieldStart("targets");
+                generator.writeObjectFieldStart("label");
+                generator.writeStringField("task_type", EdgeTaskTypeV2.link_prediction.name());
 
-            generator.writeStartObject();
-            generator.writeArrayFieldStart("split_rate");
-            for (Double splitRate : config.defaultSplitRates()) {
-                generator.writeNumber(splitRate);
+                generator.writeArrayFieldStart("targets");
+
+                generator.writeStartObject();
+                generator.writeArrayFieldStart("split_rate");
+                for (Double splitRate : config.defaultSplitRates()) {
+                    generator.writeNumber(splitRate);
+                }
+                generator.writeEndArray();
+                generator.writeEndObject();
+
+                generator.writeEndArray();
+                generator.writeEndObject();
+                generator.writeEndObject();
             }
-            generator.writeEndArray();
-            generator.writeEndObject();
+        } else {
+            for (RdfTaskTypeV2 taskType : RdfTaskTypeV2.values()) {
+                List<LabelConfigV2> taskSpecificConfigs = classificationSpecifications.stream().filter(c -> c.taskType().equals(taskType.name())).collect(Collectors.toList());
 
-            generator.writeEndArray();
-            generator.writeEndObject();
-            generator.writeEndObject();
+                if (taskType == RdfTaskTypeV2.link_prediction){
+                    for (String filename : filenames) {
+                        generator.writeStartObject();
+                        generator.writeStringField("file_name", filename);
+
+                        generator.writeObjectFieldStart("label");
+                        generator.writeStringField("task_type", taskType.name());
+
+                        generator.writeArrayFieldStart("targets");
+
+                        for (LabelConfigV2 taskSpecificConfig : taskSpecificConfigs) {
+                            generator.writeStartObject();
+                            generator.writeArrayFieldStart("split_rate");
+                            for (Double splitRate : taskSpecificConfig.splitRates()) {
+                                generator.writeNumber(splitRate);
+                            }
+                            generator.writeEndArray();
+                            generator.writeEndObject();
+                        }
+
+                        generator.writeEndArray();
+                        generator.writeEndObject();
+                        generator.writeEndObject();
+                    }
+                } else {
+                    for (String filename : filenames) {
+                        generator.writeStartObject();
+                        generator.writeStringField("file_name", filename);
+
+                        generator.writeObjectFieldStart("label");
+                        generator.writeStringField("task_type", taskType.name());
+
+                        generator.writeArrayFieldStart("targets");
+
+                        for (LabelConfigV2 taskSpecificConfig : taskSpecificConfigs) {
+                            generator.writeStartObject();
+                            generator.writeStringField("node", taskSpecificConfig.label().labelsAsString());
+                            if (taskType == RdfTaskTypeV2.classification){
+                                generator.writeStringField("predicate", taskSpecificConfig.property());
+                            }
+                            generator.writeArrayFieldStart("split_rate");
+                            for (Double splitRate : taskSpecificConfig.splitRates()) {
+                                generator.writeNumber(splitRate);
+                            }
+                            generator.writeEndArray();
+                            generator.writeEndObject();
+                        }
+
+                        generator.writeEndArray();
+                        generator.writeEndObject();
+                        generator.writeEndObject();
+                    }
+                }
+            }
         }
+
+
 
         generator.writeEndArray();
     }
