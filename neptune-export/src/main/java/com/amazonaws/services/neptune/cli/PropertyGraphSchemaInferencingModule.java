@@ -23,23 +23,6 @@ import java.util.Collection;
 
 public class PropertyGraphSchemaInferencingModule {
 
-    public enum SchemaInferenceStrategy {
-        Scan{
-            @Override
-            boolean scan() {
-                return true;
-            }
-        },
-
-        FullScan {
-            @Override
-            boolean scan() {
-                return false;
-            }
-        };
-
-        abstract boolean scan();
-    }
 
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating schema.")
     @Once
@@ -52,14 +35,8 @@ public class PropertyGraphSchemaInferencingModule {
     public PropertyGraphSchemaInferencingModule(){
     }
 
-    public PropertyGraphSchemaInferencingModule withSchemaInferenceStrategy(SchemaInferenceStrategy strategy) {
-        this.sample = strategy.scan();
-        return this;
-    }
-
-    public PropertyGraphSchemaInferencingModule withSampleSize(long sampleSize) {
-        this.sampleSize = sampleSize;
-        return this;
+    public boolean isFullScan(){
+        return !sample;
     }
 
     public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification> exportSpecifications,

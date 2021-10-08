@@ -16,9 +16,12 @@ import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
+import com.amazonaws.services.neptune.io.Target;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
+import com.amazonaws.services.neptune.propertygraph.io.ExportPropertyGraphJob;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig;
 import com.amazonaws.services.neptune.propertygraph.schema.CreateGraphSchemaCommand;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
@@ -50,13 +53,13 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
 
     @Inject
-    private PropertyGraphTargetModule target = new PropertyGraphTargetModule();
+    private PropertyGraphTargetModule target = new PropertyGraphTargetModule(Target.devnull);
 
     @Inject
     private PropertyGraphScopeModule scope = new PropertyGraphScopeModule();
 
     @Inject
-    private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule(false);
+    private PropertyGraphConcurrencyModule concurrency = new PropertyGraphConcurrencyModule();
 
     @Inject
     private PropertyGraphSerializationModule serialization = new PropertyGraphSerializationModule();
@@ -69,26 +72,65 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
 
         try {
             Timer.timedActivity("creating property graph config", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(sampling.isFullScan()), featureToggles())) {
 
-                    ExportStats stats = new ExportStats();
-                    Directories directories = target.createDirectories(DirectoryStructure.Config);
-                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, featureToggles());
+                    if (sampling.isFullScan()) {
 
-                    try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
-                         GraphTraversalSource g = client.newTraversalSource()) {
+                        Directories directories = target.createDirectories(DirectoryStructure.Config);
+                        JsonResource<GraphSchema> configFileResource = directories.configFileResource();
 
-                        CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
-                        GraphSchema graphSchema = createGraphSchemaCommand.execute();
+                        GraphSchema graphSchema = new GraphSchema();
+                        ExportStats stats = new ExportStats();
 
-                        configFileResource.save(graphSchema);
+                        PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptionsModule().config());
+
+                        Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
+
+                        try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
+                             GraphTraversalSource g = client.newTraversalSource()) {
+
+                            ExportPropertyGraphJob exportJob = new ExportPropertyGraphJob(
+                                    exportSpecifications,
+                                    graphSchema,
+                                    g,
+                                    new PropertyGraphRangeModule().config(),
+                                    cluster.concurrencyConfig(),
+                                    targetConfig);
+
+                            graphSchema = exportJob.execute();
+
+                            configFileResource.save(graphSchema);
+                        }
+
+                        directories.writeRootDirectoryPathAsMessage(target.description(), target);
                         configFileResource.writeResourcePathAsMessage(target);
+
+                        System.err.println();
+                        System.err.println(stats.formatStats(graphSchema));
+
+                        directories.writeRootDirectoryPathAsReturnValue(target);
+                        onExportComplete(directories, stats, cluster, graphSchema);
+
+                    } else {
+
+                        ExportStats stats = new ExportStats();
+                        Directories directories = target.createDirectories(DirectoryStructure.Config);
+                        JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                        Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, featureToggles());
+
+                        try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
+                             GraphTraversalSource g = client.newTraversalSource()) {
+
+                            CreateGraphSchemaCommand createGraphSchemaCommand = sampling.createSchemaCommand(exportSpecifications, g);
+                            GraphSchema graphSchema = createGraphSchemaCommand.execute();
+
+                            configFileResource.save(graphSchema);
+                            configFileResource.writeResourcePathAsMessage(target);
+                        }
+
+                        directories.writeConfigFilePathAsReturnValue(target);
+                        onExportComplete(directories, stats, cluster);
                     }
-
-                    directories.writeConfigFilePathAsReturnValue(target);
-                    onExportComplete(directories, stats, cluster);
-
                 }
             });
         } catch (Exception e) {

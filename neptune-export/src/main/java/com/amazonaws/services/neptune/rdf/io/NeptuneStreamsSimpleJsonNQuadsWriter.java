@@ -21,8 +21,8 @@ import org.eclipse.rdf4j.common.text.ASCIIUtil;
 import org.eclipse.rdf4j.common.text.StringUtil;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.rio.*;
-import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.NTriplesUtil;
+import org.eclipse.rdf4j.rio.nquads.NQuadsWriter;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
@@ -30,6 +30,8 @@ import java.io.StringWriter;
 import java.util.Collection;
 
 public class NeptuneStreamsSimpleJsonNQuadsWriter implements RDFWriter {
+
+    private static final String REGEX_LAST_NEWLINE = String.format("%s$", System.lineSeparator());
 
     private final JsonGenerator generator;
     private final Status status = new Status(StatusOutputFormat.Description, "records");
@@ -101,15 +103,29 @@ public class NeptuneStreamsSimpleJsonNQuadsWriter implements RDFWriter {
             generator.writeStringField("value", "");
             generator.writeStringField("dataType", "");
 
-            generator.writeStringField("s", getValue(statement.getSubject()));
-            generator.writeStringField("p", getValue(statement.getPredicate()));
-            generator.writeStringField("o", getValue(statement.getObject()));
+//            generator.writeStringField("s", getValue(statement.getSubject()));
+//            generator.writeStringField("p", getValue(statement.getPredicate()));
+//            generator.writeStringField("o", getValue(statement.getObject()));
+//
+//            if (statement.getContext() != null) {
+//                generator.writeStringField("g", getValue(statement.getContext()));
+//            } else {
+//                generator.writeStringField("g", "");
+//            }
 
-            if (statement.getContext() != null) {
-                generator.writeStringField("g", getValue(statement.getContext()));
-            } else {
-                generator.writeStringField("g", "");
-            }
+            generator.writeStringField("s", "");
+            generator.writeStringField("p", "");
+            generator.writeStringField("o", "");
+            generator.writeStringField("g", "");
+
+            generator.writeFieldName("stmt");
+
+            StringWriter stringWriter = new StringWriter();
+            NQuadsWriter nQuadsWriter = new NQuadsWriter(stringWriter);
+            nQuadsWriter.startRDF();
+            nQuadsWriter.handleStatement(statement);
+            nQuadsWriter.endRDF();
+            generator.writeString(stringWriter.toString().replaceAll(REGEX_LAST_NEWLINE, ""));
 
             generator.writeStringField("op", "ADD");
             generator.writeEndObject();

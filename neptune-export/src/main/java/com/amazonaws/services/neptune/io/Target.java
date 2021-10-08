@@ -29,6 +29,11 @@ public enum Target implements CommandWriter {
         }
 
         @Override
+        public boolean isFileBased() {
+            return true;
+        }
+
+        @Override
         public void writeReturnValue(String value) {
             System.out.println(value);
         }
@@ -37,6 +42,27 @@ public enum Target implements CommandWriter {
         @Override
         public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
             return new StdOutPrintOutputWriter();
+        }
+
+        @Override
+        public boolean isFileBased() {
+            return false;
+        }
+
+        @Override
+        public void writeReturnValue(String value) {
+            System.err.println(value);
+        }
+    },
+    devnull {
+        @Override
+        public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
+            return new NoOpOutputWriter();
+        }
+
+        @Override
+        public boolean isFileBased() {
+            return false;
         }
 
         @Override
@@ -58,6 +84,11 @@ public enum Target implements CommandWriter {
         }
 
         @Override
+        public boolean isFileBased() {
+            return false;
+        }
+
+        @Override
         public void writeReturnValue(String value) {
             System.out.println(value);
         }
@@ -69,6 +100,8 @@ public enum Target implements CommandWriter {
     }
 
     public abstract OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException;
+
+    public abstract boolean isFileBased();
 
     @Override
     public abstract void writeReturnValue(String value);

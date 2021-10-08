@@ -122,6 +122,7 @@ public class ExportPropertyGraphJob {
         }
 
         MasterLabelSchemas masterLabelSchemas = exportSpecification.createMasterLabelSchemas(fileSpecificLabelSchemas);
+
         RewriteCommand rewriteCommand = targetConfig.createRewriteCommand(concurrencyConfig);
 
         return rewriteCommand.execute(masterLabelSchemas);

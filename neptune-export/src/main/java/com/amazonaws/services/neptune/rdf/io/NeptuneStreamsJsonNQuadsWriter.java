@@ -28,6 +28,8 @@ import java.util.Collection;
 
 public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
 
+    private static final String REGEX_LAST_NEWLINE = String.format("%s$", System.lineSeparator());
+
     private final JsonGenerator generator;
     private final Status status = new Status(StatusOutputFormat.Description,"statements");
     private final OutputWriter outputWriter;
@@ -103,7 +105,7 @@ public class NeptuneStreamsJsonNQuadsWriter implements RDFWriter {
             nQuadsWriter.startRDF();
             nQuadsWriter.handleStatement(statement);
             nQuadsWriter.endRDF();
-            generator.writeString(stringWriter.toString().replace(System.lineSeparator(), ""));
+            generator.writeString(stringWriter.toString().replaceAll(REGEX_LAST_NEWLINE, ""));
 
             generator.writeEndObject();
 
