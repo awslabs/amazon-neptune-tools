@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -12,13 +12,18 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.services.neptune.AmazonNeptune;
+import com.amazonaws.services.neptune.io.CommandWriter;
 
-import java.util.function.Supplier;
+import java.io.IOException;
 
-public interface Cluster extends AutoCloseable {
-    ConnectionConfig connectionConfig();
-    ConcurrencyConfig concurrencyConfig();
-    Supplier<AmazonNeptune> clientSupplier();
-    NeptuneClusterMetadata clusterMetadata();
+public class DoNotGetLastEventIdTask implements GetLastEventIdStrategy {
+    @Override
+    public void saveLastEventId(String streamEndpointType) throws IOException {
+        // Do nothing
+    }
+
+    @Override
+    public void writeLastEventIdResourcePathAsMessage(CommandWriter writer) {
+        // Do nothing
+    }
 }

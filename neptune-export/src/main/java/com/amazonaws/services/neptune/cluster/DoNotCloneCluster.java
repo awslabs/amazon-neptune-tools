@@ -26,6 +26,7 @@ public class DoNotCloneCluster implements CloneClusterStrategy {
 
     @Override
     public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig) throws Exception {
+
         return new Cluster() {
             @Override
             public ConnectionConfig connectionConfig() {
@@ -40,6 +41,11 @@ public class DoNotCloneCluster implements CloneClusterStrategy {
             @Override
             public Supplier<AmazonNeptune> clientSupplier() {
                 return clientSupplier;
+            }
+
+            @Override
+            public NeptuneClusterMetadata clusterMetadata() {
+                return NeptuneClusterMetadata.createFromClusterId(connectionConfig.clusterId(), clientSupplier);
             }
 
             @Override

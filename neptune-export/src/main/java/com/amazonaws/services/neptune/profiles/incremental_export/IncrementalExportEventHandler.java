@@ -14,8 +14,7 @@ package com.amazonaws.services.neptune.profiles.incremental_export;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
-import com.amazonaws.services.neptune.cluster.Cluster;
-import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
+import com.amazonaws.services.neptune.cluster.*;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.CompletionFileWriter;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
@@ -105,44 +104,18 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
 
     @Override
     public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
-        NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(cluster.connectionConfig().clusterId(), cluster.clientSupplier());
-
-        if (clusterMetadata.isStreamEnabled()) {
-            String streamEndpointType = graphSchema == null ? "sparql" : "gremlin";
-            Timer.timedActivity("getting LastEventId from stream", (CheckedActivity.Runnable) () -> getLastEventIdFromStream(clusterMetadata, streamEndpointType));
-        }
+        Timer.timedActivity("getting LastEventId from stream", (CheckedActivity.Runnable) () ->
+                getLastEventIdFromStream(cluster,  graphSchema == null ? "sparql" : "gremlin"));
     }
 
-    private void getLastEventIdFromStream(NeptuneClusterMetadata clusterMetadata, String streamEndpointType) {
-        String streamsEndpoint = String.format("https://%s:%s/%s/stream", clusterMetadata.endpoints().get(0), clusterMetadata.port(), streamEndpointType);
-        logger.info("Streams endpoint: {}", streamsEndpoint);
+    private void getLastEventIdFromStream(Cluster cluster, String streamEndpointType) {
 
-        try {
+        NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(cluster.connectionConfig().clusterId(), cluster.clientSupplier());
 
-            String region = new DefaultAwsRegionProviderChain().getRegion();
-            NeptuneHttpsClient neptuneHttpsClient = new NeptuneHttpsClient(streamsEndpoint, region);
-
-            Map<String, String> params = new HashMap<>();
-            params.put("commitNum", String.valueOf(Long.MAX_VALUE));
-            params.put("limit", "1");
-
-            HttpResponse httpResponse = neptuneHttpsClient.get(params);
-
-            logger.info(httpResponse.getContent());
-
-        } catch (AmazonServiceException e) {
-
-            if (e.getErrorCode().equals("StreamRecordsNotFoundException")){
-                StreamRecordsNotFoundExceptionParser.LastEventId lastEventId = StreamRecordsNotFoundExceptionParser.parseLastEventId(e.getErrorMessage());
-                commitNum.set(lastEventId.commitNum());
-                opNum.set(lastEventId.opNum());
-                logger.info("LastEventId: {}", lastEventId);
-            } else {
-                logger.error("Error while accessing Neptune Streams endpoint", e);
-            }
-
-        } catch (Exception e){
-            logger.error("Error while accessing Neptune Streams endpoint", e);
+        EventId eventId = new GetLastEventId(clusterMetadata, cluster.connectionConfig(), streamEndpointType).execute();
+        if (eventId != null){
+            commitNum.set(eventId.commitNum());
+            opNum.set(eventId.opNum());
         }
     }
 }

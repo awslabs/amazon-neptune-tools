@@ -14,6 +14,8 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.EventId;
+import com.amazonaws.services.neptune.cluster.GetLastEventIdStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -79,6 +81,9 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
     @Inject
     private GremlinFiltersModule gremlinFilters = new GremlinFiltersModule();
 
+    @Inject
+    private NeptuneStreamsModule streams = new NeptuneStreamsModule();
+
     @Override
     public void run() {
 
@@ -87,7 +92,12 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                 try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
 
                     Directories directories = target.createDirectories();
+
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    JsonResource<EventId> eventIdFileResource = directories.lastEventIdFileResource();
+
+                    GetLastEventIdStrategy getLastEventIdStrategy = streams.lastEventIdStrategy(cluster, eventIdFileResource);
+                    getLastEventIdStrategy.saveLastEventId("gremlin");
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
@@ -119,6 +129,7 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);
                     configFileResource.writeResourcePathAsMessage(target);
+                    getLastEventIdStrategy.writeLastEventIdResourcePathAsMessage(target);
 
                     System.err.println();
                     System.err.println(stats.formatStats(graphSchema));

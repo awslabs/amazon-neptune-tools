@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.cluster.EventId;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
@@ -41,6 +42,7 @@ public class Directories {
     }
 
     private static final String CONFIG_FILE = "config.json";
+    private static final String LAST_EVENT_ID_FILE = "lastEventId.json";
     private static final String QUERIES_FILE = "queries.json";
 
     public static Directories createFor(DirectoryStructure directoryStructure,
@@ -246,6 +248,12 @@ public class Directories {
                 GraphSchema.class);
     }
 
+    public JsonResource<EventId> lastEventIdFileResource() {
+        return new JsonResource<>("LastEventId file",
+                lastEventIdFilePath().toUri(),
+                EventId.class);
+    }
+
     public JsonResource<NamedQueriesCollection> queriesResource() {
         return new JsonResource<>("Queries file",
                 queriesFilePath().toUri(),
@@ -261,6 +269,10 @@ public class Directories {
 
     private Path configFilePath() {
         return directory.resolve(CONFIG_FILE).toAbsolutePath();
+    }
+
+    private Path lastEventIdFilePath() {
+        return directory.resolve(LAST_EVENT_ID_FILE).toAbsolutePath();
     }
 
     private Path queriesFilePath() {

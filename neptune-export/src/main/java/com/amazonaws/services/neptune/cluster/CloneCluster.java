@@ -87,6 +87,7 @@ public class CloneCluster implements CloneClusterStrategy {
                         true
                 ),
                 new ConcurrencyConfig(newConcurrency),
+                targetClusterMetadata,
                 amazonNeptuneClientSupplier);
     }
 
@@ -94,13 +95,16 @@ public class CloneCluster implements CloneClusterStrategy {
 
         private final ConnectionConfig connectionConfig;
         private final ConcurrencyConfig concurrencyConfig;
+        private final NeptuneClusterMetadata clusterMetadata;
         private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
         private ClonedCluster(ConnectionConfig connectionConfig,
                               ConcurrencyConfig concurrencyConfig,
+                              NeptuneClusterMetadata clusterMetadata,
                               Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
             this.connectionConfig = connectionConfig;
             this.concurrencyConfig = concurrencyConfig;
+            this.clusterMetadata = clusterMetadata;
             this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
         }
 
@@ -117,6 +121,11 @@ public class CloneCluster implements CloneClusterStrategy {
         @Override
         public Supplier<AmazonNeptune> clientSupplier() {
             return amazonNeptuneClientSupplier;
+        }
+
+        @Override
+        public NeptuneClusterMetadata clusterMetadata() {
+            return clusterMetadata;
         }
 
         @Override
