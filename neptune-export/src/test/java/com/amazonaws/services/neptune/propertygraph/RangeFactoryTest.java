@@ -55,11 +55,12 @@ public class RangeFactoryTest {
     public void shouldReturnConsecutiveRanges(){
 
         GraphClient<?> graphClient = mock(GraphClient.class);
-        when(graphClient.approxCount(any(), any())).thenReturn(2250L);
+        when(graphClient.approxCount(any(), any(), any())).thenReturn(2250L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
                 ALL_LABELS,
+                GremlinFilters.EMPTY,
                 new RangeConfig(1000, 0, 2500, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -82,11 +83,12 @@ public class RangeFactoryTest {
     public void shouldReturnSingleRangeForAllIfRangeSizeIsMinusOne(){
 
         GraphClient<?> graphClient = mock(GraphClient.class);
-        when(graphClient.approxCount(any(), any())).thenReturn(2250L);
+        when(graphClient.approxCount(any(), any(), any())).thenReturn(2250L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
                 ALL_LABELS,
+                GremlinFilters.EMPTY,
                 new RangeConfig(-1, 0, Long.MAX_VALUE, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -103,11 +105,12 @@ public class RangeFactoryTest {
     public void shouldLeaveLastRangeOpenIfNoUpperLimit(){
 
         GraphClient<?> graphClient = mock(GraphClient.class);
-        when(graphClient.approxCount(any(), any())).thenReturn(2250L);
+        when(graphClient.approxCount(any(), any(), any())).thenReturn(2250L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
                 ALL_LABELS,
+                GremlinFilters.EMPTY,
                 new RangeConfig(1000, 0, Long.MAX_VALUE, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -130,11 +133,12 @@ public class RangeFactoryTest {
     public void shouldIndicateThatItIsExhausted(){
 
         GraphClient<?> graphClient = mock(GraphClient.class);
-        when(graphClient.approxCount(any(), any())).thenReturn(5000L);
+        when(graphClient.approxCount(any(), any(), any())).thenReturn(5000L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
                 ALL_LABELS,
+                GremlinFilters.EMPTY,
                 new RangeConfig(1000, 0, 2000, -1, -1),
                 new ConcurrencyConfig(1));
 
@@ -149,11 +153,12 @@ public class RangeFactoryTest {
     public void shouldCalculateRangesStartingFromSkipNumber(){
 
         GraphClient<?> graphClient = mock(GraphClient.class);
-        when(graphClient.approxCount(any(), any())).thenReturn(30L);
+        when(graphClient.approxCount(any(), any(), any())).thenReturn(30L);
 
         RangeFactory rangeFactory = RangeFactory.create(
                 graphClient,
                 ALL_LABELS,
+                GremlinFilters.EMPTY,
                 new RangeConfig(10, 20, 10, -1, -1),
                 new ConcurrencyConfig(1));
 

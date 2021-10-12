@@ -71,7 +71,11 @@ public class ParamConverter {
         } else if (argValue.isObject()) {
             String value = String.format("'%s'", argValue.toPrettyString());
             args.addOption(argName, value);
-        } else {
+        } else if (argValue.isTextual()){
+            String value = String.format("'%s'", argValue.textValue());
+            args.addOption(argName, value);
+        }
+        else {
             String value = argValue.toString();
             args.addOption(argName, value);
         }

@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.export;
 import com.amazonaws.services.neptune.profiles.incremental_export.IncrementalExportEventHandler;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV2;
+import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.AmazonS3;
@@ -112,6 +113,13 @@ public class NeptuneExportService {
 
                 if (maxConcurrency > 0 && !args.contains("--clone-cluster-max-concurrency")) {
                     args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
+                }
+
+                if (!args.contains("--clone-cluster-correlation-id")){
+                    String correlationId = EnvironmentVariableUtils.getOptionalEnv("AWS_BATCH_JOB_ID", null);
+                    if (StringUtils.isNotEmpty(correlationId)){
+                        args.addOption("--clone-cluster-correlation-id", correlationId);
+                    }
                 }
             }
         } catch (Exception e) {

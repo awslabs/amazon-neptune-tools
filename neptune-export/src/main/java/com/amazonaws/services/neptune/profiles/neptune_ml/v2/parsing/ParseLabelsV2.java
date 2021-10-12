@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separato
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeTaskTypeV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.LabelConfigV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.RdfTaskTypeV2;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -39,7 +40,15 @@ public class ParseLabelsV2 {
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
 
         for (JsonNode json : config) {
-            if (isNodeClass(json)) {
+
+            if (dataModel.isRdfLinkPrediction(json)) {
+                ParsingContext context = new ParsingContext("edge");
+                String subject = new ParseSubject(json, context).parseSubject();
+                String predicate = dataModel.parseProperty(json, context, null);
+                String object = new ParseObject(json, context).parseObject();
+                Collection<Double> splitRates = new ParseSplitRate(json, defaultSplitRates, context).parseSplitRates();
+                nodeClassLabels.add(new LabelConfigV2(null, RdfTaskTypeV2.link_prediction.name(), predicate, subject, object, splitRates, null));
+            } else if (isNodeClass(json)) {
                 ParsingContext context = new ParsingContext(String.format("node %s", dataModel.nodeTypeName().toLowerCase()));
                 Label nodeType = new ParseNodeType(json, context).parseNodeType();
                 String property = dataModel.parseProperty(json, context, nodeType);
@@ -47,7 +56,7 @@ public class ParseLabelsV2 {
                 String taskType = dataModel.parseTaskType(json, propertyContext, nodeType, property);
                 Separator separator = new ParseSeparator(json).parseSeparator();
                 Collection<Double> splitRates = new ParseSplitRate(json, defaultSplitRates, propertyContext).parseSplitRates();
-                nodeClassLabels.add(new LabelConfigV2(nodeType, taskType, property, splitRates, separator));
+                nodeClassLabels.add(new LabelConfigV2(nodeType, taskType, property, null, null, splitRates, separator));
             }
         }
 
@@ -64,8 +73,10 @@ public class ParseLabelsV2 {
 
     public void validate() {
         for (JsonNode json : config) {
-            if (!isNodeClass(json) && !isEdgeClass(json)) {
-                throw new IllegalArgumentException("Illegal label element. Expected 'node' or 'edge' field.");
+            if (!dataModel.isRdfLinkPrediction(json)) {
+                if (!isNodeClass(json) && !isEdgeClass(json)) {
+                    throw new IllegalArgumentException(String.format("Illegal target element. Expected %s field.", dataModel.labelFields()));
+                }
             }
         }
     }
@@ -82,7 +93,7 @@ public class ParseLabelsV2 {
                 taskType.validate(property, edgeType);
                 Separator separator = new ParseSeparator(json).parseSeparator();
                 Collection<Double> splitRates = new ParseSplitRate(json, defaultSplitRates, propertyContext).parseSplitRates();
-                edgeClassLabels.add(new LabelConfigV2(edgeType, taskType.name(), property, splitRates, separator));
+                edgeClassLabels.add(new LabelConfigV2(edgeType, taskType.name(), property, null, null, splitRates, separator));
             }
         }
         return edgeClassLabels;

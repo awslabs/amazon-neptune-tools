@@ -24,17 +24,20 @@ public class CloneCluster implements CloneClusterStrategy {
     private final int maxConcurrency;
     private final String engineVersion;
     private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+    private final String cloneCorrelationId;
 
     public CloneCluster(String cloneClusterInstanceType,
                         int replicaCount,
                         int maxConcurrency,
                         String engineVersion,
-                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier,
+                        String cloneCorrelationId) {
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
         this.maxConcurrency = maxConcurrency;
         this.engineVersion = engineVersion;
         this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+        this.cloneCorrelationId = cloneCorrelationId;
     }
 
     @Override
@@ -53,7 +56,8 @@ public class CloneCluster implements CloneClusterStrategy {
                 cloneClusterInstanceType,
                 replicaCount,
                 engineVersion,
-                amazonNeptuneClientSupplier);
+                amazonNeptuneClientSupplier,
+                cloneCorrelationId);
 
         NeptuneClusterMetadata targetClusterMetadata = addCloneTask.execute();
 

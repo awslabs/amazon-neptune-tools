@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.export;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -46,7 +47,7 @@ public class ParamConverterTest {
 
         Args args = ParamConverter.fromJson("export-pg", jsonNode);
 
-        assertEquals("export-pg --endpoint \"endpoint1\" --endpoint \"endpoint2\" --profile \"neptune_ml\" --use-iam-auth --clone-cluster --clone-cluster-replica-count 2", args.toString());
+        assertEquals("export-pg --endpoint 'endpoint1' --endpoint 'endpoint2' --profile 'neptune_ml' --use-iam-auth --clone-cluster --clone-cluster-replica-count 2", args.toString());
     }
 
 }

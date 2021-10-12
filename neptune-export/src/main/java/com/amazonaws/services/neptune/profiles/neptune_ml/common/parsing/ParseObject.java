@@ -12,42 +12,32 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
-import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-public class ParseNodeType {
+public class ParseObject {
 
     private final JsonNode json;
     private final ParsingContext context;
 
-    public ParseNodeType(JsonNode json, ParsingContext context) {
+    public ParseObject(JsonNode json, ParsingContext context) {
         this.json = json;
         this.context = context;
     }
 
-    public Label parseNodeType(){
-        if (json.has("node")){
-            JsonNode node = json.get("node");
-            if (node.isTextual()){
-                return new Label(node.textValue());
-            } else if (node.isArray()){
-                Collection<String> values = new ArrayList<>();
-                for (JsonNode element : node) {
-                    values.add(element.textValue());
-                }
-                return new Label(values);
+    public String parseObject() {
+        if (json.has("object")) {
+            JsonNode node = json.get("object");
+            if (node.isTextual()) {
+                return node.textValue();
             } else {
                 throw error();
             }
         } else {
-            throw error();
+            return null;
         }
     }
 
     private IllegalArgumentException error() {
-        return ErrorMessageHelper.errorParsingField("node", context, "a text value or array of text values");
+        return ErrorMessageHelper.errorParsingField("object", context, "a text value");
     }
 }

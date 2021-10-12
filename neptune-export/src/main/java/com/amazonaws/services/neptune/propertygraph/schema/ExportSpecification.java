@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class ExportSpecification {
     private final GraphElementType graphElementType;
     private final LabelsFilter labelsFilter;
+    private final GremlinFilters gremlinFilters;
     private final boolean tokensOnly;
     private final ExportStats stats;
     private final FeatureToggles featureToggles;
@@ -37,11 +38,13 @@ public class ExportSpecification {
 
     public ExportSpecification(GraphElementType graphElementType,
                                LabelsFilter labelsFilter,
+                               GremlinFilters gremlinFilters,
                                ExportStats stats,
                                boolean tokensOnly,
                                FeatureToggles featureToggles) {
         this.graphElementType = graphElementType;
         this.labelsFilter = labelsFilter;
+        this.gremlinFilters = gremlinFilters;
         this.tokensOnly = tokensOnly;
         this.stats = stats;
         this.featureToggles = featureToggles;
@@ -57,7 +60,8 @@ public class ExportSpecification {
         graphClient.queryForSchema(
                 new CreateSchemaHandler(graphElementType, graphSchema),
                 Range.ALL,
-                labelsFilter);
+                labelsFilter,
+                gremlinFilters);
     }
 
     public void sample(GraphSchema graphSchema, GraphTraversalSource g, long sampleSize) {
@@ -72,7 +76,8 @@ public class ExportSpecification {
             graphClient.queryForSchema(
                     new CreateSchemaHandler(graphElementType, graphSchema),
                     new Range(0, sampleSize),
-                    labelsFilter.filterFor(label));
+                    labelsFilter.filterFor(label),
+                    gremlinFilters);
         }
     }
 
@@ -86,13 +91,14 @@ public class ExportSpecification {
         return RangeFactory.create(
                 graphElementType.graphClient(g, tokensOnly, stats, featureToggles),
                 labelsFilter,
-                rangeConfig,
+                gremlinFilters, rangeConfig,
                 concurrencyConfig);
     }
 
     public ExportPropertyGraphTask<Map<String, Object>> createExportTask(GraphSchema graphSchema,
                                                                          GraphTraversalSource g,
                                                                          PropertyGraphTargetConfig targetConfig,
+                                                                         GremlinFilters gremlinFilters,
                                                                          RangeFactory rangeFactory,
                                                                          Status status,
                                                                          int index,
@@ -104,6 +110,7 @@ public class ExportSpecification {
                 graphElementType.writerFactory(),
                 targetConfig,
                 rangeFactory,
+                gremlinFilters,
                 status,
                 index,
                 fileDescriptorCount
@@ -147,7 +154,7 @@ public class ExportSpecification {
 
         if (graphElementType == GraphElementType.edges || featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
             return labelsFilter.split().stream()
-                    .map(l -> new ExportSpecification(graphElementType, l, stats, tokensOnly, featureToggles))
+                    .map(l -> new ExportSpecification(graphElementType, l, gremlinFilters, stats, tokensOnly, featureToggles))
                     .collect(Collectors.toList());
 
         } else {

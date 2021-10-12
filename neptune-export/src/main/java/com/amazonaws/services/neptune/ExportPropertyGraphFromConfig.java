@@ -68,6 +68,9 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
     @Inject
     private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
+    @Inject
+    private GremlinFiltersModule gremlinFilters = new GremlinFiltersModule();
+
     @Override
     public void run() {
 
@@ -83,7 +86,11 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
-                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(
+                            graphSchema,
+                            gremlinFilters.filters(),
+                            stats,
+                            featureToggles());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
@@ -93,6 +100,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                                 graphSchema,
                                 g,
                                 range.config(),
+                                gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
                                 targetConfig);
 

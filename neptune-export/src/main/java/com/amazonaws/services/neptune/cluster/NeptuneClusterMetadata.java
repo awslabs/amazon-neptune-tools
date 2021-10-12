@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 public class NeptuneClusterMetadata {
 
     public static final String NEPTUNE_EXPORT_APPLICATION_TAG = "neptune-export";
+    public static final String NEPTUNE_EXPORT_CORRELATION_ID_KEY = "correlation-id";
 
     public static String clusterIdFromEndpoint(String endpoint) {
         int index = endpoint.indexOf(".");

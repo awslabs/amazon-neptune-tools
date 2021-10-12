@@ -15,7 +15,9 @@ package com.amazonaws.services.neptune.profiles.neptune_ml;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseProperty;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.LabelConfigV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.RdfTaskTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseNodeTaskTypeV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing.ParseRdfTaskType;
 import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
@@ -24,10 +26,12 @@ import com.amazonaws.services.neptune.rdf.RdfExportScope;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.Collection;
+
 public enum NeptuneMLSourceDataModel {
     PropertyGraph {
         @Override
-        void updateArgsBeforeExport(Args args) {
+        void updateArgsBeforeExport(Args args, Collection<TrainingDataWriterConfigV2> trainingJobWriterConfigCollection) {
             if (!args.contains("--exclude-type-definitions")) {
                 args.addFlag("--exclude-type-definitions");
             }
@@ -74,16 +78,37 @@ public enum NeptuneMLSourceDataModel {
         public String parseProperty(JsonNode json, ParsingContext propertyContext, Label nodeType) {
             return new ParseProperty(json, propertyContext.withLabel(nodeType), this).parseSingleProperty();
         }
+
+        @Override
+        public String labelFields() {
+            return "'node' or 'edge'";
+        }
+
+        @Override
+        public boolean isRdfLinkPrediction(JsonNode json) {
+            return false;
+        }
     },
     RDF {
         @Override
-        void updateArgsBeforeExport(Args args) {
+        void updateArgsBeforeExport(Args args, Collection<TrainingDataWriterConfigV2> trainingJobWriterConfigCollection) {
             args.removeOptions("--format");
             args.addOption("--format", RdfExportFormat.ntriples.name());
 
-            args.removeOptions("--rdf-export-scope");
-            args.addOption("--rdf-export-scope", RdfExportScope.edges.name());
+            boolean exportEdgesOnly = true;
 
+            for (TrainingDataWriterConfigV2 trainingDataWriterConfigV2 : trainingJobWriterConfigCollection) {
+                for (LabelConfigV2 labelConfig : trainingDataWriterConfigV2.nodeConfig().getAllClassificationSpecifications()) {
+                    String taskType = labelConfig.taskType();
+                    if (taskType.equals(RdfTaskTypeV2.classification.name()) || taskType.equals(RdfTaskTypeV2.regression.name())){
+                        exportEdgesOnly = false;
+                    }
+                }
+            }
+
+            if (!args.contains("--rdf-export-scope") && exportEdgesOnly){
+                args.addOption("--rdf-export-scope", RdfExportScope.edges.name());
+            }
         }
 
         @Override
@@ -112,9 +137,19 @@ public enum NeptuneMLSourceDataModel {
         public String parseProperty(JsonNode json, ParsingContext propertyContext, Label nodeType) {
             return new ParseProperty(json, propertyContext.withLabel(nodeType), this).parseNullableSingleProperty();
         }
+
+        @Override
+        public String labelFields() {
+            return "'node'";
+        }
+
+        @Override
+        public boolean isRdfLinkPrediction(JsonNode json) {
+            return parseTaskType(json, new ParsingContext("RDF target"), null, null).equals(RdfTaskTypeV2.link_prediction.name());
+        }
     };
 
-    abstract void updateArgsBeforeExport(Args args);
+    abstract void updateArgsBeforeExport(Args args, Collection<TrainingDataWriterConfigV2> trainingJobWriterConfigCollection);
 
     public abstract String nodeTypeName();
 
@@ -125,4 +160,8 @@ public enum NeptuneMLSourceDataModel {
     public abstract String parseTaskType(JsonNode json, ParsingContext propertyContext, Label nodeType, String property);
 
     public abstract String parseProperty(JsonNode json, ParsingContext propertyContext, Label nodeType);
+
+    public abstract String labelFields();
+
+    public abstract boolean isRdfLinkPrediction(JsonNode json);
 }

@@ -71,6 +71,10 @@ public class CloneClusterModule {
     @Once
     private String engineVersion;
 
+    @Option(name = {"--clone-cluster-correlation-id"}, description = "Correlation ID to be added to a correlation-id tag on the cloned cluster.")
+    @Once
+    private String cloneCorrelationId;
+
     private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
     public CloneClusterModule(Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
@@ -88,7 +92,8 @@ public class CloneClusterModule {
                         replicaCount,
                         maxConcurrency,
                         engineVersion,
-                        amazonNeptuneClientSupplier);
+                        amazonNeptuneClientSupplier,
+                        cloneCorrelationId);
                 return command.cloneCluster(connectionConfig, concurrencyConfig);
             }
         } else {

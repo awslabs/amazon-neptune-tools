@@ -36,19 +36,22 @@ public class AddCloneTask {
     private final int replicaCount;
     private final String engineVersion;
     private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+    private final String cloneCorrelationId;
 
     public AddCloneTask(String sourceClusterId,
                         String targetClusterId,
                         String cloneClusterInstanceType,
                         int replicaCount,
                         String engineVersion,
-                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier,
+                        String cloneCorrelationId) {
         this.sourceClusterId = sourceClusterId;
         this.targetClusterId = targetClusterId;
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
         this.engineVersion = engineVersion;
         this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+        this.cloneCorrelationId = cloneCorrelationId;
     }
 
     public NeptuneClusterMetadata execute() {
@@ -186,11 +189,10 @@ public class AddCloneTask {
                 .withKey("application")
                 .withValue(NeptuneClusterMetadata.NEPTUNE_EXPORT_APPLICATION_TAG));
 
-        String correlationId = EnvironmentVariableUtils.getOptionalEnv("AWS_BATCH_JOB_ID", null);
-        if (StringUtils.isNotEmpty(correlationId)) {
+        if (StringUtils.isNotEmpty(cloneCorrelationId)) {
             tags.add(new Tag()
-                    .withKey("correlationId")
-                    .withValue(correlationId));
+                    .withKey(NeptuneClusterMetadata.NEPTUNE_EXPORT_CORRELATION_ID_KEY)
+                    .withValue(cloneCorrelationId));
         }
 
         return tags;

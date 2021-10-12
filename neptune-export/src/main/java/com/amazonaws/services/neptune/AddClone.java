@@ -78,10 +78,14 @@ public class AddClone implements Runnable {
     @Once
     private String engineVersion;
 
+    @Option(name = {"--clone-cluster-correlation-id"}, description = "Correlation ID to be added to a correlation-id tag on the cloned cluster.")
+    @Once
+    private String cloneCorrelationId;
+
     @Override
     public void run() {
         try {
-            AddCloneTask addCloneTask = new AddCloneTask(sourceClusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion, awsCli);
+            AddCloneTask addCloneTask = new AddCloneTask(sourceClusterId, targetClusterId, cloneClusterInstanceType, replicaCount, engineVersion, awsCli, cloneCorrelationId);
             NeptuneClusterMetadata clusterMetadata = addCloneTask.execute();
 
             GetClusterInfo.printClusterDetails(clusterMetadata);

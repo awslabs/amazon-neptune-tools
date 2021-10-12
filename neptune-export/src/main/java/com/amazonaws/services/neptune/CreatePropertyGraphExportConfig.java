@@ -67,6 +67,9 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
     @Inject
     private PropertyGraphSchemaInferencingModule sampling = new PropertyGraphSchemaInferencingModule();
 
+    @Inject
+    private GremlinFiltersModule gremlinFilters = new GremlinFiltersModule();
+
     @Override
     public void run() {
 
@@ -84,7 +87,11 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
 
                         PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptionsModule().config());
 
-                        Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
+                        Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(
+                                graphSchema,
+                                gremlinFilters.filters(),
+                                stats,
+                                featureToggles());
 
                         try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                              GraphTraversalSource g = client.newTraversalSource()) {
@@ -94,6 +101,7 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
                                     graphSchema,
                                     g,
                                     new PropertyGraphRangeModule().config(),
+                                    gremlinFilters.filters(),
                                     cluster.concurrencyConfig(),
                                     targetConfig);
 
@@ -116,7 +124,10 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
                         ExportStats stats = new ExportStats();
                         Directories directories = target.createDirectories(DirectoryStructure.Config);
                         JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                        Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(stats, featureToggles());
+                        Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(
+                                stats,
+                                gremlinFilters.filters(),
+                                featureToggles());
 
                         try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                              GraphTraversalSource g = client.newTraversalSource()) {

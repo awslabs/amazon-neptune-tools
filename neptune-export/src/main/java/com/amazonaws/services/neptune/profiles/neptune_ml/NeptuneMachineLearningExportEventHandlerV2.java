@@ -97,7 +97,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
 
         logger.info("ARGS: {}", args.toString());
 
-        dataModel.updateArgsBeforeExport(args);
+        dataModel.updateArgsBeforeExport(args, trainingJobWriterConfigCollection);
 
         if (args.contains("--export-id")) {
             args.removeOptions("--export-id");

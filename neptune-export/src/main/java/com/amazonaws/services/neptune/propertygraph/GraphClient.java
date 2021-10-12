@@ -21,11 +21,11 @@ import java.util.Map;
 public interface GraphClient<T> {
     String description();
 
-    void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter);
+    void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter, GremlinFilters gremlinFilters);
 
-    void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter, GraphElementSchemas graphElementSchemas);
+    void queryForValues(GraphElementHandler<T> handler, Range range, LabelsFilter labelsFilter, GremlinFilters gremlinFilters, GraphElementSchemas graphElementSchemas);
 
-    long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig);
+    long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig, GremlinFilters gremlinFilters);
 
     Collection<Label> labels(LabelStrategy labelStrategy);
 
