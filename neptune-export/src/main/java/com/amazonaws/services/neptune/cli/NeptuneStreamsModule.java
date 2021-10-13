@@ -19,7 +19,7 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 
 public class NeptuneStreamsModule {
 
-    @Option(name = {"--include-last-event-id"}, description = "Get the last event ID from the Amazon Neptune stream, if enabled (optional, default 'false').")
+    @Option(name = {"--include-last-event-id"}, description = "Get the last event ID from the Amazon Neptune stream, if enabled, and save it to a JSON file (optional, default 'false').")
     @Once
     private boolean includeLastEventId = false;
 
