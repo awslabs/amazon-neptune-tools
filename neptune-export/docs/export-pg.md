@@ -10,6 +10,7 @@
                     [ {-b | --batch-size} <batchSize> ]
                     [ {-c | --config-file | --filter-config-file} <configFile> ]
                     [ --clone-cluster ]
+                    [ --clone-cluster-correlation-id <cloneCorrelationId> ]
                     [ --clone-cluster-instance-type <cloneClusterInstanceType> ]
                     [ --clone-cluster-replica-count <replicaCount> ]
                     [ {--cluster-id | --cluster | --clusterid} <clusterId> ]
@@ -20,7 +21,11 @@
                     [ {-el | --edge-label} <edgeLabels>... ]
                     [ --escape-csv-headers ] [ --escape-newline ]
                     [ --exclude-type-definitions ] [ --export-id <exportId> ]
-                    [ --format <format> ] [ --janus ]
+                    [ --format <format> ]
+                    [ --gremlin-edge-filter <gremlinEdgeFilter> ]
+                    [ --gremlin-filter <gremlinFilter> ]
+                    [ --gremlin-node-filter <gremlinNodeFilter> ]
+                    [ --include-last-event-id ] [ --janus ]
                     [ --lb-port <loadBalancerPort> ] [ --limit <limit> ]
                     [ --log-level <log level> ]
                     [ --max-content-length <maxContentLength> ] [ --merge-files ]
@@ -82,6 +87,13 @@
     
             --clone-cluster
                 Clone an Amazon Neptune cluster.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --clone-cluster-correlation-id <cloneCorrelationId>
+                Correlation ID to be added to a correlation-id tag on the cloned
+                cluster.
     
                 This option may occur a maximum of 1 times
     
@@ -235,6 +247,31 @@
                 This option may occur a maximum of 1 times
     
     
+            --gremlin-edge-filter <gremlinEdgeFilter>
+                Gremlin steps for filtering edges (overrides --gremlin-filter).
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --gremlin-filter <gremlinFilter>
+                Gremlin steps for filtering nodes and edges.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --gremlin-node-filter <gremlinNodeFilter>
+                Gremlin steps for filtering nodes (overrides --gremlin-filter).
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --include-last-event-id
+                Get the last event ID from the Amazon Neptune stream, if enabled,
+                and save it to a JSON file (optional, default 'false').
+    
+                This option may occur a maximum of 1 times
+    
+    
             --janus
                 Use JanusGraph serializer.
     
@@ -312,6 +349,7 @@
                 This options value is restricted to the following set of values:
                     files
                     stdout
+                    devnull
                     stream
     
                 This option may occur a maximum of 1 times

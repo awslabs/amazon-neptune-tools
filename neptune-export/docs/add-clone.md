@@ -2,12 +2,21 @@
             neptune-export.sh add-clone - Clone an Amazon Neptune database cluster.
     
     SYNOPSIS
-            neptune-export.sh add-clone [ --clone-cluster-id <targetClusterId> ]
+            neptune-export.sh add-clone
+                    [ --clone-cluster-correlation-id <cloneCorrelationId> ]
+                    [ --clone-cluster-id <targetClusterId> ]
                     [ --clone-cluster-instance-type <cloneClusterInstanceType> ]
                     [ --clone-cluster-replica-count <replicaCount> ]
                     --source-cluster-id <sourceClusterId>
     
     OPTIONS
+            --clone-cluster-correlation-id <cloneCorrelationId>
+                Correlation ID to be added to a correlation-id tag on the cloned
+                cluster.
+    
+                This option may occur a maximum of 1 times
+    
+    
             --clone-cluster-id <targetClusterId>
                 Cluster ID of the cloned Amazon Neptune database cluster.
     

@@ -178,17 +178,9 @@ public class NeptuneExportService {
             boolean useV2 =  args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name()) ||
                     (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v2."));
 
-            if (useV2) {
-                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
-                        new NeptuneMachineLearningExportEventHandlerV2(
-                                outputS3Path,
-                                s3Region,
-                                createExportSubdirectory,
-                                additionalParams,
-                                args,
-                                profiles);
-                eventHandlerCollection.addHandler(neptuneMlEventHandler);
-            } else {
+            boolean useV1 =  (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v1."));
+
+            if (useV1) {
                 NeptuneMachineLearningExportEventHandlerV1 neptuneMlEventHandler =
                         new NeptuneMachineLearningExportEventHandlerV1(
                                 outputS3Path,
@@ -198,8 +190,17 @@ public class NeptuneExportService {
                                 args,
                                 profiles);
                 eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            } else {
+                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV2(
+                                outputS3Path,
+                                s3Region,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
             }
-
         }
 
         if (profiles.contains(INCREMENTAL_EXPORT_PROFILE_NAME)) {
