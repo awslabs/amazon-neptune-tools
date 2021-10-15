@@ -104,7 +104,6 @@ public class FileToStreamOutputWriter implements OutputWriter {
         }
 
         public void handle(String line) {
-            System.out.println(String.format("HANDLING: %s", line));
             stream.publish(line);
             linesProcessed++;
         }
