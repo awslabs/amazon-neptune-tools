@@ -154,8 +154,10 @@ class BulkLoadStatus:
             if status == 'LOAD_COMPLETED':
                 print('load completed')
                 break
-            if status == 'LOAD_IN_PROGRESS':
+            elif status == 'LOAD_IN_PROGRESS':
                 print('loading... {} records inserted'.format(json_response['payload']['overallStatus']['totalRecords']))
                 time.sleep(interval)
+            elif status == "LOAD_IN_QUEUE":
+                print("Load in queue...")
             else:
                 raise Exception(json_response)
