@@ -159,5 +159,6 @@ class BulkLoadStatus:
                 time.sleep(interval)
             elif status == "LOAD_IN_QUEUE":
                 print("Load in queue...")
+                time.sleep(interval)
             else:
                 raise Exception(json_response)
