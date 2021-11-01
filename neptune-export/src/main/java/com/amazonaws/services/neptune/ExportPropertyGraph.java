@@ -122,7 +122,9 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 cluster.concurrencyConfig(),
                                 targetConfig);
 
-                        graphSchema = exportJob.execute();
+                        graphSchema = Timer.timedActivity(
+                                "export",
+                                (CheckedActivity.Callable<GraphSchema>) exportJob::execute);
 
                         configFileResource.save(graphSchema);
                     }

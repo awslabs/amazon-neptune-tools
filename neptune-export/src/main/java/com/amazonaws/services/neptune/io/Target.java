@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -25,7 +26,7 @@ public enum Target implements CommandWriter {
         public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
             File file = pathSupplier.get().toFile();
             boolean isNewTarget = !(file.exists());
-            return new PrintOutputWriter(file.getAbsolutePath(), isNewTarget, new FileWriter(file));
+            return new PrintOutputWriter(file.getAbsolutePath(), isNewTarget, new BufferedWriter(new FileWriter(file)));
         }
 
         @Override
