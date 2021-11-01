@@ -54,7 +54,9 @@ public class PropertyValueParser {
     PropertyValue parseArrayValue(String s, ArrayNode arrayNode) {
         Set<String> values = new HashSet<>();
         for (JsonNode node : arrayNode) {
-            values.add(format(node.textValue().replace(";", semicolonReplacement)));
+            System.out.println(node.textValue());
+            //values.add(format(node.textValue().replace(";", semicolonReplacement)));
+            values.add(format(node.asText().replace(";", semicolonReplacement)));
         }
         if (values.size() < arrayNode.size()){
             policy.handleDuplicates(s, arrayNode, this);
