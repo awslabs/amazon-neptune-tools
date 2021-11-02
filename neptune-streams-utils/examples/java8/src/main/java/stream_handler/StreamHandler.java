@@ -88,7 +88,7 @@ public class StreamHandler extends AbstractStreamHandler {
 
     private Cluster createCluster() {
         Cluster.Builder builder = Cluster.build()
-                .addContactPoint(String.valueOf(additionalParams.get("neptune_endpoint")))
+                .addContactPoint(String.valueOf(additionalParams.get("neptune_cluster_endpoint")))
                 .port((int) additionalParams.get("neptune_port"))
                 .enableSsl(true)
                 .minConnectionPoolSize(1)
