@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
@@ -260,10 +261,16 @@ public class Directories {
                 NamedQueriesCollection.class);
     }
 
-    private Path createFilePath(Path directory, String name, FileExtension extension) {
-        String filename = tag.isEmpty() ?
-                String.format("%s.%s", name, extension.extension()) :
-                String.format("%s-%s.%s", tag, name, extension.extension());
+    public Path createFilePath(Path directory, String name, FileExtension extension) {
+
+        String filenameWithoutExtension = tag.isEmpty() ?
+                name :
+                String.format("%s-%s", tag, name);
+
+        String filename = filenameWithoutExtension.getBytes().length > 250 ?
+                String.format("%s.%s", DigestUtils.sha1Hex(filenameWithoutExtension), extension.extension()) :
+                String.format("%s.%s", filenameWithoutExtension, extension.extension());
+
         return directory.resolve(filename);
     }
 

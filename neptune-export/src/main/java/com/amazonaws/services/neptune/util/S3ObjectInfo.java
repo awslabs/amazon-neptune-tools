@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.util;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.File;
 import java.net.URI;
 
@@ -24,7 +26,8 @@ public class S3ObjectInfo {
         URI uri = URI.create(s3Uri);
 
         bucket = uri.getAuthority();
-        key = uri.getPath().substring(1);
+        String path = uri.getPath();
+        key = StringUtils.isNotEmpty(path) ? path.substring(1) : "";
         fileName = new File(uri.getPath()).getName();
     }
 
@@ -41,7 +44,8 @@ public class S3ObjectInfo {
     }
 
     public S3ObjectInfo withNewKeySuffix(String suffix) {
-        return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  new File(key, suffix).getPath()));
+        File file = StringUtils.isNotEmpty(key) ? new File(key, suffix) : new File(suffix);
+        return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  file.getPath()));
     }
 
     public S3ObjectInfo replaceOrAppendKey(String placeholder, String ifPresent, String ifAbsent) {
