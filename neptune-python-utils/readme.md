@@ -546,6 +546,49 @@ endpoints = GlueNeptuneConnectionInfo(region, role_arn).neptune_endpoints('neptu
 
 ### Using neptune-python-utils to insert or upsert data from an AWS Glue job
 
+When using neptune-python-utils with Glue Job, you need to attach a Glue Connection of type "Network". This allows Glue Job to connect to the Neptune cluster. You can create the Glue Connection either manually or using sample script below:
+
+```
+import boto3
+
+session = boto3.Session(region_name=aws_region)
+ec2_resource = session.resource("ec2")
+ec2_client = session.client("ec2")
+glue_client = session.client("glue")
+
+subnet_ids = []
+
+for vpc in ec2_resource.vpcs.all():
+    if vpc.id == '<replace-with-cluster-vpc-id>':
+        for subnet in vpc.subnets.all():
+            subnet_ids.append(subnet.id)
+
+
+subnets = ec2_client.describe_subnets(SubnetIds=subnet_ids)
+connections = []
+
+for subnet in subnets["Subnets"]:
+    connectionName = 'connection' + subnet["SubnetId"]
+    response = glue_client.create_connection(
+        ConnectionInput={
+            'Name': connectionName,
+            'Description': connectionName,
+            'ConnectionType': 'NETWORK',
+            'ConnectionProperties': {},
+            'PhysicalConnectionRequirements': {
+                'SubnetId': subnet["SubnetId"],
+                'SecurityGroupIdList': [
+                    '<replace-with-neptune-security-group>',
+                ],
+                'AvailabilityZone': subnet["AvailabilityZone"]
+            }
+        }
+    )
+    
+    connections.append(connectionName)
+
+```
+
 The code below, taken from the sample Glue job [export-from-mysql-to-neptune.py](https://github.com/aws-samples/amazon-neptune-samples/blob/master/gremlin/glue-neptune/glue-jobs/mysql-neptune/export-from-mysql-to-neptune.py), shows extracting data from several tables in an RDBMS, formatting the dynamic frame columns according to the Neptune bulk load CSV column headings format, and then bulk loading direct into Neptune.
 
 Parallel inserts and upserts can sometimes trigger a `ConcurrentModificationException`. _neptune-python-utils_ will attempt 5 retries for each batch should such exceptions occur. 
@@ -577,7 +620,7 @@ from neptune_python_utils.glue_gremlin_csv_transforms import GlueGremlinCsvTrans
 from neptune_python_utils.endpoints import Endpoints
 from neptune_python_utils.gremlin_utils import GremlinUtils
 
-args = getResolvedOptions(sys.argv, ['JOB_NAME', 'DATABASE_NAME', 'NEPTUNE_CONNECTION_NAME', 'AWS_REGION', 'CONNECT_TO_NEPTUNE_ROLE_ARN'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'DATABASE_NAME', 'NEPTUNE_ENDPOINT', 'AWS_REGION', 'CONNECT_TO_NEPTUNE_ROLE_ARN'])
 
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -592,7 +635,7 @@ supplier_table = 'salesdb_supplier'
 
 # Create Gremlin client
 
-gremlin_endpoints = GlueNeptuneConnectionInfo(args['AWS_REGION'], args['CONNECT_TO_NEPTUNE_ROLE_ARN']).neptune_endpoints(args['NEPTUNE_CONNECTION_NAME'])
+gremlin_endpoints = GlueNeptuneConnectionInfo(args['AWS_REGION'], args['CONNECT_TO_NEPTUNE_ROLE_ARN']).neptune_endpoints(args['NEPTUNE_ENDPOINT'])
 gremlin_client = GlueGremlinClient(gremlin_endpoints)
 
 # Create Product vertices

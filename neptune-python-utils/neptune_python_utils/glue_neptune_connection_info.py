@@ -13,7 +13,6 @@
 # and limitations under the License.
 
 import sys
-import boto3
 import requests
 from neptune_python_utils.endpoints import Endpoints
 
@@ -23,32 +22,8 @@ class GlueNeptuneConnectionInfo:
             self.region = region
             self.role_arn = role_arn
     
-    def neptune_endpoints(self, connection_name):
-        """Gets Neptune endpoint information from the Glue Data Catalog.
-        
-        You may need to install a Glue VPC Endpoint in your VPC for this method to work.
-        
-        You can store Neptune endpoint information as JDBC connections in the Glue Data Catalog.
-        JDBC connection strings must begin 'jdbc:'. To store a Neptune endpoint, use the following format:
-        
-        'jdbc:<protocol>://<dns_name>:<port>/<endpoint>'
-        
-        For example, if you store:
-        
-        'jdbc:wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin'
-        
-        – this method will return:
-        
-        'wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin' 
-        
-        Example:
-        >>> gremlin_endpoint = GlueNeptuneConnectionInfo(glueContext).neptune_endpoint('neptune')
-        """
-        glue = boto3.client('glue', region_name=self.region)
-        
-        connection = glue.get_connection(Name=connection_name)
-        neptune_uri = connection['Connection']['ConnectionProperties']['JDBC_CONNECTION_URL'][5:]
-        parse_result = requests.utils.urlparse(neptune_uri)
+    def neptune_endpoints(self, neptune_endpoint):
+        parse_result = requests.utils.urlparse(neptune_endpoint)
         netloc_parts = parse_result.netloc.split(':')
         host = netloc_parts[0]
         port = netloc_parts[1]
