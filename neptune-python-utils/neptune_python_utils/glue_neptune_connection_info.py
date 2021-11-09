@@ -24,30 +24,30 @@ class GlueNeptuneConnectionInfo:
             self.role_arn = role_arn
     
     def neptune_endpoints(self, connection_name):
-        """Gets Neptune endpoint information from the Glue Data Catalog.
+        """Gets Neptune endpoint information from the AWS Glue Data Catalog.
         
         You may need to install a Glue VPC Endpoint in your VPC for this method to work.
         
-        You can store Neptune endpoint information as JDBC connections in the Glue Data Catalog.
-        JDBC connection strings must begin 'jdbc:'. To store a Neptune endpoint, use the following format:
+        You can either create a Glue Connection type of 'JDBC' or 'NETWORK'. 
         
-        'jdbc:<protocol>://<dns_name>:<port>/<endpoint>'
+        When you use Glue Connection Type of 'JDBC' store the Amazon Neptune endpoint in 'JDBC_CONNECTION_URL' field, e.g. 'jdbc:wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin'. 
         
-        For example, if you store:
+        When you use Glue Connection Type of 'NETWORK' store the Amazon Neptune endpoint in 'Description' field, e.g. 'wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin'.
         
-        'jdbc:wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin'
-        
-        – this method will return:
-        
-        'wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin' 
+        When you invoke the method it returns Neptune endpoint, e.g. 'wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin' 
         
         Example:
         >>> gremlin_endpoint = GlueNeptuneConnectionInfo(glueContext).neptune_endpoint('neptune')
         """
         glue = boto3.client('glue', region_name=self.region)
-        
-        connection = glue.get_connection(Name=connection_name)
-        neptune_uri = connection['Connection']['ConnectionProperties']['JDBC_CONNECTION_URL'][5:]
+        connection = glue.get_connection(Name=connection_name)['Connection']
+
+        if connection['ConnectionType'] == "JDBC":
+            neptune_uri = connection['ConnectionProperties']['JDBC_CONNECTION_URL'][5:]
+
+        if connection['ConnectionType'] == "NETWORK":
+            neptune_uri = connection['Description']
+
         parse_result = requests.utils.urlparse(neptune_uri)
         netloc_parts = parse_result.netloc.split(':')
         host = netloc_parts[0]

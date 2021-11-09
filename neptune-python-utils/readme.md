@@ -546,6 +546,8 @@ endpoints = GlueNeptuneConnectionInfo(region, role_arn).neptune_endpoints('neptu
 
 ### Using neptune-python-utils to insert or upsert data from an AWS Glue job
 
+To use _neptune-python-utils_ with AWS Glue job, you need to create an AWS Glue connection and attach it to AWS Glue job. You can either create AWS Glue Connection type of **"JDBC"** or **"NETWORK"**. When you use Glue Connection Type of "JDBC" store the Amazon Neptune endpoint in **JDBC_CONNECTION_URL** field, e.g. **jdbc:wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin**. When you use Glue Connection Type of "NETWORK" store the Amazon Neptune endpoint in **Description** field, e.g **wss://my-neptune-cluster.us-east-1.neptune.amazonaws.com:8182/gremlin**
+
 The code below, taken from the sample Glue job [export-from-mysql-to-neptune.py](https://github.com/aws-samples/amazon-neptune-samples/blob/master/gremlin/glue-neptune/glue-jobs/mysql-neptune/export-from-mysql-to-neptune.py), shows extracting data from several tables in an RDBMS, formatting the dynamic frame columns according to the Neptune bulk load CSV column headings format, and then bulk loading direct into Neptune.
 
 Parallel inserts and upserts can sometimes trigger a `ConcurrentModificationException`. _neptune-python-utils_ will attempt 5 retries for each batch should such exceptions occur. 
