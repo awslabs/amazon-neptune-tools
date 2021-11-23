@@ -74,6 +74,13 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Once
     private String partitionDirectories = "";
 
+    public PropertyGraphTargetModule() {
+    }
+
+    public PropertyGraphTargetModule(Target target) {
+        this.output =  target;
+    }
+
     public Directories createDirectories() throws IOException {
         return Directories.createFor(directoryStructure(), directory, exportId, tag, partitionDirectories );
     }

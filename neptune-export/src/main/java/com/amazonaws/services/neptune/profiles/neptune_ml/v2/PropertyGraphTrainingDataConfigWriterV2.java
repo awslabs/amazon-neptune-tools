@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.PropertyName;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.PropertyName;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ErrorMessageHelper;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
@@ -314,7 +314,7 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
         generator.writeStartObject();
         generator.writeArrayFieldStart("label");
         generator.writeString(labelConfig.property());
-        generator.writeString(labelConfig.type());
+        generator.writeString(labelConfig.taskType());
         generator.writeEndArray();
         writeSplitRates(labelConfig);
         labelConfig.separator().writeTo(generator, propertySchema.isMultiValue());

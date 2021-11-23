@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseSplitRate;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
@@ -31,7 +32,7 @@ public class TrainingDataWriterConfigV2 {
     public static final Collection<Double> DEFAULT_SPLIT_RATES_V2 = Arrays.asList(0.9, 0.1, 0.0);
     private static final String DEFAULT_NAME_V2 = "training-data-configuration";
 
-    public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json) {
+    public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json, NeptuneMLSourceDataModel dataModel) {
 
         Collection<TrainingDataWriterConfigV2> results = new ArrayList<>();
 
@@ -39,17 +40,17 @@ public class TrainingDataWriterConfigV2 {
             ArrayNode configNodes = (ArrayNode) json;
             int index = 1;
             for (JsonNode configNode : configNodes) {
-                results.add(getTrainingJobWriterConfig(configNode, index++));
+                results.add(getTrainingJobWriterConfig(configNode, index++, dataModel));
             }
         } else {
             if (json.has("jobs")) {
                 ArrayNode configNodes = (ArrayNode) json.get("jobs");
                 int index = 1;
                 for (JsonNode configNode : configNodes) {
-                    results.add(getTrainingJobWriterConfig(configNode, index++));
+                    results.add(getTrainingJobWriterConfig(configNode, index++, dataModel));
                 }
             } else {
-                results.add(getTrainingJobWriterConfig(json, 1));
+                results.add(getTrainingJobWriterConfig(json, 1, dataModel));
             }
         }
 
@@ -62,7 +63,7 @@ public class TrainingDataWriterConfigV2 {
         return results;
     }
 
-    private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index) {
+    private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index, NeptuneMLSourceDataModel dataModel) {
 
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES_V2, new ParsingContext("config")).parseSplitRates();
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
@@ -102,7 +103,7 @@ public class TrainingDataWriterConfigV2 {
             } else {
                 labelNodes.add(labels);
             }
-            ParseLabelsV2 parseLabels = new ParseLabelsV2(labelNodes, defaultSplitRates);
+            ParseLabelsV2 parseLabels = new ParseLabelsV2(labelNodes, defaultSplitRates, dataModel);
             parseLabels.validate();
             nodeClassLabels.addAll(parseLabels.parseNodeClassLabels());
             edgeClassLabels.addAll(parseLabels.parseEdgeClassLabels());

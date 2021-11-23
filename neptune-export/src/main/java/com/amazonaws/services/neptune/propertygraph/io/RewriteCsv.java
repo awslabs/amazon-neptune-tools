@@ -105,9 +105,6 @@ public class RewriteCsv implements RewriteCommand {
             Label label = labelSchema.label();
             File sourceCsvFile = new File(fileSpecificLabelSchema.outputId());
 
-            if (sourceCsvFile.getName().contains("Cpt_LP_COLLECT_")) {
-                System.out.println("ALERT: " + fileSpecificLabelSchema.labelSchema().label().labelsAsString() + "[" + sourceCsvFile + "]");
-            }
 
             if (!sourceCsvFile.exists()) {
                 if (label.label().size() > 1) {
@@ -146,7 +143,7 @@ public class RewriteCsv implements RewriteCommand {
                 for (CSVRecord record : records) {
                     target.printStartRow();
 
-                    if (graphElementType.equals(GraphElementType.nodes)) {
+                    if (graphElementType == GraphElementType.nodes) {
                         target.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                     } else {
                         if (label.hasFromAndToLabels()) {

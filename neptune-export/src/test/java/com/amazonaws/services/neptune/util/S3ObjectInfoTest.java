@@ -116,4 +116,30 @@ public class S3ObjectInfoTest {
 
         assertEquals("a/b/123.json", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123", "123.json").key());
     }
+
+    @Test
+    public void canHandlePathsWithBucketNameOnlyNoSlash(){
+        String s3Uri = "s3://my-bucket";
+
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
+
+        assertEquals("", s3ObjectInfo.key());
+        assertEquals("s3://my-bucket/new-suffix", s3ObjectInfo.withNewKeySuffix("new-suffix").toString());
+        assertEquals("new-suffix", s3ObjectInfo.withNewKeySuffix("new-suffix").key());
+        assertEquals("/123", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123").key());
+        assertEquals("/123.json", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123", "123.json").key());
+    }
+
+    @Test
+    public void canHandlePathsWithBucketNameWithSlash(){
+        String s3Uri = "s3://my-bucket/";
+
+        S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
+
+        assertEquals("", s3ObjectInfo.key());
+        assertEquals("s3://my-bucket/new-suffix", s3ObjectInfo.withNewKeySuffix("new-suffix").toString());
+        assertEquals("new-suffix", s3ObjectInfo.withNewKeySuffix("new-suffix").key());
+        assertEquals("/123", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123").key());
+        assertEquals("/123.json", s3ObjectInfo.replaceOrAppendKey("_COMPLETION_ID_", "123", "123.json").key());
+    }
 }

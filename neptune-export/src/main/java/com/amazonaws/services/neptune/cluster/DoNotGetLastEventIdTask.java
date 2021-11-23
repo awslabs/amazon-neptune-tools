@@ -10,13 +10,20 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml;
+package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.services.neptune.propertygraph.io.PrinterOptions;
-import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
+import com.amazonaws.services.neptune.io.CommandWriter;
 
-public interface PropertyName {
+import java.io.IOException;
 
-    String escaped(PropertySchema propertySchema, PrinterOptions printerOptions);
-    String unescaped(PropertySchema propertySchema);
+public class DoNotGetLastEventIdTask implements GetLastEventIdStrategy {
+    @Override
+    public void saveLastEventId(String streamEndpointType) throws IOException {
+        // Do nothing
+    }
+
+    @Override
+    public void writeLastEventIdResourcePathAsMessage(CommandWriter writer) {
+        // Do nothing
+    }
 }

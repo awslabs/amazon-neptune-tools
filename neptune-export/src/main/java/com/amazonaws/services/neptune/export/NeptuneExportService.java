@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.export;
 import com.amazonaws.services.neptune.profiles.incremental_export.IncrementalExportEventHandler;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV2;
+import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.AmazonS3;
@@ -113,6 +114,13 @@ public class NeptuneExportService {
                 if (maxConcurrency > 0 && !args.contains("--clone-cluster-max-concurrency")) {
                     args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
                 }
+
+                if (!args.contains("--clone-cluster-correlation-id")){
+                    String correlationId = EnvironmentVariableUtils.getOptionalEnv("AWS_BATCH_JOB_ID", null);
+                    if (StringUtils.isNotEmpty(correlationId)){
+                        args.addOption("--clone-cluster-correlation-id", correlationId);
+                    }
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -170,17 +178,9 @@ public class NeptuneExportService {
             boolean useV2 =  args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name()) ||
                     (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v2."));
 
-            if (useV2) {
-                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
-                        new NeptuneMachineLearningExportEventHandlerV2(
-                                outputS3Path,
-                                s3Region,
-                                createExportSubdirectory,
-                                additionalParams,
-                                args,
-                                profiles);
-                eventHandlerCollection.addHandler(neptuneMlEventHandler);
-            } else {
+            boolean useV1 =  (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v1."));
+
+            if (useV1) {
                 NeptuneMachineLearningExportEventHandlerV1 neptuneMlEventHandler =
                         new NeptuneMachineLearningExportEventHandlerV1(
                                 outputS3Path,
@@ -190,17 +190,22 @@ public class NeptuneExportService {
                                 args,
                                 profiles);
                 eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            } else {
+                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV2(
+                                outputS3Path,
+                                s3Region,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
             }
-
         }
 
         if (profiles.contains(INCREMENTAL_EXPORT_PROFILE_NAME)) {
 
-            String exportId = args.contains("--export-id") ?
-                    args.getFirstOptionValue("--export-id") :
-                    UUID.randomUUID().toString().replace("-", "");
-
-            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler(exportId);
+            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler(additionalParams);
             completionFileWriters.add(incrementalExportEventHandler);
             eventHandlerCollection.addHandler(incrementalExportEventHandler);
         }

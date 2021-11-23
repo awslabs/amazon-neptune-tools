@@ -10,12 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.incremental_export;
+package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.DefaultRequest;
-import com.amazonaws.Request;
-import com.amazonaws.Response;
+import com.amazonaws.*;
 import com.amazonaws.auth.AWS4Signer;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -32,25 +29,31 @@ public class NeptuneHttpsClient {
 
     private final AWS4Signer signer;
     private final String uri;
+    private final boolean disableCertCheck;
 
-    public NeptuneHttpsClient(String uri, String region) {
+    public NeptuneHttpsClient(String uri, String region, boolean disableCertCheck) {
         this.uri = uri;
+        this.disableCertCheck = disableCertCheck;
         signer = new AWS4Signer();
         signer.setRegionName(region);
         signer.setServiceName("neptune-db");
     }
 
-    public HttpResponse get(Map<String, String> queryeStringParams) {
+    public HttpResponse get(Map<String, String> queryStringParams) {
 
         Request<Void> request = new DefaultRequest<>(signer.getServiceName());
         request.setEndpoint(URI.create(uri));
         request.setHttpMethod(HttpMethodName.GET);
 
-        for (Map.Entry<String, String> entry : queryeStringParams.entrySet()) {
+        for (Map.Entry<String, String> entry : queryStringParams.entrySet()) {
             request.addParameter(entry.getKey(), entry.getValue());
         }
 
         signer.sign(request, awsCredentialsProvider.getCredentials());
+
+        if (disableCertCheck){
+            System.setProperty(SDKGlobalConfiguration.DISABLE_CERT_CHECKING_SYSTEM_PROPERTY, "true");
+        }
 
         Response<HttpResponse> response = new AmazonHttpClient(new ClientConfiguration())
                 .requestExecutionBuilder()

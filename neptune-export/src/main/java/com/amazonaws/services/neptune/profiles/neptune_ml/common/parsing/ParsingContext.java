@@ -12,7 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.propertygraph.Label;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,37 +23,47 @@ public class ParsingContext {
     private final String description;
     private final Label label;
     private final Collection<String> properties;
+    private final NeptuneMLSourceDataModel dataModel;
 
-    private ParsingContext(String description, Label label, Collection<String> properties) {
+    private ParsingContext(String description, Label label, Collection<String> properties,  NeptuneMLSourceDataModel dataModel) {
         this.description = description;
         this.label = label;
         this.properties = properties;
+        this.dataModel = dataModel;
+    }
+
+    public ParsingContext(String description, NeptuneMLSourceDataModel dataModel) {
+        this(description, null, Collections.emptyList(), dataModel);
     }
 
     public ParsingContext(String description) {
-        this(description, null, Collections.emptyList());
+        this(description, null, Collections.emptyList(), NeptuneMLSourceDataModel.PropertyGraph);
     }
 
     public ParsingContext withLabel(Label label) {
-        return new ParsingContext(description, label, properties);
+        return new ParsingContext(description, label, properties, dataModel);
     }
 
     public ParsingContext withProperties(Collection<String> properties) {
-        return new ParsingContext(description, label, properties);
+        return new ParsingContext(description, label, properties, dataModel);
     }
 
     public ParsingContext withProperty(String property) {
-        return new ParsingContext(description, label, Collections.singleton(property));
+        if (StringUtils.isNotEmpty(property)){
+            return new ParsingContext(description, label, Collections.singleton(property), dataModel);
+        } else {
+            return this;
+        }
     }
 
     @Override
     public String toString() {
         if (label != null && properties.size() == 1) {
-            return String.format("%s (Label: %s, Property: %s)", description, label.allLabelsAsArrayString(), properties.iterator().next());
+            return String.format("%s (%s: %s, %s: %s)", description, dataModel.nodeTypeName(),  label.allLabelsAsArrayString(), dataModel.nodeAttributeNameSingular(), properties.iterator().next());
         } else if (label != null && !properties.isEmpty()) {
-            return String.format("%s (Label: %s, Properties: [%s])", description, label.allLabelsAsArrayString(), String.join(", ", properties));
+            return String.format("%s (%s: %s, %s: [%s])", description, dataModel.nodeTypeName(), label.allLabelsAsArrayString(), dataModel.nodeAttributeNamePlural(), String.join(", ", properties));
         } else if (label != null) {
-            return String.format("%s (Label: %s)", description, label.allLabelsAsArrayString());
+            return String.format("%s (%s: %s)", description, dataModel.nodeTypeName(), label.allLabelsAsArrayString());
         } else {
             return description;
         }

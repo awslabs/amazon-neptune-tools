@@ -19,9 +19,11 @@ import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -48,7 +50,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        JsonNode json = objectMapper.readTree(inputStream);
+        JsonNode json = objectMapper.readTree(IOUtils.toString(inputStream, UTF_8.name()));
 
         String cmd = json.has("command") ?
                 json.path("command").textValue() :

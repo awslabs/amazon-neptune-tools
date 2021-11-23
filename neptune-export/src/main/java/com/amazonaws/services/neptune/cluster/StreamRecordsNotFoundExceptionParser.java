@@ -10,7 +10,9 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.incremental_export;
+package com.amazonaws.services.neptune.cluster;
+
+import com.amazonaws.services.neptune.cluster.EventId;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,7 +44,7 @@ public class StreamRecordsNotFoundExceptionParser {
         }
     }
 
-    public static LastEventId parseLastEventId(String errorMessage){
+    public static EventId parseLastEventId(String errorMessage){
         String commitNum = "-1";
         String opNum = "-1";
 
@@ -58,6 +60,6 @@ public class StreamRecordsNotFoundExceptionParser {
         }
 
 
-        return new LastEventId(Long.parseLong( commitNum), Long.parseLong(opNum));
+        return new EventId(Long.parseLong( commitNum), Long.parseLong(opNum));
     }
 }

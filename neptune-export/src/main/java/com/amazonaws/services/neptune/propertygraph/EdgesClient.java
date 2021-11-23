@@ -60,7 +60,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter, GremlinFilters gremlinFilters) {
         GraphTraversal<? extends Element, Map<Object, Object>> t1 = tokensOnly ?
                 traversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
                 traversal(range, labelsFilter).valueMap(true);
@@ -80,6 +80,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
                                Range range,
                                LabelsFilter labelsFilter,
+                               GremlinFilters gremlinFilters,
                                GraphElementSchemas graphElementSchemas) {
 
         GraphTraversal<Edge, Edge> t1 = tokensOnly ?
@@ -89,7 +90,9 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
         GraphTraversal<? extends Element, ?> t2 = range.applyRange(labelsFilter.apply(t1, featureToggles, GraphElementType.edges));
         GraphTraversal<? extends Element, ?> t3 = filterByPropertyKeys(t2, labelsFilter, graphElementSchemas);
 
-        GraphTraversal<? extends Element, Map<String, Object>> t4 = t3.
+        GraphTraversal<? extends Element, ?> t4 = gremlinFilters.applyToEdges(t3);
+
+        GraphTraversal<? extends Element, Map<String, Object>> t5 = t4.
                 project("~id", labelsFilter.addAdditionalColumnNames("~label", "properties", "~from", "~to")).
                 by(T.id).
                 by(T.label).
@@ -100,7 +103,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
                 by(outV().id()).
                 by(inV().id());
 
-        GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t4);
+        GraphTraversal<? extends Element, Map<String, Object>> traversal = labelsFilter.addAdditionalColumns(t5);
 
         logger.info(GremlinQueryDebugger.queryAsString(traversal));
 
@@ -128,7 +131,7 @@ public class EdgesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
+    public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig, GremlinFilters gremlinFilters) {
 
         if (rangeConfig.approxEdgeCount() > 0) {
             return rangeConfig.approxEdgeCount();

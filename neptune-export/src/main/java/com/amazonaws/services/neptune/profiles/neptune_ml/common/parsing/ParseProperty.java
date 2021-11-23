@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -23,40 +24,53 @@ public class ParseProperty {
 
     private final JsonNode json;
     private final ParsingContext context;
+    private final NeptuneMLSourceDataModel dataModel;
 
-    public ParseProperty(JsonNode json, ParsingContext context) {
+    public ParseProperty(JsonNode json, ParsingContext context, NeptuneMLSourceDataModel dataModel) {
         this.json = json;
         this.context = context;
+        this.dataModel = dataModel;
+    }
+
+    public ParseProperty(JsonNode json, ParsingContext context) {
+        this(json, context, NeptuneMLSourceDataModel.PropertyGraph);
     }
 
     public String parseSingleProperty() {
-        if (json.has("property") && json.get("property").isTextual()) {
-            return json.get("property").textValue();
+        String fieldName = dataModel.nodeAttributeNameSingular().toLowerCase();
+
+        if (json.has(fieldName) && json.get(fieldName).isTextual()) {
+            return json.get(fieldName).textValue();
         } else {
-            throw ErrorMessageHelper.errorParsingField("property", context, "a 'property' field with a string value");
+            throw ErrorMessageHelper.errorParsingField(fieldName, context, String.format("a '%s' field with a string value", fieldName));
         }
     }
 
     public String parseNullableSingleProperty() {
-        if (json.has("property") && json.get("property").isTextual()) {
-            return json.get("property").textValue();
+        String fieldName = dataModel.nodeAttributeNameSingular().toLowerCase();
+        if (json.has(fieldName) && json.get(fieldName).isTextual()) {
+            return json.get(fieldName).textValue();
         } else {
             return "";
         }
     }
 
     public Collection<String> parseMultipleProperties() {
-        if (json.has("property") && json.get("property").isTextual()) {
-            return Collections.singletonList(json.get("property").textValue());
-        } if (json.has("properties") && json.get("properties").isArray()){
-            ArrayNode properties = (ArrayNode) json.get("properties");
+        String fieldNameSingular = dataModel.nodeAttributeNameSingular().toLowerCase();
+        String fieldNamePlural = dataModel.nodeAttributeNamePlural().toLowerCase();
+
+        if (json.has(fieldNameSingular) && json.get(fieldNameSingular).isTextual()) {
+            return Collections.singletonList(json.get(fieldNameSingular).textValue());
+        }
+        if (json.has(fieldNamePlural) && json.get(fieldNamePlural).isArray()) {
+            ArrayNode properties = (ArrayNode) json.get(fieldNamePlural);
             Collection<String> results = new ArrayList<>();
             for (JsonNode property : properties) {
                 results.add(property.textValue());
             }
             return results;
         } else {
-            throw new IllegalArgumentException(String.format("Expected a 'property' field with a string value, or a 'properties' field with an array value for %s.", context));
+            throw new IllegalArgumentException(String.format("Expected a '%s' field with a string value, or a '%s' field with an array value for %s.",  fieldNameSingular, fieldNamePlural, context));
         }
     }
 }

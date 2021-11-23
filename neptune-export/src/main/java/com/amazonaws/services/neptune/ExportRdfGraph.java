@@ -12,15 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune;
 
-import com.amazonaws.services.neptune.cli.CloneClusterModule;
-import com.amazonaws.services.neptune.cli.CommonConnectionModule;
-import com.amazonaws.services.neptune.cli.RdfExportScopeModule;
-import com.amazonaws.services.neptune.cli.RdfTargetModule;
+import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.cluster.EventId;
+import com.amazonaws.services.neptune.cluster.GetLastEventIdStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
+import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
 import com.amazonaws.services.neptune.rdf.ExportRdfJob;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -51,6 +51,9 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
     @Inject
     private RdfExportScopeModule exportScope = new RdfExportScopeModule();
 
+    @Inject
+    private NeptuneStreamsModule streams = new NeptuneStreamsModule();
+
     @Override
     public void run() {
 
@@ -58,7 +61,12 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
             Timer.timedActivity(String.format("exporting rdf %s", exportScope.scope()), (CheckedActivity.Runnable) () -> {
                 try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1), featureToggles())) {
 
-                    Directories directories = target.createDirectories(DirectoryStructure.Rdf);
+                    Directories directories = target.createDirectories();
+
+                    JsonResource<EventId> eventIdFileResource = directories.lastEventIdFileResource();
+
+                    GetLastEventIdStrategy getLastEventIdStrategy = streams.lastEventIdStrategy(cluster, eventIdFileResource);
+                    getLastEventIdStrategy.saveLastEventId("sparql");
 
                     try (NeptuneSparqlClient client = NeptuneSparqlClient.create(cluster.connectionConfig())) {
 
@@ -67,6 +75,8 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
                     }
 
                     directories.writeRootDirectoryPathAsReturnValue(target);
+                    getLastEventIdStrategy.writeLastEventIdResourcePathAsMessage(target);
+
                     onExportComplete(directories, new ExportStats(), cluster);
 
                 }

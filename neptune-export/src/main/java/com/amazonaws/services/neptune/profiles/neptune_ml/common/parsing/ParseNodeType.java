@@ -29,8 +29,8 @@ public class ParseNodeType {
     }
 
     public Label parseNodeType(){
-        JsonNode node = json.get("node");
         if (json.has("node")){
+            JsonNode node = json.get("node");
             if (node.isTextual()){
                 return new Label(node.textValue());
             } else if (node.isArray()){

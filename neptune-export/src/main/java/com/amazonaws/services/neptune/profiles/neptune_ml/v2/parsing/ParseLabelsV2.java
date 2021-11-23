@@ -12,11 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.*;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeLabelTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.EdgeTaskTypeV2;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.LabelConfigV2;
-import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.NodeLabelTypeV2;
+import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.RdfTaskTypeV2;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -27,26 +28,38 @@ public class ParseLabelsV2 {
 
     private final Collection<JsonNode> config;
     private final Collection<Double> defaultSplitRates;
+    private final NeptuneMLSourceDataModel dataModel;
 
-    public ParseLabelsV2(Collection<JsonNode> config, Collection<Double> defaultSplitRates) {
+    public ParseLabelsV2(Collection<JsonNode> config, Collection<Double> defaultSplitRates, NeptuneMLSourceDataModel dataModel) {
         this.config = config;
         this.defaultSplitRates = defaultSplitRates;
+        this.dataModel = dataModel;
     }
 
     public Collection<LabelConfigV2> parseNodeClassLabels() {
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
+
         for (JsonNode json : config) {
-            if (isNodeClass(json)) {
-                ParsingContext context = new ParsingContext("node label");
+
+            if (dataModel.isRdfLinkPrediction(json)) {
+                ParsingContext context = new ParsingContext("edge");
+                String subject = new ParseSubject(json, context).parseSubject();
+                String predicate = dataModel.parseProperty(json, context, null);
+                String object = new ParseObject(json, context).parseObject();
+                Collection<Double> splitRates = new ParseSplitRate(json, defaultSplitRates, context).parseSplitRates();
+                nodeClassLabels.add(new LabelConfigV2(null, RdfTaskTypeV2.link_prediction.name(), predicate, subject, object, splitRates, null));
+            } else if (isNodeClass(json)) {
+                ParsingContext context = new ParsingContext(String.format("node %s", dataModel.nodeTypeName().toLowerCase()));
                 Label nodeType = new ParseNodeType(json, context).parseNodeType();
-                String property = new ParseProperty(json, context.withLabel(nodeType)).parseSingleProperty();
+                String property = dataModel.parseProperty(json, context, nodeType);
                 ParsingContext propertyContext = context.withLabel(nodeType).withProperty(property);
-                NodeLabelTypeV2 labelType = new ParseNodeLabelTypeV2(json, propertyContext).parseLabel();
+                String taskType = dataModel.parseTaskType(json, propertyContext, nodeType, property);
                 Separator separator = new ParseSeparator(json).parseSeparator();
                 Collection<Double> splitRates = new ParseSplitRate(json, defaultSplitRates, propertyContext).parseSplitRates();
-                nodeClassLabels.add(new LabelConfigV2(nodeType, labelType.name(), property, splitRates, separator));
+                nodeClassLabels.add(new LabelConfigV2(nodeType, taskType, property, null, null, splitRates, separator));
             }
         }
+
         return nodeClassLabels;
     }
 
@@ -60,8 +73,10 @@ public class ParseLabelsV2 {
 
     public void validate() {
         for (JsonNode json : config) {
-            if (!isNodeClass(json) && !isEdgeClass(json)) {
-                throw new IllegalArgumentException("Illegal label element. Expected 'node' or 'edge' field.");
+            if (!dataModel.isRdfLinkPrediction(json)) {
+                if (!isNodeClass(json) && !isEdgeClass(json)) {
+                    throw new IllegalArgumentException(String.format("Illegal target element. Expected %s field.", dataModel.labelFields()));
+                }
             }
         }
     }
@@ -74,11 +89,11 @@ public class ParseLabelsV2 {
                 Label edgeType = new ParseEdgeType(json, context).parseEdgeType();
                 String property = new ParseProperty(json, context.withLabel(edgeType)).parseNullableSingleProperty();
                 ParsingContext propertyContext = context.withLabel(edgeType).withProperty(property);
-                EdgeLabelTypeV2 labelType = new ParseEdgeLabelTypeV2(json, propertyContext).parseLabel();
-                labelType.validate(property, edgeType);
+                EdgeTaskTypeV2 taskType = new ParseEdgeTaskTypeV2(json, propertyContext).parseTaskType();
+                taskType.validate(property, edgeType);
                 Separator separator = new ParseSeparator(json).parseSeparator();
                 Collection<Double> splitRates = new ParseSplitRate(json, defaultSplitRates, propertyContext).parseSplitRates();
-                edgeClassLabels.add(new LabelConfigV2(edgeType, labelType.name(), property, splitRates, separator));
+                edgeClassLabels.add(new LabelConfigV2(edgeType, taskType.name(), property, null, null, splitRates, separator));
             }
         }
         return edgeClassLabels;

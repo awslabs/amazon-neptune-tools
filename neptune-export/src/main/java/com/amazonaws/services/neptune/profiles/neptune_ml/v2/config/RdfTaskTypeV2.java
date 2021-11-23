@@ -12,24 +12,19 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
 import com.amazonaws.services.neptune.propertygraph.Label;
-import org.apache.commons.lang.StringUtils;
 
-public enum EdgeLabelTypeV2 {
+public enum RdfTaskTypeV2 {
     classification,
     regression,
-    link_prediction {
-        @Override
-        public void validate(String property, Label label){
-            // Do nothing
-        }
-    };
+    link_prediction;
 
-    public void validate(String property, Label label) {
-        ParsingContext context = new ParsingContext(String.format("edge %s specification", name())).withLabel(label);
-        if (StringUtils.isEmpty(property)){
-            throw new IllegalArgumentException(String.format("Missing or empty 'property' field for %s.", context));
-        }
+    public void validate(String predicate, Label label) {
+        // Do nothing
+
+//        ParsingContext context = new ParsingContext(String.format("node %s specification", name()), NeptuneMLSourceDataModel.RDF).withLabel(label);
+//        if (StringUtils.isEmpty(predicate)) {
+//            throw new IllegalArgumentException(String.format("Missing or empty 'predicate' field for %s.", context));
+//        }
     }
 }

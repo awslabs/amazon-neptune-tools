@@ -46,6 +46,11 @@ public class SimulatedCloneCluster implements CloneClusterStrategy {
             }
 
             @Override
+            public NeptuneClusterMetadata clusterMetadata() {
+                return NeptuneClusterMetadata.createFromClusterId(connectionConfig.clusterId(), clientSupplier);
+            }
+
+            @Override
             public void close() throws Exception {
                 System.err.println("Simulating deleting cloned cluster (original cluster will not be deleted)...");
             }

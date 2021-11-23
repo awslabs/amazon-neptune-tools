@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.propertygraph.io;
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.StatusOutputFormat;
+import com.amazonaws.services.neptune.propertygraph.GremlinFilters;
 import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
@@ -42,6 +43,7 @@ public class ExportPropertyGraphJob {
     private final GraphSchema graphSchema;
     private final GraphTraversalSource g;
     private final RangeConfig rangeConfig;
+    private final GremlinFilters gremlinFilters;
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
 
@@ -49,12 +51,14 @@ public class ExportPropertyGraphJob {
                                   GraphSchema graphSchema,
                                   GraphTraversalSource g,
                                   RangeConfig rangeConfig,
+                                  GremlinFilters gremlinFilters,
                                   ConcurrencyConfig concurrencyConfig,
                                   PropertyGraphTargetConfig targetConfig) {
         this.exportSpecifications = exportSpecifications;
         this.graphSchema = graphSchema;
         this.g = g;
         this.rangeConfig = rangeConfig;
+        this.gremlinFilters = gremlinFilters;
         this.concurrencyConfig = concurrencyConfig;
         this.targetConfig = targetConfig;
     }
@@ -98,6 +102,7 @@ public class ExportPropertyGraphJob {
                             graphSchema,
                             g,
                             targetConfig,
+                            gremlinFilters,
                             rangeFactory,
                             status,
                             index,
@@ -122,6 +127,7 @@ public class ExportPropertyGraphJob {
         }
 
         MasterLabelSchemas masterLabelSchemas = exportSpecification.createMasterLabelSchemas(fileSpecificLabelSchemas);
+
         RewriteCommand rewriteCommand = targetConfig.createRewriteCommand(concurrencyConfig);
 
         return rewriteCommand.execute(masterLabelSchemas);

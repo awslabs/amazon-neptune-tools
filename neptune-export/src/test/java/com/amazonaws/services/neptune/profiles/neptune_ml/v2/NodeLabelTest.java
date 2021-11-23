@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.JsonFromResource;
 import com.amazonaws.services.neptune.profiles.neptune_ml.Output;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
@@ -95,7 +96,7 @@ public class NodeLabelTest {
 
         JsonNode expectedTrainingDataConfig = json.get("config");
 
-        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(json.get("label"));
+        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(json.get("label"), NeptuneMLSourceDataModel.PropertyGraph);
 
         Output output = new Output();
 

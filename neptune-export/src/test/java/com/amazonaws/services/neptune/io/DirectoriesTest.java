@@ -12,9 +12,15 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
@@ -26,5 +32,16 @@ public class DirectoriesTest {
         String updated = Directories.fileName(filename, 1);
         assertEquals("%28Person%3BStaff%3BTemp%5C%3BHolidays%29-works_for-%28Admin%3BPerm%3BPerson%29-1", updated);
     }
+
+    @Test
+    public void createsDigestFilePathsForVeryLongFilenames() throws IOException {
+        Path path = Paths.get("/export");
+        String longName = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890";
+        Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, new File("home"), "export-id", "", "");
+        Path filePath = directories.createFilePath(path, longName, PropertyGraphExportFormat.csv);
+
+        assertEquals("/export/8044f12c352773b7ff400ef524da6e90db419e4a.csv", filePath.toString());
+    }
+
 
 }

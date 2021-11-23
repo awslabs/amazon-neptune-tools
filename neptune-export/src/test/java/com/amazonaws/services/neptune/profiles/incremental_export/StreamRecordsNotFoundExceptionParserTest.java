@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.incremental_export;
 
+import com.amazonaws.services.neptune.cluster.EventId;
+import com.amazonaws.services.neptune.cluster.StreamRecordsNotFoundExceptionParser;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -22,7 +24,7 @@ public class StreamRecordsNotFoundExceptionParserTest {
     public void ShouldParseCommitNumAndOpNum(){
         String errorMessage = "Requested startEventId is from the future. Last valid eventId is [commitNum = 1132, opNum = 200]";
 
-        StreamRecordsNotFoundExceptionParser.LastEventId lastEventId = StreamRecordsNotFoundExceptionParser.parseLastEventId(errorMessage);
+        EventId lastEventId = StreamRecordsNotFoundExceptionParser.parseLastEventId(errorMessage);
 
         assertEquals(1132, lastEventId.commitNum());
         assertEquals(200, lastEventId.opNum());
@@ -32,7 +34,7 @@ public class StreamRecordsNotFoundExceptionParserTest {
     public void ShouldReturnMinus1IfNotFound(){
         String errorMessage = "Requested startEventId is from the future";
 
-        StreamRecordsNotFoundExceptionParser.LastEventId lastEventId = StreamRecordsNotFoundExceptionParser.parseLastEventId(errorMessage);
+        EventId lastEventId = StreamRecordsNotFoundExceptionParser.parseLastEventId(errorMessage);
 
         assertEquals(-1, lastEventId.commitNum());
         assertEquals(-1, lastEventId.opNum());

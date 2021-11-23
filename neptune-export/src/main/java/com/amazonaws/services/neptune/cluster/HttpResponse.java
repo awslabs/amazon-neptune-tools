@@ -10,7 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.incremental_export;
+package com.amazonaws.services.neptune.cluster;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-class HttpResponse {
+public class HttpResponse {
 
     private static final String JSON_CONTENT_TYPE = "application/json";
     private static final ObjectMapper MAPPER = new ObjectMapper();
