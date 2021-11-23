@@ -12,9 +12,10 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.incremental_export;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.regions.DefaultAwsRegionProviderChain;
-import com.amazonaws.services.neptune.cluster.*;
+import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.EventId;
+import com.amazonaws.services.neptune.cluster.GetLastEventId;
+import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.amazonaws.services.neptune.export.Args;
 import com.amazonaws.services.neptune.export.CompletionFileWriter;
 import com.amazonaws.services.neptune.export.ExportToS3NeptuneExportEventHandler;
@@ -26,13 +27,12 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.util.CheckedActivity;
 import com.amazonaws.services.neptune.util.Timer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IncrementalExportEventHandler implements NeptuneExportServiceEventHandler, CompletionFileWriter {
@@ -43,10 +43,19 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
     private final AtomicLong commitNum = new AtomicLong(0);
     private final AtomicLong opNum = new AtomicLong(0);
     private final String exportId;
+    private final String stageId;
+    private final String command;
 
-    public IncrementalExportEventHandler(String exportId) {
-        this.exportId = exportId;
+    public IncrementalExportEventHandler(ObjectNode additionalParams) {
         this.timestamp = System.currentTimeMillis();
+
+        JsonNode incrementalExport = additionalParams.path("incremental_export");
+
+        this.exportId = incrementalExport.path("exportId").textValue();;
+        this.stageId = incrementalExport.path("stageId").textValue();
+        this.command = incrementalExport.path("command").textValue();
+
+        logger.info("Incremental export params: exportId: {}, stageId: {}, command: {}", exportId, stageId, command);
     }
 
     @Override
@@ -65,6 +74,7 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
         ObjectNode incrementalExportNode = JsonNodeFactory.instance.objectNode();
         completionFilePayload.set("incrementalExport", incrementalExportNode);
         incrementalExportNode.put("exportId", exportId);
+        incrementalExportNode.put("stageId", stageId);
         incrementalExportNode.set("partitions", partitions);
         incrementalExportNode.set("lastEventId", lastEventId);
     }
@@ -80,16 +90,25 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
             args.removeOptions("--partition-directories");
         }
 
-        args.addOption("--partition-directories", String.format("timestamp=%s", timestamp));
+        boolean createExportSubdirectory = true;
 
-        if (args.contains("export-pg")) {
-            args.addOption("--format", PropertyGraphExportFormat.neptuneStreamsSimpleJson.name());
+        if (command.equals("apply")){
+            args.addOption("--partition-directories", String.format("timestamp=%s", timestamp));
+            createExportSubdirectory = false;
+            if (args.contains("export-pg")) {
+                args.addOption("--format", PropertyGraphExportFormat.neptuneStreamsSimpleJson.name());
+            } else {
+                args.addOption("--format", RdfExportFormat.neptuneStreamsSimpleJson.name());
+            }
         } else {
-            args.addOption("--format", RdfExportFormat.neptuneStreamsSimpleJson.name());
+            if (args.contains("export-pg")) {
+                args.addOption("--format", PropertyGraphExportFormat.csv.name());
+            } else {
+                args.addOption("--format", RdfExportFormat.nquads.name());
+            }
         }
 
-        s3UploadParams.setCreateExportSubdirectory(false).setOverwriteExisting(true);
-
+        s3UploadParams.setCreateExportSubdirectory(createExportSubdirectory).setOverwriteExisting(true);
     }
 
     @Override
@@ -105,7 +124,7 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
     @Override
     public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
         Timer.timedActivity("getting LastEventId from stream", (CheckedActivity.Runnable) () ->
-                getLastEventIdFromStream(cluster,  graphSchema == null ? "sparql" : "gremlin"));
+                getLastEventIdFromStream(cluster, graphSchema == null ? "sparql" : "gremlin"));
     }
 
     private void getLastEventIdFromStream(Cluster cluster, String streamEndpointType) {
@@ -113,7 +132,7 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
         NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(cluster.connectionConfig().clusterId(), cluster.clientSupplier());
 
         EventId eventId = new GetLastEventId(clusterMetadata, cluster.connectionConfig(), streamEndpointType).execute();
-        if (eventId != null){
+        if (eventId != null) {
             commitNum.set(eventId.commitNum());
             opNum.set(eventId.opNum());
         }

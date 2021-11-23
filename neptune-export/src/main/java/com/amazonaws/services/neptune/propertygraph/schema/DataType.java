@@ -53,12 +53,12 @@ public enum DataType {
 
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeBoolean((boolean) value);
+            generator.writeBoolean((java.lang.Boolean) Boolean.convert(value));
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeBooleanField(key, (boolean) value);
+            generator.writeBooleanField(key, (java.lang.Boolean) Boolean.convert(value));
         }
 
         @Override
@@ -79,12 +79,12 @@ public enum DataType {
     Byte {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((byte) value);
+            generator.writeNumber((java.lang.Byte) Byte.convert(value));
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (byte) value);
+            generator.writeNumberField(key, (java.lang.Byte) Byte.convert(value));
         }
 
         @Override
@@ -105,12 +105,12 @@ public enum DataType {
     Short {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((short) value);
+            generator.writeNumber((java.lang.Short) Short.convert(value));
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (short) value);
+            generator.writeNumberField(key, (java.lang.Short) Short.convert(value));
         }
 
         @Override
@@ -162,12 +162,12 @@ public enum DataType {
     Long {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((long) value);
+            generator.writeNumber((java.lang.Long) Long.convert(value));
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (long) value);
+            generator.writeNumberField(key, (java.lang.Long) Long.convert(value));
         }
 
         @Override
@@ -188,12 +188,12 @@ public enum DataType {
     Float {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((float) value);
+            generator.writeNumber((java.lang.Float) Float.convert(value));
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (float) value);
+            generator.writeNumberField(key, (java.lang.Float) Float.convert(value));
         }
 
         @Override
@@ -214,12 +214,12 @@ public enum DataType {
     Double {
         @Override
         public void printTo(JsonGenerator generator, Object value) throws IOException {
-            generator.writeNumber((double) value);
+            generator.writeNumber((java.lang.Double) Double.convert(value));
         }
 
         @Override
         public void printTo(JsonGenerator generator, String key, Object value) throws IOException {
-            generator.writeNumberField(key, (double) value);
+            generator.writeNumberField(key, (java.lang.Double) Double.convert(value));
         }
 
         @Override

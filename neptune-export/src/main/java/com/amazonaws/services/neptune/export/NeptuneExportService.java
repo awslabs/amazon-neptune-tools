@@ -205,11 +205,7 @@ public class NeptuneExportService {
 
         if (profiles.contains(INCREMENTAL_EXPORT_PROFILE_NAME)) {
 
-            String exportId = args.contains("--export-id") ?
-                    args.getFirstOptionValue("--export-id") :
-                    UUID.randomUUID().toString().replace("-", "");
-
-            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler(exportId);
+            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler(additionalParams);
             completionFileWriters.add(incrementalExportEventHandler);
             eventHandlerCollection.addHandler(incrementalExportEventHandler);
         }
