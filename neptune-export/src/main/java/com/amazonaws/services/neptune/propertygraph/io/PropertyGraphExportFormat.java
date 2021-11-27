@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.FileExtension;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
@@ -48,7 +49,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema, FeatureToggles featureToggles) {
             return RewriteCommand.NULL_COMMAND;
         }
     },
@@ -80,12 +81,12 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema, FeatureToggles featureToggles) {
             if (targetConfig.mergeFiles()) {
-                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
+                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig, featureToggles);
             } else {
                 if (inferSchema) {
-                    return new RewriteCsv(targetConfig, concurrencyConfig);
+                    return new RewriteCsv(targetConfig, concurrencyConfig, featureToggles);
                 } else {
                     return RewriteCommand.NULL_COMMAND;
                 }
@@ -120,12 +121,12 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema, FeatureToggles featureToggles) {
             if (targetConfig.mergeFiles()) {
-                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig);
+                return new RewriteAndMergeCsv(targetConfig, concurrencyConfig, featureToggles);
             } else {
                 if (inferSchema) {
-                    return new RewriteCsv(targetConfig, concurrencyConfig);
+                    return new RewriteCsv(targetConfig, concurrencyConfig, featureToggles);
                 } else {
                     return RewriteCommand.NULL_COMMAND;
                 }
@@ -155,7 +156,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema, FeatureToggles featureToggles) {
             return RewriteCommand.NULL_COMMAND;
         }
     },
@@ -182,7 +183,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
         }
 
         @Override
-        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema) {
+        public RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema, FeatureToggles featureToggles) {
             return RewriteCommand.NULL_COMMAND;
         }
     };
@@ -200,7 +201,7 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
     public abstract String description();
 
-    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema);
+    public abstract RewriteCommand createRewriteCommand(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig, boolean inferSchema, FeatureToggles featureToggles);
 
     public String replaceExtension(String filename, String replacement){
         return String.format("%s.%s",  FilenameUtils.removeExtension(filename), replacement);

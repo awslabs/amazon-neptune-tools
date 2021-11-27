@@ -120,7 +120,8 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 range.config(),
                                 gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
-                                targetConfig);
+                                targetConfig,
+                                featureToggles());
 
                         graphSchema = Timer.timedActivity(
                                 "export",

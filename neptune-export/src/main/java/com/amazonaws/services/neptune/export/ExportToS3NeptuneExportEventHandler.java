@@ -12,6 +12,9 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.event.ProgressEvent;
+import com.amazonaws.event.ProgressListener;
 import com.amazonaws.services.neptune.cluster.Cluster;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
@@ -317,32 +320,51 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
             return;
         }
 
+        boolean allowRetry = true;
+        int retryCount = 0;
 
-        try {
+        while (allowRetry){
+            try {
 
-            //deleteS3Directories(directory, outputS3ObjectInfo);
+                //deleteS3Directories(directory, outputS3ObjectInfo);
 
-            ObjectMetadataProvider metadataProvider = (file, objectMetadata) -> {
-                objectMetadata.setContentLength(file.length());
-                objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
-            };
+                ObjectMetadataProvider metadataProvider = (file, objectMetadata) -> {
+                    objectMetadata.setContentLength(file.length());
+                    objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);
+                };
 
-            ObjectTaggingProvider taggingProvider = uploadContext -> createObjectTags(profiles);
+                ObjectTaggingProvider taggingProvider = uploadContext -> createObjectTags(profiles);
 
-            logger.info("Uploading export files to {}", outputS3ObjectInfo.key());
+                logger.info("Uploading export files to {}", outputS3ObjectInfo.key());
 
-            MultipleFileUpload upload = transferManager.uploadDirectory(
-                    outputS3ObjectInfo.bucket(),
-                    outputS3ObjectInfo.key(),
-                    directory,
-                    true,
-                    metadataProvider,
-                    taggingProvider);
+                MultipleFileUpload upload = transferManager.uploadDirectory(
+                        outputS3ObjectInfo.bucket(),
+                        outputS3ObjectInfo.key(),
+                        directory,
+                        true,
+                        metadataProvider,
+                        taggingProvider);
 
-            upload.waitForCompletion();
-        } catch (InterruptedException e) {
-            logger.warn(e.getMessage());
-            Thread.currentThread().interrupt();
+                AmazonClientException amazonClientException = upload.waitForException();
+
+                if (amazonClientException != null){
+                    String errorMessage = amazonClientException.getMessage();
+                    logger.error("Upload to S3 failed: {}", errorMessage);
+                    if (!amazonClientException.isRetryable() || retryCount > 2){
+                        allowRetry = false;
+                        logger.warn("Cancelling upload to S3 [RetryCount: {}]", retryCount);
+                        throw new RuntimeException(String.format("Upload to S3 failed [Directory: %s, S3 location: %s, Reason: %s, RetryCount: %s]", directory, outputS3ObjectInfo, errorMessage, retryCount));
+                    } else {
+                        retryCount++;
+                        logger.info("Retrying upload to S3 [RetryCount: {}]", retryCount);
+                    }
+                } else {
+                    allowRetry = false;
+                }
+            } catch (InterruptedException e) {
+                logger.warn(e.getMessage());
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

@@ -102,7 +102,7 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                                 range.config(),
                                 gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
-                                targetConfig);
+                                targetConfig, featureToggles());
 
                         graphSchema = exportJob.execute();
 

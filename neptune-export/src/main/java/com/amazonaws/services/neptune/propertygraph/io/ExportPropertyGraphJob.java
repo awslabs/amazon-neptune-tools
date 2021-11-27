@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.StatusOutputFormat;
 import com.amazonaws.services.neptune.propertygraph.GremlinFilters;
@@ -46,6 +47,7 @@ public class ExportPropertyGraphJob {
     private final GremlinFilters gremlinFilters;
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
+    private final FeatureToggles featureToggles;
 
     public ExportPropertyGraphJob(Collection<ExportSpecification> exportSpecifications,
                                   GraphSchema graphSchema,
@@ -53,7 +55,8 @@ public class ExportPropertyGraphJob {
                                   RangeConfig rangeConfig,
                                   GremlinFilters gremlinFilters,
                                   ConcurrencyConfig concurrencyConfig,
-                                  PropertyGraphTargetConfig targetConfig) {
+                                  PropertyGraphTargetConfig targetConfig,
+                                  FeatureToggles featureToggles) {
         this.exportSpecifications = exportSpecifications;
         this.graphSchema = graphSchema;
         this.g = g;
@@ -61,6 +64,7 @@ public class ExportPropertyGraphJob {
         this.gremlinFilters = gremlinFilters;
         this.concurrencyConfig = concurrencyConfig;
         this.targetConfig = targetConfig;
+        this.featureToggles = featureToggles;
     }
 
     public GraphSchema execute() throws Exception {
@@ -94,6 +98,8 @@ public class ExportPropertyGraphJob {
 
             System.err.println("Started " + description);
 
+            AtomicInteger fileIndex = new AtomicInteger();
+
             Timer.timedActivity(description, (CheckedActivity.Runnable) () -> {
                 ExecutorService taskExecutor = Executors.newFixedThreadPool(rangeFactory.concurrency());
 
@@ -105,7 +111,7 @@ public class ExportPropertyGraphJob {
                             gremlinFilters,
                             rangeFactory,
                             status,
-                            index,
+                            fileIndex,
                             fileDescriptorCount
                     );
                     futures.add(taskExecutor.submit(exportTask));
@@ -128,7 +134,7 @@ public class ExportPropertyGraphJob {
 
         MasterLabelSchemas masterLabelSchemas = exportSpecification.createMasterLabelSchemas(fileSpecificLabelSchemas);
 
-        RewriteCommand rewriteCommand = targetConfig.createRewriteCommand(concurrencyConfig);
+        RewriteCommand rewriteCommand = targetConfig.createRewriteCommand(concurrencyConfig, featureToggles);
 
         return rewriteCommand.execute(masterLabelSchemas);
     }

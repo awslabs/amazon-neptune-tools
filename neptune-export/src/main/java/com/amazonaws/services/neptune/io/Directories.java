@@ -30,11 +30,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Directories {
 
-    public static String fileName(String name, int index) throws UnsupportedEncodingException {
-        String filename = String.format("%s-%s", name, index);
+    public static String fileName(String name, AtomicInteger index) throws UnsupportedEncodingException {
+        String filename = String.format("%s-%s", name, index.incrementAndGet());
         return URLEncoder.encode(filename, StandardCharsets.UTF_8.toString());
     }
 
