@@ -12,8 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.services.neptune.cluster.EventId;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
