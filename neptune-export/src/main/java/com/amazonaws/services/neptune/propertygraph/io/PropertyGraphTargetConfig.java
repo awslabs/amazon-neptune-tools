@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.KinesisConfig;
 import com.amazonaws.services.neptune.io.OutputWriter;
@@ -104,9 +105,9 @@ public class PropertyGraphTargetConfig {
         }
     }
 
-    public RewriteCommand createRewriteCommand(ConcurrencyConfig concurrencyConfig) {
+    public RewriteCommand createRewriteCommand(ConcurrencyConfig concurrencyConfig, FeatureToggles featureToggles) {
         if (output.isFileBased()) {
-            return format.createRewriteCommand(this, concurrencyConfig, inferSchema);
+            return format.createRewriteCommand(this, concurrencyConfig, inferSchema, featureToggles);
         } else {
             return masterLabelSchemas -> masterLabelSchemas;
         }

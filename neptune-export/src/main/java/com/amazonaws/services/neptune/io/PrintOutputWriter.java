@@ -111,4 +111,9 @@ public class PrintOutputWriter extends PrintWriter implements OutputWriter {
         return System.lineSeparator();
     }
 
+    @Override
+    public void close() {
+        super.flush();
+        super.close();
+    }
 }

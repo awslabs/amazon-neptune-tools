@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -29,7 +30,7 @@ public class DirectoriesTest {
     @Test
     public void replacesForbiddenCharactersInFilename() throws UnsupportedEncodingException {
         String filename = "(Person;Staff;Temp\\;Holidays)-works_for-(Admin;Perm;Person)";
-        String updated = Directories.fileName(filename, 1);
+        String updated = Directories.fileName(filename, new AtomicInteger());
         assertEquals("%28Person%3BStaff%3BTemp%5C%3BHolidays%29-works_for-%28Admin%3BPerm%3BPerson%29-1", updated);
     }
 
