@@ -215,7 +215,7 @@ public class NeptuneExportService {
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
-        new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
+        new NeptuneExportRunner(args.values(), eventHandlerCollection, false).run();
 
         return exportToS3EventHandler.result();
     }

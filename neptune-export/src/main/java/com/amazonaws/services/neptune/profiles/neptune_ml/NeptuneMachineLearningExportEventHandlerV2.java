@@ -53,6 +53,7 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
     private final Collection<String> profiles;
     private final boolean createExportSubdirectory;
     private final PrinterOptions printerOptions;
+    private final boolean includeEdgeFeatures;
 
     public NeptuneMachineLearningExportEventHandlerV2(String outputS3Path,
                                                       String s3Region,
@@ -78,6 +79,22 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
         this.trainingJobWriterConfigCollection = createTrainingJobConfigCollection(additionalParams);
         this.profiles = profiles;
         this.printerOptions = new PrinterOptions(csvPrinterOptions, jsonPrinterOptions);
+        this.includeEdgeFeatures = shouldIncludeEdgeFeatures(additionalParams);
+    }
+
+    private boolean shouldIncludeEdgeFeatures(ObjectNode additionalParams) {
+        JsonNode neptuneMlNode = additionalParams.path(NEPTUNE_ML_PROFILE_NAME);
+
+        if (neptuneMlNode.isMissingNode()){
+            return true;
+        }
+
+        if (neptuneMlNode.has("disableEdgeFeatures") &&
+                neptuneMlNode.path("disableEdgeFeatures").asBoolean()){
+            return false;
+        }
+
+        return true;
     }
 
     private Collection<TrainingDataWriterConfigV2> createTrainingJobConfigCollection(ObjectNode additionalParams) {
@@ -159,8 +176,6 @@ public class NeptuneMachineLearningExportEventHandlerV2 implements NeptuneExport
                         createJsonGenerator(writer),
                         trainingDataWriterConfig).write();
             } else {
-
-                boolean includeEdgeFeatures = args.contains("--feature-toggle", FeatureToggle.Edge_Features.name());
 
                 new PropertyGraphTrainingDataConfigWriterV2(
                         graphSchema,
