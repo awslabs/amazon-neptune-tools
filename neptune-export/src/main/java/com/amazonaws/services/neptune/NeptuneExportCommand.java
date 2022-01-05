@@ -66,7 +66,8 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
             e.printStackTrace();
             System.err.println("An error occurred while connecting to Neptune. " +
                     "Ensure you have not disabled SSL if the database requires SSL in transit. " +
-                    "Ensure you have specified the --use-iam-auth flag if the database uses IAM database authentication.");
+                    "Ensure you have specified the --use-iam-auth flag (and set the SERVICE_REGION environment variable if running in your own environment) if the database uses IAM database authentication. " +
+                    "Ensure the database's VPC security group(s) allow access from the export tool.");
 
         } else {
             e.printStackTrace();

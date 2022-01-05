@@ -166,6 +166,7 @@ public class NeptuneStreamsSimpleJsonPropertyGraphPrinter implements PropertyGra
         //generator.writeStringField("op", "ADD");
 
         generator.writeEndObject();
+        generator.writeRaw(writer.lineSeparator());
         generator.flush();
         writer.endOp();
     }
