@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class Status {
 
@@ -26,14 +27,20 @@ public class Status {
     private final AtomicBoolean allowContinue = new AtomicBoolean(true);
     private final StatusOutputFormat outputFormat;
     private final String description;
+    private final Supplier<String> additionalDetailsSupplier;
 
     public Status(StatusOutputFormat outputFormat) {
         this(outputFormat, "");
     }
 
     public Status(StatusOutputFormat outputFormat, String description) {
+        this(outputFormat, description, () -> "");
+    }
+
+    public Status(StatusOutputFormat outputFormat, String description, Supplier<String> additionalDetailsSupplier) {
         this.outputFormat = outputFormat;
         this.description = description;
+        this.additionalDetailsSupplier = additionalDetailsSupplier;
     }
 
     public void update() {
@@ -41,7 +48,7 @@ public class Status {
         if (counterValue % 10000 == 0 && outputFormat == StatusOutputFormat.Dot) {
             System.err.print(".");
         } else if (counterValue % 100000 == 0 && outputFormat == StatusOutputFormat.Description) {
-            logger.info("{} ({})", counterValue, description);
+            logger.info("{} ({}){}", counterValue, description, additionalDetailsSupplier.get());
         }
     }
 

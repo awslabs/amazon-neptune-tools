@@ -129,6 +129,7 @@ public class NeptuneStreamsSimpleJsonNQuadsWriter implements RDFWriter {
 
             generator.writeStringField("op", "ADD");
             generator.writeEndObject();
+            generator.writeRaw(outputWriter.lineSeparator());
             generator.flush();
 
             outputWriter.endCommit();

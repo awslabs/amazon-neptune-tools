@@ -112,4 +112,8 @@ public class PropertyGraphTargetConfig {
             return masterLabelSchemas -> masterLabelSchemas;
         }
     }
+
+    public long freeSpaceInGigabytes(){
+        return directories.freeSpaceInGigabytes();
+    }
 }

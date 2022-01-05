@@ -121,6 +121,7 @@ public class Directories {
     private final Path statementsDirectory;
     private final Path resultsDirectory;
     private final Path recordsDirectory;
+    private final File directoryFile;
 
     private Directories(Path directory,
                         Path nodesDirectory,
@@ -136,6 +137,7 @@ public class Directories {
         this.resultsDirectory = resultsDirectory;
         this.recordsDirectory = recordsDirectory;
         this.tag = tag;
+        this.directoryFile = directory.toFile();
     }
 
     public void writeRootDirectoryPathAsMessage(String fileType, CommandWriter writer){
@@ -146,6 +148,10 @@ public class Directories {
         Path path = directory.toAbsolutePath();
         writer.writeReturnValue(path.toString());
         return path;
+    }
+
+    public long freeSpaceInGigabytes(){
+        return directoryFile.getFreeSpace() / 1000000000;
     }
 
     public Path rootDirectory() {

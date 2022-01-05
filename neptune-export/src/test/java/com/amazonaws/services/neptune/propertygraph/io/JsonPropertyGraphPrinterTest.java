@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.DataType;
 import com.amazonaws.services.neptune.propertygraph.schema.LabelSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.PropertySchema;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -207,7 +208,7 @@ public class JsonPropertyGraphPrinterTest {
     }
 
     @Test
-    public void updatesDataTypesForColumnsWithEachNewRowWhenInferringSchema() throws IOException {
+    public void updatesDataTypesInSchemaForColumnsWithEachNewRowWhenInferringSchema() throws IOException {
         StringWriter stringWriter = new StringWriter();
 
         LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
@@ -225,6 +226,31 @@ public class JsonPropertyGraphPrinterTest {
 
         assertEquals(2, labelSchema.propertyCount());
         assertEquals(DataType.String, labelSchema.getPropertySchema("age").dataType());
+    }
+
+    @Test
+    @Ignore
+    public void keepsOriginalDatatypesForPropertyValuesWhenWritingProperties() throws IOException {
+        StringWriter stringWriter = new StringWriter();
+
+        LabelSchema labelSchema = new LabelSchema(new Label("my-label"));
+
+        PropertyGraphPrinter printer = PropertyGraphExportFormat.json.createPrinterForInferredSchema(
+                new PrintOutputWriter("test", stringWriter),
+                labelSchema,
+                PrinterOptions.NULL_OPTIONS);
+
+        print(printer,
+                map(entry("age", 10)),
+                map(entry("age", "ten"), entry("height", 5)),
+                map(entry("age", 11), entry("height", 5.2))
+        );
+
+        String expectedOutput = "{\"age\":10}\n" +
+                "{\"age\":\"ten\",\"height\":5}\n" +
+                "{\"age\":11,\"height\":5.2}";
+
+        assertEquals(expectedOutput, stringWriter.toString());
     }
 
     @Test
