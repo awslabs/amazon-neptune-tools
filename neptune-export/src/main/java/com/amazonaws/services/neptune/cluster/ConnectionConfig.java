@@ -23,37 +23,27 @@ public class ConnectionConfig {
     private final String clusterId;
     private final Collection<String> neptuneEndpoints;
     private final int neptunePort;
-    private final String nlbEndpoint;
-    private final String albEndpoint;
-    private final int lbPort;
     private final boolean useIamAuth;
     private boolean useSsl;
+    private final ProxyConfig proxyConfig;
 
     public ConnectionConfig(String clusterId,
                             Collection<String> neptuneEndpoints,
                             int neptunePort,
-                            String nlbEndpoint,
-                            String albEndpoint,
-                            int lbPort,
-                            boolean useIamAuth,
-                            boolean useSsl) {
+                            boolean useIamAuth, boolean useSsl, ProxyConfig proxyConfig) {
         this.clusterId = clusterId;
         this.neptuneEndpoints = neptuneEndpoints;
         this.neptunePort = neptunePort;
-        this.nlbEndpoint = nlbEndpoint;
-        this.albEndpoint = albEndpoint;
-        this.lbPort = lbPort;
         this.useIamAuth = useIamAuth;
         this.useSsl = useSsl;
+        this.proxyConfig = proxyConfig;
     }
 
     public Collection<String> endpoints() {
         if (isDirectConnection()) {
             return neptuneEndpoints;
-        } else if (nlbEndpoint != null) {
-            return Collections.singletonList(nlbEndpoint);
         } else {
-            return Collections.singletonList(albEndpoint);
+            return Collections.singletonList(proxyConfig.endpoint());
         }
     }
 
@@ -61,7 +51,7 @@ public class ConnectionConfig {
         if (isDirectConnection()) {
             return neptunePort;
         } else {
-            return lbPort;
+            return proxyConfig.port();
         }
     }
 
@@ -76,32 +66,21 @@ public class ConnectionConfig {
     public HandshakeRequestConfig handshakeRequestConfig() {
         if (isDirectConnection()) {
             return new HandshakeRequestConfig(Collections.emptyList(), neptunePort, false);
-        } else if (nlbEndpoint != null) {
-            return new HandshakeRequestConfig(neptuneEndpoints, neptunePort, false);
         } else {
-            return new HandshakeRequestConfig(neptuneEndpoints, neptunePort, true);
+            return new HandshakeRequestConfig(neptuneEndpoints, neptunePort, proxyConfig.removeHostHeader());
         }
     }
 
     public boolean isDirectConnection() {
-        return nlbEndpoint == null && albEndpoint == null;
+        return proxyConfig == null;
     }
 
-    public String nlbEndpoint() {
-        return nlbEndpoint;
+    public ProxyConfig proxyConfig() {
+        return proxyConfig;
     }
-
-    public String albEndpoint() {
-        return albEndpoint;
-    }
-
-    public int lbPort() {
-        return lbPort;
-    }
-
 
     public String clusterId() {
-        return StringUtils.isNotEmpty(clusterId ) ?
+        return StringUtils.isNotEmpty(clusterId) ?
                 clusterId :
                 NeptuneClusterMetadata.clusterIdFromEndpoint(endpoints().iterator().next());
     }

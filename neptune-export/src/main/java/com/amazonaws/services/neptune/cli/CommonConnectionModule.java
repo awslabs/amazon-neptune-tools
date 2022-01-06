@@ -15,12 +15,12 @@ package com.amazonaws.services.neptune.cli;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.cluster.ConnectionConfig;
 import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
+import com.amazonaws.services.neptune.cluster.ProxyConfig;
 import com.amazonaws.services.neptune.export.EndpointValidator;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.function.Supplier;
@@ -55,18 +55,33 @@ public class CommonConnectionModule {
 
     @Option(name = {"--nlb-endpoint"}, description = "Network load balancer endpoint (optional: use only if connecting to an IAM DB enabled Neptune cluster through a network load balancer (NLB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-network-load-balancer).")
     @Once
-    @MutuallyExclusiveWith(tag = "load-balancer")
+    @MutuallyExclusiveWith(tag = "proxy-endpoint")
     private String networkLoadBalancerEndpoint;
 
     @Option(name = {"--alb-endpoint"}, description = "Application load balancer endpoint (optional: use only if connecting to an IAM DB enabled Neptune cluster through an application load balancer (ALB) – see https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer#connecting-to-amazon-neptune-from-clients-outside-the-neptune-vpc-using-aws-application-load-balancer).")
     @Once
-    @MutuallyExclusiveWith(tag = "load-balancer")
+    @MutuallyExclusiveWith(tag = "proxy-endpoint")
     private String applicationLoadBalancerEndpoint;
 
     @Option(name = {"--lb-port"}, description = "Load balancer port (optional, default 80).")
     @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
     @Once
     private int loadBalancerPort = 80;
+
+    @Option(name = {"--proxy-endpoint"}, description = "Proxy endpoint (optional: use only if connecting to an IAM DB enabled Neptune cluster through a proxy such as a bastion host).")
+    @Once
+    @MutuallyExclusiveWith(tag = "proxy-endpoint")
+    private String proxyEndpoint;
+
+    @Option(name = {"--proxy-port"}, description = "Proxy port (optional, default 8182).")
+    @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
+    @Once
+    private int proxyPort = 8182;
+
+    @Option(name = {"--proxy-remove-host-header"}, description = "Remove Host header after Sigv4 signing request to be forwarded via proxy.")
+    @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
+    @Once
+    private boolean removeProxyHostHeader = false;
 
     private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
@@ -76,23 +91,32 @@ public class CommonConnectionModule {
 
     public ConnectionConfig config() {
 
-        if (StringUtils.isNotEmpty(clusterId)){
+        if (StringUtils.isNotEmpty(clusterId)) {
             NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
             endpoints.addAll(clusterMetadata.endpoints());
         }
 
-        if (endpoints.isEmpty()){
+        if (endpoints.isEmpty()) {
             throw new IllegalStateException("You must supply a cluster ID or one or more endpoints");
+        }
+
+        ProxyConfig proxyConfig = null;
+
+        if (StringUtils.isNotEmpty(networkLoadBalancerEndpoint)) {
+            proxyConfig = new ProxyConfig(networkLoadBalancerEndpoint, loadBalancerPort, false);
+        } else if (StringUtils.isNotEmpty(applicationLoadBalancerEndpoint)) {
+            proxyConfig = new ProxyConfig(applicationLoadBalancerEndpoint, loadBalancerPort, true);
+        } else if (StringUtils.isNotEmpty(proxyEndpoint)) {
+            proxyConfig = new ProxyConfig(proxyEndpoint, proxyPort, removeProxyHostHeader);
         }
 
         return new ConnectionConfig(
                 clusterId,
                 EndpointValidator.validate(endpoints),
                 port,
-                networkLoadBalancerEndpoint,
-                applicationLoadBalancerEndpoint,
-                loadBalancerPort,
                 useIamAuth,
-                !disableSsl);
+                !disableSsl,
+                proxyConfig
+        );
     }
 }
