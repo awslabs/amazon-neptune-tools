@@ -12,12 +12,17 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
+import org.apache.tinkerpop.gremlin.driver.GremlinClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public enum EndpointsType implements EndpointsSelector {
+
     All {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
@@ -41,6 +46,7 @@ public enum EndpointsType implements EndpointsSelector {
                     .collect(Collectors.toList());
 
             if (results.isEmpty()){
+                logger.warn("Unable to get Primary endpoint so getting ClusterEndpoint instead");
                 return ClusterEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
             }
 
@@ -60,6 +66,7 @@ public enum EndpointsType implements EndpointsSelector {
                     .collect(Collectors.toList());
 
             if (results.isEmpty()) {
+                logger.warn("Unable to get ReadReplicas endpoints so getting ReaderEndpoint instead");
                 return ReaderEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
             }
 
@@ -83,6 +90,8 @@ public enum EndpointsType implements EndpointsSelector {
 
             return Collections.singletonList(readerEndpoint);
         }
-    }
+    };
+
+    private static final Logger logger = LoggerFactory.getLogger(EndpointsType.class);
 
 }
