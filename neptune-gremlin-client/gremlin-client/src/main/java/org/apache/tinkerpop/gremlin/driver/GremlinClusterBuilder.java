@@ -74,11 +74,19 @@ public class GremlinClusterBuilder {
     private GremlinClusterBuilder() {
     }
 
+    /**
+     * Number of consecutive failures to acquire a connection before the {@link #refreshOnErrorEventHandler}
+     * is triggered.
+     */
     public GremlinClusterBuilder refreshOnErrorThreshold(final int refreshOnErrorThreshold) {
         this.refreshOnErrorThreshold = refreshOnErrorThreshold;
         return this;
     }
 
+    /**
+     * Handler to be invoked when the number of consecutive failures to acquire a connection exceeds the
+     * {@link #refreshOnErrorThreshold}. The handler should return a collection of endpoint addresses.
+     */
     public GremlinClusterBuilder refreshOnErrorEventHandler(final Supplier<Collection<String>> refreshOnErrorEventHandler) {
         this.refreshOnErrorEventHandler = refreshOnErrorEventHandler;
         return this;
