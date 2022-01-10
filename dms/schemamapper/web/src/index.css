@@ -1,0 +1,543 @@
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
+    Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  line-height: 1.6;
+  font-size: 14px;
+ background-color: #ffffff !important
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+
+
+footer {
+  margin-top: 1rem;
+  margin-bottom: 0%;
+  text-align: center;
+
+}
+
+#loginContainer{
+  width: 30rem !important;
+  border-radius: 1em;
+  
+}
+
+/* #loginForm{
+  text-align: right;
+  padding-top: 5rem !important;
+  background-image: url('./assets/kraken.png');
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 15%;
+} */
+
+
+.bannerText {
+  color: white !important;
+  margin-right: 1rem;
+  color: green;
+    -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: white;
+}
+
+.heading2Xl {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+}
+
+.headingXl {
+  font-size: 2rem;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+  color: green;
+  -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+.headingLg {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin: 1rem 0;
+}
+
+.headingMd {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: black;
+  -webkit-text-fill-color: green; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-color: black;
+}
+
+.borderCircle {
+  border-radius: 9999px;
+}
+
+.colorInherit {
+  color: inherit;
+}
+
+.padding1px {
+  padding-top: 1px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  margin: 0 0 1.25rem;
+}
+
+.lightText {
+  color: #666;
+}
+
+.headingMdLeftAligned {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: black;
+  -webkit-text-fill-color: green; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 0.1px;
+  -webkit-text-stroke-color: black;
+  text-align: left !important;
+  margin-top: 1rem;
+}
+  
+
+
+.btn-primary{
+  background-color: #6984ab;
+  border-color: #1e1f20;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu,
+    Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  line-height: 1.6; 
+  font-size: 14px;
+  background-color: #d1d1d3 !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+
+
+footer {
+  margin-top: 1rem;
+  margin-bottom: 0%;
+  text-align: center;
+
+}
+
+
+.bannerText {
+  color: white !important;
+  margin-right: 1rem;
+  color: green;
+    -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: white;
+}
+
+.heading2Xl {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+  color: green;
+  -webkit-text-fill-color: rgb(209, 160, 160); /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 0.05rem;
+  -webkit-text-stroke-color: black;
+}
+
+.headingXl {
+  font-size: 3rem;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+  color: green;
+  -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+.headingLg {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin: 1rem 0;
+}
+
+.headingMd {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: black;
+  -webkit-text-fill-color: green; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-color: black;
+}
+
+.borderCircle {
+  border-radius: 9999px;
+}
+
+.colorInherit {
+  color: inherit;
+}
+
+.padding1px {
+  padding-top: 1px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  margin: 0 0 1.25rem;
+}
+
+.lightText {
+  color: #666;
+}
+.card {
+  background-color: #ffffff !important;
+}
+
+
+.headingMdLeftAligned {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: black;
+  -webkit-text-fill-color: #96a6d3 !important;
+  -webkit-text-stroke-width: 0.1px;
+  -webkit-text-stroke-color: black;
+  text-align: left !important;
+  margin-top: 1rem;
+}
+
+
+
+.userprofile{
+  width: 10rem;
+  height: 10rem;
+}
+  
+
+.review{
+  padding: 2rem;
+  background-color: #bfcbec !important;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+}
+
+.reviewHeader{
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 2.5rem;
+  -webkit-text-fill-color: #bfcbec !important;
+  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-color: black;
+}
+
+.availabledates {
+  padding: 1rem;
+  border-color: #bfcbec !important;
+  border-width: 0.25rem;
+  border-style: solid;
+  background-color: #bfcbec !important;
+  border-radius: 0.5rem;
+}
+
+.cardImage{
+  align-self: right;
+}
+
+.charBotOverlay {
+  position:absolute;
+  bottom: 0;
+  right: 0;
+}
+  
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: #0070f3;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+
+
+footer {
+  margin-top: 1rem;
+  margin-bottom: 0%;
+  text-align: center;
+
+}
+
+#loginContainer{
+  width: 30rem !important;
+  border-radius: 1em;
+  
+}
+
+/* #loginForm{
+  text-align: right;
+  padding-top: 5rem !important;
+  background-image: url('../assets/kraken.png');
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 15%;
+} */
+
+
+.bannerText {
+  color: white !important;
+  margin-right: 1rem;
+  color: green;
+    -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: white;
+}
+
+.heading2Xl {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+}
+
+
+.heading5Xl {
+  font-size: 5rem;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+}
+
+.headingXl {
+  font-size: 2rem;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: -0.05rem;
+  margin: 1rem 0;
+  color: green;
+  -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+.headingLg {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin: 1rem 0;
+}
+
+.headingMd {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: black;
+  -webkit-text-fill-color: rgb(126, 154, 126); /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 0.5px;
+  -webkit-text-stroke-color: black;
+}
+
+.borderCircle {
+  border-radius: 9999px;
+}
+
+.colorInherit {
+  color: inherit;
+}
+
+.padding1px {
+  padding-top: 1px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  margin: 0 0 1.25rem;
+}
+
+.lightText {
+  color: #666;
+}
+.card {
+  /* background-color: rgb(240, 223, 216) !important; */
+  margin: 0.25rem;
+  padding: 0.25rem;
+}
+.cardImage{
+  max-width: 50% !important;
+  align-self: center;
+}
+
+.card-body{
+  padding: 0rem 0rem !important;
+}
+
+.NCForm {
+  border: none !important;
+}
+
+.headingMdLeftAligned {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: black;
+  -webkit-text-fill-color: green; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 0.1px;
+  -webkit-text-stroke-color: black;
+  text-align: left !important;
+  margin-top: 1rem;
+}
+
+.NCForm{
+  border: solid 0.25rem;
+  border-color: #a1a4a8;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin:1rem;
+}
+
+.tree-depth-1 {
+  margin-left: 2rem;
+}
+
+#loginContainer
+{
+    padding-top: 5rem;
+    width: 30rem !important;
+    border-radius: 1em; 
+}
+
+.container {
+  max-width: 100%;
+  /* background-color: #f1f1f1; */
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  /* margin:2rem; */
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 14px;
+}
+
+.backToHome {
+  margin: 3rem 0 0;
+}
+
+.footer {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  /* background-color: rgb(218, 158, 147); */
+  color: white;
+  text-align: center;
+  position:relative;
+}
+
+.btn-primary{
+  background-color: #6984ab;
+  border-color: #1e1f20;
+  margin:0.25rem;
+}
+
+
+
+
+.rightAlign{
+  padding: 0.1rem;
+  text-align: right !important;
+}
+
+.navbarcenter{
+  text-align: center;
+  padding: 0.25rem;
+  background-color: rgb(5, 52, 99);
+  color: #1e1f20;
+  font-size: x-large;
+}
+
+blockquote {
+  font-size: large;
+}
