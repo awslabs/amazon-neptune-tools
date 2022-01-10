@@ -1,0 +1,39 @@
+{
+  "name": "neptune-gremlin",
+  "version": "0.0.5",
+  "description": "An SDK for querying an Amazon Neptune graph database using gremlin",
+  "main": "neptune-gremlin.js",
+  "homepage": "https://github.com/awslabs/amazon-neptune-tools/neptune-gremlin-js",
+  "bugs": {
+    "url": "https://github.com/awslabs/amazon-neptune-tools/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/awslabs/amazon-neptune-tools"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "npm i && npm run lint && cp neptune-gremlin.js ./cdk-test-app/lambda && cd cdk-test-app && npm i && npm run synth && cd .. && npm run test",
+    "lint": "eslint . --fix"
+  },
+  "keywords": [
+    "aws",
+    "amazon",
+    "neptune",
+    "gremlin",
+    "tinkerpop",
+    "graph"
+  ],
+  "author": "Eric Z. Beard",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "async": "^3.2.2",
+    "aws4": "^1.11.0",
+    "gremlin": "^3.5.1",
+    "util": "^0.12.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.4.1",
+    "jest": "^27.4.3"
+  }
+}

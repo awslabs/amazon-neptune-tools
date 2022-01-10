@@ -1,0 +1,22 @@
+{
+  "name": "cdk-test-app",
+  "version": "0.1.0",
+  "bin": {
+    "cdk-test-app": "bin/cdk-test-app.js"
+  },
+  "scripts": {
+    "build": "echo \"The build step is not required when using JavaScript!\" && exit 0",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.1.0",
+    "jest": "^26.4.2"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-neptune-alpha": "^2.1.0-alpha.0",
+    "aws-cdk-lib": "2.1.0",
+    "constructs": "^10.0.0"
+  }
+}
