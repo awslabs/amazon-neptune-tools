@@ -168,8 +168,8 @@ class Connection {
                     // Check for connection issues
                     if (err.message.startsWith("WebSocket is not open")) {
                         console.warn("Reopening connection")
-                        this.connection.close()
-                        this.connect()
+                        self.connection.close()
+                        self.connect()
                         g = self.getG()
                         return true
                     }
