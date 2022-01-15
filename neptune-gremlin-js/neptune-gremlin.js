@@ -351,6 +351,14 @@ class Connection {
                     .has(options.focus.label, options.focus.key, options.focus.value)
                     .bothE().bothV().dedup()
                     .valueMap(true).toList()
+
+                if (rawNodes.length === 0) {
+                    // Maybe this node doesn't have any edges, we still want it
+                    // Can we do this all in one query?
+                    rawNodes = await g.V()
+                        .has(options.focus.label, options.focus.key, options.focus.value)
+                        .valueMap(true).toList()
+                }
             } else {
                 // Get everything
                 rawNodes = await g.V().valueMap(true).toList()
