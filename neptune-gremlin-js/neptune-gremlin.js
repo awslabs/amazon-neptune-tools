@@ -6,6 +6,7 @@ const {DriverRemoteConnection} = gremlin.driver
 const util = require("util")
 const aws4 = require("aws4")
 const { PartitionStrategy } = require("gremlin/lib/process/traversal-strategy")
+const __ = gremlin.process.statics
 
 /**
  * Represents a connection to Neptune's gremlin endpoint.
@@ -346,23 +347,43 @@ class Connection {
 
             let rawNodes
             if (options.focus) {
-                console.info("options.focus", options.focus)
-                rawNodes = await g.V()
-                    .has(options.focus.label, options.focus.key, options.focus.value)
-                    .bothE().bothV().dedup()
-                    .valueMap(true).toList()
 
-                if (rawNodes.length === 0) {
-                    // Maybe this node doesn't have any edges, we still want it
-                    // Can we do this all in one query?
+                console.info("options.focus", options.focus)
+
+                if (options.focus.key === undefined) {
+                    // Search for all edges with the specified label
+                    rawNodes = await g.V()
+                        .hasLabel(options.focus.label)
+                        .union(__.identity(), __.bothE().bothV())
+                        .dedup()
+                        .valueMap(true).toList()
+                } else {
+                    // Find the edge with matching label, property key and value, 
+                    // and also return all of its edges and linked vertices.
+                    // TODO: There is a bug here where it returns no vertices but *all* edges.
                     rawNodes = await g.V()
                         .has(options.focus.label, options.focus.key, options.focus.value)
+                        .union(__.identity(), __.bothE().bothV())
+                        .dedup()
                         .valueMap(true).toList()
+
+                    // Below should not be necessary with union
+
+                    // console.log("focus query returned no results, trying again without edges")
+
+                    // if (rawNodes.length === 0) {
+                    //     // Maybe this node doesn't have any edges, we still want it
+                    //     // Can we do this all in one query?
+                    //     rawNodes = await g.V()
+                    //         .has(options.focus.label, options.focus.key, options.focus.value)
+                    //         .valueMap(true).toList()
+                    // }
                 }
             } else {
                 // Get everything
                 rawNodes = await g.V().valueMap(true).toList()
             }
+
             console.info("rawNodes", rawNodes)
 
             const rawEdges = await g.E().elementMap().toList()

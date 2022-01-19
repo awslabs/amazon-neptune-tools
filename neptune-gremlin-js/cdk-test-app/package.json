@@ -5,7 +5,7 @@
     "cdk-test-app": "bin/cdk-test-app.js"
   },
   "scripts": {
-    "build": "echo \"The build step is not required when using JavaScript!\" && exit 0",
+    "build": "npm i && npm run synth && cd lambda && npm i && cd ..",
     "cdk": "cdk",
     "synth": "cdk synth",
     "test": "jest"

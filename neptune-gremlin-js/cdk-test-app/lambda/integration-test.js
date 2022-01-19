@@ -60,6 +60,11 @@ exports.handler = async (event, context) => {
     }
 }
 
+/**
+ * Make sure a node can be saved without an id.
+ * 
+ * @param {*} conn 
+ */
 async function testNoId(conn) {
     console.log("Test creating node with no id")
     const propVal = uuid.v4()
@@ -75,6 +80,146 @@ async function testNoId(conn) {
     console.log("TestNoId node found", node)
 
     nodeAssert.strictEqual(node.testnoidprop, propVal)
+}
+
+/**
+ * Test the options.focus functionality that allows us to retrieve a subset 
+ * of the graph.
+ * 
+ * @param {*} connection 
+ */
+async function testFocus(connection) {
+
+    const node1 = {
+        id: uuid.v4(),
+        properties: {
+            name: "Test Focus1",
+            category: "category_a",
+        },
+        labels: ["label_x"],
+    }
+
+    await connection.saveNode(node1)
+
+    const node2 = {
+        id: uuid.v4(),
+        properties: {
+            name: "Test Focus2",
+        },
+        labels: ["label_y"],
+    }
+
+    await connection.saveNode(node2)
+
+    const node3 = {
+        id: uuid.v4(),
+        properties: {
+            name: "Test Focus3",
+        },
+        labels: ["label_x"],
+    }
+
+    await connection.saveNode(node3)
+
+    const node4 = {
+        id: uuid.v4(),
+        properties: {
+            name: "Test Focus4",
+        },
+        labels: ["label_z"],
+    }
+
+    await connection.saveNode(node4)
+
+    const edge1 = {
+        id: uuid.v4(),
+        label: "points_to",
+        to: node2.id,
+        from: node1.id,
+        properties: {},
+    }
+
+    await connection.saveEdge(edge1)
+
+    async function cleanup() {
+        try {
+            connection.deleteEdge(edge1.id)
+            connection.deleteNode(node1.id)
+            connection.deleteNode(node2.id)
+            connection.deleteNode(node3.id)
+            connection.deleteNode(node4.id)
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    let options = {}
+
+    // Focus on everything with label_x and directly related nodes.
+    // This should return 1 and 3, and by relation 2
+    // It should not return 4
+    options.focus = {
+        label: "label_x",
+    }
+
+    let searchResult = await connection.search(options)
+
+    for (const node of [node1, node2, node3, node4]) {
+        node.found = false
+    }
+
+    for (const foundNode of searchResult.nodes) {
+        for (const node of [node1, node2, node3, node4]) {
+            if (node.id === foundNode.id) node.found = true
+        }
+    }
+
+    // 1, 2, and 3 should all be found, but 4 should not
+    let assertions = {
+        "Found1": () => node1.found,
+        "Found2": ()  => node2.found,
+        "Found3": ()  => node3.found,
+        "NotFound4": () => !node4.found,
+    }
+
+    if (!runAssertions(assertions)) {
+        await cleanup()
+        throw new Error("focus on label assertions failed")
+    }
+
+    options = {
+        focus: {
+            key: "name", 
+            value: "Test Focus4", 
+            label: "label_z",
+        },
+    }
+
+    searchResult = await connection.search(options)
+
+    for (const node of [node1, node2, node3, node4]) {
+        node.found = false
+    }
+
+    for (const foundNode of searchResult.nodes) {
+        for (const node of [node1, node2, node3, node4]) {
+            if (node.id === foundNode.id) node.found = true
+        }
+    }
+
+    // Only 4 should be found
+    assertions = {
+        "NotFound1": () => !node1.found,
+        "NotFound2": ()  => !node2.found,
+        "NotFound3": ()  => !node3.found,
+        "Found4": () => node4.found,
+    }
+
+    if (!runAssertions(assertions)) {
+        await cleanup()
+        throw new Error("focus by name failed")
+    }
+
 }
 
 /**
@@ -251,6 +396,10 @@ async function runTests() {
         throw new Error("delete assertions failed")
     }
 
+    // Test options.focus
+    await testFocus(connection)
+
+    // Test creating a node without an id
     await testNoId(connection)
 
     // Test partitions

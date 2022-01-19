@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "npm i && npm run lint && cp neptune-gremlin.js ./cdk-test-app/lambda && cd cdk-test-app && npm i && npm run synth && cd .. && npm run test",
+    "build": "npm i && npm run lint && cp neptune-gremlin.js ./cdk-test-app/lambda && cd cdk-test-app && npm run build && cd .. && npm run test",
     "lint": "eslint . --fix"
   },
   "keywords": [
