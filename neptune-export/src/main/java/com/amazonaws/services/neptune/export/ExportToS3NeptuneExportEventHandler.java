@@ -291,6 +291,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
                         FilenameUtils.getBaseName(completionFile.getName()),
                         completionFile.getName());
 
+        logger.info("Uploading completion file to {}", completionFileS3ObjectInfo.key());
 
         try (InputStream inputStream = new FileInputStream(completionFile)) {
 
