@@ -53,7 +53,7 @@ public class ParseFeaturesV1 {
                 ParsingContext context = new ParsingContext(FeatureTypeV1.word2vec.name() + " feature");
                 Label nodeType = new ParseNodeType(node, context).parseNodeType();
                 String property = new ParseProperty(node, context.withLabel(nodeType)).parseSingleProperty();
-                Collection<String> language = new ParseLanguage(node).parseLanguage();
+                Collection<String> language = new ParseWord2VecLanguage(node).parseLanguage();
                 Word2VecConfig config = new Word2VecConfig(nodeType, property, language);
                 word2VecFeatures.add(config);
             }

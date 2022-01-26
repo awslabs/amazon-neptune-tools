@@ -528,14 +528,14 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
             for (String language : word2VecSpecification.languages()) {
                 generator.writeString(language);
                 try {
-                    SupportedLanguages.valueOf(language);
+                    SupportedWord2VecLanguages.valueOf(language);
                 } catch (IllegalArgumentException e) {
                     warnings.add(String.format("Unsupported language for text_word2vec feature for '%s': '%s'. " +
                                     "Supported languages are: %s. " +
                                     "The output embedding is not guaranteed to be valid if you supply another language.",
                             propertySchema.nameWithoutDataType(),
                             language,
-                            ErrorMessageHelper.quoteList(Arrays.stream(SupportedLanguages.values()).map(Enum::name).collect(Collectors.toList()))));
+                            ErrorMessageHelper.quoteList(Arrays.stream(SupportedWord2VecLanguages.values()).map(Enum::name).collect(Collectors.toList()))));
                 }
 
             }

@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.config;
 
-public enum SupportedLanguages {
-    en_core_web_lg,
-    fr_core_news_lg
+public enum SupportedWord2VecLanguages {
+    en_core_web_lg
 }

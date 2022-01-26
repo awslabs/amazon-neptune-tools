@@ -123,7 +123,7 @@ public class ParseFeaturesV2 {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.text_word2vec.name() + " feature");
                 Label label = supplier.getLabel(json, context);
                 String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
-                Collection<String> language = new ParseLanguage(json).parseLanguage();
+                Collection<String> language = new ParseWord2VecLanguage(json).parseLanguage();
                 Word2VecConfig config = new Word2VecConfig(label, property, language);
                 word2VecFeatures.add(config);
             }
