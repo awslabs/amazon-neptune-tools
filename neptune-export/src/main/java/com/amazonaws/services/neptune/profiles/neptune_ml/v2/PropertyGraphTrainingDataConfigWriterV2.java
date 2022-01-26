@@ -231,6 +231,12 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
                 if (nodeConfig.hasWord2VecSpecification(label, column)) {
                     writeWord2VecFeature(propertySchema, nodeConfig.getWord2VecSpecification(label, column));
                 }
+                if (nodeConfig.hasFastTextSpecification(label, column)) {
+                    writeFastTextFeature(propertySchema, nodeConfig.getFastTextSpecification(label, column));
+                }
+                if (nodeConfig.hasSbertSpecification(label, column)) {
+                    writeSbertFeature(propertySchema, nodeConfig.getSbertSpecification(label, column));
+                }
                 if (nodeConfig.hasNumericalBucketSpecification(label, column)) {
                     writeNumericalBucketFeature(propertySchema, nodeConfig.getNumericalBucketSpecification(label, column));
                 }
@@ -275,6 +281,12 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
                 }
                 if (edgeConfig.hasWord2VecSpecification(label, column)) {
                     writeWord2VecFeature(propertySchema, edgeConfig.getWord2VecSpecification(label, column));
+                }
+                if (edgeConfig.hasFastTextSpecification(label, column)) {
+                    writeFastTextFeature(propertySchema, edgeConfig.getFastTextSpecification(label, column));
+                }
+                if (edgeConfig.hasSbertSpecification(label, column)) {
+                    writeSbertFeature(propertySchema, edgeConfig.getSbertSpecification(label, column));
                 }
                 if (edgeConfig.hasNumericalBucketSpecification(label, column)) {
                     writeNumericalBucketFeature(propertySchema, edgeConfig.getNumericalBucketSpecification(label, column));
@@ -424,10 +436,14 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
     }
 
     private void writeFeature(PropertySchema propertySchema, FeatureTypeV2 featureType) throws IOException {
+        writeFeature(propertySchema, featureType.name());
+    }
+
+    private void writeFeature(PropertySchema propertySchema, String featureType) throws IOException {
         generator.writeArrayFieldStart("feature");
         generator.writeString(propertyName.escaped(propertySchema, printerOptions)); // column
         generator.writeString(propertyName.escaped(propertySchema, printerOptions)); // feature name
-        generator.writeString(featureType.name());
+        generator.writeString(featureType);
         generator.writeEndArray();
     }
 
@@ -528,19 +544,66 @@ public class PropertyGraphTrainingDataConfigWriterV2 {
             for (String language : word2VecSpecification.languages()) {
                 generator.writeString(language);
                 try {
-                    SupportedLanguages.valueOf(language);
+                    SupportedWord2VecLanguages.valueOf(language);
                 } catch (IllegalArgumentException e) {
                     warnings.add(String.format("Unsupported language for text_word2vec feature for '%s': '%s'. " +
                                     "Supported languages are: %s. " +
                                     "The output embedding is not guaranteed to be valid if you supply another language.",
                             propertySchema.nameWithoutDataType(),
                             language,
-                            ErrorMessageHelper.quoteList(Arrays.stream(SupportedLanguages.values()).map(Enum::name).collect(Collectors.toList()))));
+                            ErrorMessageHelper.quoteList(Arrays.stream(SupportedWord2VecLanguages.values()).map(Enum::name).collect(Collectors.toList()))));
                 }
 
             }
             generator.writeEndArray();
         }
+
+        generator.writeEndObject();
+    }
+
+    private void writeFastTextFeature(PropertySchema propertySchema, FastTextConfig fastTextConfig) throws IOException {
+
+        if (propertySchema.isMultiValue()) {
+            warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_fasttext, propertySchema.nameWithoutDataType()));
+            writeAutoInferredFeature(propertySchema);
+            return;
+        }
+
+        generator.writeStartObject();
+
+        writeFeature(propertySchema, FeatureTypeV2.text_fasttext);
+
+        String language = fastTextConfig.language();
+        try {
+            SupportedFastTextLanguages.valueOf(language);
+        } catch (IllegalArgumentException e) {
+            warnings.add(String.format("Unsupported language for text_fasttext feature for '%s': '%s'. " +
+                            "Supported languages are: %s. " +
+                            "The output embedding is not guaranteed to be valid if you supply another language.",
+                    propertySchema.nameWithoutDataType(),
+                    language,
+                    ErrorMessageHelper.quoteList(Arrays.stream(SupportedFastTextLanguages.values()).map(Enum::name).collect(Collectors.toList()))));
+        }
+        generator.writeStringField("language", language);
+
+        if (fastTextConfig.maxLength().isPresent()){
+            generator.writeNumberField("max_length", fastTextConfig.maxLength().get());
+        }
+
+        generator.writeEndObject();
+    }
+
+    private void writeSbertFeature(PropertySchema propertySchema, SbertConfig sbertConfig) throws IOException {
+
+        if (propertySchema.isMultiValue()) {
+            warnings.add(String.format("%s feature does not support multi-value properties. Auto-inferring a feature for '%s'.", FeatureTypeV2.text_sbert, propertySchema.nameWithoutDataType()));
+            writeAutoInferredFeature(propertySchema);
+            return;
+        }
+
+        generator.writeStartObject();
+
+        writeFeature(propertySchema, sbertConfig.name());
 
         generator.writeEndObject();
     }

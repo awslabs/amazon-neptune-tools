@@ -12,16 +12,16 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.SupportedLanguages;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.SupportedWord2VecLanguages;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ParseLanguage {
+public class ParseWord2VecLanguage {
     private final JsonNode json;
 
-    public ParseLanguage(JsonNode json) {
+    public ParseWord2VecLanguage(JsonNode json) {
         this.json = json;
     }
 
@@ -38,7 +38,7 @@ public class ParseLanguage {
             }
         }
         if (results.isEmpty()) {
-            results.add(SupportedLanguages.en_core_web_lg.name());
+            results.add(SupportedWord2VecLanguages.en_core_web_lg.name());
         }
         return results;
     }

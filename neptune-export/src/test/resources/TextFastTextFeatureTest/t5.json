@@ -17,8 +17,8 @@
       {
         "node": "Person",
         "property": "bio",
-        "type": "text_word2vec",
-        "language": ["unsupported_language"]
+        "type": "text_fasttext",
+        "language": "en"
       }
     ]
   },
@@ -31,12 +31,12 @@
         "separator" : ",",
         "node" : [ "~id", "Person" ],
         "features" : [ {
-          "feature" : [ "bio", "bio", "text_word2vec" ],
-          "language" : [ "unsupported_language" ]
+          "feature" : [ "bio", "bio", "text_fasttext" ],
+          "language" : "en"
         } ]
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "Unsupported language for text_word2vec feature for 'bio': 'unsupported_language'. Supported languages are: 'en_core_web_lg'. The output embedding is not guaranteed to be valid if you supply another language."  ]
+    "warnings" : [ ]
   }
 }

@@ -18,7 +18,7 @@
         "node": "Person",
         "property": "bio",
         "type": "text_word2vec",
-        "language": ["fr_core_news_lg"]
+        "language": ["en_core_web_lg"]
       }
     ]
   },
@@ -32,7 +32,7 @@
         "node" : [ "~id", "Person" ],
         "features" : [ {
           "feature" : [ "bio", "bio", "text_word2vec" ],
-          "language" : [ "fr_core_news_lg" ]
+          "language" : [ "en_core_web_lg" ]
         } ]
       } ],
       "edges" : [ ]
