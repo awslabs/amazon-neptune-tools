@@ -1,0 +1,27 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "bio",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "bio",
+        "type": "text_sbertUnknown"
+      }
+    ]
+  },
+  "config": {
+
+  }
+}

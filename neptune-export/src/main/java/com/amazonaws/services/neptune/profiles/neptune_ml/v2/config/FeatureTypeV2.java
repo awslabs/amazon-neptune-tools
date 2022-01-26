@@ -42,6 +42,38 @@ public enum FeatureTypeV2 {
             }
         }
     },
+    text_fasttext {
+        @Override
+        public void validateOverride(JsonNode json, ParsingContext context) {
+            if (json.has("imputer")) {
+                throw new IllegalArgumentException(String.format("Invalid 'imputer' field for %s.", context));
+            }
+        }
+    },
+    text_sbert {
+        @Override
+        public void validateOverride(JsonNode json, ParsingContext context) {
+            if (json.has("imputer")) {
+                throw new IllegalArgumentException(String.format("Invalid 'imputer' field for %s.", context));
+            }
+        }
+    },
+    text_sbert128 {
+        @Override
+        public void validateOverride(JsonNode json, ParsingContext context) {
+            if (json.has("imputer")) {
+                throw new IllegalArgumentException(String.format("Invalid 'imputer' field for %s.", context));
+            }
+        }
+    },
+    text_sbert512 {
+        @Override
+        public void validateOverride(JsonNode json, ParsingContext context) {
+            if (json.has("imputer")) {
+                throw new IllegalArgumentException(String.format("Invalid 'imputer' field for %s.", context));
+            }
+        }
+    },
     category {
         @Override
         public void validateOverride(JsonNode json, ParsingContext context) {
