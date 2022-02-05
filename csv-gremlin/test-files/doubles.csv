@@ -1,0 +1,2 @@
+~id,~label,value:double,set:double[],optional
+abc-1,person,23.6,12.34;56.789,
