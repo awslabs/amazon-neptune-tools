@@ -93,10 +93,9 @@ Rows=13, IDs=5, Duplicate IDs=7, Vertices=5, Edges=0, Properties=17, Errors=0
 
 The help can always be displayed using the `-h` or `--help` command line arguments.
 ```
-$ python csv-gremlin.py -h
-usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc]
-                      [-rows ROWS] [-all_errors] [-silent] [-no_summary]
-                      [-escape_dollar]
+==>python3 csv-gremlin.py -h
+usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc] [-rows ROWS] [-all_errors] [-silent]
+                      [-no_summary] [-double_suffix] [-escape_dollar]
                       csvfile
 
 positional arguments:
@@ -107,22 +106,18 @@ optional arguments:
   -v, --version   Display version information
   -vb VB          Set the vertex batch size to use (default 10)
   -eb EB          Set the edge batch size to use (default 10)
-  -java_dates     Use Java style "new Date()" instead of "datetime()". This
-                  option can also be used to force date validation.
-  -assume_utc     If date fields do not contain timezone information, assume
-                  they are in UTC. By default local time is assumed otherwise.
-                  This option only applies if java_dates is also specified.
-  -rows ROWS      Specify the maximum number of rows to process. By default
-                  the whole file is processed
-  -all_errors     Show all errors. By default processing stops after any error
-                  in the CSV is encountered.
-  -silent         Enable silent mode. Only errors are reported. No Gremlin is
-                  generated.
+  -java_dates     Use Java style "new Date()" instead of "datetime()". This option can also be used to force date
+                  validation.
+  -assume_utc     If date fields do not contain timezone information, assume they are in UTC. By default local time
+                  is assumed otherwise. This option only applies if java_dates is also specified.
+  -rows ROWS      Specify the maximum number of rows to process. By default the whole file is processed
+  -all_errors     Show all errors. By default processing stops after any error in the CSV is encountered.
+  -silent         Enable silent mode. Only errors are reported. No Gremlin is generated.
   -no_summary     Do not show a summary report after processing.
-  -escape_dollar  For any dollar signs found convert them to an escaped form
-                  \$. This is needed if you are going to load the generated
-                  Gremlin using a Groovy processor such as used by the Gremlin
-                  Console. In Groovy strings, the $ sign is used for
-                  interpolation
-
+  -double_suffix  Suffix all floats and doubles with a "d" such as 12.34d. This is helpful when using the Gremlin
+                  Console or Groovy scripts as it will prevent floats and doubles automatically being created as
+                  BigDecimal objects.
+  -escape_dollar  For any dollar signs found convert them to an escaped form \$. This is needed if you are going to
+                  load the generated Gremlin using a Groovy processor such as used by the Gremlin Console. In Groovy
+                  strings, the $ sign is used for interpolation
   ```
