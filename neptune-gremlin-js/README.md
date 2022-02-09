@@ -111,6 +111,10 @@ into the cdk app's lambda folder, and then synthesizes the cdk app.
 npm run build
 ```
 
+### Sample application
+
+There is a sample app at [https://github.com/aws-samples/cdk-neptune-knowledge-graph](https://github.com/aws-samples/cdk-neptune-knowledge-graph) where you can see how to incorporate this library into a REST API.
+
 ### Making changes
 
 If you want to make a change or an addition to the package (contributions welcome!), please 

@@ -33,7 +33,16 @@
     "util": "^0.12.4"
   },
   "devDependencies": {
+    "@swc/core": "^1.2.137",
+    "@swc/wasm": "^1.2.137",
+    "bufferutil": "^4.0.6",
+    "canvas": "^2.9.0",
+    "encoding": "^0.1.13",
     "eslint": "^8.4.1",
-    "jest": "^27.4.3"
+    "jest": "^27.4.3",
+    "node-notifier": "^10.0.1",
+    "retire": "^3.0.6",
+    "ts-node": "^10.5.0",
+    "utf-8-validate": "^5.0.8"
   }
 }
