@@ -50,11 +50,11 @@ public class VariableRowCsvPropertyGraphPrinterTest {
                 map(entry("fname", "fname5"), entry("lname", "lname5"), entry("age", 50))
         );
 
-        String expectedOutput = "\"fname1\"\n" +
-                "\"fname2\",\"lname2\"\n" +
-                "\"fname3\",,30\n" +
-                ",\"lname4\",40\n" +
-                "\"fname5\",\"lname5\",50\n";
+        String expectedOutput = "\"fname1\"" + System.lineSeparator() +
+                "\"fname2\",\"lname2\"" + System.lineSeparator() +
+                "\"fname3\",,30" + System.lineSeparator() +
+                ",\"lname4\",40" + System.lineSeparator() +
+                "\"fname5\",\"lname5\",50" + System.lineSeparator();
 
         assertEquals(expectedOutput, stringWriter.toString());
 

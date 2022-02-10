@@ -197,10 +197,10 @@ public class JsonPropertyGraphPrinterTest {
                 map(entry("fname", "fname5"), entry("lname", "lname5"), entry("age", 50))
         );
 
-        String expectedOutput = "{\"fname\":\"fname1\"}\n" +
-                "{\"fname\":\"fname2\",\"lname\":\"lname2\"}\n" +
-                "{\"fname\":\"fname3\",\"age\":30}\n" +
-                "{\"lname\":\"lname4\",\"age\":40}\n" +
+        String expectedOutput = "{\"fname\":\"fname1\"}" + System.lineSeparator() +
+                "{\"fname\":\"fname2\",\"lname\":\"lname2\"}" + System.lineSeparator() +
+                "{\"fname\":\"fname3\",\"age\":30}" + System.lineSeparator() +
+                "{\"lname\":\"lname4\",\"age\":40}" + System.lineSeparator() +
                 "{\"fname\":\"fname5\",\"lname\":\"lname5\",\"age\":50}";
 
         assertEquals(expectedOutput, stringWriter.toString());

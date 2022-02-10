@@ -71,7 +71,7 @@ public class DataTypeTest {
     @Test
     public void shouldNotEscapeNewline(){
         String result = DataType.String.format("A" + System.lineSeparator() + "B");
-        assertEquals("\"A\nB\"", result);
+        assertEquals("\"A" + System.lineSeparator() + "B\"", result);
     }
 
     @Test
@@ -82,8 +82,11 @@ public class DataTypeTest {
 
     @Test
     public void shouldEscapeNewlineIfEscapeNewlineSetToTrue(){
-        String result = DataType.String.format("A" + System.lineSeparator() + "B", true);
-        assertEquals("\"A\\nB\"", result);
+        String result1 = DataType.String.format("A\r\nB", true);
+        assertEquals("\"A\\r\\nB\"", result1);
+
+        String result2 = DataType.String.format("A\nB", true);
+        assertEquals("\"A\\nB\"", result2);
     }
 
     @Test

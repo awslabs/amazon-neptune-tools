@@ -41,7 +41,7 @@ public class DirectoriesTest {
         Directories directories = Directories.createFor(DirectoryStructure.PropertyGraph, new File("home"), "export-id", "", "");
         Path filePath = directories.createFilePath(path, longName, PropertyGraphExportFormat.csv);
 
-        assertEquals("/export/8044f12c352773b7ff400ef524da6e90db419e4a.csv", filePath.toString());
+        assertEquals(File.separator + "export" + File.separator + "8044f12c352773b7ff400ef524da6e90db419e4a.csv", filePath.toString());
     }
 
 
