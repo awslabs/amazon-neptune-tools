@@ -62,7 +62,7 @@ export default function Layout({ children, home, login }) {
                             <Nav className="me-auto">
                                 {/* <Nav.Link href="/">Home</Nav.Link> */}
                                 <Nav.Link href="/">Schema-mapper</Nav.Link>
-                                <Nav.Link href="/gm">Graph-modeller</Nav.Link>
+                                {/* <Nav.Link href="/gm">Graph-modeller</Nav.Link> */}
                                 {/* <NavDropdown title="Dropdown" id="basic-nav-dropdown">
                                     <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
                                     <NavDropdown.Item href="#action/3.2">Another action</NavDropdown.Item>
@@ -126,11 +126,8 @@ export default function Layout({ children, home, login }) {
             <hr />
             <footer class="footer">
                 <div class="container">
-                    <p> for Neptune Developers
-                        <br />
-                        by
-                        <br />
-                        <a href="mailto:neptune-developer-feedbac@amazon.com">neptune-uitools@amazon.com</a>
+                    <p> email: 
+                        <a href="mailto:neptune-developer-feedbac@amazon.com">wwso-neptune-ssa@amazon.com</a>
                     </p>
                 </div>
             </footer>
