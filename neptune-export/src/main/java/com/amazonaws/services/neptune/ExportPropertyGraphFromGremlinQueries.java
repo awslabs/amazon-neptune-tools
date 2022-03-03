@@ -77,6 +77,10 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
     @Once
     private boolean includeTypeDefinitions = false;
 
+    @Option(name = {"--strict-cardinality"}, description = "Use strict cardinality (optional, default 'false').")
+    @Once
+    private boolean strictCardinality = false;
+
     @Option(name = {"--timeout-millis"}, description = "Query timeout in milliseconds (optional).")
     @Once
     private Long timeoutMillis = null;
@@ -94,7 +98,7 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
                             directories.queriesResource();
 
                     CsvPrinterOptions csvPrinterOptions = CsvPrinterOptions.builder().setIncludeTypeDefinitions(includeTypeDefinitions).build();
-                    JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder().setStrictCardinality(true).build();
+                    JsonPrinterOptions jsonPrinterOptions = JsonPrinterOptions.builder().setStrictCardinality(strictCardinality).build();
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, new PrinterOptions(csvPrinterOptions, jsonPrinterOptions));
                     NamedQueriesCollection namedQueries = getNamedQueriesCollection(queries, queriesFile, queriesResource);
