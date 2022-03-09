@@ -2,11 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>neptune-gremlin-client</artifactId>
+        <groupId>software.amazon.neptune</groupId>
+        <version>1.8</version>
+    </parent>
 
-    <groupId>software.amazon.neptune</groupId>
     <artifactId>gremlin-client</artifactId>
-    <packaging>jar</packaging>
-    <version>1.0.3-SNAPSHOT</version>
 
     <modelVersion>4.0.0</modelVersion>
 
