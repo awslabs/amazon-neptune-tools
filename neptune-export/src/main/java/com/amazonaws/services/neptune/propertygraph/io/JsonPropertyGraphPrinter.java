@@ -113,12 +113,27 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
     }
 
     private void printProperty(Object value, PropertySchema propertySchema) throws IOException {
-
-        DataType dataType = propertySchema.dataType();
         String formattedKey = propertySchema.nameWithoutDataType();
-        boolean isMultiValue = propertySchema.isMultiValue();
 
-        printProperty(value, dataType, formattedKey, isMultiValue);
+        if (isMap(value)) {
+            generator.writeFieldName(formattedKey);
+            printStartRow();
+            printNestedProperties((Map<?, ?>) value);
+            printEndRow();
+        } else {
+            DataType dataType = propertySchema.dataType();
+            boolean isMultiValue = propertySchema.isMultiValue();
+
+            printProperty(value, dataType, formattedKey, isMultiValue);
+        }
+    }
+
+    private void printNestedProperties(Map<?, ?> value) throws IOException {
+        for (Map.Entry<?, ?> property : value.entrySet()) {
+            PropertySchema propertySchema = new PropertySchema(property.getKey());
+            propertySchema.accept(property.getValue(), true);
+            printProperty(property.getValue(), propertySchema);
+        }
     }
 
     private void printProperty(Object value, DataType dataType, String formattedKey, boolean forceMultiValue) throws IOException {
@@ -209,5 +224,9 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
     private boolean isList(Object value) {
         return value instanceof List<?>;
+    }
+
+    private boolean isMap(Object value) {
+        return value instanceof Map<?, ?>;
     }
 }

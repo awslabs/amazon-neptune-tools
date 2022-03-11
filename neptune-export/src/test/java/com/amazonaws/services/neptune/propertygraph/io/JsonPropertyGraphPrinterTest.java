@@ -178,6 +178,30 @@ public class JsonPropertyGraphPrinterTest {
     }
 
     @Test
+    public void shouldPrintNestedPropertiesMapAsJsonObject() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema1 = new PropertySchema("property", false, DataType.String, true);
+
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("property", propertySchema1);
+
+        Map<?, ?> props = map(entry("property", map(
+                entry("nestedProperty1", "value1"),
+                entry("nestedProperty2", "value2"))));
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, PrinterOptions.NULL_OPTIONS)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"property\":{\"nestedProperty1\":\"value1\",\"nestedProperty2\":\"value2\"}}",
+                stringWriter.toString());
+    }
+
+    @Test
     public void appendsPreviouslyUnseenValuesToObjectWhenInferringSchema() throws IOException {
 
         StringWriter stringWriter = new StringWriter();
