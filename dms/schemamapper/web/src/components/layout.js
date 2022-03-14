@@ -61,7 +61,7 @@ export default function Layout({ children, home, login }) {
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="me-auto">
                                 {/* <Nav.Link href="/">Home</Nav.Link> */}
-                                <Nav.Link href="/">Schema-mapper</Nav.Link>
+                                <Nav.Link href="/index.html">Schema-mapper</Nav.Link>
                                 {/* <Nav.Link href="/gm">Graph-modeller</Nav.Link> */}
                                 {/* <NavDropdown title="Dropdown" id="basic-nav-dropdown">
                                     <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>

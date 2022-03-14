@@ -16,6 +16,10 @@ ReactDOM.render(
           <SchemaMapper />
           {/* <Schemas/> */}
         </Route>
+        <Route exact path="/index.html">
+          <SchemaMapper />
+          {/* <Schemas/> */}
+        </Route>
         {/* <Route path="/sm">
           <SchemaMapper />
         </Route> */}
