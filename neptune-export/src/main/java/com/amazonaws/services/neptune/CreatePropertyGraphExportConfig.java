@@ -103,7 +103,8 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
                                     new PropertyGraphRangeModule().config(),
                                     gremlinFilters.filters(),
                                     cluster.concurrencyConfig(),
-                                    targetConfig, featureToggles());
+                                    targetConfig, featureToggles(),
+                                    getMaxFileDescriptorCount());
 
                             graphSchema = exportJob.execute();
 

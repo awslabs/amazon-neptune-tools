@@ -24,13 +24,14 @@ public class LabelWriters<T extends Map<?, ?>> implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(LabelWriters.class);
 
-    private static final int MAX_FILE_DESCRIPTOR_COUNT = 9000;
+    private final int maxFileDescriptorCount;
 
     private final AtomicInteger fileDescriptorCount;
     private final LinkedHashMap<Label, LabelWriter<T>> labelWriters = new LinkedHashMap<>(16, 0.75f, true);
 
-    public LabelWriters(AtomicInteger fileDescriptorCount) {
+    public LabelWriters(AtomicInteger fileDescriptorCount, int maxFileDescriptorCount) {
         this.fileDescriptorCount = fileDescriptorCount;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     public boolean containsKey(Label label){
@@ -39,7 +40,7 @@ public class LabelWriters<T extends Map<?, ?>> implements AutoCloseable {
 
     public void put(Label label, LabelWriter<T> labelWriter) throws Exception {
 
-        if (fileDescriptorCount.get() > MAX_FILE_DESCRIPTOR_COUNT && labelWriters.size() > 1){
+        if (fileDescriptorCount.get() > maxFileDescriptorCount && labelWriters.size() > 1){
             Label leastRecentlyAccessedLabel = labelWriters.keySet().iterator().next();
             LabelWriter<T> leastRecentlyAccessedLabelWriter = labelWriters.remove(leastRecentlyAccessedLabel);
             logger.info("Closing writer for label {} for output {} so as to conserve file descriptors", leastRecentlyAccessedLabel.labelsAsString(), leastRecentlyAccessedLabelWriter.outputId());

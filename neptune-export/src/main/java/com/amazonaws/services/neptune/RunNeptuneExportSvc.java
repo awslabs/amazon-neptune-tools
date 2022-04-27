@@ -30,6 +30,11 @@ import java.nio.charset.StandardCharsets;
 @Command(name = "nesvc", description = "neptune-export service", hidden = true)
 public class RunNeptuneExportSvc extends NeptuneExportBaseCommand implements Runnable {
 
+    /**
+     * Same as the default value given in the CFN template at https://docs.aws.amazon.com/neptune/latest/userguide/export-service.html
+     */
+    public static final int DEFAULT_MAX_FILE_DESCRIPTOR_COUNT = 10000;
+
     @Option(name = {"--json"}, description = "JSON")
     @Once
     private String json;
@@ -42,13 +47,17 @@ public class RunNeptuneExportSvc extends NeptuneExportBaseCommand implements Run
     @Once
     private boolean cleanRootPath = false;
 
+    @Option(name = {"--max-file-descriptor-count"}, description = "Maximum number of simultaneously open files.", hidden = true)
+    @Once
+    private int maxFileDescriptorCount = DEFAULT_MAX_FILE_DESCRIPTOR_COUNT;
+
     @Override
     public void run() {
 
         InputStream input = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
 
         try {
-            new NeptuneExportLambda(rootPath, cleanRootPath).handleRequest(input, System.out, new Context() {
+            new NeptuneExportLambda(rootPath, cleanRootPath, maxFileDescriptorCount).handleRequest(input, System.out, new Context() {
                 @Override
                 public String getAwsRequestId() {
                     throw new NotImplementedException();

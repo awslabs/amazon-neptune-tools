@@ -38,6 +38,8 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
 
     private boolean isCliInvocation = false;
 
+    private int maxFileDescriptorCount;
+
     private NeptuneExportEventHandler eventHandler = NeptuneExportEventHandler.NULL_EVENT_HANDLER;
 
     @Override
@@ -82,5 +84,13 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
 
     FeatureToggles featureToggles() {
         return featureToggleModule.featureToggles();
+    }
+
+    public int getMaxFileDescriptorCount() {
+        return maxFileDescriptorCount;
+    }
+
+    public void setMaxFileDescriptorCount(int maxFileDescriptorCount) {
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 }
