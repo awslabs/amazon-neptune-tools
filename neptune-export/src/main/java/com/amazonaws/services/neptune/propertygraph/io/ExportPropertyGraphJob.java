@@ -48,6 +48,7 @@ public class ExportPropertyGraphJob {
     private final ConcurrencyConfig concurrencyConfig;
     private final PropertyGraphTargetConfig targetConfig;
     private final FeatureToggles featureToggles;
+    private final int maxFileDescriptorCount;
 
     public ExportPropertyGraphJob(Collection<ExportSpecification> exportSpecifications,
                                   GraphSchema graphSchema,
@@ -56,7 +57,8 @@ public class ExportPropertyGraphJob {
                                   GremlinFilters gremlinFilters,
                                   ConcurrencyConfig concurrencyConfig,
                                   PropertyGraphTargetConfig targetConfig,
-                                  FeatureToggles featureToggles) {
+                                  FeatureToggles featureToggles,
+                                  int maxFileDescriptorCount) {
         this.exportSpecifications = exportSpecifications;
         this.graphSchema = graphSchema;
         this.g = g;
@@ -65,6 +67,7 @@ public class ExportPropertyGraphJob {
         this.concurrencyConfig = concurrencyConfig;
         this.targetConfig = targetConfig;
         this.featureToggles = featureToggles;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     public GraphSchema execute() throws Exception {
@@ -115,7 +118,8 @@ public class ExportPropertyGraphJob {
                             rangeFactory,
                             status,
                             fileIndex,
-                            fileDescriptorCount
+                            fileDescriptorCount,
+                            maxFileDescriptorCount
                     );
                     futures.add(taskExecutor.submit(exportTask));
                 }

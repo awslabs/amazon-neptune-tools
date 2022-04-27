@@ -17,20 +17,25 @@ import com.amazonaws.services.neptune.NeptuneExportCommand;
 import com.amazonaws.services.neptune.NeptuneExportEventHandlerHost;
 import org.apache.commons.lang.StringUtils;
 
+import static com.amazonaws.services.neptune.export.NeptuneExportService.MAX_FILE_DESCRIPTOR_COUNT;
+
 public class NeptuneExportRunner {
 
     private final String[] args;
     private final NeptuneExportEventHandler eventHandler;
     private final boolean isCliInvocation;
+    private final int maxFileDescriptorCount;
 
     public NeptuneExportRunner(String[] args) {
-        this(args, NeptuneExportEventHandler.NULL_EVENT_HANDLER, true);
+        this(args, NeptuneExportEventHandler.NULL_EVENT_HANDLER, true, MAX_FILE_DESCRIPTOR_COUNT);
     }
 
-    public NeptuneExportRunner(String[] args, NeptuneExportEventHandler eventHandler, boolean isCliInvocation) {
+    public NeptuneExportRunner(String[] args, NeptuneExportEventHandler eventHandler,
+                               boolean isCliInvocation, int maxFileDescriptorCount) {
         this.args = args;
         this.eventHandler = eventHandler;
         this.isCliInvocation = isCliInvocation;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     public void run() {
@@ -55,6 +60,10 @@ public class NeptuneExportRunner {
 
             if (NeptuneExportCommand.class.isAssignableFrom(cmd.getClass())){
                 ((NeptuneExportCommand) cmd).setIsCliInvocation(isCliInvocation);
+            }
+
+            if (NeptuneExportCommand.class.isAssignableFrom(cmd.getClass())){
+                ((NeptuneExportCommand) cmd).setMaxFileDescriptorCount(maxFileDescriptorCount);
             }
 
             cmd.run();

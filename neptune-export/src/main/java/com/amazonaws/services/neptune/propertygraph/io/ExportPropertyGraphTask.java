@@ -50,7 +50,8 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                                    GremlinFilters gremlinFilters,
                                    Status status,
                                    AtomicInteger index,
-                                   AtomicInteger fileDescriptorCount) {
+                                   AtomicInteger fileDescriptorCount,
+                                   int maxFileDescriptorCount) {
         this.graphElementSchemas = graphElementSchemas;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
@@ -60,7 +61,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         this.gremlinFilters = gremlinFilters;
         this.status = status;
         this.index = index;
-        this.labelWriters = new LabelWriters<>(fileDescriptorCount);
+        this.labelWriters = new LabelWriters<>(fileDescriptorCount, maxFileDescriptorCount);
     }
 
     @Override

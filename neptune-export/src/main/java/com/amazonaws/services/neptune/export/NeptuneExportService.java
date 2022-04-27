@@ -43,6 +43,7 @@ public class NeptuneExportService {
     public static final List<Tag> NEPTUNE_EXPORT_TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
     public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
     public static final String INCREMENTAL_EXPORT_PROFILE_NAME = "incremental_export";
+    public static final int MAX_FILE_DESCRIPTOR_COUNT = 9000;
 
     private final String cmd;
     private final String localOutputPath;
@@ -58,6 +59,7 @@ public class NeptuneExportService {
     private final ObjectNode additionalParams;
     private final int maxConcurrency;
     private final String s3Region;
+    private final int maxFileDescriptorCount;
 
     public NeptuneExportService(String cmd,
                                 String localOutputPath,
@@ -72,7 +74,8 @@ public class NeptuneExportService {
                                 ObjectNode completionFilePayload,
                                 ObjectNode additionalParams,
                                 int maxConcurrency,
-                                String s3Region) {
+                                String s3Region,
+                                int maxFileDescriptorCount) {
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
         this.cleanOutputPath = cleanOutputPath;
@@ -87,6 +90,7 @@ public class NeptuneExportService {
         this.additionalParams = additionalParams;
         this.maxConcurrency = maxConcurrency;
         this.s3Region = s3Region;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     public S3ObjectInfo execute() throws IOException {
@@ -210,12 +214,19 @@ public class NeptuneExportService {
             eventHandlerCollection.addHandler(incrementalExportEventHandler);
         }
 
+        /**
+         * We are removing a buffer of 1000 for maxFileDescriptorCount used at {@link com.amazonaws.services.neptune.propertygraph.io.LabelWriters#put}
+         * since the value received from neptune-export service is set as the `nofile` ulimit in the AWS Batch
+         * container properties and there might be other processes on the container having open files.
+         * This ensures we close the leastRecentlyAccessed files before exceeding the hard limit for `nofile` ulimit.
+         */
+        final int maxFileDescriptorCountAfterRemovingBuffer = Math.max(maxFileDescriptorCount - 1000, MAX_FILE_DESCRIPTOR_COUNT);
 
         eventHandlerCollection.onBeforeExport(args, s3UploadParams);
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
-        new NeptuneExportRunner(args.values(), eventHandlerCollection, false).run();
+        new NeptuneExportRunner(args.values(), eventHandlerCollection, false, maxFileDescriptorCountAfterRemovingBuffer).run();
 
         return exportToS3EventHandler.result();
     }
