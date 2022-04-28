@@ -187,7 +187,7 @@ def edge_fetcher(q,start_offset,bracket_size):
         while not success:
             print(nm,"[edges] retrieving range ({},{} batch=size={})".format(p1,p2,p2-p1))
             try:
-                edges = g.E().range(p1,p2).id().toList()
+                edges = g.E().range_(p1,p2).id_().toList()
                 success = True
             except:
                 print("***",nm,"Exception while fetching. Retrying.")
@@ -231,7 +231,7 @@ def vertex_fetcher(q,start_offset,bracket_size):
         while not success:
             print(nm,"[vertices] retrieving range ({},{} batch=size={})".format(p1,p2,p2-p1))
             try:
-                vertices = g.V().range(p1,p2).id().toList()
+                vertices = g.V().range_(p1,p2).id_().toList()
                 success = True
             except:
                 print("***",nm,"Exception while fetching. Retrying.")
