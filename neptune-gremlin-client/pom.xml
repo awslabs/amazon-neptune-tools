@@ -22,10 +22,17 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <javac.target>1.8</javac.target>
         <aws.sdk.version>1.12.38</aws.sdk.version>
-        <gremlin.driver.version>3.4.12</gremlin.driver.version>
-        <jackson.databind.version>2.12.3</jackson.databind.version>
+        <gremlin.driver.version>3.4.13</gremlin.driver.version>
+        <jackson.databind.version>2.13.2.2</jackson.databind.version>
+        <jackson.dataformat.version>2.13.2</jackson.dataformat.version>
         <sigv4.version>2.4.0</sigv4.version>
     </properties>
+
+    <modules>
+        <module>gremlin-client</module>
+        <module>gremlin-client-demo</module>
+        <module>neptune-endpoints-info-lambda</module>
+    </modules>
 
     <dependencyManagement>
         <dependencies>
@@ -39,7 +46,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-cbor</artifactId>
-                <version>${jackson.databind.version}</version>
+                <version>${jackson.dataformat.version}</version>
             </dependency>
 
             <dependency>
@@ -90,7 +97,6 @@
                 <version>2.6.0</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
@@ -119,10 +125,32 @@
         </dependencies>
     </dependencyManagement>
 
-    <modules>
-        <module>gremlin-client</module>
-        <module>gremlin-client-demo</module>
-        <module>neptune-endpoints-info-lambda</module>
-    </modules>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://aws.oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://aws.oss.sonatype.org/content/groups/staging/</url>
+        </repository>
+    </distributionManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.1</version>
+                    <configuration>
+                        <compilerVersion>${javac.target}</compilerVersion>
+                        <source>${javac.target}</source>
+                        <target>${javac.target}</target>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>
