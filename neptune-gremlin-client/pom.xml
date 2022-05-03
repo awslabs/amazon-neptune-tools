@@ -23,7 +23,8 @@
         <javac.target>1.8</javac.target>
         <aws.sdk.version>1.12.38</aws.sdk.version>
         <gremlin.driver.version>3.4.13</gremlin.driver.version>
-        <jackson.databind.version>2.12.3</jackson.databind.version>
+        <jackson.databind.version>2.13.2.2</jackson.databind.version>
+        <jackson.dataformat.version>2.13.2</jackson.dataformat.version>
         <sigv4.version>2.4.0</sigv4.version>
     </properties>
 
@@ -45,7 +46,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.dataformat</groupId>
                 <artifactId>jackson-dataformat-cbor</artifactId>
-                <version>${jackson.databind.version}</version>
+                <version>${jackson.dataformat.version}</version>
             </dependency>
 
             <dependency>
