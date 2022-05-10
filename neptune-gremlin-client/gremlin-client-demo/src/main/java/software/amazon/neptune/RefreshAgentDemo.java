@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package software.amazon.neptune;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import software.amazon.neptune.cluster.*;
 import com.github.rvesse.airline.annotations.Command;

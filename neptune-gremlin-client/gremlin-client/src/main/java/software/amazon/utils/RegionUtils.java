@@ -14,7 +14,7 @@ package software.amazon.utils;
 
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class RegionUtils {
     public static String getCurrentRegionName(){
