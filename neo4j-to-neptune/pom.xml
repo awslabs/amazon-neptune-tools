@@ -6,7 +6,7 @@
 
     <groupId>com.amazonaws</groupId>
     <artifactId>neo4j-to-neptune</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.12</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
