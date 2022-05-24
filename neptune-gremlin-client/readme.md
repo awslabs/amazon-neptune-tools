@@ -4,11 +4,13 @@ A Java Gremlin client for Amazon Neptune that allows you to change the endpoints
 
 The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
 
-  - **[New May 10 2022 – version 1.0.4]** Upgraded to version 3.5.2 of the Java Gremlin driver.
+  - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
   
-  - **[New May 5 2022 – version 1.0.3]** Upgraded to version 3.4.13 of the Java Gremlin driver.
+  - **[New May 24 2022 – version 1.0.5]** Upgraded to version 3.4.13 of the Java Gremlin driver.
 
-  - **[New January 2022 – version 1.0.2]** `GremlinClient.chooseConnection()` now respects the connection pool's `maxWaitForConnection` timeout value. Improves the way in which consecutive failures to acquire a connection can trigger endpoint refresh behaviours.
+  - **[WARNING]** Avoid use of versions, 1.0.3, 1.0.4, and 1.11. 
+
+  - **[New January 2022 – version 1.0.2]** `GremlinClient.chooseConnection()` now respects the connection pool's `maxWaitForConnection` timeout value. Improves the way in which consecutive failures to acquire a connection can trigger endpoint refresh behaviours.
 
   - **[New July 2021]** Upgraded to version 3.4.12 of the Java Gremlin driver.
   
