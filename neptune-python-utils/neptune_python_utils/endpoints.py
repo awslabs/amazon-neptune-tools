@@ -60,8 +60,8 @@ class RequestParameters:
         self.headers = headers
 
 class Endpoint:
-    
-    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False): 
+
+    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False, endpoint_url=None):
         
         self.protocol = protocol
         self.neptune_endpoint = neptune_endpoint
@@ -71,7 +71,8 @@ class Endpoint:
         self.proxy_dns = proxy_dns
         self.proxy_port = proxy_port
         self.remove_host_header = remove_host_header
-        
+        self.endpoint_url = endpoint_url
+
         if role_arn:
             self.role_arn = role_arn
             self.credentials = None
@@ -93,7 +94,10 @@ class Endpoint:
     def _get_credentials(self):        
 
         if self.credentials is None:
-            sts = boto3.client('sts', region_name=self.region)
+            if self.endpoint_url:
+                sts = boto3.client('sts', region_name=self.region, endpoint_url=self.endpoint_url)
+            else:
+                sts = boto3.client('sts', region_name=self.region)
             
             role = sts.assume_role(
                 RoleArn=self.role_arn,
@@ -110,7 +114,10 @@ class Endpoint:
         return self.credentials.get_frozen_credentials()
                
     def _new_credentials(self):
-        sts = boto3.client('sts', region_name=self.region)
+        if self.endpoint_url:
+            sts = boto3.client('sts', region_name=self.region, endpoint_url=self.endpoint_url)
+        else:
+            sts = boto3.client('sts', region_name=self.region)
         
         role = sts.assume_role(
             RoleArn=self.role_arn,
@@ -169,8 +176,8 @@ class Endpoint:
         
 
 class Endpoints:
-    
-    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False):
+
+    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False, endpoint_url=None):
         
         if neptune_endpoint is None:
             assert ('NEPTUNE_CLUSTER_ENDPOINT' in os.environ), 'neptune_endpoint is missing.'
@@ -188,12 +195,13 @@ class Endpoints:
         else:
             session = boto3.session.Session()
             self.region = session.region_name
-            
+
         self.credentials = credentials
         self.role_arn = role_arn
         self.proxy_dns = proxy_dns
         self.proxy_port = proxy_port
         self.remove_host_header = remove_host_header
+        self.endpoint_url = endpoint_url
             
             
     def gremlin_endpoint(self):
@@ -218,5 +226,4 @@ class Endpoints:
         return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql/stream')
     
     def __endpoint(self, protocol, neptune_endpoint, neptune_port, suffix):
-        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn, self.proxy_dns, self.proxy_port, self.remove_host_header)
-  
+        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn, self.proxy_dns, self.proxy_port, self.remove_host_header, self.endpoint_url)
