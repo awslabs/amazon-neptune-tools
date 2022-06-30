@@ -27,6 +27,8 @@
   "author": "Eric Z. Beard",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-crypto/sha256-js": "^2.0.1",
+    "@aws-sdk/signature-v4": "^3.110.0",
     "async": "^3.2.2",
     "aws4": "^1.11.0",
     "gremlin": "^3.5.1",

@@ -74,6 +74,7 @@ class CdkTestAppStack extends Stack {
             "NEPTUNE_ENDPOINT": cluster.clusterEndpoint.hostname,
             "NEPTUNE_PORT": cluster.clusterEndpoint.port,
             "USE_IAM": "true",
+            "USE_AWS4": "true",
         }
 
         // Create the integration test Lambda

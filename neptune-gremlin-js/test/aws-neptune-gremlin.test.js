@@ -1,6 +1,6 @@
-const {getHeaders} = require("../neptune-gremlin.js")
+const {getHeaders, getAws4Headers} = require("../neptune-gremlin.js")
 
-test("getHeaders", () => {
+test("getHeaders", async () => {
 
     const expected = {
         Host: "myneptunecluster.us-east-1.neptune.amazonaws.com:8182",
@@ -9,7 +9,7 @@ test("getHeaders", () => {
         Authorization: "AWS4-HMAC-SHA256 Credential=.../20211123/us-east-1/neptune-db/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token, Signature=...",
     }
 
-    const headers = getHeaders(
+    const headers = await getHeaders(
         "myneptunecluster.us-east-1.neptune.amazonaws.com",
         8182,
         {
@@ -20,11 +20,33 @@ test("getHeaders", () => {
         },
         "/gremlin")
 
-    console.log(getHeaders)
+    console.log(headers)
 
-    expect(headers.Host).toEqual(expected.Host)
-    expect(headers["X-Amz-Security-Token"]).toBeTruthy() // ?
-    expect(headers["X-Amz-Date"].length).toEqual(16)
-    expect(headers.Authorization.indexOf("AWS4-HMAC-SHA256 Credential=")).toEqual(0)
+    expect(headers.host).toEqual(expected.Host)
+    expect(headers["x-amz-security-token"]).toBeTruthy() // ?
+    expect(headers["x-amz-date"].length).toEqual(16)
+    expect(headers.authorization.indexOf("AWS4-HMAC-SHA256 Credential=")).toEqual(0)
 
+})
+
+test("compare sigs", async () => {
+
+    const host = "myneptunecluster.us-east-1.neptune.amazonaws.com"
+    const port = 8182
+    const creds = {
+        accessKey: "...",
+        secretKey: "...",
+        sessionToken: "AAAAAA1111111",
+        region: "us-east-1",
+    }
+    const path = "/gremlin"
+    const headers = await getHeaders(host, port, creds, path)
+
+    console.log({headers})
+
+    const aws4headers = getAws4Headers(host, port, creds, path)
+
+    console.log({aws4headers})
+
+    //expect(headers.authorization).toEqual(aws4headers.Authorization)
 })

@@ -21,6 +21,8 @@ const util = require("util")
 const aws4 = require("aws4")
 const { PartitionStrategy } = require("gremlin/lib/process/traversal-strategy")
 const __ = gremlin.process.statics
+const { Sha256 } = require("@aws-crypto/sha256-js")
+const { SignatureV4 } = require("@aws-sdk/signature-v4")
 
 /**
  * Represents a connection to Neptune's gremlin endpoint.
@@ -83,10 +85,11 @@ class Connection {
      * @param {number} port 
      * @param {boolean} @param {useIam, partition} options
      */
-    constructor(host, port, {useIam = true, partition}) {
+    constructor(host, port, {useIam = true, useAws4 = false, partition}) {
         this.host = host
         this.port = port
         this.useIam = useIam
+        this.useAws4 = useAws4
         this.connection = null
         this.partition = partition
     }
@@ -113,7 +116,16 @@ class Connection {
         const path = "/gremlin"
 
         const url = `wss://${this.host}:${this.port}${path}`
-        const headers = this.useIam ? getHeaders(this.host, this.port, {}, path) : {}
+        let headers
+        if (this.useIam) {
+            if (this.useAws4) {
+                headers = getAws4Headers(this.host, this.port, {}, path)
+            } else {
+                headers = await getHeaders(this.host, this.port, {}, path)
+            }
+        } else {
+            headers = {}
+        }
 
         console.info("url: ", url)
         console.info("headers: ", headers)
@@ -535,7 +547,7 @@ function nodeExists(nodes, id) {
 }
 
 /**
- * Sigv4 
+ * Sigv4 with aws4
  * 
  * @param {String} host Database hostname (Neptune cluster Writer endpoint)
  * @param {number} port Database port, typically 8182
@@ -543,7 +555,7 @@ function nodeExists(nodes, id) {
  * @param {*} canonicalUri e.g. "/gremlin"
  * @returns {Host, Authorization, X-Amz-Security-Token, X-Amz-Date}
  */
-function getHeaders(host, port, credentials, canonicalUri) {
+function getAws4Headers(host, port, credentials, path) {
 
     if (!host || !port) {
         throw new Error("Host and port are required")
@@ -563,11 +575,54 @@ function getHeaders(host, port, credentials, canonicalUri) {
     const signOptions = {
         host: `${host}:${port}`,
         region,
-        path: canonicalUri,
+        path,
         service: "neptune-db",
     }
 
     return aws4.sign(signOptions, { accessKeyId, secretAccessKey, sessionToken }).headers
 }
 
-module.exports = { Connection, updateProperties, getHeaders }
+/**
+ * Sigv4 with the AWS managed package.
+ * 
+ * @param {String} host Database hostname (Neptune cluster Writer endpoint)
+ * @param {number} port Database port, typically 8182
+ * @param {*} credentials Optional { accessKey, secretKey, sessionToken, region }
+ * @param {*} canonicalUri e.g. "/gremlin"
+ * @returns {Host, Authorization, X-Amz-Security-Token, X-Amz-Date}
+ */
+async function getHeaders(host, port, credentials, path) {
+
+    if (!host || !port) {
+        throw new Error("Host and port are required")
+    }
+
+    const accessKeyId = credentials.accessKey || credentials.accessKeyId
+        || process.env.AWS_ACCESS_KEY_ID
+    const secretAccessKey = credentials.secretKey || credentials.secretAccessKey
+        || process.env.AWS_SECRET_ACCESS_KEY
+    const sessionToken = credentials.sessionToken || process.env.AWS_SESSION_TOKEN
+    const region = credentials.region || process.env.AWS_DEFAULT_REGION
+
+    if (!accessKeyId || !secretAccessKey) {
+        throw new Error("Access key and secret key are required")
+    }
+
+    const sigv4 = new SignatureV4({
+        credentials: { accessKeyId, secretAccessKey, sessionToken, region },
+        service: "neptune-db",
+        region,
+        sha256: Sha256,
+    })
+
+    const signature = await sigv4.signRequest(
+        {method:"get", headers:{host: `${host}:${port}`}, path}, 
+        new Date(),
+        region,
+        { accessKeyId, secretAccessKey, sessionToken, region })
+
+    console.log({signature})
+    return signature.headers
+}
+
+module.exports = { Connection, updateProperties, getHeaders, getAws4Headers }
