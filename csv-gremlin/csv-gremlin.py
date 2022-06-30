@@ -451,7 +451,7 @@ class NeptuneCSVReader:
         self.property_count = 0
         try:
             with open(fname, newline='') as csvfile:
-                reader = csv.DictReader(csvfile,escapechar="\\")
+                reader = csv.DictReader(csvfile, skipinitialspace=True, escapechar="\\")
 
                 if not '~id' in reader.fieldnames:
                     self.print_error('The header row must include an ~id column')
