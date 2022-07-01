@@ -1,0 +1,4 @@
+~id, ~label,   type
+a1, animal, cat
+a2, " animal ", cat
+a3, animal , cat

@@ -19,7 +19,7 @@
 @license:    Apache2
 @contact:    @krlawrence
 @deffield    created:  2020-11-17
-@deffield    lastUpdated:  2022-02-04
+@deffield    lastUpdated:  2022-06-30
 
 Overview
 --------
@@ -74,7 +74,8 @@ class NeptuneCSVReader:
 
     def __init__(self, vbatch=1, ebatch=1, java_dates=False, max_rows=sys.maxsize,
                  assume_utc=False, stop_on_error=True, silent_mode=False,
-                 escape_dollar=False, show_summary=True, double_suffix=False):
+                 escape_dollar=False, show_summary=True, double_suffix=False,
+                 skip_spaces=False):
         
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
@@ -96,6 +97,7 @@ class NeptuneCSVReader:
         self.edge_count = 0
         self.property_count = 0
         self.verbose_summary = False
+        self.skip_spaces = skip_spaces
 
     def get_batch_sizes(self):
         return {'vbatch': self.vertex_batch_size,
@@ -152,6 +154,12 @@ class NeptuneCSVReader:
 
     def get_double_suffix(self):
         return self.double_suffix
+
+    def set_skip_spaces(self,skip:bool):
+        self.skip_spaces = skip
+
+    def get_skip_spaces(self):
+        return self.skip_spaces
 
     def escape(self,string):
         escaped = string.replace('"','\\"')
@@ -451,7 +459,7 @@ class NeptuneCSVReader:
         self.property_count = 0
         try:
             with open(fname, newline='') as csvfile:
-                reader = csv.DictReader(csvfile,escapechar="\\")
+                reader = csv.DictReader(csvfile, skipinitialspace=self.skip_spaces, escapechar="\\")
 
                 if not '~id' in reader.fieldnames:
                     self.print_error('The header row must include an ~id column')
@@ -509,6 +517,13 @@ if __name__ == '__main__':
                         help='Suffix all floats and doubles with a "d" such as 12.34d. This is helpful\
                         when using the Gremlin Console or Groovy scripts as it will prevent\
                         floats and doubles automatically being created as BigDecimal objects.')
+    parser.add_argument('-skip_spaces', action='store_true',
+                        help='Skip any leading spaces in each column.\
+                        By defaut this setting is False and any leading spaces\
+                        will be considered part of the column header or data value.\
+                        This setting does not apply to values enclosed in quotes\
+                        such as "  abcd".',
+                        default=False)
     parser.add_argument('-escape_dollar', action='store_true',
                         help='For any dollar signs found convert them to an escaped\
                         form \$. This is needed if you are going to load the\
@@ -527,4 +542,5 @@ if __name__ == '__main__':
     ncsv.set_escape_dollar(args.escape_dollar)
     ncsv.set_double_suffix(args.double_suffix)
     ncsv.set_show_summary(not args.no_summary)
+    ncsv.set_skip_spaces(args.skip_spaces)
     ncsv.process_csv_file(args.csvfile)
