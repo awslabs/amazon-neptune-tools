@@ -64,8 +64,8 @@ import datetime
 import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.18
-    VERSION_DATE = '2022-02-05'
+    VERSION = 0.19
+    VERSION_DATE = '2022-06-30'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     BOOLS = ('BOOL','BOOLEAN')
