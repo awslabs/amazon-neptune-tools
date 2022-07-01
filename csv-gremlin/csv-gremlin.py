@@ -75,7 +75,7 @@ class NeptuneCSVReader:
     def __init__(self, vbatch=1, ebatch=1, java_dates=False, max_rows=sys.maxsize,
                  assume_utc=False, stop_on_error=True, silent_mode=False,
                  escape_dollar=False, show_summary=True, double_suffix=False,
-                 skip_spaces = False):
+                 skip_spaces=False):
         
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
