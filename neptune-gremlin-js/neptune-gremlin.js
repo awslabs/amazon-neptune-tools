@@ -17,8 +17,6 @@ const async = require("async")
 const {traversal} = gremlin.process.AnonymousTraversalSource
 const { t } = gremlin.process
 const {DriverRemoteConnection} = gremlin.driver
-const util = require("util")
-const aws4 = require("aws4")
 const { PartitionStrategy } = require("gremlin/lib/process/traversal-strategy")
 const __ = gremlin.process.statics
 const { Sha256 } = require("@aws-crypto/sha256-js")
@@ -26,11 +24,6 @@ const { SignatureV4 } = require("@aws-sdk/signature-v4")
 
 /**
  * Represents a connection to Neptune's gremlin endpoint.
- * 
- * TODO: Get a single node, get a single edge
- * TODO: A-B-C queries. node label/props - edge label/props - node label/props
- *       e.g. person/title=Manager - manages - person/title=Engineer
- *            person/name=Eric - owns/leased=true - car/color=Blue
  * 
  * Connect to Neptune:
  * 
@@ -85,11 +78,10 @@ class Connection {
      * @param {number} port 
      * @param {boolean} @param {useIam, partition} options
      */
-    constructor(host, port, {useIam = true, useAws4 = false, partition}) {
+    constructor(host, port, {useIam = true, partition}) {
         this.host = host
         this.port = port
         this.useIam = useIam
-        this.useAws4 = useAws4
         this.connection = null
         this.partition = partition
     }
@@ -118,17 +110,10 @@ class Connection {
         const url = `wss://${this.host}:${this.port}${path}`
         let headers
         if (this.useIam) {
-            if (this.useAws4) {
-                headers = getAws4Headers(this.host, this.port, {}, path)
-            } else {
-                headers = await getHeaders(this.host, this.port, {}, path)
-            }
+            headers = await getHeaders(this.host, this.port, {}, path)
         } else {
             headers = {}
         }
-
-        console.info("url: ", url)
-        console.info("headers: ", headers)
 
         this.connection = new DriverRemoteConnection(
             url,
@@ -153,20 +138,15 @@ class Connection {
      * @returns 
      */
     getG() {
-        console.log("About to get traversal")
-        
         let g = traversal().withRemote(this.connection)
 
         if (!this.partition) return g
-
-        console.log("Using a partition strategy:", this.partition)
 
         return g.withStrategies(new PartitionStrategy({
             partitionKey: "_partition", 
             writePartition: this.partition, 
             readPartitions: [this.partition],
         }))
-       
     }
 
     /**
@@ -182,7 +162,6 @@ class Connection {
         let g = this.getG()
         const self = this
 
-        console.log("About to start async retry loop")
         return async.retry(
             {
                 times: 5,
@@ -218,7 +197,6 @@ class Connection {
 
             },
             async () => {
-                console.log("About to call the query function")
                 return await f(g)
             })
     }
@@ -239,23 +217,18 @@ class Connection {
 
         await this.query(async function (g) {
             const existing = node.id == null ? {} : await g.V(node.id).next()
-            console.log(existing)
 
             if (existing.value) {
                 // If it exists already, only update its properties
-                console.info("node exists", existing.value)
                 await updateProperties(node.id, g, node.properties)
             } else {
                 // Create the new node
                 let query = g.addV(node.labels.join("::"))
                 if(node.id != null) query = query.property(t.id, node.id)
                 const {value: result} = await query.next()
-                console.log(util.inspect(result))
                 await updateProperties(result.id, g, node.properties)
             }
         })
-        console.log("node saved")
-
     }
 
     /**
@@ -264,8 +237,6 @@ class Connection {
      * @param {*} id 
      */
     async deleteNode(id) {
-        console.info("deleteNode", id)
-
         await this.query(async function (g) {
             await g.V(id).inE().drop().next()
             await g.V(id).outE().drop().next()
@@ -281,28 +252,22 @@ class Connection {
      * @param {*} edge 
      */
     async saveEdge(edge) {
-        console.info("saveEdge", edge)
-
         await this.query(async function (g) {
 
             const existing = await g.E(edge.id).next()
-            console.log(existing)
 
             if (existing.value) {
                 // If it exists already, only update its properties
-                console.info("Edge exists", existing)
                 await updateProperties(edge.id, g, edge.properties, false)
             } else {
                 // Create the new edge
-                const result = await g.V(edge.to)
+                await g.V(edge.to)
                     .as("a")
                     .V(edge.from)
                     .addE(edge.label)
                     .property(gremlin.process.t.id, edge.id)
                     .from_("a")
                     .next()
-
-                console.log(util.inspect(result))
 
                 await updateProperties(edge.id, g, edge.properties, false)
             }
@@ -316,8 +281,6 @@ class Connection {
      * @param {*} id 
      */
     async deleteEdge(id) {
-        console.info("deleteEdge", id)
-
         await this.query(async function (g) {
             await g.E(id).drop().next()
         })
@@ -361,20 +324,10 @@ class Connection {
      */
     async search(options) {
 
-        // TODO: Create some intuitive options
-        //      - Node "A" and its direct edges, plus their edges in common with "A"
-        //      - All nodes with label "Person"
-        //      - Depth setting to iterate down edges
-        //      - A-B-C relationships. People who like movies made by Disney.
-
-        console.info("search", options)
-
         return await this.query(async function (g) {
 
             let rawNodes
             if (options.focus) {
-
-                console.info("options.focus", options.focus)
 
                 if (options.focus.key === undefined) {
                     // Search for all edges with the specified label
@@ -392,28 +345,13 @@ class Connection {
                         .union(__.identity(), __.bothE().bothV())
                         .dedup()
                         .valueMap(true).toList()
-
-                    // Below should not be necessary with union
-
-                    // console.log("focus query returned no results, trying again without edges")
-
-                    // if (rawNodes.length === 0) {
-                    //     // Maybe this node doesn't have any edges, we still want it
-                    //     // Can we do this all in one query?
-                    //     rawNodes = await g.V()
-                    //         .has(options.focus.label, options.focus.key, options.focus.value)
-                    //         .valueMap(true).toList()
-                    // }
                 }
             } else {
                 // Get everything
                 rawNodes = await g.V().valueMap(true).toList()
             }
 
-            console.info("rawNodes", rawNodes)
-
             const rawEdges = await g.E().elementMap().toList()
-            console.info("rawEdges", rawEdges)
 
             const nodes = []
             const edges = []
@@ -500,7 +438,6 @@ async function updateProperties(id, g, props, isNode = true) {
 
     // Compare existing props and delete any that are missing
     const existingProps = await gve.call(g, id).valueMap().toList()
-    console.info("existingProps", existingProps)
 
     // We filter out the _partition property below since it is 
     // automatically added by the partition strategy when we save 
@@ -508,12 +445,8 @@ async function updateProperties(id, g, props, isNode = true) {
 
     const propsToDrop = Object.keys(existingProps[0]).filter(key => {
         return props[key] == null && key !== "_partition" })
-    console.info("propsToDrop", propsToDrop)
     if (propsToDrop.length > 0) {
-        console.info("dropping properties", propsToDrop)
         await gve.call(g, id).properties(...propsToDrop).drop().next()
-    } else {
-        console.log("No properties to drop")
     }
 
     // We split props into an array of tuples ([['key1', 'val1'], ['key2', 'val2'], ...] and pass it to reduce.
@@ -542,44 +475,7 @@ function nodeExists(nodes, id) {
             return true
         }
     }
-    console.log(`Node with id ${id} does not exist in search results`)
     return false
-}
-
-/**
- * Sigv4 with aws4
- * 
- * @param {String} host Database hostname (Neptune cluster Writer endpoint)
- * @param {number} port Database port, typically 8182
- * @param {*} credentials Optional { accessKey, secretKey, sessionToken, region }
- * @param {*} canonicalUri e.g. "/gremlin"
- * @returns {Host, Authorization, X-Amz-Security-Token, X-Amz-Date}
- */
-function getAws4Headers(host, port, credentials, path) {
-
-    if (!host || !port) {
-        throw new Error("Host and port are required")
-    }
-
-    const accessKeyId = credentials.accessKey || credentials.accessKeyId
-        || process.env.AWS_ACCESS_KEY_ID
-    const secretAccessKey = credentials.secretKey || credentials.secretAccessKey
-        || process.env.AWS_SECRET_ACCESS_KEY
-    const sessionToken = credentials.sessionToken || process.env.AWS_SESSION_TOKEN
-    const region = credentials.region || process.env.AWS_DEFAULT_REGION
-
-    if (!accessKeyId || !secretAccessKey) {
-        throw new Error("Access key and secret key are required")
-    }
-
-    const signOptions = {
-        host: `${host}:${port}`,
-        region,
-        path,
-        service: "neptune-db",
-    }
-
-    return aws4.sign(signOptions, { accessKeyId, secretAccessKey, sessionToken }).headers
 }
 
 /**
@@ -616,13 +512,12 @@ async function getHeaders(host, port, credentials, path) {
     })
 
     const signature = await sigv4.signRequest(
-        {method:"get", headers:{host: `${host}:${port}`}, path}, 
+        {method:"GET", headers:{host: `${host}:${port}`}, path}, 
         new Date(),
         region,
         { accessKeyId, secretAccessKey, sessionToken, region })
 
-    console.log({signature})
     return signature.headers
 }
 
-module.exports = { Connection, updateProperties, getHeaders, getAws4Headers }
+module.exports = { Connection, updateProperties, getHeaders }

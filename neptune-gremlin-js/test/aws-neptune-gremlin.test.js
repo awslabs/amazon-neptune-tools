@@ -1,4 +1,4 @@
-const {getHeaders, getAws4Headers} = require("../neptune-gremlin.js")
+const {getHeaders} = require("../neptune-gremlin.js")
 
 test("getHeaders", async () => {
 
@@ -29,24 +29,3 @@ test("getHeaders", async () => {
 
 })
 
-test("compare sigs", async () => {
-
-    const host = "myneptunecluster.us-east-1.neptune.amazonaws.com"
-    const port = 8182
-    const creds = {
-        accessKey: "...",
-        secretKey: "...",
-        sessionToken: "AAAAAA1111111",
-        region: "us-east-1",
-    }
-    const path = "/gremlin"
-    const headers = await getHeaders(host, port, creds, path)
-
-    console.log({headers})
-
-    const aws4headers = getAws4Headers(host, port, creds, path)
-
-    console.log({aws4headers})
-
-    //expect(headers.authorization).toEqual(aws4headers.Authorization)
-})
