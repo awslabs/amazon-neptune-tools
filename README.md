@@ -43,6 +43,10 @@ If you're interested in converting Neptune's CSV format to RDF, see [amazon-nept
 
 [csv-to-neptune-bulk-format](csv-to-neptune-bulk-format/README.md) is a utility to identify nodes and edges in the source CSV data file(s) and generate the Amazon Neptune gremlin load data format files. A configuration file (JSON) defines the source and target files, nodes/edges definition, and selection logic. The script interprets one or more configuration files and generates Amazon Neptune gremlin load data format files. The generated files can be loaded into the Neptune database.
 
+### neptune-gremlin-js
+
+A Javascript SDK for querying Neptune with gremlin.
+
 ## License
 
 This library is licensed under the Apache 2.0 License. 

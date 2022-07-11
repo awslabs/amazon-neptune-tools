@@ -1,0 +1,22 @@
+{
+  "name": "cdk-test-app",
+  "version": "0.1.0",
+  "bin": {
+    "cdk-test-app": "bin/cdk-test-app.js"
+  },
+  "scripts": {
+    "build": "npm i && npm run synth && cd lambda && npm i && cd ..",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.28.1",
+    "jest": "^26.4.2"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-neptune-alpha": "^2.28.1-alpha.0",
+    "aws-cdk-lib": "2.28.1",
+    "constructs": "^10.0.0"
+  }
+}
