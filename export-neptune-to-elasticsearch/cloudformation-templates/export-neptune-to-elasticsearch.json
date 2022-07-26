@@ -341,7 +341,7 @@
                 "neptune-stream",
                 "lambda",
                 "python39",
-		"release_2022_06_06",
+		"release_2022_07_25",
                 "neptune-streams-layer.zip"
               ]
             ]
@@ -397,7 +397,7 @@
                 "neptune-stream",
                 "lambda",
                 "python39",
-		"release_2022_06_06",
+		"release_2022_07_25",
                 "neptune-es-layer.zip"
               ]
             ]
