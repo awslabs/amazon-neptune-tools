@@ -121,7 +121,7 @@ _neptune-export_'s [`export-pg-from-queries`](docs/export-pg-from-queries.md) co
 
 Every user-supplied query should return a resultset whose every result comprises a Map. Typically, these are queries that return a `valueMap()` or a projection created using `project().by().by()...`.
 
-Queries are grouped into _named groups_. All the queries in a named group should return the same columns. Named groups allow you to 'shard' large queries and execute them in parallel (using the `--concurrency` option). The resulting CSV or JSON files will be written to a directory named after the group.
+Queries are grouped into _named groups_. All the queries in a named group should return the same columns. Named groups allow you to 'shard' large queries and execute them in parallel (using the `--concurrency` option). **Note that query sharding is not done automatically, so if you just supply one query, you will get no benefit from increasing the concurrency level past one.** The resulting CSV or JSON files will be written to a directory named after the group.
 
 If there is a possibility that individual rows in a query's resultset will contain different keys, use the `--two-pass-analysis` flag to force _neptune-export_ to determine the superset of keys or column headers for the query.
 
@@ -129,7 +129,19 @@ You can supply multiple named groups using multiple `--queries` options. Each gr
 
 `-q person="g.V().hasLabel('Person').range(0,100000).valueMap();g.V().hasLabel('Person').range(100000,-1).valueMap()"`
 
-Alternatively, you can supply a JSON file of queries.
+Sharding queries for concurrent execution can create a large number of queries, especially with a high concurrency level. In order to avoid inputting all of these queries as command-line arguments, you can also supply them in a JSON file with the `--queriesFile` option. The JSON file should be formatted like this:
+
+```json
+[
+  {
+    "name": "NamedQueryGroup",
+    "queries": ["list", "of", "sharded", "queries", "in", "group"]
+  },
+  ...
+]
+```
+
+This file can be given as a local path, or over https or s3.
 
 ### Parallel execution of queries
 
