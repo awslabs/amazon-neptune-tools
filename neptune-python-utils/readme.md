@@ -61,13 +61,13 @@ To supply your own credentials:
 
 ```
 from neptune_python_utils.endpoints import Endpoints
-from botocore.credentials import ReadOnlyCredentials
+from botocore.credentials import Credentials
 
 access_key = '...'
 secret_key = '...'
 token = '...'
 
-credentials = ReadOnlyCredentials(access_key, secret_key, token)
+credentials = Credentials(access_key, secret_key, token)
 
 endpoints = Endpoints(credentials=credentials)
 ```
