@@ -19,7 +19,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javac.target>1.8</javac.target>
         <uberjar.name>neptune-export</uberjar.name>
-        <aws.sdk.version>1.11.982</aws.sdk.version>
+        <aws.sdk.version>1.12.261</aws.sdk.version>
         <gremlin.version>3.4.8</gremlin.version>
         <slf4j.version>1.8.0-beta2</slf4j.version>
         <rdf4j.version>3.5.0</rdf4j.version>
