@@ -15,7 +15,7 @@ package com.amazonaws.services.neptune.cluster;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.model.*;
 import com.amazonaws.services.neptune.util.Activity;
-import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
+import com.amazonaws.services.neptune.util.NeptuneEngineVersionUtil;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.commons.lang.StringUtils;
 
@@ -207,7 +207,7 @@ public class AddCloneTask {
                 new CreateDBParameterGroupRequest()
                         .withDBParameterGroupName(String.format("%s-db-params", targetClusterId))
                         .withDescription(String.format("%s DB Parameter Group", targetClusterId))
-                        .withDBParameterGroupFamily("neptune1")
+                        .withDBParameterGroupFamily(NeptuneEngineVersionUtil.getNeptuneDBParameterGroupFamily(this.engineVersion).getParameterGroupFamily())
                         .withTags(getTags(sourceClusterMetadata.clusterId())));
 
         neptune.modifyDBParameterGroup(new ModifyDBParameterGroupRequest()
@@ -251,7 +251,7 @@ public class AddCloneTask {
                 new CreateDBClusterParameterGroupRequest()
                         .withDBClusterParameterGroupName(String.format("%s-db-cluster-params", targetClusterId))
                         .withDescription(String.format("%s DB Cluster Parameter Group", targetClusterId))
-                        .withDBParameterGroupFamily("neptune1")
+                        .withDBParameterGroupFamily(NeptuneEngineVersionUtil.getNeptuneClusterParameterGroupFamily(this.engineVersion).getParameterGroupFamily())
                         .withTags(getTags(sourceClusterMetadata.clusterId())));
 
         String neptuneStreamsParameterValue = sourceClusterMetadata.isStreamEnabled() ? "1" : "0";

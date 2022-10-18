@@ -2,3 +2,7 @@
 artifacts/
 **/target/
 pom.xml.versionsBackup
+
+# Intellij generated files
+.idea
+*.iml
