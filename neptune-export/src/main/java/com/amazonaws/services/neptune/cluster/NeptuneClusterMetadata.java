@@ -16,10 +16,8 @@ import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.model.*;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class NeptuneClusterMetadata {
 
@@ -57,6 +55,31 @@ public class NeptuneClusterMetadata {
         boolean isIAMDatabaseAuthenticationEnabled = dbCluster.isIAMDatabaseAuthenticationEnabled();
         Integer port = dbCluster.getPort();
         String dbClusterParameterGroup = dbCluster.getDBClusterParameterGroup();
+
+        String dbParameterGroupFamily;
+
+        try
+        {
+            DescribeDBClusterParameterGroupsResult describeDBClusterParameterGroupsResult = neptune.describeDBClusterParameterGroups(
+                    new DescribeDBClusterParameterGroupsRequest()
+                            .withDBClusterParameterGroupName(dbClusterParameterGroup));
+
+            Optional<DBClusterParameterGroup> parameterGroup = describeDBClusterParameterGroupsResult
+                    .getDBClusterParameterGroups().stream().findFirst();
+
+            dbParameterGroupFamily = parameterGroup.isPresent() ?
+                    parameterGroup.get().getDBParameterGroupFamily() :
+                    "neptune1";
+
+        } catch (AmazonNeptuneException e){
+
+            // Older deployments of Neptune Export service may not have requisite permissions to
+            // describe cluster parameter group, so we'll try and guess the group family.
+
+            String engineVersion = dbCluster.getEngineVersion();
+            int v = Integer.parseInt(engineVersion.split(".")[1]);
+            dbParameterGroupFamily = v > 1 ? "neptune1.2" : "neptune1";
+        }
 
         DescribeDBClusterParametersResult describeDBClusterParametersResult = neptune.describeDBClusterParameters(
                 new DescribeDBClusterParametersRequest()
@@ -108,20 +131,21 @@ public class NeptuneClusterMetadata {
         return new NeptuneClusterMetadata(clusterId,
                 port,
                 dbClusterParameterGroup,
+                dbParameterGroupFamily,
                 isIAMDatabaseAuthenticationEnabled,
                 isStreamEnabled,
                 dbSubnetGroup,
                 vpcSecurityGroupIds,
                 primary,
                 replicas,
-                instanceTypes,
-                clusterTags);
+                instanceTypes, clusterTags);
     }
 
     private final String clusterId;
 
     private final int port;
     private final String dbClusterParameterGroupName;
+    private final String dbParameterGroupFamily;
     private final Boolean isIAMDatabaseAuthenticationEnabled;
     private final Boolean isStreamEnabled;
     private final String dbSubnetGroupName;
@@ -134,6 +158,7 @@ public class NeptuneClusterMetadata {
     private NeptuneClusterMetadata(String clusterId,
                                    int port,
                                    String dbClusterParameterGroupName,
+                                   String dbParameterGroupFamily,
                                    Boolean isIAMDatabaseAuthenticationEnabled,
                                    Boolean isStreamEnabled,
                                    String dbSubnetGroupName,
@@ -145,6 +170,7 @@ public class NeptuneClusterMetadata {
         this.clusterId = clusterId;
         this.port = port;
         this.dbClusterParameterGroupName = dbClusterParameterGroupName;
+        this.dbParameterGroupFamily = dbParameterGroupFamily;
         this.isIAMDatabaseAuthenticationEnabled = isIAMDatabaseAuthenticationEnabled;
         this.isStreamEnabled = isStreamEnabled;
         this.dbSubnetGroupName = dbSubnetGroupName;
@@ -165,6 +191,10 @@ public class NeptuneClusterMetadata {
 
     public String dbClusterParameterGroupName() {
         return dbClusterParameterGroupName;
+    }
+
+    public String dbParameterGroupFamily() {
+        return dbParameterGroupFamily;
     }
 
     public Boolean isIAMDatabaseAuthenticationEnabled() {

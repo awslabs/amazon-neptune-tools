@@ -170,8 +170,8 @@ public class AddCloneTask {
                 e.printStackTrace();
             }
             clusterStatus = neptune.describeDBClusters(
-                    new DescribeDBClustersRequest()
-                            .withDBClusterIdentifier(targetDbCluster.getDBClusterIdentifier()))
+                            new DescribeDBClustersRequest()
+                                    .withDBClusterIdentifier(targetDbCluster.getDBClusterIdentifier()))
                     .getDBClusters()
                     .get(0)
                     .getStatus();
@@ -207,7 +207,7 @@ public class AddCloneTask {
                 new CreateDBParameterGroupRequest()
                         .withDBParameterGroupName(String.format("%s-db-params", targetClusterId))
                         .withDescription(String.format("%s DB Parameter Group", targetClusterId))
-                        .withDBParameterGroupFamily("neptune1")
+                        .withDBParameterGroupFamily(sourceClusterMetadata.dbParameterGroupFamily())
                         .withTags(getTags(sourceClusterMetadata.clusterId())));
 
         neptune.modifyDBParameterGroup(new ModifyDBParameterGroupRequest()
@@ -219,8 +219,8 @@ public class AddCloneTask {
                                 .withApplyMethod(ApplyMethod.PendingReboot)));
 
         List<Parameter> dbParameters = neptune.describeDBParameters(
-                new DescribeDBParametersRequest()
-                        .withDBParameterGroupName(dbParameterGroup.getDBParameterGroupName()))
+                        new DescribeDBParametersRequest()
+                                .withDBParameterGroupName(dbParameterGroup.getDBParameterGroupName()))
                 .getParameters();
 
         while (dbParameters.stream().noneMatch(parameter ->
@@ -232,8 +232,8 @@ public class AddCloneTask {
                 e.printStackTrace();
             }
             dbParameters = neptune.describeDBClusterParameters(
-                    new DescribeDBClusterParametersRequest()
-                            .withDBClusterParameterGroupName(dbParameterGroup.getDBParameterGroupName()))
+                            new DescribeDBClusterParametersRequest()
+                                    .withDBClusterParameterGroupName(dbParameterGroup.getDBParameterGroupName()))
                     .getParameters();
         }
 
@@ -251,7 +251,7 @@ public class AddCloneTask {
                 new CreateDBClusterParameterGroupRequest()
                         .withDBClusterParameterGroupName(String.format("%s-db-cluster-params", targetClusterId))
                         .withDescription(String.format("%s DB Cluster Parameter Group", targetClusterId))
-                        .withDBParameterGroupFamily("neptune1")
+                        .withDBParameterGroupFamily(sourceClusterMetadata.dbParameterGroupFamily())
                         .withTags(getTags(sourceClusterMetadata.clusterId())));
 
         String neptuneStreamsParameterValue = sourceClusterMetadata.isStreamEnabled() ? "1" : "0";
@@ -288,8 +288,8 @@ public class AddCloneTask {
         }
 
         List<Parameter> dbClusterParameters = neptune.describeDBClusterParameters(
-                new DescribeDBClusterParametersRequest()
-                        .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName()))
+                        new DescribeDBClusterParametersRequest()
+                                .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName()))
                 .getParameters();
 
         while (dbClusterParameters.stream().noneMatch(parameter ->
@@ -301,8 +301,8 @@ public class AddCloneTask {
                 e.printStackTrace();
             }
             dbClusterParameters = neptune.describeDBClusterParameters(
-                    new DescribeDBClusterParametersRequest()
-                            .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName()))
+                            new DescribeDBClusterParametersRequest()
+                                    .withDBClusterParameterGroupName(dbClusterParameterGroup.getDBClusterParameterGroupName()))
                     .getParameters();
         }
 
@@ -343,7 +343,7 @@ public class AddCloneTask {
                 e.printStackTrace();
             }
             instanceStatus = neptune.describeDBInstances(new DescribeDBInstancesRequest()
-                    .withDBInstanceIdentifier(targetDbInstance.getDBInstanceIdentifier()))
+                            .withDBInstanceIdentifier(targetDbInstance.getDBInstanceIdentifier()))
                     .getDBInstances()
                     .get(0)
                     .getDBInstanceStatus();
