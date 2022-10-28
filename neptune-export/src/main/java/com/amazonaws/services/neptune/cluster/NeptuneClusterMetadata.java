@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.model.*;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -77,8 +78,12 @@ public class NeptuneClusterMetadata {
             // describe cluster parameter group, so we'll try and guess the group family.
 
             String engineVersion = dbCluster.getEngineVersion();
-            int v = Integer.parseInt(engineVersion.split(".")[1]);
-            dbParameterGroupFamily = v > 1 ? "neptune1.2" : "neptune1";
+            if (StringUtils.isNotEmpty(engineVersion) && engineVersion.contains(".")){
+                int v = Integer.parseInt(engineVersion.split("\\.")[1]);
+                dbParameterGroupFamily = v > 1 ? "neptune1.2" : "neptune1";
+            } else {
+                dbParameterGroupFamily = "neptune1";
+            }
         }
 
         DescribeDBClusterParametersResult describeDBClusterParametersResult = neptune.describeDBClusterParameters(
