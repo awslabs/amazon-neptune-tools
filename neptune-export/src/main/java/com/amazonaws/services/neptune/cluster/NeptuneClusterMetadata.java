@@ -27,7 +27,7 @@ public class NeptuneClusterMetadata {
 
     public static String clusterIdFromEndpoint(String endpoint) {
         int index = endpoint.indexOf(".");
-        if (index < 0){
+        if (index < 0) {
             throw new IllegalArgumentException(String.format("Unable to identify cluster ID from endpoint '%s'. Use the clusterId export parameter instead.", endpoint));
         }
         return endpoint.substring(0, index);
@@ -56,11 +56,11 @@ public class NeptuneClusterMetadata {
         boolean isIAMDatabaseAuthenticationEnabled = dbCluster.isIAMDatabaseAuthenticationEnabled();
         Integer port = dbCluster.getPort();
         String dbClusterParameterGroup = dbCluster.getDBClusterParameterGroup();
+        String engineVersion = dbCluster.getEngineVersion();
 
         String dbParameterGroupFamily;
 
-        try
-        {
+        try {
             DescribeDBClusterParameterGroupsResult describeDBClusterParameterGroupsResult = neptune.describeDBClusterParameterGroups(
                     new DescribeDBClusterParameterGroupsRequest()
                             .withDBClusterParameterGroupName(dbClusterParameterGroup));
@@ -72,13 +72,13 @@ public class NeptuneClusterMetadata {
                     parameterGroup.get().getDBParameterGroupFamily() :
                     "neptune1";
 
-        } catch (AmazonNeptuneException e){
+        } catch (AmazonNeptuneException e) {
 
             // Older deployments of Neptune Export service may not have requisite permissions to
             // describe cluster parameter group, so we'll try and guess the group family.
 
-            String engineVersion = dbCluster.getEngineVersion();
-            if (StringUtils.isNotEmpty(engineVersion) && engineVersion.contains(".")){
+
+            if (StringUtils.isNotEmpty(engineVersion) && engineVersion.contains(".")) {
                 int v = Integer.parseInt(engineVersion.split("\\.")[1]);
                 dbParameterGroupFamily = v > 1 ? "neptune1.2" : "neptune1";
             } else {
@@ -135,6 +135,7 @@ public class NeptuneClusterMetadata {
 
         return new NeptuneClusterMetadata(clusterId,
                 port,
+                engineVersion,
                 dbClusterParameterGroup,
                 dbParameterGroupFamily,
                 isIAMDatabaseAuthenticationEnabled,
@@ -147,8 +148,8 @@ public class NeptuneClusterMetadata {
     }
 
     private final String clusterId;
-
     private final int port;
+    private final String engineVersion;
     private final String dbClusterParameterGroupName;
     private final String dbParameterGroupFamily;
     private final Boolean isIAMDatabaseAuthenticationEnabled;
@@ -162,6 +163,7 @@ public class NeptuneClusterMetadata {
 
     private NeptuneClusterMetadata(String clusterId,
                                    int port,
+                                   String engineVersion,
                                    String dbClusterParameterGroupName,
                                    String dbParameterGroupFamily,
                                    Boolean isIAMDatabaseAuthenticationEnabled,
@@ -174,6 +176,7 @@ public class NeptuneClusterMetadata {
                                    Map<String, String> clusterTags) {
         this.clusterId = clusterId;
         this.port = port;
+        this.engineVersion = engineVersion;
         this.dbClusterParameterGroupName = dbClusterParameterGroupName;
         this.dbParameterGroupFamily = dbParameterGroupFamily;
         this.isIAMDatabaseAuthenticationEnabled = isIAMDatabaseAuthenticationEnabled;
@@ -192,6 +195,10 @@ public class NeptuneClusterMetadata {
 
     public int port() {
         return port;
+    }
+
+    public String engineVersion() {
+        return engineVersion;
     }
 
     public String dbClusterParameterGroupName() {
@@ -234,7 +241,7 @@ public class NeptuneClusterMetadata {
         return instanceMetadata.values().stream().map(i -> i.endpoint().getAddress()).collect(Collectors.toList());
     }
 
-    public boolean isTaggedWithNeptuneExport(){
+    public boolean isTaggedWithNeptuneExport() {
         return clusterTags.containsKey("application") &&
                 clusterTags.get("application").equalsIgnoreCase(NEPTUNE_EXPORT_APPLICATION_TAG);
     }
