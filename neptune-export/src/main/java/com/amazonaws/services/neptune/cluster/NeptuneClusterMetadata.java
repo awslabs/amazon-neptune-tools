@@ -246,6 +246,39 @@ public class NeptuneClusterMetadata {
                 clusterTags.get("application").equalsIgnoreCase(NEPTUNE_EXPORT_APPLICATION_TAG);
     }
 
+    public void printDetails(){
+        System.err.println("Cluster ID              : " + clusterId());
+        System.err.println("Port                    : " + port());
+        System.err.println("Engine                  : " + engineVersion());
+        System.err.println("IAM DB Auth             : " + isIAMDatabaseAuthenticationEnabled());
+        System.err.println("Streams enabled         : " + isStreamEnabled());
+        System.err.println("Parameter group family  : " + dbParameterGroupFamily());
+        System.err.println("Cluster parameter group : " + dbClusterParameterGroupName());
+        System.err.println("Subnet group            : " + dbSubnetGroupName());
+        System.err.println("Security group IDs      : " + String.join(", ", vpcSecurityGroupIds()));
+        System.err.println("Instance endpoints      : " + String.join(", ", endpoints()));
+
+        NeptuneClusterMetadata.NeptuneInstanceMetadata primary = instanceMetadataFor(primary());
+        System.err.println();
+        System.err.println("Primary");
+        System.err.println("  Instance ID              : " + primary());
+        System.err.println("  Instance type            : " + primary.instanceType());
+        System.err.println("  Endpoint                 : " + primary.endpoint().getAddress());
+        System.err.println("  Database parameter group : " + primary.dbParameterGroupName());
+
+        if (!replicas().isEmpty()) {
+            for (String replicaId : replicas()) {
+                NeptuneClusterMetadata.NeptuneInstanceMetadata replica = instanceMetadataFor(replicaId);
+                System.err.println();
+                System.err.println("Replica");
+                System.err.println("  Instance ID              : " + replicaId);
+                System.err.println("  Instance type            : " + replica.instanceType());
+                System.err.println("  Endpoint                 : " + replica.endpoint().getAddress());
+                System.err.println("  Database parameter group : " + replica.dbParameterGroupName());
+            }
+        }
+    }
+
     public static class NeptuneInstanceMetadata {
         private final String instanceType;
         private final String dbParameterGroupName;
@@ -269,5 +302,4 @@ public class NeptuneClusterMetadata {
             return endpoint;
         }
     }
-
 }
