@@ -101,7 +101,7 @@ The following code shows how to create a refresh agent that gets endpoint inform
 ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
     EndpointsType.ReadReplicas,
     "neptune-endpoint-info_my-cluster",
-	"eu-west-1");
+    "eu-west-1");
 ```
 
 ### EndpointsSelector
