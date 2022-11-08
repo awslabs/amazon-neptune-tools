@@ -82,6 +82,10 @@ public class CloneClusterModule {
     }
 
     public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, FeatureToggles featureToggles) throws Exception {
+
+        NeptuneClusterMetadata originalClusterMetadata = NeptuneClusterMetadata.createFromClusterId(connectionConfig.clusterId(), amazonNeptuneClientSupplier);
+        originalClusterMetadata.printDetails();
+
         if (cloneCluster){
             if (featureToggles.containsFeature(FeatureToggle.Simulate_Cloned_Cluster)){
                 return new SimulatedCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);

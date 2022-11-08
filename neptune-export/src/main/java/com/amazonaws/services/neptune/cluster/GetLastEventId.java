@@ -72,7 +72,7 @@ public class GetLastEventId {
             NeptuneHttpsClient neptuneHttpsClient = new NeptuneHttpsClient(streamsEndpoint, region, endpoint.equals("localhost"));
 
             Map<String, String> params = new HashMap<>();
-            params.put("commitNum", String.valueOf(Long.MAX_VALUE));
+            params.put("commitNum", MaxCommitNumValueForEngine(clusterMetadata.engineVersion()));
             params.put("limit", "1");
 
             HttpResponse httpResponse = neptuneHttpsClient.get(params);
