@@ -4,7 +4,7 @@ A Java Gremlin client for Amazon Neptune that allows you to change the endpoints
 
 The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
 
-If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda fucntion that can act as a Neptune endpoints information proxy.
+If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
 
   - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
   
