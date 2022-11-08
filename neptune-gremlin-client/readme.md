@@ -4,6 +4,8 @@ A Java Gremlin client for Amazon Neptune that allows you to change the endpoints
 
 The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
 
+If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
+
   - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
   
   - **[New May 24 2022 – version 1.0.5]** Upgraded to version 3.4.13 of the Java Gremlin driver.
@@ -81,6 +83,25 @@ refreshAgent.startPollingNeptuneAPI(
         addresses -> client.refreshEndpoints(addresses.get(selector)),
         60,
         TimeUnit.SECONDS);
+```
+
+### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
+
+If the Neptune Management API experiences a high rate of requests, it will start throttling API calls. If you have a lot of clients frequently polling for endpoint information, your application can very quickly experience throttling (in the form of HTTP 400 throttling exceptions).
+
+Because of this throttling behaviour, if your application uses a lot of concurrent `GremlinClient` and `ClusterEndpointsRefreshAgent` instances, instead of querying the Management API directly, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of its clients.
+
+This repository includes an AWS CloudFormation template that creates a Lambda function which polls the Management API, and which you can configure with a Neptune database cluster ID and a polling interval. After it’s deployed, this function is named _neptune-endpoint-info_<cluster-id>_. In your application code, you can then create a `ClusterEndpointsRefreshAgent` using the `lambdaProxy()` factory method, supplying the type of endpoint information to be retrieved (`All`, `Primary`, `ReadReplicas`, `ClusterEndpoint` or `ReaderEndpoint` – see the `EndpointsType` below), the name of the proxy Lambda function, and the AWS Region in which the proxy Lambda function is located.
+
+The identity under which you're running your aoplication must be authorized to perform `lambda:Invoke` for your proxy Lambda function.
+
+The following code shows how to create a refresh agent that gets endpoint information from a proxy Lambda function named _neptune-endpoint-info_my-cluster_:
+
+```
+ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
+    EndpointsType.ReadReplicas,
+    "neptune-endpoint-info_my-cluster",
+    "eu-west-1");
 ```
 
 ### EndpointsSelector
@@ -252,8 +273,6 @@ refreshAgent.startPollingNeptuneAPI(
 The `refreshAgent` here is configured to find the endpoint addresses of all database instances in a Neptune cluster that are currently acting as readers. The `GremlinClusterBuilder` creates a `GremlinCluster` whose contact points (i.e. its endpoint addresses) are initialized via a first invocation of the `refreshAgent`. But the builder also configures the cluster so that after 1000 consecutive failed attempts to acquire a connection from its currently configured endpoint addresses, it refreshes those addresses using the agent. The cluster is also configured to timeout attempts to get a connection after 20 seconds. At the end of the snippet we also configure the `refreshAgent` to refresh the `GremlinClient` every minute, irrespective of any failures or successes.
 
 With this setup, then, the `GremlinClient` will refresh its endpoint addresses once every minute. It will also refresh its endpoints after 1000 consecutive failed attempts to get a connection. If any attempt to get a connection takes longer than 20 seconds, the client will throw a `TimeoutException`.
-
-
 
 ## Demos
  
