@@ -6,6 +6,8 @@ The client also provides support for IAM database authentication, and for connec
 
 If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
 
+  - **[New November 2022]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
+
   - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
   
   - **[New May 24 2022 – version 1.0.5]** Upgraded to version 3.4.13 of the Java Gremlin driver.
@@ -80,28 +82,9 @@ GremlinCluster cluster = GremlinClusterBuilder.build()
 GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
-        addresses -> client.refreshEndpoints(addresses.get(selector)),
+        (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
         60,
         TimeUnit.SECONDS);
-```
-
-### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
-
-If the Neptune Management API experiences a high rate of requests, it will start throttling API calls. If you have a lot of clients frequently polling for endpoint information, your application can very quickly experience throttling (in the form of HTTP 400 throttling exceptions).
-
-Because of this throttling behaviour, if your application uses a lot of concurrent `GremlinClient` and `ClusterEndpointsRefreshAgent` instances, instead of querying the Management API directly, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of its clients.
-
-This repository includes an AWS CloudFormation template that creates a Lambda function which polls the Management API, and which you can configure with a Neptune database cluster ID and a polling interval. After it’s deployed, this function is named _neptune-endpoint-info_<cluster-id>_. In your application code, you can then create a `ClusterEndpointsRefreshAgent` using the `lambdaProxy()` factory method, supplying the type of endpoint information to be retrieved (`All`, `Primary`, `ReadReplicas`, `ClusterEndpoint` or `ReaderEndpoint` – see the `EndpointsType` below), the name of the proxy Lambda function, and the AWS Region in which the proxy Lambda function is located.
-
-The identity under which you're running your aoplication must be authorized to perform `lambda:Invoke` for your proxy Lambda function.
-
-The following code shows how to create a refresh agent that gets endpoint information from a proxy Lambda function named _neptune-endpoint-info_my-cluster_:
-
-```
-ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
-    EndpointsType.ReadReplicas,
-    "neptune-endpoint-info_my-cluster",
-    "eu-west-1");
 ```
 
 ### EndpointsSelector
@@ -130,7 +113,7 @@ GremlinCluster cluster = GremlinClusterBuilder.build()
 GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
-    addresses -> client.refreshEndpoints(addresses.get(selector)),
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
     60,
     TimeUnit.SECONDS);
 ```
@@ -143,7 +126,67 @@ The `EndpointsType` enum provides implementations of `EndpointsSelector` for som
   * `EndpointsType.ClusterEndpoint` – returns the cluster endpoint
   * `EndpointsType.ReaderEndpoint` – return the reader endpoint
 
+### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
 
+When the Neptune Management API experiences a high rate of requests, it starts throttling API calls. If you have a lot of clients frequently polling for endpoint information, your application can very quickly experience throttling (in the form of HTTP 400 throttling exceptions).
+
+Because of this throttling behaviour, if your application uses a lot of concurrent `GremlinClient` and `ClusterEndpointsRefreshAgent` instances, instead of querying the Management API directly, you should proxy endpoint refresh requests through an AWS Lambda function. The Lambda function can periodically query the Management API and then cache the results on behalf of its clients.
+
+This repository includes an AWS CloudFormation template that creates a Lambda function which polls the Management API, and which you can configure with a Neptune database cluster ID and a polling interval. After it's deployed, this function is named _neptune-endpoint-info_<cluster-id>_. In your application code, you can then create a `ClusterEndpointsRefreshAgent` using the `lambdaProxy()` factory method, supplying the type of endpoint information to be retrieved (for example, `All`, `Primary`, `ReadReplicas`, `ClusterEndpoint` or `ReaderEndpoint`), the name of the proxy Lambda function, and the AWS Region in which the proxy Lambda function is located.
+
+The identity under which you're running your aoplication must be authorized to perform `lambda:Invoke` for your proxy Lambda function.
+
+The following code shows how to create a refresh agent that gets endpoint information from a proxy Lambda function named _neptune-endpoint-info_my-cluster_:
+
+```
+ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
+    EndpointsType.ReadReplicas,
+    "neptune-endpoint-info_my-cluster",
+    "eu-west-1");
+	
+GremlinCluster cluster = GremlinClusterBuilder.build()
+    .enableSsl(true)
+    .addContactPoints(refreshAgent.getAddresses())
+    .port(8182)
+    .create();
+
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    60,
+    TimeUnit.SECONDS);
+```
+
+You can also supply a custom endpoints selector when using the Lambda proxy:
+
+```
+EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
+    instances.stream()
+        .filter(NeptuneInstanceProperties::isReader)
+        .filter(i -> i.hasTag("workload", "analytics"))
+        .filter(NeptuneInstanceProperties::isAvailable)
+        .map(NeptuneInstanceProperties::getEndpoint)
+        .collect(Collectors.toList());
+
+ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
+    selector,
+    "neptune-endpoint-info_my-cluster",
+    "eu-west-1");
+
+GremlinCluster cluster = GremlinClusterBuilder.build()
+    .enableSsl(true)
+    .addContactPoints(refreshAgent.getAddresses())
+    .port(8182)
+    .create();
+
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    60,
+    TimeUnit.SECONDS);
+```
 
 ## GremlinClusterBuilder and NeptuneGremlinClusterBuilder
 
@@ -265,7 +308,7 @@ GremlinCluster cluster = GremlinClusterBuilder.build()
 GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
-    addresses -> client.refreshEndpoints(addresses.get(selector)),
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
     60,
     TimeUnit.SECONDS);
 ```

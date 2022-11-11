@@ -25,6 +25,7 @@ import com.evanlennick.retry4j.CallExecutorBuilder;
 import com.evanlennick.retry4j.Status;
 import com.evanlennick.retry4j.config.RetryConfig;
 import com.evanlennick.retry4j.config.RetryConfigBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import software.amazon.utils.RegionUtils;
@@ -38,10 +39,32 @@ import java.util.concurrent.Callable;
 
 public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrategy {
 
-    private final EndpointsType endpointsType;
+    private final EndpointsSelector endpointsSelector;
     private final String lambdaName;
     private final AWSLambda lambdaClient;
     private final RetryConfig retryConfig;
+
+    public GetEndpointsFromLambdaProxy(EndpointsSelector endpointsSelector, String lambdaName) {
+        this(endpointsSelector, lambdaName, RegionUtils.getCurrentRegionName());
+    }
+
+    public GetEndpointsFromLambdaProxy(EndpointsSelector endpointsSelector, String lambdaName, String region) {
+        this(endpointsSelector, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE);
+    }
+
+    public GetEndpointsFromLambdaProxy(EndpointsSelector endpointsSelector,
+                                       String lambdaName,
+                                       String region,
+                                       String iamProfile) {
+        this(endpointsSelector, lambdaName, region, iamProfile, null);
+    }
+
+    public GetEndpointsFromLambdaProxy(EndpointsSelector endpointsSelector,
+                                       String lambdaName,
+                                       String region,
+                                       AWSCredentialsProvider credentials) {
+        this(endpointsSelector, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE, credentials);
+    }
 
     public GetEndpointsFromLambdaProxy(EndpointsType endpointsType, String lambdaName) {
         this(endpointsType, lambdaName, RegionUtils.getCurrentRegionName());
@@ -65,12 +88,12 @@ public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrateg
         this(endpointsType, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE, credentials);
     }
 
-    private GetEndpointsFromLambdaProxy(EndpointsType endpointsType,
+    private GetEndpointsFromLambdaProxy(EndpointsSelector endpointsSelector,
                                         String lambdaName,
                                         String region,
                                         String iamProfile,
                                         AWSCredentialsProvider credentials) {
-        this.endpointsType = endpointsType;
+        this.endpointsSelector = endpointsSelector;
         this.lambdaName = lambdaName;
         this.lambdaClient = createLambdaClient(region, iamProfile, credentials);
         this.retryConfig = new RetryConfigBuilder()
@@ -84,7 +107,7 @@ public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrateg
     private AWSLambda createLambdaClient(String region, String iamProfile, AWSCredentialsProvider credentials) {
         AWSLambdaClientBuilder builder = AWSLambdaClientBuilder.standard();
 
-        if (credentials != null){
+        if (credentials != null) {
             builder = builder.withCredentials(credentials);
         } else {
 
@@ -105,27 +128,58 @@ public class GetEndpointsFromLambdaProxy implements ClusterEndpointsFetchStrateg
     @Override
     public Map<EndpointsSelector, Collection<String>> getAddresses() {
 
-        Callable<Map<EndpointsSelector, Collection<String>>> query = () -> {
-            InvokeRequest invokeRequest = new InvokeRequest()
-                    .withFunctionName(lambdaName)
-                    .withPayload(String.format("\"%s\"", endpointsType.name()));
+        if (endpointsSelector.getClass().equals(EndpointsType.class)) {
+            Callable<Map<EndpointsSelector, Collection<String>>> query = () -> {
 
-            InvokeResult result = lambdaClient.invoke(invokeRequest);
-            String payload = new String(result.getPayload().array());
+                EndpointsType endpointsType = (EndpointsType) endpointsSelector;
+
+                InvokeRequest invokeRequest = new InvokeRequest()
+                        .withFunctionName(lambdaName)
+                        .withPayload(String.format("\"%s\"", endpointsType.name()));
+
+                InvokeResult result = lambdaClient.invoke(invokeRequest);
+                String payload = new String(result.getPayload().array());
+
+                Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
+
+                results.put(endpointsType, Arrays.asList(payload.split(",")));
+
+                return results;
+            };
+
+            @SuppressWarnings("unchecked")
+            CallExecutor<Map<EndpointsSelector, Collection<String>>> executor =
+                    new CallExecutorBuilder<Map<EndpointsSelector, Collection<String>>>().config(retryConfig).build();
+
+            Status<Map<EndpointsSelector, Collection<String>>> status = executor.execute(query);
+
+            return status.getResult();
+        } else {
+            Callable<NeptuneClusterMetadata> query = () -> {
+
+                InvokeRequest invokeRequest = new InvokeRequest()
+                        .withFunctionName(lambdaName)
+                        .withPayload("\"\"");
+                InvokeResult result = lambdaClient.invoke(invokeRequest);
+
+                return NeptuneClusterMetadata.fromByeArray(result.getPayload().array());
+            };
+
+            @SuppressWarnings("unchecked")
+            CallExecutor<NeptuneClusterMetadata> executor =
+                    new CallExecutorBuilder<Map<EndpointsSelector, Collection<String>>>().config(retryConfig).build();
+
+            Status<NeptuneClusterMetadata> status = executor.execute(query);
+            NeptuneClusterMetadata neptuneClusterMetadata = status.getResult();
 
             Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
 
-            results.put(endpointsType, Arrays.asList(payload.split(",")));
+                results.put(endpointsSelector, endpointsSelector.getEndpoints(
+                        neptuneClusterMetadata.getClusterEndpoint(),
+                        neptuneClusterMetadata.getReaderEndpoint(),
+                        neptuneClusterMetadata.getInstances()));
 
             return results;
-        };
-
-        @SuppressWarnings("unchecked")
-        CallExecutor<Map<EndpointsSelector, Collection<String>>> executor =
-                new CallExecutorBuilder<Map<EndpointsSelector, Collection<String>>>().config(retryConfig).build();
-
-        Status<Map<EndpointsSelector, Collection<String>>> status = executor.execute(query);
-
-        return status.getResult();
+        }
     }
 }

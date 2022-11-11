@@ -29,7 +29,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.neptune.cluster.NeptuneInstanceProperties;
 
 import java.util.*;
 import java.util.concurrent.Executors;

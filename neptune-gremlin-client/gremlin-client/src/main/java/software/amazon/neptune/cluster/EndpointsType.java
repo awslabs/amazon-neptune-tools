@@ -26,10 +26,10 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
             return instances.stream()
-                    .filter(NeptuneInstanceProperties::isAvailable)
-                    .map(NeptuneInstanceProperties::getEndpoint)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
         }
     },
@@ -37,11 +37,11 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
             List<String> results = instances.stream()
-                    .filter(NeptuneInstanceProperties::isPrimary)
-                    .filter(NeptuneInstanceProperties::isAvailable)
-                    .map(NeptuneInstanceProperties::getEndpoint)
+                    .filter(NeptuneInstanceMetadata::isPrimary)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
 
             if (results.isEmpty()){
@@ -56,12 +56,12 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
 
             List<String> results = instances.stream()
-                    .filter(NeptuneInstanceProperties::isReader)
-                    .filter(NeptuneInstanceProperties::isAvailable)
-                    .map(NeptuneInstanceProperties::getEndpoint)
+                    .filter(NeptuneInstanceMetadata::isReader)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
 
             if (results.isEmpty()) {
@@ -76,7 +76,7 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
 
             return Collections.singletonList(clusterEndpoint);
         }
@@ -85,7 +85,7 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
 
             return Collections.singletonList(readerEndpoint);
         }

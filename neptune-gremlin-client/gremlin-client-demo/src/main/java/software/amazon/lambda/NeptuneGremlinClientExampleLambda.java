@@ -27,12 +27,12 @@ import org.apache.tinkerpop.gremlin.process.remote.RemoteConnectionException;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.T;
-import software.amazon.neptune.cluster.ClusterEndpointsRefreshAgent;
-import software.amazon.neptune.cluster.EndpointsType;
-import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
+import software.amazon.neptune.cluster.*;
 
 import java.io.*;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +72,7 @@ public class NeptuneGremlinClientExampleLambda implements RequestStreamHandler {
         this.client = cluster.connect();
 
         refreshAgent.startPollingNeptuneAPI(
-                addresses -> client.refreshEndpoints(addresses.get(ENDPOINT_TYPE)),
+                (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(ENDPOINT_TYPE)),
                 5,
                 TimeUnit.SECONDS);
 
@@ -132,7 +132,7 @@ public class NeptuneGremlinClientExampleLambda implements RequestStreamHandler {
 
             Class<? extends Exception> exceptionClass = e.getClass();
 
-            if (RemoteConnectionException.class.isAssignableFrom(exceptionClass)){
+            if (RemoteConnectionException.class.isAssignableFrom(exceptionClass)) {
                 System.out.println("Retrying because RemoteConnectionException");
                 return true;
             }
