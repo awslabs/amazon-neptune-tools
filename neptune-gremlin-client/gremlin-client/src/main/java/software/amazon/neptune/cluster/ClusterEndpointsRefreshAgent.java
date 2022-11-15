@@ -48,6 +48,28 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
                 new GetEndpointsFromLambdaProxy(endpointsType, lambdaName, region, iamProfile));
     }
 
+    public static ClusterEndpointsRefreshAgent lambdaProxy(
+            EndpointsSelector endpointsSelector,
+            String lambdaName){
+        return lambdaProxy(endpointsSelector, lambdaName, RegionUtils.getCurrentRegionName());
+    }
+
+    public static ClusterEndpointsRefreshAgent lambdaProxy(
+            EndpointsSelector endpointsSelector,
+            String lambdaName,
+            String region){
+        return lambdaProxy(endpointsSelector, lambdaName, region, IamAuthConfig.DEFAULT_PROFILE);
+    }
+
+    public static ClusterEndpointsRefreshAgent lambdaProxy(
+            EndpointsSelector endpointsSelector,
+            String lambdaName,
+            String region,
+            String iamProfile){
+        return new ClusterEndpointsRefreshAgent(
+                new GetEndpointsFromLambdaProxy(endpointsSelector, lambdaName, region, iamProfile));
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(ClusterEndpointsRefreshAgent.class);
 
     private final ClusterEndpointsFetchStrategy clusterEndpointsFetchStrategy;
@@ -76,6 +98,27 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
         }, delay, delay, timeUnit);
     }
 
+    public void startPollingNeptuneAPI(OnNewClusterMetadata onNewClusterMetadata,
+                                       long delay,
+                                       TimeUnit timeUnit) {
+
+        if (!ClusterMetadataFetchStrategy.class.isAssignableFrom(clusterEndpointsFetchStrategy.getClass())){
+            throw new IllegalStateException("Fetch strategy does not implement ClusterMetadataFetchStrategy: "
+                    + clusterEndpointsFetchStrategy.getClass().getSimpleName());
+        }
+
+        scheduledExecutorService.scheduleWithFixedDelay(() -> {
+            try{
+                NeptuneClusterMetadata clusterMetadata = getClusterMetadata();
+                logger.info("New cluster metadata: {}", clusterMetadata);
+                onNewClusterMetadata.apply(clusterMetadata);
+            } catch (Exception e){
+                logger.error("Error while getting cluster metadata", e);
+            }
+
+        }, delay, delay, timeUnit);
+    }
+
     public void stop() {
         scheduledExecutorService.shutdownNow();
     }
@@ -87,5 +130,9 @@ public class ClusterEndpointsRefreshAgent implements AutoCloseable {
 
     public Map<EndpointsSelector, Collection<String>> getAddresses() {
         return clusterEndpointsFetchStrategy.getAddresses();
+    }
+
+    public NeptuneClusterMetadata getClusterMetadata() {
+        return ((ClusterMetadataFetchStrategy)clusterEndpointsFetchStrategy).getClusterMetadata();
     }
 }

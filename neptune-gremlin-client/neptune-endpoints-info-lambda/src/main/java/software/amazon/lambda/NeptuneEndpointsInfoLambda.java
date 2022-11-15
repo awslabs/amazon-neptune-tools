@@ -15,15 +15,15 @@ package software.amazon.lambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import software.amazon.neptune.cluster.ClusterEndpointsRefreshAgent;
-import software.amazon.neptune.cluster.EndpointsSelector;
 import software.amazon.neptune.cluster.EndpointsType;
+import software.amazon.neptune.cluster.NeptuneClusterMetadata;
+import software.amazon.neptune.cluster.OnNewClusterMetadata;
 import software.amazon.utils.EnvironmentVariableUtils;
 
 import java.io.*;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,36 +33,33 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
 
     private final ClusterEndpointsRefreshAgent refreshAgent;
-    private final AtomicReference<Map<EndpointsSelector, Collection<String>>> addresses = new AtomicReference<>(new HashMap<>());
+    private final AtomicReference<NeptuneClusterMetadata> neptuneClusterMetadata = new AtomicReference<>();
 
     public NeptuneEndpointsInfoLambda() {
+        this(EnvironmentVariableUtils.getMandatoryEnv("clusterId"),
+                Integer.parseInt(
+                        EnvironmentVariableUtils.getOptionalEnv("pollingIntervalSeconds", "15")));
+    }
 
-        String clusterId = EnvironmentVariableUtils.getMandatoryEnv("clusterId");
-        int pollingIntervalSeconds = Integer.parseInt(
-                EnvironmentVariableUtils.getOptionalEnv("pollingIntervalSeconds", "15"));
+    public NeptuneEndpointsInfoLambda(String clusterId, int pollingIntervalSeconds) {
+        refreshAgent = new ClusterEndpointsRefreshAgent(clusterId, EndpointsType.All);
+        neptuneClusterMetadata.set(refreshAgent.getClusterMetadata());
 
-        refreshAgent = new ClusterEndpointsRefreshAgent(clusterId,
-                EndpointsType.All,
-                EndpointsType.Primary,
-                EndpointsType.ReadReplicas,
-                EndpointsType.ClusterEndpoint,
-                EndpointsType.ReaderEndpoint);
-
-        addresses.set(refreshAgent.getAddresses());
+        System.out.println(String.format("clusterId: %s", clusterId));
+        System.out.println(String.format("pollingIntervalSeconds: %s", pollingIntervalSeconds));
 
         refreshAgent.startPollingNeptuneAPI(
-                addresses::set,
+                (OnNewClusterMetadata) metadata -> neptuneClusterMetadata.set(metadata),
                 pollingIntervalSeconds,
                 TimeUnit.SECONDS);
     }
-
 
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
 
         LambdaLogger logger = context.getLogger();
 
-        EndpointsType endpointsType = EndpointsType.ReadReplicas;
+        EndpointsType endpointsType = null;
 
         Scanner scanner = new Scanner(input);
         if (scanner.hasNext()) {
@@ -72,21 +69,46 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
             }
         }
 
-        logger.log("EndpointsType: " + endpointsType);
-
-        Map<EndpointsSelector, Collection<String>> addressesMap = addresses.get();
-
-        for (Map.Entry<EndpointsSelector, Collection<String>> entry : addressesMap.entrySet()) {
-            logger.log(entry.getKey() + ": " + entry.getValue());
+        if (endpointsType != null) {
+            returnEndpointList(endpointsType, logger, output);
+        } else {
+            returnClusterMetadata(logger, output);
         }
+    }
 
-        String results = String.join(",", addressesMap.get(endpointsType));
+    private void returnClusterMetadata(LambdaLogger logger, OutputStream output) throws IOException {
+
+        logger.log("Returning cluster metadata");
+
+        NeptuneClusterMetadata clusterMetadata = neptuneClusterMetadata.get();
+        String results = clusterMetadata.toJsonString();
+
         logger.log("Results: " + results);
 
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(output, UTF_8))) {
             writer.write(results);
             writer.flush();
         }
+    }
 
+    private void returnEndpointList(EndpointsType endpointsType,
+                                    LambdaLogger logger,
+                                    OutputStream output) throws IOException {
+
+        logger.log("Returning list of endpoints for EndpointsType: " + endpointsType);
+
+        NeptuneClusterMetadata clusterMetadata = neptuneClusterMetadata.get();
+        Collection<String> endpoints = endpointsType.getEndpoints(
+                clusterMetadata.getClusterEndpoint(),
+                clusterMetadata.getReaderEndpoint(),
+                clusterMetadata.getInstances());
+
+        String results = String.join(",", endpoints);
+        logger.log("Results: " + results);
+
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(output, UTF_8))) {
+            writer.write(results);
+            writer.flush();
+        }
     }
 }
