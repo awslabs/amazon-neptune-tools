@@ -137,11 +137,12 @@ public class GetEndpointsFromNeptuneManagementApi implements
                                 if (replicas.contains(c.getDBInstanceIdentifier())) {
                                     role = "reader";
                                 }
+                                String address = c.getEndpoint() == null ? null : c.getEndpoint().getAddress();
                                 instances.add(
                                         new NeptuneInstanceMetadata()
                                                 .withInstanceId(c.getDBInstanceIdentifier())
                                                 .withRole(role)
-                                                .withEndpoint(c.getEndpoint().getAddress())
+                                                .withEndpoint(address)
                                                 .withStatus(c.getDBInstanceStatus())
                                                 .withAvailabilityZone(c.getAvailabilityZone())
                                                 .withInstanceType(c.getDBInstanceClass())
