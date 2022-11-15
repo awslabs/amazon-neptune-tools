@@ -145,7 +145,7 @@ public class NeptuneInstanceMetadata {
 
     @JsonIgnore
     public boolean isAvailable(){
-        return getStatus().equalsIgnoreCase("Available");
+        return getStatus().equalsIgnoreCase("Available") && endpoint != null;
     }
 
     @JsonIgnore
