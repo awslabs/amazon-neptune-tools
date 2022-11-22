@@ -378,8 +378,7 @@ public enum DataType {
     }
 
     public static String escapeDoubleQuotes(Object value) {
-        String temp = value.toString().replace("\"\"", "\"");
-        return temp.replace("\"", "\"\"");
+        return value.toString().replace("\"", "\"\"");
     }
 
     public String typeDescription() {
