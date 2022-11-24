@@ -33,6 +33,57 @@ public class NeptuneClusterMetadata {
         return endpoint.substring(0, index);
     }
 
+    public static NeptuneClusterMetadata createFromEndpoints(Collection<String> endpoints, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+        AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
+
+        String paginationToken = null;
+
+        do {
+            DescribeDBClustersResult describeDBClustersResult = neptune
+                    .describeDBClusters(new DescribeDBClustersRequest()
+                            .withMarker(paginationToken)
+                            .withFilters(new Filter().withName("engine").withValues("neptune")));
+
+            paginationToken = describeDBClustersResult.getMarker();
+
+            for (DBCluster dbCluster : describeDBClustersResult.getDBClusters()) {
+                for (String endpoint : endpoints) {
+                    String endpointValue = endpoint.toLowerCase();
+                    if (endpointValue.equals(dbCluster.getEndpoint().toLowerCase())){
+                        return createFromClusterId(dbCluster.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                    } else if (endpointValue.equals(dbCluster.getReaderEndpoint().toLowerCase())){
+                        return createFromClusterId(dbCluster.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                    }
+                }
+            }
+        } while (paginationToken != null);
+
+        paginationToken = null;
+
+        do {
+
+        DescribeDBInstancesResult describeDBInstancesResult = neptune.describeDBInstances(
+                new DescribeDBInstancesRequest()
+                        .withMarker(paginationToken)
+                        .withFilters(new Filter().withName("engine").withValues("neptune")));
+
+        paginationToken = describeDBInstancesResult.getMarker();
+
+        for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
+            for (String endpoint : endpoints) {
+                String endpointValue = endpoint.toLowerCase();
+                if (endpointValue.equals(dbInstance.getEndpoint().getAddress().toLowerCase())){
+                    return createFromClusterId(dbInstance.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                }
+            }
+        }
+
+        } while (paginationToken != null);
+
+        throw new IllegalStateException(String.format("Unable to identify cluster ID from endpoints: %s", endpoints));
+
+    }
+
     public static NeptuneClusterMetadata createFromClusterId(String clusterId, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
 
         AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
@@ -144,7 +195,9 @@ public class NeptuneClusterMetadata {
                 vpcSecurityGroupIds,
                 primary,
                 replicas,
-                instanceTypes, clusterTags);
+                instanceTypes,
+                clusterTags,
+                amazonNeptuneClientSupplier);
     }
 
     private final String clusterId;
@@ -161,6 +214,8 @@ public class NeptuneClusterMetadata {
     private final Map<String, NeptuneInstanceMetadata> instanceMetadata;
     private final Map<String, String> clusterTags;
 
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+
     private NeptuneClusterMetadata(String clusterId,
                                    int port,
                                    String engineVersion,
@@ -173,7 +228,8 @@ public class NeptuneClusterMetadata {
                                    String primary,
                                    Collection<String> replicas,
                                    Map<String, NeptuneInstanceMetadata> instanceMetadata,
-                                   Map<String, String> clusterTags) {
+                                   Map<String, String> clusterTags,
+                                   Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
         this.clusterId = clusterId;
         this.port = port;
         this.engineVersion = engineVersion;
@@ -187,6 +243,7 @@ public class NeptuneClusterMetadata {
         this.replicas = replicas;
         this.instanceMetadata = instanceMetadata;
         this.clusterTags = clusterTags;
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
     public String clusterId() {
@@ -244,6 +301,10 @@ public class NeptuneClusterMetadata {
     public boolean isTaggedWithNeptuneExport() {
         return clusterTags.containsKey("application") &&
                 clusterTags.get("application").equalsIgnoreCase(NEPTUNE_EXPORT_APPLICATION_TAG);
+    }
+
+    public Supplier<AmazonNeptune> clientSupplier() {
+        return amazonNeptuneClientSupplier;
     }
 
     public void printDetails(){

@@ -129,9 +129,7 @@ public class IncrementalExportEventHandler implements NeptuneExportServiceEventH
 
     private void getLastEventIdFromStream(Cluster cluster, String streamEndpointType) {
 
-        NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(cluster.connectionConfig().clusterId(), cluster.clientSupplier());
-
-        EventId eventId = new GetLastEventId(clusterMetadata, cluster.connectionConfig(), streamEndpointType).execute();
+        EventId eventId = new GetLastEventId(cluster.clusterMetadata(), cluster.connectionConfig(), streamEndpointType).execute();
         if (eventId != null) {
             commitNum.set(eventId.commitNum());
             opNum.set(eventId.opNum());

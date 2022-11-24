@@ -42,7 +42,7 @@ import java.util.Collection;
 public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -76,7 +76,11 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
         try {
             Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories();
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();

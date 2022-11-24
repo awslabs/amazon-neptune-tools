@@ -18,7 +18,6 @@ import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
 import com.amazonaws.services.neptune.cluster.EventId;
 import com.amazonaws.services.neptune.cluster.GetLastEventIdStrategy;
 import com.amazonaws.services.neptune.io.Directories;
-import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
 import com.amazonaws.services.neptune.rdf.NeptuneSparqlClient;
@@ -40,7 +39,7 @@ import javax.inject.Inject;
 public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -59,7 +58,11 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
 
         try {
             Timer.timedActivity(String.format("exporting rdf %s", exportScope.scope()), (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), new ConcurrencyConfig(1), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        new ConcurrencyConfig(1),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories();
 
