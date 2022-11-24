@@ -47,7 +47,7 @@ import java.util.List;
 public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -86,7 +86,11 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
         try {
             Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
                     JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?

@@ -12,7 +12,6 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cli;
 
-import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.cluster.*;
 import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.FeatureToggles;
@@ -20,8 +19,6 @@ import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.AllowedValues;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.ranges.IntegerRange;
-
-import java.util.function.Supplier;
 
 public class CloneClusterModule {
 
@@ -75,33 +72,33 @@ public class CloneClusterModule {
     @Once
     private String cloneCorrelationId;
 
-    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
 
-    public CloneClusterModule(Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
-        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+    public CloneClusterModule() {
     }
 
-    public Cluster cloneCluster(ConnectionConfig connectionConfig, ConcurrencyConfig concurrencyConfig, FeatureToggles featureToggles) throws Exception {
+    public Cluster cloneCluster(NeptuneClusterMetadata clusterMetadata,
+                                ConnectionConfig connectionConfig,
+                                ConcurrencyConfig concurrencyConfig,
+                                FeatureToggles featureToggles) throws Exception {
 
-        NeptuneClusterMetadata originalClusterMetadata = NeptuneClusterMetadata.createFromClusterId(connectionConfig.clusterId(), amazonNeptuneClientSupplier);
-        originalClusterMetadata.printDetails();
+        clusterMetadata.printDetails();
 
-        if (cloneCluster){
-            if (featureToggles.containsFeature(FeatureToggle.Simulate_Cloned_Cluster)){
-                return new SimulatedCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);
+        if (cloneCluster) {
+            if (featureToggles.containsFeature(FeatureToggle.Simulate_Cloned_Cluster)) {
+                return new SimulatedCloneCluster(clusterMetadata).cloneCluster(connectionConfig, concurrencyConfig);
             } else {
 
                 CloneCluster command = new CloneCluster(
+                        clusterMetadata,
                         cloneClusterInstanceType,
                         replicaCount,
                         maxConcurrency,
                         engineVersion,
-                        amazonNeptuneClientSupplier,
                         cloneCorrelationId);
                 return command.cloneCluster(connectionConfig, concurrencyConfig);
             }
         } else {
-            return new DoNotCloneCluster(amazonNeptuneClientSupplier).cloneCluster(connectionConfig, concurrencyConfig);
+            return new DoNotCloneCluster(clusterMetadata).cloneCluster(connectionConfig, concurrencyConfig);
         }
     }
 }

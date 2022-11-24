@@ -32,11 +32,10 @@ public class GetLastEventIdTask implements GetLastEventIdStrategy{
     @Override
     public void saveLastEventId(String streamEndpointType) throws IOException {
 
-        NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(
-                cluster.connectionConfig().clusterId(),
-                cluster.clientSupplier());
-
-        EventId eventId = new GetLastEventId(clusterMetadata, cluster.connectionConfig(), streamEndpointType).execute();
+        EventId eventId = new GetLastEventId(
+                cluster.clusterMetadata(),
+                cluster.connectionConfig(),
+                streamEndpointType).execute();
 
         if (eventId != null){
             lastEventId.set(eventId);
