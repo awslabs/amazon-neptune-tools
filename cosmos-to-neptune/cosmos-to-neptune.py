@@ -5,7 +5,6 @@ import pandas as pd
 nodes = []
 edges = []
 
-
 def parseNode(dict):
     node = {}
     node["~id"] = dict["id"]
@@ -31,7 +30,6 @@ def parseJSON():
     filename = 'data/cosmos-dump.json'
     with open(filename, 'r') as f:
         data = json.load(f)
-        # print(data[0])
 
         for dataItem in data:
             for nodedictionaryItem in dataItem.values():
