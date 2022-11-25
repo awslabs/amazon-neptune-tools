@@ -21,7 +21,7 @@ Please note that the tool provides the below 3 options for exporting
 * ![](./images/image004.png)
 
 
-## Step 1: Use cosmos-to-neptune utility to transform and load data inside Amazon Neptune
+## Step 2: Use cosmos-to-neptune utility to transform and load data inside Amazon Neptune
 
 Once you have the exported json file, update the file path in the utility 
 
