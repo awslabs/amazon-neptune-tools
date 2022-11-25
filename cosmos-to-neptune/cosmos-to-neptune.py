@@ -27,7 +27,7 @@ def parseEdge(dict):
 #parse JSON start
 def parseJSON():
     # change the input file name to local file 
-    filename = 'data/cosmos-dump.json'
+    filename = 'data/cosmos-dump-sample.json'
     with open(filename, 'r') as f:
         data = json.load(f)
 
