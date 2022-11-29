@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
+import com.amazonaws.services.neptune.export.EndpointValidator;
 import com.amazonaws.services.neptune.model.*;
 import org.apache.commons.lang.StringUtils;
 
@@ -48,10 +49,10 @@ public class NeptuneClusterMetadata {
 
             for (DBCluster dbCluster : describeDBClustersResult.getDBClusters()) {
                 for (String endpoint : endpoints) {
-                    String endpointValue = endpoint.toLowerCase();
-                    if (endpointValue.equals(dbCluster.getEndpoint().toLowerCase())){
+                    String endpointValue = getEndpointValue(endpoint);
+                    if (endpointValue.equals(getEndpointValue(dbCluster.getEndpoint()))){
                         return createFromClusterId(dbCluster.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
-                    } else if (endpointValue.equals(dbCluster.getReaderEndpoint().toLowerCase())){
+                    } else if (endpointValue.equals(getEndpointValue(dbCluster.getReaderEndpoint()))){
                         return createFromClusterId(dbCluster.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
                     }
                 }
@@ -62,26 +63,30 @@ public class NeptuneClusterMetadata {
 
         do {
 
-        DescribeDBInstancesResult describeDBInstancesResult = neptune.describeDBInstances(
-                new DescribeDBInstancesRequest()
-                        .withMarker(paginationToken)
-                        .withFilters(new Filter().withName("engine").withValues("neptune")));
+            DescribeDBInstancesResult describeDBInstancesResult = neptune.describeDBInstances(
+                    new DescribeDBInstancesRequest()
+                            .withMarker(paginationToken)
+                            .withFilters(new Filter().withName("engine").withValues("neptune")));
 
-        paginationToken = describeDBInstancesResult.getMarker();
+            paginationToken = describeDBInstancesResult.getMarker();
 
-        for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
-            for (String endpoint : endpoints) {
-                String endpointValue = endpoint.toLowerCase();
-                if (endpointValue.equals(dbInstance.getEndpoint().getAddress().toLowerCase())){
-                    return createFromClusterId(dbInstance.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+            for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
+                for (String endpoint : endpoints) {
+                    String endpointValue = getEndpointValue(endpoint);
+                    if (endpointValue.equals(getEndpointValue(dbInstance.getEndpoint().getAddress()))){
+                        return createFromClusterId(dbInstance.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                    }
                 }
             }
-        }
 
         } while (paginationToken != null);
 
         throw new IllegalStateException(String.format("Unable to identify cluster ID from endpoints: %s", endpoints));
 
+    }
+
+    private static String getEndpointValue(String endpoint) {
+        return EndpointValidator.validate(endpoint).toLowerCase();
     }
 
     public static NeptuneClusterMetadata createFromClusterId(String clusterId, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {

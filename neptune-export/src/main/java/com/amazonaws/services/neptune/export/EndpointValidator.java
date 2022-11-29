@@ -29,7 +29,7 @@ public class EndpointValidator {
         return validatedEndpoints;
     }
 
-    static String validate(String endpoint) {
+    public static String validate(String endpoint) {
         if (endpoint.startsWith("ws://") || endpoint.startsWith("wss://") || endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
             logger.warn("Endpoint cannot contain protocol. Removing protocol: {}", endpoint);
             endpoint = endpoint.substring(endpoint.indexOf("//") + 2);
