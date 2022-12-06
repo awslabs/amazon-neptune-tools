@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.export;
 import com.amazonaws.services.neptune.NeptuneExportCli;
 import com.amazonaws.services.neptune.NeptuneExportCommand;
 import com.amazonaws.services.neptune.NeptuneExportEventHandlerHost;
+import com.amazonaws.services.neptune.util.GitProperties;
 import org.apache.commons.lang.StringUtils;
 
 import static com.amazonaws.services.neptune.export.NeptuneExportService.MAX_FILE_DESCRIPTOR_COUNT;
@@ -39,6 +40,8 @@ public class NeptuneExportRunner {
     }
 
     public void run() {
+
+        System.err.println(String.format("neptune-export.jar: %s", GitProperties.fromResource()) );
 
         Args argsCollection = new Args(this.args);
         if (argsCollection.contains("--log-level")){
