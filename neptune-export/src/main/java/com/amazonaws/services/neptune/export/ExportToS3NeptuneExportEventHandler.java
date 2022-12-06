@@ -339,7 +339,7 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
 
                 ObjectTaggingProvider taggingProvider = uploadContext -> createObjectTags(profiles);
 
-                logger.info("Uploading export files to s3 bucket={} key={}", outputS3ObjectInfo.bucket(), outputS3ObjectInfo.key());
+                logger.info("Uploading export files to {}", outputS3ObjectInfo.toString());
 
                 MultipleFileUpload upload = transferManager.uploadDirectory(
                         outputS3ObjectInfo.bucket(),
