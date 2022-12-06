@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import com.amazonaws.services.neptune.util.GitProperties;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
