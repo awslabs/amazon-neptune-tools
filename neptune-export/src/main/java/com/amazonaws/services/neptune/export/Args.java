@@ -15,13 +15,12 @@ package com.amazonaws.services.neptune.export;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 
 import java.util.*;
-import java.util.function.UnaryOperator;
 
 public class Args {
 
     private final List<String> args = new ArrayList<>();
 
-    public Args(String[] args){
+    public Args(String[] args) {
         this.args.addAll(Arrays.asList(args));
     }
 
@@ -63,21 +62,21 @@ public class Args {
         args.add(value);
     }
 
-    public boolean contains(String name){
+    public boolean contains(String name) {
         for (String arg : args) {
-            if (arg.equals(name)){
+            if (arg.equals(name)) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean contains(String name, String value){
+    public boolean contains(String name, String value) {
         Iterator<String> iterator = args.iterator();
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             String arg = iterator.next();
-            if (arg.equals(name)){
-                if (iterator.hasNext() && iterator.next().equals(value)){
+            if (arg.equals(name)) {
+                if (iterator.hasNext() && iterator.next().equals(value)) {
                     return true;
                 }
             }
@@ -100,7 +99,7 @@ public class Args {
 
     public void replace(String original, String replacement) {
         args.replaceAll(s -> {
-            if (s.equals(original)){
+            if (s.equals(original)) {
                 return replacement;
             } else {
                 return s;
@@ -110,7 +109,7 @@ public class Args {
 
     public boolean containsAny(String... values) {
         for (String value : values) {
-            if (args.contains(value)){
+            if (args.contains(value)) {
                 return true;
             }
         }
@@ -119,10 +118,10 @@ public class Args {
 
     public String getFirstOptionValue(String name) {
         Iterator<String> iterator = args.iterator();
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             String arg = iterator.next();
-            if (arg.equals(name)){
-                if (iterator.hasNext()){
+            if (arg.equals(name)) {
+                if (iterator.hasNext()) {
                     return iterator.next();
                 }
             }
@@ -133,10 +132,10 @@ public class Args {
     public Collection<String> getOptionValues(String name) {
         Collection<String> values = new ArrayList<>();
         Iterator<String> iterator = args.iterator();
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             String arg = iterator.next();
-            if (arg.equals(name)){
-                if (iterator.hasNext()){
+            if (arg.equals(name)) {
+                if (iterator.hasNext()) {
                     values.add(iterator.next());
                 }
             }

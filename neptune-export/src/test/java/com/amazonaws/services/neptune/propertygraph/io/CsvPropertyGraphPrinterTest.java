@@ -208,7 +208,7 @@ public class CsvPropertyGraphPrinterTest {
                 .map(p -> p.property().toString())
                 .collect(Collectors.toList())
                 .toArray(new String[]{});
-        CSVFormat format = CSVFormat.RFC4180.withHeader(filePropertyHeaders);
+        CSVFormat format = CSVFormat.RFC4180.builder().setHeader(filePropertyHeaders).build();
         Reader in = new StringReader(stringWriter.toString());
         Iterable<CSVRecord> records = format.parse(in);
 
