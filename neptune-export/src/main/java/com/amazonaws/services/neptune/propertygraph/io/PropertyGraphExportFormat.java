@@ -33,13 +33,13 @@ public enum PropertyGraphExportFormat implements FileExtension {
 
         @Override
         PropertyGraphPrinter createPrinter(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
-            JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
+            JsonGenerator generator = createJsonGenerator(writer, writer.lineSeparator());
             return new JsonPropertyGraphPrinter(writer, generator, labelSchema, printerOptions);
         }
 
         @Override
         PropertyGraphPrinter createPrinterForInferredSchema(OutputWriter writer, LabelSchema labelSchema, PrinterOptions printerOptions) throws IOException {
-            JsonGenerator generator = createJsonGenerator(writer, System.lineSeparator());
+            JsonGenerator generator = createJsonGenerator(writer, writer.lineSeparator());
             return new JsonPropertyGraphPrinter(writer, generator, labelSchema, printerOptions,  true);
         }
 
