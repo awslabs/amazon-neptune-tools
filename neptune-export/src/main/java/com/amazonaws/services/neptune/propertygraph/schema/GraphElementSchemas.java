@@ -114,9 +114,15 @@ public class GraphElementSchemas {
 
         Object value = properties.get(T.label);
 
-        Label label = List.class.isAssignableFrom(value.getClass()) ?
-                new Label((List<String>) value) :
-                new Label(String.valueOf(value));
+        Label label;
+
+        if (List.class.isAssignableFrom(value.getClass())){
+            @SuppressWarnings("unchecked")
+            List<String> values = (List<String>) value;
+            label = new Label(values);
+        } else {
+            label = new Label(String.valueOf(value));
+        }
 
         update(label, properties, allowStructuralElements);
     }
