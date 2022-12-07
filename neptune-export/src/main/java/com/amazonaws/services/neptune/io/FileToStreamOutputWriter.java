@@ -113,7 +113,6 @@ public class FileToStreamOutputWriter implements OutputWriter {
         }
 
         public boolean isFinished() {
-            System.out.println(String.format("linesProcessed: %s, totalLineCount: %s", linesProcessed, totalLineCount.get()));
             return linesProcessed == totalLineCount.get();
         }
     }
