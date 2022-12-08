@@ -1,4 +1,4 @@
-# Neptune UI Utils home
+# Neptune DMS SchemaMapping Generation Tool
 Install node and npm
 
 Download yarn package manager
