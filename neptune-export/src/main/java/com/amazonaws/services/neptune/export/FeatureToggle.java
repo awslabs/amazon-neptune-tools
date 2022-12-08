@@ -18,5 +18,6 @@ public enum FeatureToggle {
     NeptuneML_V2,
     Edge_Features,
     Inject_Fault,
-    Simulate_Cloned_Cluster
+    Simulate_Cloned_Cluster,
+    Keep_Rewritten_Files
 }

@@ -13,24 +13,35 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.export;
 
 import com.amazonaws.services.neptune.NeptuneExportCli;
+import com.amazonaws.services.neptune.NeptuneExportCommand;
 import com.amazonaws.services.neptune.NeptuneExportEventHandlerHost;
+import com.amazonaws.services.neptune.util.GitProperties;
 import org.apache.commons.lang.StringUtils;
+
+import static com.amazonaws.services.neptune.export.NeptuneExportService.MAX_FILE_DESCRIPTOR_COUNT;
 
 public class NeptuneExportRunner {
 
     private final String[] args;
     private final NeptuneExportEventHandler eventHandler;
+    private final boolean isCliInvocation;
+    private final int maxFileDescriptorCount;
 
     public NeptuneExportRunner(String[] args) {
-        this(args, NeptuneExportEventHandler.NULL_EVENT_HANDLER);
+        this(args, NeptuneExportEventHandler.NULL_EVENT_HANDLER, true, MAX_FILE_DESCRIPTOR_COUNT);
     }
 
-    public NeptuneExportRunner(String[] args, NeptuneExportEventHandler eventHandler) {
+    public NeptuneExportRunner(String[] args, NeptuneExportEventHandler eventHandler,
+                               boolean isCliInvocation, int maxFileDescriptorCount) {
         this.args = args;
         this.eventHandler = eventHandler;
+        this.isCliInvocation = isCliInvocation;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     public void run() {
+
+        System.err.println(String.format("neptune-export.jar: %s", GitProperties.fromResource()) );
 
         Args argsCollection = new Args(this.args);
         if (argsCollection.contains("--log-level")){
@@ -48,6 +59,14 @@ public class NeptuneExportRunner {
             if (NeptuneExportEventHandlerHost.class.isAssignableFrom(cmd.getClass())) {
                 NeptuneExportEventHandlerHost eventHandlerHost = (NeptuneExportEventHandlerHost) cmd;
                 eventHandlerHost.setEventHandler(eventHandler);
+            }
+
+            if (NeptuneExportCommand.class.isAssignableFrom(cmd.getClass())){
+                ((NeptuneExportCommand) cmd).setIsCliInvocation(isCliInvocation);
+            }
+
+            if (NeptuneExportCommand.class.isAssignableFrom(cmd.getClass())){
+                ((NeptuneExportCommand) cmd).setMaxFileDescriptorCount(maxFileDescriptorCount);
             }
 
             cmd.run();

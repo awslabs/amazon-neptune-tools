@@ -19,22 +19,25 @@ import java.util.function.Supplier;
 
 public class CloneCluster implements CloneClusterStrategy {
 
+    private final NeptuneClusterMetadata originalClusterMetadata;
     private final String cloneClusterInstanceType;
     private final int replicaCount;
     private final int maxConcurrency;
     private final String engineVersion;
-    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+    private final String cloneCorrelationId;
 
-    public CloneCluster(String cloneClusterInstanceType,
+    public CloneCluster(NeptuneClusterMetadata originalClusterMetadata,
+                        String cloneClusterInstanceType,
                         int replicaCount,
                         int maxConcurrency,
                         String engineVersion,
-                        Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+                        String cloneCorrelationId) {
+        this.originalClusterMetadata = originalClusterMetadata;
         this.cloneClusterInstanceType = cloneClusterInstanceType;
         this.replicaCount = replicaCount;
         this.maxConcurrency = maxConcurrency;
         this.engineVersion = engineVersion;
-        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+        this.cloneCorrelationId = cloneCorrelationId;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class CloneCluster implements CloneClusterStrategy {
             throw new IllegalStateException("neptune-export does not support cloning a Neptune cluster accessed via a load balancer");
         }
 
-        String clusterId = connectionConfig.clusterId();
+        String clusterId = originalClusterMetadata.clusterId();
         String targetClusterId = String.format("neptune-export-cluster-%s", UUID.randomUUID().toString().substring(0, 5));
 
         AddCloneTask addCloneTask = new AddCloneTask(
@@ -53,7 +56,8 @@ public class CloneCluster implements CloneClusterStrategy {
                 cloneClusterInstanceType,
                 replicaCount,
                 engineVersion,
-                amazonNeptuneClientSupplier);
+                originalClusterMetadata.clientSupplier(),
+                cloneCorrelationId);
 
         NeptuneClusterMetadata targetClusterMetadata = addCloneTask.execute();
 
@@ -76,28 +80,25 @@ public class CloneCluster implements CloneClusterStrategy {
                         targetClusterId,
                         targetClusterMetadata.endpoints(),
                         connectionConfig.port(),
-                        connectionConfig.nlbEndpoint(),
-                        connectionConfig.albEndpoint(),
-                        connectionConfig.lbPort(),
-                        targetClusterMetadata.isIAMDatabaseAuthenticationEnabled(),
-                        true
+                        targetClusterMetadata.isIAMDatabaseAuthenticationEnabled(), true, connectionConfig.proxyConfig()
                 ),
                 new ConcurrencyConfig(newConcurrency),
-                amazonNeptuneClientSupplier);
+                targetClusterMetadata
+        );
     }
 
     private static class ClonedCluster implements Cluster {
 
         private final ConnectionConfig connectionConfig;
         private final ConcurrencyConfig concurrencyConfig;
-        private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+        private final NeptuneClusterMetadata clusterMetadata;
 
         private ClonedCluster(ConnectionConfig connectionConfig,
                               ConcurrencyConfig concurrencyConfig,
-                              Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+                              NeptuneClusterMetadata clusterMetadata) {
             this.connectionConfig = connectionConfig;
             this.concurrencyConfig = concurrencyConfig;
-            this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
+            this.clusterMetadata = clusterMetadata;
         }
 
         @Override
@@ -111,16 +112,14 @@ public class CloneCluster implements CloneClusterStrategy {
         }
 
         @Override
-        public Supplier<AmazonNeptune> clientSupplier() {
-            return amazonNeptuneClientSupplier;
+        public NeptuneClusterMetadata clusterMetadata() {
+            return clusterMetadata;
         }
 
         @Override
         public void close() throws Exception {
 
-            RemoveCloneTask removeCloneTask = new RemoveCloneTask(
-                    connectionConfig.clusterId(),
-                    amazonNeptuneClientSupplier);
+            RemoveCloneTask removeCloneTask = new RemoveCloneTask(clusterMetadata);
 
             removeCloneTask.execute();
         }

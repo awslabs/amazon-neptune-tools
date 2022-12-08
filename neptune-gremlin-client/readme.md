@@ -4,8 +4,22 @@ A Java Gremlin client for Amazon Neptune that allows you to change the endpoints
 
 The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
 
-  - **[New July 2021]** Upgraded to version 3.4.12 of the Java Gremlin driver.  
-  - **[New July 2021]** `ClusterEndpointsRefreshAgent` and `GetEndpointsFromLambdaProxy` allow you to supply a region, and a credentials profile name or `AwsCredentialsProvider` object. 
+If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
+
+  - **[New November 2022]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
+
+  - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
+  
+  - **[New May 24 2022 – version 1.0.5]** Upgraded to version 3.4.13 of the Java Gremlin driver.
+
+  - **[WARNING]** Avoid use of versions, 1.0.3, 1.0.4, and 1.11. 
+
+  - **[New January 2022 – version 1.0.2]** `GremlinClient.chooseConnection()` now respects the connection pool's `maxWaitForConnection` timeout value. Improves the way in which consecutive failures to acquire a connection can trigger endpoint refresh behaviours.
+
+  - **[New July 2021]** Upgraded to version 3.4.12 of the Java Gremlin driver.
+  
+  - **[New July 2021]** `ClusterEndpointsRefreshAgent` and `GetEndpointsFromLambdaProxy` allow you to supply a region, and a credentials profile name or `AwsCredentialsProvider` object.
+  
   - **[New July 2021]** `NeptuneGremlinClusterBuilder` allows you to supply a Neptune service region, and a credentials profile name or `AwsCredentialsProvider` object. The `NeptuneGremlinClusterBuilder` also allows you to supply your own `HandshakeInterceptor` implementation to override the default load balancer-aware SigV4 request signing process.
 
 The Amazon CloudWatch screenshot below shows requests being distributed over 5 instances in a Neptune cluster. The cluster endpoints are being rotated in the client every minute, with 3 endpoints active at any one time. Partway through the run, we deliberately triggered a failover in the cluster.
@@ -68,7 +82,7 @@ GremlinCluster cluster = GremlinClusterBuilder.build()
 GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
-        addresses -> client.refreshEndpoints(addresses.get(selector)),
+        (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
         60,
         TimeUnit.SECONDS);
 ```
@@ -99,7 +113,7 @@ GremlinCluster cluster = GremlinClusterBuilder.build()
 GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
-    addresses -> client.refreshEndpoints(addresses.get(selector)),
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
     60,
     TimeUnit.SECONDS);
 ```
@@ -112,7 +126,67 @@ The `EndpointsType` enum provides implementations of `EndpointsSelector` for som
   * `EndpointsType.ClusterEndpoint` – returns the cluster endpoint
   * `EndpointsType.ReaderEndpoint` – return the reader endpoint
 
+### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
 
+When the Neptune Management API experiences a high rate of requests, it starts throttling API calls. If you have a lot of clients frequently polling for endpoint information, your application can very quickly experience throttling (in the form of HTTP 400 throttling exceptions).
+
+Because of this throttling behaviour, if your application uses a lot of concurrent `GremlinClient` and `ClusterEndpointsRefreshAgent` instances, instead of querying the Management API directly, you should proxy endpoint refresh requests through an AWS Lambda function. The Lambda function can periodically query the Management API and then cache the results on behalf of its clients.
+
+This repository includes an AWS CloudFormation template that creates a Lambda function which polls the Management API, and which you can configure with a Neptune database cluster ID and a polling interval. After it's deployed, this function is named _neptune-endpoint-info_<cluster-id>_. In your application code, you can then create a `ClusterEndpointsRefreshAgent` using the `lambdaProxy()` factory method, supplying the type of endpoint information to be retrieved (for example, `All`, `Primary`, `ReadReplicas`, `ClusterEndpoint` or `ReaderEndpoint`), the name of the proxy Lambda function, and the AWS Region in which the proxy Lambda function is located.
+
+The identity under which you're running your aoplication must be authorized to perform `lambda:Invoke` for your proxy Lambda function.
+
+The following code shows how to create a refresh agent that gets endpoint information from a proxy Lambda function named _neptune-endpoint-info_my-cluster_:
+
+```
+ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
+    EndpointsType.ReadReplicas,
+    "neptune-endpoint-info_my-cluster",
+    "eu-west-1");
+	
+GremlinCluster cluster = GremlinClusterBuilder.build()
+    .enableSsl(true)
+    .addContactPoints(refreshAgent.getAddresses())
+    .port(8182)
+    .create();
+
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    60,
+    TimeUnit.SECONDS);
+```
+
+You can also supply a custom endpoints selector when using the Lambda proxy:
+
+```
+EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
+    instances.stream()
+        .filter(NeptuneInstanceProperties::isReader)
+        .filter(i -> i.hasTag("workload", "analytics"))
+        .filter(NeptuneInstanceProperties::isAvailable)
+        .map(NeptuneInstanceProperties::getEndpoint)
+        .collect(Collectors.toList());
+
+ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
+    selector,
+    "neptune-endpoint-info_my-cluster",
+    "eu-west-1");
+
+GremlinCluster cluster = GremlinClusterBuilder.build()
+    .enableSsl(true)
+    .addContactPoints(refreshAgent.getAddresses())
+    .port(8182)
+    .create();
+
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    60,
+    TimeUnit.SECONDS);
+```
 
 ## GremlinClusterBuilder and NeptuneGremlinClusterBuilder
 
@@ -196,6 +270,52 @@ GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
         .serviceRegion(regionName)
         .create();
 ```
+
+### Connection timeouts and refreshing endpoint addresses after connection failures
+
+Whenever you submit a Gremlin request to a `GremlinClient`, the client repeatedly tries to acquire a connection until it either succeeds, a `ConnectionException` occurs, or a timeout threshold is exceeded.
+
+As of version 1.0.2, the `GremlinClient.chooseConnection()` method now respects the `maxWaitForConnection` value specified when you create a `GremlinCluster`. The following example creates a `GremlinClient` whose `chooseConnection()` method will throw a `TimeoutException` after 10 seconds if it can't acquire a connection.
+
+```
+GremlinCluster cluster = GremlinClusterBuilder.build()
+        .maxWaitForConnection(10000)
+        ...
+        .create();
+
+GremlinClient client = cluster.connect();
+```
+
+If you don't specify a `maxWaitForConnection` value, the `GremlinCluster` uses a default value of 16,000 milliseconds.
+
+Whenever a `GremlinClient` attempts to acquire a connection, it iterates through the connection pools associated with the endpoints with which it has been configured, looking for the first healthy connection. It waits 5 milliseconds between attempts to get a connection.
+
+Using `GremlinClusterBuilder.refreshOnErrorThreshold()` and `GremlinClusterBuilder.refreshOnErrorEventHandler()` (and the `NeptuneGremlinClusterBuilder` equivalents), you can instruct a `GremlinClinet` to refresh its endpoints after a certain number of consecutive failures to acquire a connection. The following example shows how to create a `GremlinClient` that will refresh its endpoints after 1000 consecutive failures to acquire a connection:
+
+```
+
+ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
+    clusterId,
+    EndpointsType.ReadReplicas);
+
+GremlinCluster cluster = GremlinClusterBuilder.build()
+        .addContactPoints(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
+        .refreshOnErrorThreshold(1000)
+        .refreshOnErrorEventHandler(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
+        .maxWaitForConnection(20000)
+        .create();
+
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    60,
+    TimeUnit.SECONDS);
+```
+
+The `refreshAgent` here is configured to find the endpoint addresses of all database instances in a Neptune cluster that are currently acting as readers. The `GremlinClusterBuilder` creates a `GremlinCluster` whose contact points (i.e. its endpoint addresses) are initialized via a first invocation of the `refreshAgent`. But the builder also configures the cluster so that after 1000 consecutive failed attempts to acquire a connection from its currently configured endpoint addresses, it refreshes those addresses using the agent. The cluster is also configured to timeout attempts to get a connection after 20 seconds. At the end of the snippet we also configure the `refreshAgent` to refresh the `GremlinClient` every minute, irrespective of any failures or successes.
+
+With this setup, then, the `GremlinClient` will refresh its endpoint addresses once every minute. It will also refresh its endpoints after 1000 consecutive failed attempts to get a connection. If any attempt to get a connection takes longer than 20 seconds, the client will throw a `TimeoutException`.
 
 ## Demos
  

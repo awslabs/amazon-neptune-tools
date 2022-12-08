@@ -17,5 +17,5 @@ import java.util.Collection;
 public interface EndpointsSelector {
     Collection<String> getEndpoints(String clusterEndpoint,
                                     String readerEndpoint,
-                                    Collection<NeptuneInstanceProperties> instances);
+                                    Collection<NeptuneInstanceMetadata> instances);
 }

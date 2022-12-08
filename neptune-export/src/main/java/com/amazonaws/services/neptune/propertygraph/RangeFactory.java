@@ -26,6 +26,7 @@ public class RangeFactory {
 
     public static RangeFactory create(GraphClient<?> graphClient,
                                       LabelsFilter labelsFilter,
+                                      GremlinFilters gremlinFilters,
                                       RangeConfig rangeConfig,
                                       ConcurrencyConfig concurrencyConfig) {
 
@@ -33,7 +34,7 @@ public class RangeFactory {
 
         logger.info("Calculating ranges for {}", description);
 
-        long estimatedNumberOfItemsInGraph = graphClient.approxCount(labelsFilter, rangeConfig);
+        long estimatedNumberOfItemsInGraph = graphClient.approxCount(labelsFilter, rangeConfig, gremlinFilters);
         int effectiveConcurrency =  estimatedNumberOfItemsInGraph < 1000 ?
                 1 :
                 concurrencyConfig.concurrency();

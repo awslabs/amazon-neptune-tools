@@ -1,0 +1,48 @@
+{
+  "name": "neptune-gremlin",
+  "version": "0.0.6",
+  "description": "An SDK for querying an Amazon Neptune graph database using gremlin",
+  "main": "neptune-gremlin.js",
+  "homepage": "https://github.com/awslabs/amazon-neptune-tools/neptune-gremlin-js",
+  "bugs": {
+    "url": "https://github.com/awslabs/amazon-neptune-tools/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/awslabs/amazon-neptune-tools"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "npm i && npm run lint && cp neptune-gremlin.js ./cdk-test-app/lambda && cd cdk-test-app && npm run build && cd .. && npm run test",
+    "lint": "eslint . --fix"
+  },
+  "keywords": [
+    "aws",
+    "amazon",
+    "neptune",
+    "gremlin",
+    "tinkerpop",
+    "graph"
+  ],
+  "author": "Eric Z. Beard",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^2.0.1",
+    "@aws-sdk/signature-v4": "^3.110.0",
+    "async": "^3.2.2",
+    "gremlin": "^3.5.1"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.2.137",
+    "@swc/wasm": "^1.2.137",
+    "bufferutil": "^4.0.6",
+    "canvas": "^2.9.0",
+    "encoding": "^0.1.13",
+    "eslint": "^8.4.1",
+    "jest": "^27.4.3",
+    "node-notifier": "^10.0.1",
+    "retire": "^3.0.6",
+    "ts-node": "^10.5.0",
+    "utf-8-validate": "^5.0.8"
+  }
+}

@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.parsing;
 
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Norm;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Range;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Separator;
-import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
+import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.*;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.*;
 import com.amazonaws.services.neptune.propertygraph.Label;
@@ -55,6 +52,8 @@ public class ParseFeaturesV2 {
                     !isDatetimeFeature(feature) &&
                     !isAutoFeature(feature) &&
                     !isWord2VecFeature(feature) &&
+                    !isFastTextFeature(feature) &&
+                    !isSbertTextFeature(feature) &&
                     !isNumericalBucketFeature(feature) &&
                     !isNodeFeatureOverride(feature) &&
                     !isEdgeFeatureOverride(feature)) {
@@ -123,12 +122,43 @@ public class ParseFeaturesV2 {
                 ParsingContext context = new ParsingContext(FeatureTypeV2.text_word2vec.name() + " feature");
                 Label label = supplier.getLabel(json, context);
                 String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
-                Collection<String> language = new ParseLanguage(json).parseLanguage();
+                Collection<String> language = new ParseWord2VecLanguage(json).parseLanguage();
                 Word2VecConfig config = new Word2VecConfig(label, property, language);
                 word2VecFeatures.add(config);
             }
         }
         return word2VecFeatures;
+    }
+
+    public Collection<SbertConfig> parseSbertFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
+        Collection<SbertConfig> sbertConfigs = new ArrayList<>();
+        for (JsonNode json : features) {
+            if (filter.isCorrectType(json) && isSbertTextFeature(json)) {
+                ParsingContext context = new ParsingContext(FeatureTypeV2.text_sbert.name() + " feature");
+                Label label = supplier.getLabel(json, context);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
+                String name = new ParseSbertTypeName(json, context).parseTypeName();
+                SbertConfig config = new SbertConfig(label, property, name);
+                sbertConfigs.add(config);
+            }
+        }
+        return sbertConfigs;
+    }
+
+    public Collection<FastTextConfig> parseFastTextFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
+        Collection<FastTextConfig> fastTextFeatures = new ArrayList<>();
+        for (JsonNode json : features) {
+            if (filter.isCorrectType(json) && isFastTextFeature(json)) {
+                ParsingContext context = new ParsingContext(FeatureTypeV2.text_fasttext.name() + " feature");
+                Label label = supplier.getLabel(json, context);
+                String property = new ParseProperty(json, context.withLabel(label)).parseSingleProperty();
+                String language = new ParseFastTextLanguage(json, context).parseLanguage();
+                Integer maxLength = new ParseMaxLength(json, context).parseMaxLength();
+                FastTextConfig config = new FastTextConfig(label, property, language, maxLength);
+                fastTextFeatures.add(config);
+            }
+        }
+        return fastTextFeatures;
     }
 
     public Collection<NumericalBucketFeatureConfigV2> parseNumericalBucketFeatures(ElementFeatureFilter filter, LabelSupplier supplier) {
@@ -225,6 +255,14 @@ public class ParseFeaturesV2 {
         return isWord2VecType(node.get("type").textValue());
     }
 
+    private boolean isFastTextFeature(JsonNode node) {
+        return isFastTextType(node.get("type").textValue());
+    }
+
+    private boolean isSbertTextFeature(JsonNode node) {
+        return isSbertTextType(node.get("type").textValue());
+    }
+
     private boolean isNumericalBucketFeature(JsonNode node) {
         return isBucketNumericalType(node.get("type").textValue());
     }
@@ -271,6 +309,16 @@ public class ParseFeaturesV2 {
 
     private boolean isWord2VecType(String type) {
         return isOfType(FeatureTypeV2.text_word2vec, type);
+    }
+
+    private boolean isFastTextType(String type) {
+        return isOfType(FeatureTypeV2.text_fasttext, type);
+    }
+
+    private boolean isSbertTextType(String type) {
+        return isOfType(FeatureTypeV2.text_sbert, type) ||
+                isOfType(FeatureTypeV2.text_sbert128, type) ||
+                isOfType(FeatureTypeV2.text_sbert512, type);
     }
 
     private boolean isBucketNumericalType(String type) {

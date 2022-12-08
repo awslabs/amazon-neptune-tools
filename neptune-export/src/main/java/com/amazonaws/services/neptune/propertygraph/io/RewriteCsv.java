@@ -13,6 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
@@ -38,10 +40,14 @@ public class RewriteCsv implements RewriteCommand {
 
     private final PropertyGraphTargetConfig targetConfig;
     private final ConcurrencyConfig concurrencyConfig;
+    private final FeatureToggles featureToggles;
 
-    public RewriteCsv(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
+    public RewriteCsv(PropertyGraphTargetConfig targetConfig,
+                      ConcurrencyConfig concurrencyConfig,
+                      FeatureToggles featureToggles) {
         this.targetConfig = targetConfig;
         this.concurrencyConfig = concurrencyConfig;
+        this.featureToggles = featureToggles;
     }
 
     @Override
@@ -105,9 +111,6 @@ public class RewriteCsv implements RewriteCommand {
             Label label = labelSchema.label();
             File sourceCsvFile = new File(fileSpecificLabelSchema.outputId());
 
-            if (sourceCsvFile.getName().contains("Cpt_LP_COLLECT_")) {
-                System.out.println("ALERT: " + fileSpecificLabelSchema.labelSchema().label().labelsAsString() + "[" + sourceCsvFile + "]");
-            }
 
             if (!sourceCsvFile.exists()) {
                 if (label.label().size() > 1) {
@@ -138,15 +141,21 @@ public class RewriteCsv implements RewriteCommand {
                          targetConfig.forFileConsolidation());
             ) {
 
+                if (featureToggles.containsFeature(FeatureToggle.Keep_Rewritten_Files)){
+                    sourceFile.doNotDelete();
+                }
+
                 renamedFiles.add(target.outputId());
 
                 CSVFormat format = CSVFormat.RFC4180.withHeader(fileHeaders);
                 Iterable<CSVRecord> records = format.parse(in);
 
+                int recordCount = 0;
+
                 for (CSVRecord record : records) {
                     target.printStartRow();
 
-                    if (graphElementType.equals(GraphElementType.nodes)) {
+                    if (graphElementType == GraphElementType.nodes) {
                         target.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                     } else {
                         if (label.hasFromAndToLabels()) {
@@ -164,7 +173,11 @@ public class RewriteCsv implements RewriteCommand {
 
                     target.printProperties(record.toMap(), false);
                     target.printEndRow();
+
+                    recordCount++;
                 }
+
+                logger.info("Original: {}, Rewritten: {}, RecordCount: {}", sourceFile, target.outputId(), recordCount);
             }
 
         }

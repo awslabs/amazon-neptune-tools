@@ -61,11 +61,14 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler, Range range, LabelsFilter labelsFilter) {
+    public void queryForSchema(GraphElementHandler<Map<?, Object>> handler,
+                               Range range,
+                               LabelsFilter labelsFilter,
+                               GremlinFilters gremlinFilters) {
 
         GraphTraversal<? extends Element, Map<Object, Object>> t = tokensOnly ?
-                createTraversal(range, labelsFilter).valueMap(true, "~TOKENS-ONLY") :
-                createTraversal(range, labelsFilter).valueMap(true);
+                createTraversal(range, labelsFilter, gremlinFilters).valueMap(true, "~TOKENS-ONLY") :
+                createTraversal(range, labelsFilter, gremlinFilters).valueMap(true);
 
         logger.info(GremlinQueryDebugger.queryAsString(t));
 
@@ -82,9 +85,10 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     public void queryForValues(GraphElementHandler<Map<String, Object>> handler,
                                Range range,
                                LabelsFilter labelsFilter,
+                               GremlinFilters gremlinFilters,
                                GraphElementSchemas graphElementSchemas) {
 
-        GraphTraversal<? extends Element, ?> t1 = createTraversal(range, labelsFilter);
+        GraphTraversal<? extends Element, ?> t1 = createTraversal(range, labelsFilter, gremlinFilters);
 
         GraphTraversal<? extends Element, ?> t2 = filterByPropertyKeys(t1, labelsFilter, graphElementSchemas);
 
@@ -125,7 +129,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
     }
 
     @Override
-    public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig) {
+    public long approxCount(LabelsFilter labelsFilter, RangeConfig rangeConfig, GremlinFilters gremlinFilters) {
 
         if (rangeConfig.approxNodeCount() > 0) {
             return rangeConfig.approxNodeCount();
@@ -136,7 +140,7 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
 
         return Timer.timedActivity(String.format("counting %s", description), (Activity.Callable<Long>) () ->
         {
-            GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter).count();
+            GraphTraversal<? extends Element, Long> t = createTraversal(Range.ALL, labelsFilter, gremlinFilters).count();
 
             logger.info(GremlinQueryDebugger.queryAsString(t));
 
@@ -161,11 +165,11 @@ public class NodesClient implements GraphClient<Map<String, Object>> {
         stats.incrementNodeStats(label);
     }
 
-    private GraphTraversal<? extends Element, ?> createTraversal(Range range, LabelsFilter labelsFilter) {
+    private GraphTraversal<? extends Element, ?> createTraversal(Range range, LabelsFilter labelsFilter, GremlinFilters gremlinFilters) {
         GraphTraversal<Vertex, Vertex> t = tokensOnly ?
                 g.withSideEffect("x", new HashMap<String, Object>()).V() :
                 g.V();
-        return range.applyRange(labelsFilter.apply(t, featureToggles, GraphElementType.nodes));
+        return range.applyRange(gremlinFilters.applyToNodes( labelsFilter.apply(t, featureToggles, GraphElementType.nodes)));
     }
 
 }

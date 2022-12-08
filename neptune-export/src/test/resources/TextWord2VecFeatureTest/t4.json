@@ -37,6 +37,6 @@
       } ],
       "edges" : [ ]
     },
-    "warnings" : [ "Unsupported language for text_word2vec feature for 'bio': 'unsupported_language'. Supported languages are: 'en_core_web_lg', 'fr_core_news_lg'. The output embedding is not guaranteed to be valid if you supply another language."  ]
+    "warnings" : [ "Unsupported language for text_word2vec feature for 'bio': 'unsupported_language'. Supported languages are: 'en_core_web_lg'. The output embedding is not guaranteed to be valid if you supply another language."  ]
   }
 }

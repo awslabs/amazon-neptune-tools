@@ -13,6 +13,8 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.FeatureToggle;
+import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
@@ -39,10 +41,14 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
     private final PropertyGraphTargetConfig targetConfig;
     private final ConcurrencyConfig concurrencyConfig;
+    private final FeatureToggles featureToggles;
 
-    public RewriteAndMergeCsv(PropertyGraphTargetConfig targetConfig, ConcurrencyConfig concurrencyConfig) {
+    public RewriteAndMergeCsv(PropertyGraphTargetConfig targetConfig,
+                              ConcurrencyConfig concurrencyConfig,
+                              FeatureToggles featureToggles) {
         this.targetConfig = targetConfig;
         this.concurrencyConfig = concurrencyConfig;
+        this.featureToggles = featureToggles;
     }
 
     @Override
@@ -114,6 +120,10 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
                 try (DeletableFile file = new DeletableFile(new File(fileSpecificLabelSchema.outputId()))) {
 
+                    if (featureToggles.containsFeature(FeatureToggle.Keep_Rewritten_Files)){
+                        file.doNotDelete();
+                    }
+
                     LabelSchema labelSchema = fileSpecificLabelSchema.labelSchema();
                     Label label = labelSchema.label();
 
@@ -145,7 +155,7 @@ public class RewriteAndMergeCsv implements RewriteCommand {
 
                             printer.printStartRow();
 
-                            if (graphElementType.equals(GraphElementType.nodes)) {
+                            if (graphElementType == GraphElementType.nodes) {
                                 printer.printNode(record.get("~id"), Arrays.asList(record.get("~label").split(";")));
                             } else {
                                 if (label.hasFromAndToLabels()) {

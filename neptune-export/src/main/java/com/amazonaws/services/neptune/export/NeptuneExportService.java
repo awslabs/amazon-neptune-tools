@@ -15,6 +15,7 @@ package com.amazonaws.services.neptune.export;
 import com.amazonaws.services.neptune.profiles.incremental_export.IncrementalExportEventHandler;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV1;
 import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMachineLearningExportEventHandlerV2;
+import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
 import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.amazonaws.services.neptune.util.TransferManagerWrapper;
 import com.amazonaws.services.s3.AmazonS3;
@@ -42,6 +43,7 @@ public class NeptuneExportService {
     public static final List<Tag> NEPTUNE_EXPORT_TAGS = Collections.singletonList(new Tag("application", "neptune-export"));
     public static final String NEPTUNE_ML_PROFILE_NAME = "neptune_ml";
     public static final String INCREMENTAL_EXPORT_PROFILE_NAME = "incremental_export";
+    public static final int MAX_FILE_DESCRIPTOR_COUNT = 9000;
 
     private final String cmd;
     private final String localOutputPath;
@@ -57,6 +59,7 @@ public class NeptuneExportService {
     private final ObjectNode additionalParams;
     private final int maxConcurrency;
     private final String s3Region;
+    private final int maxFileDescriptorCount;
 
     public NeptuneExportService(String cmd,
                                 String localOutputPath,
@@ -71,7 +74,8 @@ public class NeptuneExportService {
                                 ObjectNode completionFilePayload,
                                 ObjectNode additionalParams,
                                 int maxConcurrency,
-                                String s3Region) {
+                                String s3Region,
+                                int maxFileDescriptorCount) {
         this.cmd = cmd;
         this.localOutputPath = localOutputPath;
         this.cleanOutputPath = cleanOutputPath;
@@ -86,6 +90,7 @@ public class NeptuneExportService {
         this.additionalParams = additionalParams;
         this.maxConcurrency = maxConcurrency;
         this.s3Region = s3Region;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     public S3ObjectInfo execute() throws IOException {
@@ -112,6 +117,13 @@ public class NeptuneExportService {
 
                 if (maxConcurrency > 0 && !args.contains("--clone-cluster-max-concurrency")) {
                     args.addOption("--clone-cluster-max-concurrency", String.valueOf(maxConcurrency));
+                }
+
+                if (!args.contains("--clone-cluster-correlation-id")){
+                    String correlationId = EnvironmentVariableUtils.getOptionalEnv("AWS_BATCH_JOB_ID", null);
+                    if (StringUtils.isNotEmpty(correlationId)){
+                        args.addOption("--clone-cluster-correlation-id", correlationId);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -170,17 +182,9 @@ public class NeptuneExportService {
             boolean useV2 =  args.contains("--feature-toggle", FeatureToggle.NeptuneML_V2.name()) ||
                     (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v2."));
 
-            if (useV2) {
-                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
-                        new NeptuneMachineLearningExportEventHandlerV2(
-                                outputS3Path,
-                                s3Region,
-                                createExportSubdirectory,
-                                additionalParams,
-                                args,
-                                profiles);
-                eventHandlerCollection.addHandler(neptuneMlEventHandler);
-            } else {
+            boolean useV1 =  (neptuneMlNode.has("version") && neptuneMlNode.get("version").textValue().startsWith("v1."));
+
+            if (useV1) {
                 NeptuneMachineLearningExportEventHandlerV1 neptuneMlEventHandler =
                         new NeptuneMachineLearningExportEventHandlerV1(
                                 outputS3Path,
@@ -190,27 +194,39 @@ public class NeptuneExportService {
                                 args,
                                 profiles);
                 eventHandlerCollection.addHandler(neptuneMlEventHandler);
+            } else {
+                NeptuneMachineLearningExportEventHandlerV2 neptuneMlEventHandler =
+                        new NeptuneMachineLearningExportEventHandlerV2(
+                                outputS3Path,
+                                s3Region,
+                                createExportSubdirectory,
+                                additionalParams,
+                                args,
+                                profiles);
+                eventHandlerCollection.addHandler(neptuneMlEventHandler);
             }
-
         }
 
         if (profiles.contains(INCREMENTAL_EXPORT_PROFILE_NAME)) {
 
-            String exportId = args.contains("--export-id") ?
-                    args.getFirstOptionValue("--export-id") :
-                    UUID.randomUUID().toString().replace("-", "");
-
-            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler(exportId);
+            IncrementalExportEventHandler incrementalExportEventHandler = new IncrementalExportEventHandler(additionalParams);
             completionFileWriters.add(incrementalExportEventHandler);
             eventHandlerCollection.addHandler(incrementalExportEventHandler);
         }
 
+        /**
+         * We are removing a buffer of 1000 for maxFileDescriptorCount used at {@link com.amazonaws.services.neptune.propertygraph.io.LabelWriters#put}
+         * since the value received from neptune-export service is set as the `nofile` ulimit in the AWS Batch
+         * container properties and there might be other processes on the container having open files.
+         * This ensures we close the leastRecentlyAccessed files before exceeding the hard limit for `nofile` ulimit.
+         */
+        final int maxFileDescriptorCountAfterRemovingBuffer = Math.max(maxFileDescriptorCount - 1000, MAX_FILE_DESCRIPTOR_COUNT);
 
         eventHandlerCollection.onBeforeExport(args, s3UploadParams);
 
         logger.info("Args after service init: {}", String.join(" ", args.values()));
 
-        new NeptuneExportRunner(args.values(), eventHandlerCollection).run();
+        new NeptuneExportRunner(args.values(), eventHandlerCollection, false, maxFileDescriptorCountAfterRemovingBuffer).run();
 
         return exportToS3EventHandler.result();
     }

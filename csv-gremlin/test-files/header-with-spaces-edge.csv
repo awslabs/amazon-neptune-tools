@@ -1,0 +1,3 @@
+ ~id, ~label, ~from,    ~to
+e1, likes, a1, a2
+e2, " likes ", a1, a2

@@ -15,8 +15,6 @@ package stream_handler;
 import com.amazonaws.neptune.StreamsRecord;
 import com.amazonaws.neptune.StreamsResponse;
 import com.amazonaws.neptune.config.CredentialsConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tinkerpop.gremlin.driver.Cluster;
 import org.apache.tinkerpop.gremlin.driver.SigV4WebSocketChannelizer;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
@@ -30,11 +28,8 @@ import java.util.Map;
 
 public class StreamHandler extends AbstractStreamHandler {
 
-    private static final Logger logger = LogManager.getLogger(StreamHandler.class);
-
     private final GraphTraversalSource g;
     private final Cluster cluster;
-
 
     public StreamHandler(String neptuneEndpoint,
                          Integer neptunePort,
@@ -62,9 +57,9 @@ public class StreamHandler extends AbstractStreamHandler {
                 String id = record.getData().getId();
                 String type = record.getData().getType();
                 if (type.equals("vl")) {
-                    logger.info(g.V(id).valueMap(true).toList());
+                    System.out.println(g.V(id).valueMap(true).toList());
                 } else if (type.equals("e")) {
-                    logger.info(g.E(id).valueMap(true).toList());
+                    System.out.println(g.E(id).valueMap(true).toList());
                 }
             }
 
@@ -88,7 +83,7 @@ public class StreamHandler extends AbstractStreamHandler {
 
     private Cluster createCluster() {
         Cluster.Builder builder = Cluster.build()
-                .addContactPoint(String.valueOf(additionalParams.get("neptune_endpoint")))
+                .addContactPoint(String.valueOf(additionalParams.get("neptune_cluster_endpoint")))
                 .port((int) additionalParams.get("neptune_port"))
                 .enableSsl(true)
                 .minConnectionPoolSize(1)

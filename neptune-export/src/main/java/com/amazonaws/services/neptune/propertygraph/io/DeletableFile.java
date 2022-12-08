@@ -48,4 +48,9 @@ class DeletableFile implements AutoCloseable {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return file.getAbsolutePath();
+    }
 }

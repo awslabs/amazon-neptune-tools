@@ -14,6 +14,8 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.EventId;
+import com.amazonaws.services.neptune.cluster.GetLastEventIdStrategy;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -50,7 +52,7 @@ import java.util.Collection;
 public class ExportPropertyGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -76,22 +78,41 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
     @Inject
     private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
+    @Inject
+    private GremlinFiltersModule gremlinFilters = new GremlinFiltersModule();
+
+    @Inject
+    private NeptuneStreamsModule streams = new NeptuneStreamsModule();
+
     @Override
     public void run() {
 
         try {
             Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories();
+
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    JsonResource<EventId> eventIdFileResource = directories.lastEventIdFileResource();
+
+                    GetLastEventIdStrategy getLastEventIdStrategy = streams.lastEventIdStrategy(cluster, eventIdFileResource);
+                    getLastEventIdStrategy.saveLastEventId("gremlin");
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
-                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(
+                            graphSchema,
+                            gremlinFilters.filters(),
+                            stats,
+                            featureToggles());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
@@ -101,16 +122,22 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 graphSchema,
                                 g,
                                 range.config(),
+                                gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
-                                targetConfig);
+                                targetConfig,
+                                featureToggles(),
+                                getMaxFileDescriptorCount());
 
-                        graphSchema = exportJob.execute();
+                        graphSchema = Timer.timedActivity(
+                                "export",
+                                (CheckedActivity.Callable<GraphSchema>) exportJob::execute);
 
                         configFileResource.save(graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);
                     configFileResource.writeResourcePathAsMessage(target);
+                    getLastEventIdStrategy.writeLastEventIdResourcePathAsMessage(target);
 
                     System.err.println();
                     System.err.println(stats.formatStats(graphSchema));

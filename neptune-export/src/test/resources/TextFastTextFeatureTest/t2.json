@@ -1,0 +1,50 @@
+{
+  "schema": {
+    "edges" : [ {
+      "label" : {
+        "~label" : "knows",
+        "~fromLabels" : [ "Person" ],
+        "~toLabels" : [ "Person" ]
+      },
+      "properties" : [ {
+        "property" : "metAtLocation",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "knows-1.csv" ]
+    } ],
+    "nodes" : [ ]
+  },
+  "feature": {
+    "features": [
+      {
+        "edge": ["Person", "knows", "Person"],
+        "property": "metAtLocation",
+        "type": "text_fasttext",
+        "language": "en",
+        "max_length": 128
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes": [],
+      "edges" : [ {
+        "file_name" : "edges/knows-1.csv",
+        "separator" : ",",
+        "source" : [ "~from", "Person" ],
+        "relation" : [ "", "knows" ],
+        "dest" : [ "~to", "Person" ],
+        "features" : [ {
+          "feature" : [ "metAtLocation", "metAtLocation", "text_fasttext" ],
+          "language" : "en",
+          "max_length": 128
+        } ]
+      } ]
+    },
+    "warnings" : [ ]
+  }
+}

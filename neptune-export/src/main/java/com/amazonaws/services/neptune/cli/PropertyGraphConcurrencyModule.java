@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -18,21 +18,15 @@ import com.github.rvesse.airline.annotations.restrictions.Once;
 
 public class PropertyGraphConcurrencyModule {
 
-    private final boolean allowConcurrentOperations;
-
     @Option(name = {"-cn", "--concurrency"}, description = "Concurrency – the number of parallel queries used to run the export (optional, default 4).")
     @Once
     private int concurrency = 4;
 
-    public PropertyGraphConcurrencyModule(){
-        this(true);
-    }
-
-    public PropertyGraphConcurrencyModule(boolean allowConcurrentOperations) {
-        this.allowConcurrentOperations = allowConcurrentOperations;
-    }
-
     public ConcurrencyConfig config(){
+        return config(true);
+    }
+
+    public ConcurrencyConfig config(boolean allowConcurrentOperations){
         return new ConcurrencyConfig(allowConcurrentOperations ? concurrency : 1);
     }
 }

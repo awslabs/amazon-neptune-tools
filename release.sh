@@ -50,7 +50,7 @@ for artifact in $MAVEN_ARTIFACTS; do
 	pushd $artifact >& /dev/null
 	mvn versions:set -DnewVersion=${VERSION_STRING} versions:update-child-modules
 	mvn clean
-	mvn package
+	mvn install
 	#All of the jars are shaded. Only take the shaded, bundled jars.
 	for jar in `find . -name "*.jar" -print | grep -vE "SNAPSHOT|original|\-$VERSION_STRING"`; do
 		cp $jar $ARTIFACT_DIR

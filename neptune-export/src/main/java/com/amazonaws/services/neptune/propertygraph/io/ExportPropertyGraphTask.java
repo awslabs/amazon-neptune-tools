@@ -36,8 +36,9 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
     private final WriterFactory<T> writerFactory;
     private final PropertyGraphTargetConfig targetConfig;
     private final RangeFactory rangeFactory;
+    private final GremlinFilters gremlinFilters;
     private final Status status;
-    private final int index;
+    private final AtomicInteger index;
     private final LabelWriters<T> labelWriters;
 
     public ExportPropertyGraphTask(GraphElementSchemas graphElementSchemas,
@@ -46,18 +47,21 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                                    WriterFactory<T> writerFactory,
                                    PropertyGraphTargetConfig targetConfig,
                                    RangeFactory rangeFactory,
+                                   GremlinFilters gremlinFilters,
                                    Status status,
-                                   int index,
-                                   AtomicInteger fileDescriptorCount) {
+                                   AtomicInteger index,
+                                   AtomicInteger fileDescriptorCount,
+                                   int maxFileDescriptorCount) {
         this.graphElementSchemas = graphElementSchemas;
         this.labelsFilter = labelsFilter;
         this.graphClient = graphClient;
         this.writerFactory = writerFactory;
         this.targetConfig = targetConfig;
         this.rangeFactory = rangeFactory;
+        this.gremlinFilters = gremlinFilters;
         this.status = status;
         this.index = index;
-        this.labelWriters = new LabelWriters<>(fileDescriptorCount);
+        this.labelWriters = new LabelWriters<>(fileDescriptorCount, maxFileDescriptorCount);
     }
 
     @Override
@@ -83,7 +87,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                 if (range.isEmpty()) {
                     status.halt();
                 } else {
-                    graphClient.queryForValues(handler, range, labelsFilter, graphElementSchemas);
+                    graphClient.queryForValues(handler, range, labelsFilter, gremlinFilters, graphElementSchemas);
                     if (range.sizeExceeds(handler.numberProcessed()) || rangeFactory.isExhausted()) {
                         status.halt();
                     }
@@ -109,7 +113,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
         private final LabelWriters<T> labelWriters;
         private final GraphClient<T> graphClient;
         private final Status status;
-        private final int index;
+        private final AtomicInteger index;
 
         private TaskHandler(FileSpecificLabelSchemas fileSpecificLabelSchemas,
                             GraphElementSchemas graphElementSchemas,
@@ -118,7 +122,7 @@ public class ExportPropertyGraphTask<T extends Map<?, ?>> implements Callable<Fi
                             LabelWriters<T> labelWriters,
                             GraphClient<T> graphClient,
                             Status status,
-                            int index) {
+                            AtomicInteger index) {
             this.fileSpecificLabelSchemas = fileSpecificLabelSchemas;
             this.graphElementSchemas = graphElementSchemas;
             this.targetConfig = targetConfig;

@@ -1,0 +1,40 @@
+{
+  "schema": {
+    "edges" : [ ],
+    "nodes" : [ {
+      "label" : "Person",
+      "properties" : [ {
+        "property" : "bio",
+        "dataType" : "String",
+        "isMultiValue" : false,
+        "isNullable" : false
+      }],
+      "files" : [ "person-1.csv" ]
+    } ]
+  },
+  "feature": {
+    "features": [
+      {
+        "node": "Person",
+        "property": "bio",
+        "type": "text_sbert512"
+      }
+    ]
+  },
+  "config": {
+    "version" : "v2.0",
+    "query_engine" : "gremlin",
+    "graph" : {
+      "nodes" : [ {
+        "file_name" : "nodes/person-1.csv",
+        "separator" : ",",
+        "node" : [ "~id", "Person" ],
+        "features" : [ {
+          "feature" : [ "bio", "bio", "text_sbert512" ]
+        } ]
+      } ],
+      "edges" : [ ]
+    },
+    "warnings" : [ ]
+  }
+}

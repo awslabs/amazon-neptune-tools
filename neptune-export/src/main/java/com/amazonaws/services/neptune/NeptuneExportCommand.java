@@ -36,11 +36,19 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
     @Inject
     private ProfilesModule profilesModule = new ProfilesModule();
 
+    private boolean isCliInvocation = false;
+
+    private int maxFileDescriptorCount;
+
     private NeptuneExportEventHandler eventHandler = NeptuneExportEventHandler.NULL_EVENT_HANDLER;
 
     @Override
     public void setEventHandler(NeptuneExportEventHandler eventHandler) {
         this.eventHandler = eventHandler;
+    }
+
+    public void setIsCliInvocation(boolean isCliInvocation) {
+        this.isCliInvocation = isCliInvocation;
     }
 
     public void onExportComplete(Directories directories, ExportStats stats, Cluster cluster, GraphSchema graphSchema) throws Exception {
@@ -60,15 +68,29 @@ public abstract class NeptuneExportCommand extends NeptuneExportBaseCommand impl
             e.printStackTrace();
             System.err.println("An error occurred while connecting to Neptune. " +
                     "Ensure you have not disabled SSL if the database requires SSL in transit. " +
-                    "Ensure you have specified the --use-iam-auth flag if the database uses IAM database authentication.");
+                    "Ensure you have specified the --use-iam-auth flag (and set the SERVICE_REGION environment variable if running in your own environment) if the database uses IAM database authentication. " +
+                    "Ensure the database's VPC security group(s) allow access from the export tool.");
+
         } else {
             e.printStackTrace();
             onError();
             System.err.println("An error occurred while exporting from Neptune: " + e.getMessage());
         }
+
+        if (isCliInvocation) {
+            System.exit(-1);
+        }
     }
 
     FeatureToggles featureToggles() {
         return featureToggleModule.featureToggles();
+    }
+
+    public int getMaxFileDescriptorCount() {
+        return maxFileDescriptorCount;
+    }
+
+    public void setMaxFileDescriptorCount(int maxFileDescriptorCount) {
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 }

@@ -5,13 +5,14 @@
             neptune-export.sh export-rdf
                     [ --alb-endpoint <applicationLoadBalancerEndpoint> ]
                     [ --clone-cluster ]
+                    [ --clone-cluster-correlation-id <cloneCorrelationId> ]
                     [ --clone-cluster-instance-type <cloneClusterInstanceType> ]
                     [ --clone-cluster-replica-count <replicaCount> ]
                     [ {--cluster-id | --cluster | --clusterid} <clusterId> ]
                     {-d | --dir} <directory> [ --disable-ssl ]
                     [ {-e | --endpoint} <endpoint>... ] [ --export-id <exportId> ]
-                    [ --format <format> ] [ --lb-port <loadBalancerPort> ]
-                    [ --log-level <log level> ]
+                    [ --format <format> ] [ --include-last-event-id ]
+                    [ --lb-port <loadBalancerPort> ] [ --log-level <log level> ]
                     [ --nlb-endpoint <networkLoadBalancerEndpoint> ]
                     [ {-o | --output} <output> ] [ {-p | --port} <port> ]
                     [ --partition-directories <partitionDirectories> ]
@@ -36,6 +37,13 @@
     
             --clone-cluster
                 Clone an Amazon Neptune cluster.
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --clone-cluster-correlation-id <cloneCorrelationId>
+                Correlation ID to be added to a correlation-id tag on the cloned
+                cluster.
     
                 This option may occur a maximum of 1 times
     
@@ -134,6 +142,14 @@
                     nquads
                     ntriples
                     neptuneStreamsJson
+                    neptuneStreamsSimpleJson
+    
+                This option may occur a maximum of 1 times
+    
+    
+            --include-last-event-id
+                Get the last event ID from the Amazon Neptune stream, if enabled,
+                and save it to a JSON file (optional, default 'false').
     
                 This option may occur a maximum of 1 times
     
@@ -179,6 +195,7 @@
                 This options value is restricted to the following set of values:
                     files
                     stdout
+                    devnull
                     stream
     
                 This option may occur a maximum of 1 times

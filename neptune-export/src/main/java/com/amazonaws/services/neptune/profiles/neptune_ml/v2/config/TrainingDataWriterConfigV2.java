@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2.config;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.config.Word2VecConfig;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParseSplitRate;
 import com.amazonaws.services.neptune.profiles.neptune_ml.common.parsing.ParsingContext;
@@ -31,7 +32,7 @@ public class TrainingDataWriterConfigV2 {
     public static final Collection<Double> DEFAULT_SPLIT_RATES_V2 = Arrays.asList(0.9, 0.1, 0.0);
     private static final String DEFAULT_NAME_V2 = "training-data-configuration";
 
-    public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json) {
+    public static Collection<TrainingDataWriterConfigV2> fromJson(JsonNode json, NeptuneMLSourceDataModel dataModel) {
 
         Collection<TrainingDataWriterConfigV2> results = new ArrayList<>();
 
@@ -39,17 +40,17 @@ public class TrainingDataWriterConfigV2 {
             ArrayNode configNodes = (ArrayNode) json;
             int index = 1;
             for (JsonNode configNode : configNodes) {
-                results.add(getTrainingJobWriterConfig(configNode, index++));
+                results.add(getTrainingJobWriterConfig(configNode, index++, dataModel));
             }
         } else {
             if (json.has("jobs")) {
                 ArrayNode configNodes = (ArrayNode) json.get("jobs");
                 int index = 1;
                 for (JsonNode configNode : configNodes) {
-                    results.add(getTrainingJobWriterConfig(configNode, index++));
+                    results.add(getTrainingJobWriterConfig(configNode, index++, dataModel));
                 }
             } else {
-                results.add(getTrainingJobWriterConfig(json, 1));
+                results.add(getTrainingJobWriterConfig(json, 1, dataModel));
             }
         }
 
@@ -62,7 +63,7 @@ public class TrainingDataWriterConfigV2 {
         return results;
     }
 
-    private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index) {
+    private static TrainingDataWriterConfigV2 getTrainingJobWriterConfig(JsonNode json, int index, NeptuneMLSourceDataModel dataModel) {
 
         Collection<Double> defaultSplitRates = new ParseSplitRate(json, DEFAULT_SPLIT_RATES_V2, new ParsingContext("config")).parseSplitRates();
         Collection<LabelConfigV2> nodeClassLabels = new ArrayList<>();
@@ -71,11 +72,15 @@ public class TrainingDataWriterConfigV2 {
         Collection<TfIdfConfigV2> tfIdfNodeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeNodeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
+        Collection<FastTextConfig> fastTextNodeFeatures = new ArrayList<>();
+        Collection<SbertConfig> sbertNodeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfigV2> numericalBucketNodeFeatures = new ArrayList<>();
         Collection<NoneFeatureConfig> noneEdgeFeatures = new ArrayList<>();
         Collection<TfIdfConfigV2> tfIdfEdgeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeEdgeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecEdgeFeatures = new ArrayList<>();
+        Collection<FastTextConfig> fastTextEdgeFeatures = new ArrayList<>();
+        Collection<SbertConfig> sbertEdgeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfigV2> numericalBucketEdgeFeatures = new ArrayList<>();
         Collection<FeatureOverrideConfigV2> nodeFeatureOverrides = new ArrayList<>();
         Collection<FeatureOverrideConfigV2> edgeFeatureOverrides = new ArrayList<>();
@@ -102,7 +107,7 @@ public class TrainingDataWriterConfigV2 {
             } else {
                 labelNodes.add(labels);
             }
-            ParseLabelsV2 parseLabels = new ParseLabelsV2(labelNodes, defaultSplitRates);
+            ParseLabelsV2 parseLabels = new ParseLabelsV2(labelNodes, defaultSplitRates, dataModel);
             parseLabels.validate();
             nodeClassLabels.addAll(parseLabels.parseNodeClassLabels());
             edgeClassLabels.addAll(parseLabels.parseEdgeClassLabels());
@@ -127,12 +132,16 @@ public class TrainingDataWriterConfigV2 {
             tfIdfNodeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             datetimeNodeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            fastTextNodeFeatures.addAll(parseFeatures.parseFastTextFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            sbertNodeFeatures.addAll(parseFeatures.parseSbertFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             numericalBucketNodeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
 
             noneEdgeFeatures.addAll(parseFeatures.parseNoneFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             tfIdfEdgeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             datetimeEdgeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             word2VecEdgeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            fastTextEdgeFeatures.addAll(parseFeatures.parseFastTextFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            sbertEdgeFeatures.addAll(parseFeatures.parseSbertFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             numericalBucketEdgeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
 
             nodeFeatureOverrides.addAll(parseFeatures.parseNodeFeatureOverrides());
@@ -140,8 +149,27 @@ public class TrainingDataWriterConfigV2 {
 
         }
 
-        ElementConfig nodeConfig = new ElementConfig(nodeClassLabels, noneNodeFeatures, tfIdfNodeFeatures, datetimeNodeFeatures, word2VecNodeFeatures, numericalBucketNodeFeatures, nodeFeatureOverrides);
-        ElementConfig edgeConfig = new ElementConfig(edgeClassLabels, noneEdgeFeatures, tfIdfEdgeFeatures, datetimeEdgeFeatures, word2VecEdgeFeatures, numericalBucketEdgeFeatures, edgeFeatureOverrides);
+        ElementConfig nodeConfig = new ElementConfig(
+                nodeClassLabels,
+                noneNodeFeatures,
+                tfIdfNodeFeatures,
+                datetimeNodeFeatures,
+                word2VecNodeFeatures,
+                fastTextNodeFeatures,
+                sbertNodeFeatures,
+                numericalBucketNodeFeatures,
+                nodeFeatureOverrides);
+
+        ElementConfig edgeConfig = new ElementConfig(
+                edgeClassLabels,
+                noneEdgeFeatures,
+                tfIdfEdgeFeatures,
+                datetimeEdgeFeatures,
+                word2VecEdgeFeatures,
+                fastTextEdgeFeatures,
+                sbertEdgeFeatures,
+                numericalBucketEdgeFeatures,
+                edgeFeatureOverrides);
 
         return new TrainingDataWriterConfigV2(name,
                 featureEncodingFlag,

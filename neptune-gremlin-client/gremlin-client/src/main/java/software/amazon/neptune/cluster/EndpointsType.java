@@ -12,20 +12,24 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public enum EndpointsType implements EndpointsSelector {
+
     All {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
             return instances.stream()
-                    .filter(NeptuneInstanceProperties::isAvailable)
-                    .map(NeptuneInstanceProperties::getEndpoint)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
         }
     },
@@ -33,14 +37,15 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
             List<String> results = instances.stream()
-                    .filter(NeptuneInstanceProperties::isPrimary)
-                    .filter(NeptuneInstanceProperties::isAvailable)
-                    .map(NeptuneInstanceProperties::getEndpoint)
+                    .filter(NeptuneInstanceMetadata::isPrimary)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
 
             if (results.isEmpty()){
+                logger.warn("Unable to get Primary endpoint so getting ClusterEndpoint instead");
                 return ClusterEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
             }
 
@@ -51,15 +56,16 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
 
             List<String> results = instances.stream()
-                    .filter(NeptuneInstanceProperties::isReader)
-                    .filter(NeptuneInstanceProperties::isAvailable)
-                    .map(NeptuneInstanceProperties::getEndpoint)
+                    .filter(NeptuneInstanceMetadata::isReader)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
 
             if (results.isEmpty()) {
+                logger.warn("Unable to get ReadReplicas endpoints so getting ReaderEndpoint instead");
                 return ReaderEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
             }
 
@@ -70,7 +76,7 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
 
             return Collections.singletonList(clusterEndpoint);
         }
@@ -79,10 +85,12 @@ public enum EndpointsType implements EndpointsSelector {
         @Override
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
-                                               Collection<NeptuneInstanceProperties> instances) {
+                                               Collection<NeptuneInstanceMetadata> instances) {
 
             return Collections.singletonList(readerEndpoint);
         }
-    }
+    };
+
+    private static final Logger logger = LoggerFactory.getLogger(EndpointsType.class);
 
 }

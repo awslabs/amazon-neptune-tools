@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QueryTask implements Callable<Object> {
 
@@ -42,7 +43,7 @@ public class QueryTask implements Callable<Object> {
     private final boolean twoPassAnalysis;
     private final Long timeoutMillis;
     private final Status status;
-    private final int index;
+    private final AtomicInteger index;
 
     public QueryTask(Queue<NamedQuery> queries,
                      NeptuneGremlinClient.QueryClient queryClient,
@@ -50,7 +51,7 @@ public class QueryTask implements Callable<Object> {
                      boolean twoPassAnalysis,
                      Long timeoutMillis,
                      Status status,
-                     int index) {
+                     AtomicInteger index) {
 
         this.queries = queries;
         this.queryClient = queryClient;

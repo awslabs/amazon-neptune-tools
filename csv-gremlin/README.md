@@ -93,10 +93,10 @@ Rows=13, IDs=5, Duplicate IDs=7, Vertices=5, Edges=0, Properties=17, Errors=0
 
 The help can always be displayed using the `-h` or `--help` command line arguments.
 ```
-$ python csv-gremlin.py -h
+$ python3 csv-gremlin.py -h
 usage: csv-gremlin.py [-h] [-v] [-vb VB] [-eb EB] [-java_dates] [-assume_utc]
                       [-rows ROWS] [-all_errors] [-silent] [-no_summary]
-                      [-escape_dollar]
+                      [-double_suffix] [-skip_spaces] [-escape_dollar]
                       csvfile
 
 positional arguments:
@@ -119,6 +119,14 @@ optional arguments:
   -silent         Enable silent mode. Only errors are reported. No Gremlin is
                   generated.
   -no_summary     Do not show a summary report after processing.
+  -double_suffix  Suffix all floats and doubles with a "d" such as 12.34d.
+                  This is helpful when using the Gremlin Console or Groovy
+                  scripts as it will prevent floats and doubles automatically
+                  being created as BigDecimal objects.
+  -skip_spaces    Skip any leading spaces in each column. By defaut this
+                  setting is False and any leading spaces will be considered
+                  part of the column header or data value. This setting does
+                  not apply to values enclosed in quotes such as " abcd".
   -escape_dollar  For any dollar signs found convert them to an escaped form
                   \$. This is needed if you are going to load the generated
                   Gremlin using a Groovy processor such as used by the Gremlin

@@ -42,7 +42,7 @@ import java.util.Collection;
 public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -68,12 +68,19 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
     @Inject
     private PrinterOptionsModule printerOptions = new PrinterOptionsModule();
 
+    @Inject
+    private GremlinFiltersModule gremlinFilters = new GremlinFiltersModule();
+
     @Override
     public void run() {
 
         try {
             Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories();
                     JsonResource<GraphSchema> configFileResource = directories.configFileResource();
@@ -83,7 +90,11 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
                     PropertyGraphTargetConfig targetConfig = target.config(directories, printerOptions.config());
 
-                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(graphSchema, stats, featureToggles());
+                    Collection<ExportSpecification> exportSpecifications = scope.exportSpecifications(
+                            graphSchema,
+                            gremlinFilters.filters(),
+                            stats,
+                            featureToggles());
 
                     try (NeptuneGremlinClient client = NeptuneGremlinClient.create(cluster, serialization.config());
                          GraphTraversalSource g = client.newTraversalSource()) {
@@ -93,8 +104,10 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                                 graphSchema,
                                 g,
                                 range.config(),
+                                gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
-                                targetConfig);
+                                targetConfig, featureToggles(),
+                                getMaxFileDescriptorCount());
 
                         graphSchema = exportJob.execute();
 

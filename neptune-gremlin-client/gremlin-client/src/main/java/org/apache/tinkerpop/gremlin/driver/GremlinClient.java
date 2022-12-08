@@ -56,6 +56,8 @@ public class GremlinClient extends Client implements AutoCloseable {
                   Supplier<Collection<String>> refreshOnErrorEventHandler) {
         super(cluster, settings);
 
+        logger.info("refreshOnErrorThreshold: {}", refreshOnErrorThreshold);
+
         this.refreshOnErrorThreshold = refreshOnErrorThreshold;
         this.refreshOnErrorEventHandler = refreshOnErrorEventHandler;
         this.clientHolders.set(clientHolders);
@@ -63,10 +65,16 @@ public class GremlinClient extends Client implements AutoCloseable {
         this.clusterBuilder = clusterBuilder;
     }
 
+    /**
+     * Refreshes the list of endpoint addresses to which the client connects.
+     */
     public void refreshEndpoints(String... addresses) {
         refreshEndpoints(Arrays.asList(addresses));
     }
 
+    /**
+     * Refreshes the list of endpoint addresses to which the client connects.
+     */
     public synchronized void refreshEndpoints(Collection<String> addresses) {
 
         if (closing.get() != null) {
@@ -140,12 +148,27 @@ public class GremlinClient extends Client implements AutoCloseable {
 
             if (clientHolder.isAvailable()) {
                 connection = clientHolder.chooseConnection(msg);
-                resetErrorCount();
             } else {
-                logger.warn("Client for {} not available", clientHolder.getAddress());
+                logger.debug("Client for {} not available", clientHolder.getAddress());
+            }
+
+            if (connection == null){
+
+                if ((System.currentTimeMillis() - start) > cluster.connectionPoolSettings().maxWaitForConnection){
+                    throw new TimeoutException("Timed-out waiting for connection");
+                }
+
                 handleError();
+
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
+
+        resetErrorCount();
 
         logger.debug("Connection: {} [{} ms]", connection.getConnectionInfo(), System.currentTimeMillis() - start);
 
@@ -153,13 +176,18 @@ public class GremlinClient extends Client implements AutoCloseable {
     }
 
     private void handleError() {
-        if (refreshOnErrorThreshold > 0
-                && consecutiveErrorCount.incrementAndGet() > refreshOnErrorThreshold
-                && !refreshing.get()) {
+        int currentConsecutiveErrorCount = consecutiveErrorCount.incrementAndGet();
+        boolean isRefreshing = refreshing.get();
+        if (refreshOnErrorThreshold > 0 && currentConsecutiveErrorCount > refreshOnErrorThreshold) {
             consecutiveErrorCount.set(0);
             if (refreshOnErrorEventHandler != null) {
-                executorService.submit(
-                        new RefreshOnErrorEventHandler(this, refreshing, refreshOnErrorEventHandler));
+                if (!isRefreshing){
+                    logger.warn("refreshOnErrorThreshold [{}] reached so invoking refreshOnErrorEventHandler", refreshOnErrorThreshold);
+                    executorService.submit(
+                            new RefreshOnErrorEventHandler(this, refreshing, refreshOnErrorEventHandler));
+                } else {
+                    logger.warn("refreshOnErrorThreshold [{}] reached but already refreshing, so not invoking refreshOnErrorEventHandler", refreshOnErrorThreshold);
+                }
             }
         }
     }
@@ -244,19 +272,19 @@ public class GremlinClient extends Client implements AutoCloseable {
             try {
                 Connection connection = client.chooseConnection(msg);
                 if (connection.isClosing()) {
-                    logger.warn("Connection is closing: {}", host);
+                    logger.debug("Connection is closing: {}", host);
                     return null;
                 }
                 if (connection.isDead()) {
-                    logger.warn("Connection is dead: {}", host);
+                    logger.debug("Connection is dead: {}", host);
                     return null;
                 }
                 return connection;
             } catch (NullPointerException e) {
-                logger.warn("NullPointerException: {}", host, e);
+                logger.debug("NullPointerException: {}", host, e);
                 return null;
             } catch (NoHostAvailableException e){
-                logger.warn("No connection available: {}", host, e);
+                logger.debug("No connection available: {}", host, e);
                 return null;
             }
         }
@@ -291,6 +319,7 @@ public class GremlinClient extends Client implements AutoCloseable {
             if (isAlreadyRefreshing) {
                 return;
             }
+
             Collection<String> endpoints = refreshOnErrorEventHandler.get();
             client.refreshEndpoints(endpoints);
 

@@ -29,6 +29,7 @@ public enum Scope {
         public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
                                                                     Collection<Label> nodeLabels,
                                                                     Collection<Label> edgeLabels,
+                                                                    GremlinFilters gremlinFilters,
                                                                     TokensOnly tokensOnly,
                                                                     EdgeLabelStrategy edgeLabelStrategy,
                                                                     ExportStats stats,
@@ -40,12 +41,16 @@ public enum Scope {
                 results.add(new ExportSpecification(
                         GraphElementType.nodes,
                         Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
-                        stats, tokensOnly.nodeTokensOnly(),
+                        gremlinFilters,
+                        stats,
+                        tokensOnly.nodeTokensOnly(),
                         featureToggles));
                 results.add(new ExportSpecification(
                         GraphElementType.edges,
                         Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
-                        stats, tokensOnly.edgeTokensOnly(),
+                        gremlinFilters,
+                        stats,
+                        tokensOnly.edgeTokensOnly(),
                         featureToggles));
             } else {
                 if (graphSchema.hasNodeSchemas()) {
@@ -55,7 +60,7 @@ public enum Scope {
                         results.add(new ExportSpecification(
                                 GraphElementType.nodes,
                                 labelsFilter,
-                                stats,
+                                gremlinFilters, stats,
                                 tokensOnly.nodeTokensOnly(),
                                 featureToggles));
                     }
@@ -67,7 +72,7 @@ public enum Scope {
                         results.add(new ExportSpecification(
                                 GraphElementType.edges,
                                 labelsFilter,
-                                stats,
+                                gremlinFilters, stats,
                                 tokensOnly.edgeTokensOnly(),
                                 featureToggles));
                     }
@@ -82,6 +87,7 @@ public enum Scope {
         public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
                                                                     Collection<Label> nodeLabels,
                                                                     Collection<Label> edgeLabels,
+                                                                    GremlinFilters gremlinFilters,
                                                                     TokensOnly tokensOnly,
                                                                     EdgeLabelStrategy edgeLabelStrategy,
                                                                     ExportStats stats,
@@ -91,7 +97,7 @@ public enum Scope {
                         new ExportSpecification(
                                 GraphElementType.nodes,
                                 Scope.labelsFilter(nodeLabels, NodeLabelStrategy.nodeLabelsOnly),
-                                stats, tokensOnly.nodeTokensOnly(),
+                                gremlinFilters, stats, tokensOnly.nodeTokensOnly(),
                                 featureToggles)
                 );
             } else if (graphSchema.hasNodeSchemas()) {
@@ -102,7 +108,9 @@ public enum Scope {
                             new ExportSpecification(
                                     GraphElementType.nodes,
                                     labelsFilter,
-                                    stats, tokensOnly.nodeTokensOnly(),
+                                    gremlinFilters,
+                                    stats,
+                                    tokensOnly.nodeTokensOnly(),
                                     featureToggles)
                     );
                 } else {
@@ -120,6 +128,7 @@ public enum Scope {
         public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
                                                                     Collection<Label> nodeLabels,
                                                                     Collection<Label> edgeLabels,
+                                                                    GremlinFilters gremlinFilters,
                                                                     TokensOnly tokensOnly,
                                                                     EdgeLabelStrategy edgeLabelStrategy,
                                                                     ExportStats stats,
@@ -129,7 +138,9 @@ public enum Scope {
                         new ExportSpecification(
                                 GraphElementType.edges,
                                 Scope.labelsFilter(edgeLabels, edgeLabelStrategy),
-                                stats, tokensOnly.edgeTokensOnly(),
+                                gremlinFilters,
+                                stats,
+                                tokensOnly.edgeTokensOnly(),
                                 featureToggles)
                 );
             } else if (graphSchema.hasEdgeSchemas()) {
@@ -140,7 +151,9 @@ public enum Scope {
                             new ExportSpecification(
                                     GraphElementType.edges,
                                     labelsFilter,
-                                    stats, tokensOnly.edgeTokensOnly(),
+                                    gremlinFilters,
+                                    stats,
+                                    tokensOnly.edgeTokensOnly(),
                                     featureToggles)
                     );
                 } else {
@@ -164,6 +177,7 @@ public enum Scope {
             GraphSchema graphSchema,
             Collection<Label> nodeLabels,
             Collection<Label> edgeLabels,
+            GremlinFilters gremlinFilters,
             TokensOnly tokensOnly,
             EdgeLabelStrategy edgeLabelStrategy,
             ExportStats stats,

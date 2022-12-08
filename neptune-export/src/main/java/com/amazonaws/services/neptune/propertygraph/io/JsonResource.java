@@ -25,6 +25,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.Files;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -53,7 +54,7 @@ public class JsonResource<T extends Jsonizable> {
 
         File resourceFile = new File(resourcePath);
 
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(resourceFile), UTF_8))) {
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(resourceFile.toPath()), UTF_8))) {
             ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
             String json = objectWriter.writeValueAsString(object.toJson());
             writer.write(json);
@@ -70,8 +71,9 @@ public class JsonResource<T extends Jsonizable> {
         try {
             Method method = clazz.getMethod("fromJson", JsonNode.class);
             Object o = method.invoke(null, json);
-            //noinspection unchecked
-            return (T) o;
+            @SuppressWarnings("unchecked")
+            T returnValue = (T) o;
+            return returnValue;
         } catch (NoSuchMethodException e) {
             throw new RuntimeException("Jsonizable object must have a static fromJson(JsonNode) method");
         } catch (IllegalAccessException | InvocationTargetException e) {

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QueryJob {
     private final Queue<NamedQuery> queries;
@@ -62,6 +63,8 @@ public class QueryJob {
 
         Collection<Future<Object>> futures = new ArrayList<>();
 
+        AtomicInteger fileIndex = new AtomicInteger();
+
         for (int index = 1; index <= concurrencyConfig.concurrency(); index++) {
             QueryTask queryTask = new QueryTask(
                     queries,
@@ -70,7 +73,7 @@ public class QueryJob {
                     twoPassAnalysis,
                     timeoutMillis,
                     status,
-                    index);
+                    fileIndex);
             futures.add(taskExecutor.submit(queryTask));
         }
 

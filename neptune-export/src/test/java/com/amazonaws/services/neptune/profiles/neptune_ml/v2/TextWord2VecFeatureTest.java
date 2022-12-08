@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.profiles.neptune_ml.v2;
 
+import com.amazonaws.services.neptune.profiles.neptune_ml.NeptuneMLSourceDataModel;
 import com.amazonaws.services.neptune.profiles.neptune_ml.JsonFromResource;
 import com.amazonaws.services.neptune.profiles.neptune_ml.Output;
 import com.amazonaws.services.neptune.profiles.neptune_ml.v2.config.TrainingDataWriterConfigV2;
@@ -20,9 +21,7 @@ import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
@@ -66,7 +65,7 @@ public class TextWord2VecFeatureTest {
 
         JsonNode expectedTrainingDataConfig = json.get("config");
 
-        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(json.get("feature"));
+        Collection<TrainingDataWriterConfigV2> overrideConfig = TrainingDataWriterConfigV2.fromJson(json.get("feature"), NeptuneMLSourceDataModel.PropertyGraph);
 
         Output output = new Output();
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -23,23 +23,6 @@ import java.util.Collection;
 
 public class PropertyGraphSchemaInferencingModule {
 
-    public enum SchemaInferenceStrategy {
-        Scan{
-            @Override
-            boolean scan() {
-                return true;
-            }
-        },
-
-        FullScan {
-            @Override
-            boolean scan() {
-                return false;
-            }
-        };
-
-        abstract boolean scan();
-    }
 
     @Option(name = {"--sample"}, description = "Select only a subset of nodes and edges when generating schema.")
     @Once
@@ -52,14 +35,8 @@ public class PropertyGraphSchemaInferencingModule {
     public PropertyGraphSchemaInferencingModule(){
     }
 
-    public PropertyGraphSchemaInferencingModule withSchemaInferenceStrategy(SchemaInferenceStrategy strategy) {
-        this.sample = strategy.scan();
-        return this;
-    }
-
-    public PropertyGraphSchemaInferencingModule withSampleSize(long sampleSize) {
-        this.sampleSize = sampleSize;
-        return this;
+    public boolean isFullScan(){
+        return !sample;
     }
 
     public CreateGraphSchemaCommand createSchemaCommand(Collection<ExportSpecification> exportSpecifications,

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -13,10 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.export.FeatureToggles;
-import com.amazonaws.services.neptune.propertygraph.EdgeLabelStrategy;
-import com.amazonaws.services.neptune.propertygraph.ExportStats;
-import com.amazonaws.services.neptune.propertygraph.Label;
-import com.amazonaws.services.neptune.propertygraph.Scope;
+import com.amazonaws.services.neptune.propertygraph.*;
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.propertygraph.schema.TokensOnly;
@@ -53,17 +50,21 @@ public class PropertyGraphScopeModule {
     @AllowedEnumValues(EdgeLabelStrategy.class)
     private EdgeLabelStrategy edgeLabelStrategy = EdgeLabelStrategy.edgeLabelsOnly;
 
-    public Collection<ExportSpecification> exportSpecifications(ExportStats stats, FeatureToggles featureToggles){
-        return exportSpecifications(new GraphSchema(), stats, featureToggles);
+    public Collection<ExportSpecification> exportSpecifications(ExportStats stats,
+                                                                GremlinFilters gremlinFilters,
+                                                                FeatureToggles featureToggles){
+        return exportSpecifications(new GraphSchema(), gremlinFilters, stats, featureToggles);
     }
 
     public Collection<ExportSpecification> exportSpecifications(GraphSchema graphSchema,
-                                                                   ExportStats stats,
-                                                                   FeatureToggles featureToggles){
+                                                                GremlinFilters gremlinFilters,
+                                                                ExportStats stats,
+                                                                FeatureToggles featureToggles){
         return scope.exportSpecifications(
                 graphSchema,
                 Label.forLabels(nodeLabels),
                 Label.forLabels(edgeLabels),
+                gremlinFilters,
                 tokensOnly,
                 edgeLabelStrategy,
                 stats,

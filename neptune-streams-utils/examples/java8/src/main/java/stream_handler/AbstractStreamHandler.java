@@ -13,17 +13,11 @@ permissions and limitations under the License.
 package stream_handler;
 
 import com.amazonaws.neptune.StreamRecordsHandler;
-import com.amazonaws.neptune.StreamsResponse;
 import com.amazonaws.neptune.config.CredentialsConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.Map;
 
 public abstract class AbstractStreamHandler implements StreamRecordsHandler {
-
-    private static final Logger logger = LogManager.getLogger(StreamHandler.class);
 
     protected final String neptuneEndpoint;
     protected final Integer neptunePort;

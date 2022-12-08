@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cli;
 
 import com.amazonaws.services.neptune.io.*;
+import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphExportFormat;
 import com.amazonaws.services.neptune.rdf.io.RdfExportFormat;
 import com.amazonaws.services.neptune.rdf.io.RdfTargetConfig;
 import com.github.rvesse.airline.annotations.Option;
@@ -65,6 +66,10 @@ public class RdfTargetModule implements CommandWriter {
     @Once
     private String partitionDirectories = "";
 
+    public Directories createDirectories() throws IOException {
+        return Directories.createFor(directoryStructure(), directory, exportId, tag, partitionDirectories );
+    }
+
     public Directories createDirectories(DirectoryStructure directoryStructure) throws IOException {
         return Directories.createFor(directoryStructure, directory, exportId, tag, partitionDirectories );
     }
@@ -81,5 +86,13 @@ public class RdfTargetModule implements CommandWriter {
     @Override
     public void writeMessage(String value) {
         output.writeMessage(value);
+    }
+
+    private DirectoryStructure directoryStructure(){
+        if (format == RdfExportFormat.neptuneStreamsSimpleJson){
+            return DirectoryStructure.SimpleStreamsOutput;
+        } else {
+            return DirectoryStructure.Rdf;
+        }
     }
 }

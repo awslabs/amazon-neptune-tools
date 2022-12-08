@@ -12,6 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.io;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -25,7 +26,12 @@ public enum Target implements CommandWriter {
         public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
             File file = pathSupplier.get().toFile();
             boolean isNewTarget = !(file.exists());
-            return new PrintOutputWriter(file.getAbsolutePath(), isNewTarget, new FileWriter(file));
+            return new PrintOutputWriter(file.getAbsolutePath(), isNewTarget, new BufferedWriter(new FileWriter(file)));
+        }
+
+        @Override
+        public boolean isFileBased() {
+            return true;
         }
 
         @Override
@@ -37,6 +43,27 @@ public enum Target implements CommandWriter {
         @Override
         public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
             return new StdOutPrintOutputWriter();
+        }
+
+        @Override
+        public boolean isFileBased() {
+            return false;
+        }
+
+        @Override
+        public void writeReturnValue(String value) {
+            System.err.println(value);
+        }
+    },
+    devnull {
+        @Override
+        public OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException {
+            return new NoOpOutputWriter();
+        }
+
+        @Override
+        public boolean isFileBased() {
+            return false;
         }
 
         @Override
@@ -58,6 +85,11 @@ public enum Target implements CommandWriter {
         }
 
         @Override
+        public boolean isFileBased() {
+            return false;
+        }
+
+        @Override
         public void writeReturnValue(String value) {
             System.out.println(value);
         }
@@ -69,6 +101,8 @@ public enum Target implements CommandWriter {
     }
 
     public abstract OutputWriter createOutputWriter(Supplier<Path> pathSupplier, KinesisConfig kinesisConfig) throws IOException;
+
+    public abstract boolean isFileBased();
 
     @Override
     public abstract void writeReturnValue(String value);

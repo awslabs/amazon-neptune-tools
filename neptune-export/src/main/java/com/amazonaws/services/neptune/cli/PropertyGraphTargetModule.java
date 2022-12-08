@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -73,6 +73,13 @@ public class PropertyGraphTargetModule implements CommandWriter {
     @Option(name = {"--partition-directories"}, description = "Partition directory path (e.g. 'year=2021/month=07/day=21').")
     @Once
     private String partitionDirectories = "";
+
+    public PropertyGraphTargetModule() {
+    }
+
+    public PropertyGraphTargetModule(Target target) {
+        this.output =  target;
+    }
 
     public Directories createDirectories() throws IOException {
         return Directories.createFor(directoryStructure(), directory, exportId, tag, partitionDirectories );
