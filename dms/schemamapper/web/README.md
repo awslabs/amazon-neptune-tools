@@ -13,10 +13,14 @@ run yarn start
 ```
 
 
-![](public/1.png)
+![](public/schemamapper1.png)
 
-![](public/2.png)
+![](public/schemamapper2.png)
 
-![](public/3.png)
+![](public/schemamapper3.png)
+
+![](public/schemamapper4.png)
+
+![](public/schemamapper5.png)
 
 
