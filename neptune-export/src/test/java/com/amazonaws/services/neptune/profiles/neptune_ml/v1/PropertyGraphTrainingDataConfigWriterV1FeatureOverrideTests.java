@@ -27,6 +27,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 
 public class PropertyGraphTrainingDataConfigWriterV1FeatureOverrideTests {
 
@@ -41,7 +42,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureOverrideTests {
 
         Label label = new Label(Arrays.asList("Person", "Admin"));
         LabelSchema labelSchema = new LabelSchema(label);
-        labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue));
+        labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -96,9 +97,9 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureOverrideTests {
 
         Label label = new Label(Arrays.asList("Person", "Admin"));
         LabelSchema labelSchema = new LabelSchema(label);
-        labelSchema.put("rating", new PropertySchema("rating", false, DataType.Float, false));
-        labelSchema.put("job", new PropertySchema("job", false, DataType.String, false));
-        labelSchema.put("rank", new PropertySchema("rank", false, DataType.Integer, false));
+        labelSchema.put("rating", new PropertySchema("rating", false, DataType.Float, false, EnumSet.noneOf(DataType.class)));
+        labelSchema.put("job", new PropertySchema("job", false, DataType.String, false, EnumSet.noneOf(DataType.class)));
+        labelSchema.put("rank", new PropertySchema("rank", false, DataType.Integer, false, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 

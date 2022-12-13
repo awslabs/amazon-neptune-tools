@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -42,7 +39,7 @@ public class CsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true, EnumSet.noneOf(DataType.class));
 
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("property1", propertySchema1);
@@ -70,7 +67,7 @@ public class CsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true, EnumSet.noneOf(DataType.class));
 
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("property1", propertySchema1);
@@ -98,7 +95,7 @@ public class CsvPropertyGraphPrinterTest {
 
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true, EnumSet.noneOf(DataType.class));
 
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("property1", propertySchema1);
@@ -184,7 +181,7 @@ public class CsvPropertyGraphPrinterTest {
     private void testEscapeCharacterAfterPrintPropertiesAndRewrite(String originalValue, String expectedValue, PrinterOptions printerOptions) throws IOException {
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, false);
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, false, EnumSet.noneOf(DataType.class));
 
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("property1", propertySchema1);

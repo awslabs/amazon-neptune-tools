@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -130,7 +131,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Arrays.asList("Person", "Admin")));
-        labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue));
+        labelSchema.put("rating", new PropertySchema("rating", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -175,7 +176,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
-        labelSchema.put("encoding", new PropertySchema("encoding", isNullable, dataType, isMultiValue));
+        labelSchema.put("encoding", new PropertySchema("encoding", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -204,7 +205,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Arrays.asList("Person", "Admin")));
-        labelSchema.put("age", new PropertySchema("age", isNullable, dataType, isMultiValue));
+        labelSchema.put("age", new PropertySchema("age", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -250,7 +251,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
-        labelSchema.put("class", new PropertySchema("class", isNullable, dataType, isMultiValue));
+        labelSchema.put("class", new PropertySchema("class", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -295,7 +296,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(new Label(Collections.singletonList("Movie")));
-        labelSchema.put("movieType", new PropertySchema("movieType", isNullable, dataType, isMultiValue));
+        labelSchema.put("movieType", new PropertySchema("movieType", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -340,7 +341,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
-        labelSchema.put("genre", new PropertySchema("genre", isNullable, dataType, isMultiValue));
+        labelSchema.put("genre", new PropertySchema("genre", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -403,7 +404,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
-        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue));
+        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -467,7 +468,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
             Label movieLabel = new Label(Collections.singletonList("Movie"));
             LabelSchema labelSchema = new LabelSchema(movieLabel);
-            labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue));
+            labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
             nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -510,7 +511,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
 
         Label movieLabel = new Label(Collections.singletonList("Movie"));
         LabelSchema labelSchema = new LabelSchema(movieLabel);
-        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue));
+        labelSchema.put("score", new PropertySchema("score", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("movie-1.csv"));
 
@@ -556,7 +557,7 @@ public class PropertyGraphTrainingDataConfigWriterV1FeatureTest {
             GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
             LabelSchema labelSchema = new LabelSchema(new Label("knows", Collections.singletonList("Person"), Collections.singletonList("Person")));
-            labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue));
+            labelSchema.put("strength", new PropertySchema("strength", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
             edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 

@@ -12,6 +12,8 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,19 +25,23 @@ public class PropertySchema {
     private DataType dataType;
     private boolean isMultiValue;
 
+    private final EnumSet<DataType> allTypes;
+
     public PropertySchema(Object property) {
-        this(property, false, DataType.None, false);
+        this(property, false, DataType.None, false, EnumSet.noneOf(DataType.class));
     }
 
     public PropertySchema(Object property,
                           boolean isNullable,
                           DataType dataType,
-                          boolean isMultiValue) {
+                          boolean isMultiValue,
+                          EnumSet<DataType> allTypes) {
         this.property = property;
         this.inferDataType = dataType == DataType.None;
         this.isNullable = isNullable;
         this.dataType = dataType;
         this.isMultiValue = isMultiValue;
+        this.allTypes = allTypes;
     }
 
     public Object property() {
@@ -59,12 +65,16 @@ public class PropertySchema {
             }
             if (inferDataType || updateDataType) {
                 for (Object v : values) {
-                    dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(v.getClass()));
+                    DataType newType = DataType.dataTypeFor(v.getClass());
+                    allTypes.add(newType);
+                    dataType = DataType.getBroadestType(dataType, newType);
                 }
             }
         } else {
             if (inferDataType || updateDataType) {
-                dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
+                DataType newType = DataType.dataTypeFor(value.getClass());
+                allTypes.add(newType);
+                dataType = DataType.getBroadestType(dataType, newType);
             }
         }
 
@@ -90,6 +100,8 @@ public class PropertySchema {
     public boolean isNullable() {
         return isNullable;
     }
+
+    public Collection<DataType> allTypes() { return allTypes; }
 
     public String nameWithDataType(boolean escapeCharacters) {
         return isMultiValue ?
@@ -136,11 +148,12 @@ public class PropertySchema {
                 ", isNullable=" + isNullable +
                 ", dataType=" + dataType +
                 ", isMultiValue=" + isMultiValue +
+                ", allTypes=" + allTypes +
                 '}';
     }
 
     public PropertySchema createCopy() {
-        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue);
+        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue, allTypes);
     }
 
     public PropertySchema union(PropertySchema other) {
@@ -155,12 +168,16 @@ public class PropertySchema {
         boolean newIsMultiValue = other.isMultiValue() || isMultiValue;
         DataType newDataType = DataType.getBroadestType(dataType, other.dataType());
 
+        EnumSet<DataType> unionAllTypes = allTypes.clone();
+        unionAllTypes.addAll(other.allTypes);
+
         return new PropertySchema(
                 property.toString(),
                 newIsNullable,
                 newDataType,
-                newIsMultiValue
-        );
+                newIsMultiValue,
+                unionAllTypes
+                );
     }
 
     @Override
