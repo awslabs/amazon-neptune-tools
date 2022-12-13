@@ -18,10 +18,8 @@ import org.apache.tinkerpop.gremlin.driver.message.RequestMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.net.URI;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,9 +38,8 @@ public class GremlinClient extends Client implements AutoCloseable {
     private final AtomicReference<CompletableFuture<Void>> closing = new AtomicReference<>(null);
     private final AtomicBoolean refreshing = new AtomicBoolean(false);
     private final AtomicInteger consecutiveErrorCount = new AtomicInteger(0);
-
     private final GremlinClusterCollection clusterCollection;
-    private final Function<String, Cluster> clusterBuilder;
+    private final Function<Collection<String>, Cluster> clusterBuilder;
     private final int refreshOnErrorThreshold;
     private final Supplier<Collection<String>> refreshOnErrorEventHandler;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -51,7 +48,7 @@ public class GremlinClient extends Client implements AutoCloseable {
                   Settings settings,
                   List<ClientHolder> clientHolders,
                   GremlinClusterCollection clusterCollection,
-                  Function<String, Cluster> clusterBuilder,
+                  Function<Collection<String>, Cluster> clusterBuilder,
                   int refreshOnErrorThreshold,
                   Supplier<Collection<String>> refreshOnErrorEventHandler) {
         super(cluster, settings);
@@ -98,7 +95,7 @@ public class GremlinClient extends Client implements AutoCloseable {
         for (String address : addresses) {
             if (!clusterCollection.containsAddress(address)) {
                 logger.info("Adding client for {}", address);
-                Cluster cluster = clusterBuilder.apply(address);
+                Cluster cluster = clusterBuilder.apply(Collections.singletonList(address));
                 ClientHolder clientHolder = new ClientHolder(address, cluster.connect());
                 clientHolder.init();
                 newClientHolders.add(clientHolder);
@@ -173,6 +170,17 @@ public class GremlinClient extends Client implements AutoCloseable {
         logger.debug("Connection: {} [{} ms]", connection.getConnectionInfo(), System.currentTimeMillis() - start);
 
         return connection;
+    }
+
+
+    @Override
+    public Client alias(String graphOrTraversalSource) {
+        return alias(makeDefaultAliasMap(graphOrTraversalSource));
+    }
+
+    @Override
+    public Client alias(final Map<String, String> aliases) {
+        return new GremlinAliasClusterClient(this, aliases, settings, clusterCollection);
     }
 
     private void handleError() {
@@ -324,6 +332,30 @@ public class GremlinClient extends Client implements AutoCloseable {
             client.refreshEndpoints(endpoints);
 
             refreshing.set(false);
+        }
+    }
+
+    public static class GremlinAliasClusterClient extends AliasClusteredClient {
+
+        private final GremlinClusterCollection clusterCollection;
+
+        GremlinAliasClusterClient(Client client, Map<String, String> aliases, Settings settings, GremlinClusterCollection clusterCollection) {
+            super(client, aliases, settings);
+            this.clusterCollection = clusterCollection;
+        }
+
+        @Override
+        public Cluster getCluster() {
+            Cluster cluster = clusterCollection.getFirstOrNull();
+            if (cluster != null){
+                logger.trace("Returning: Cluster: {}, Hosts: [{}}",
+                        cluster,
+                        cluster.availableHosts().stream().map(URI::toString).collect(Collectors.joining(", ")));
+                return cluster;
+            } else {
+                logger.warn("Unable to find cluster with available hosts in cluster collection, so returning parent cluster, which has no hosts.");
+                return super.getCluster();
+            }
         }
     }
 }

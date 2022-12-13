@@ -12,9 +12,7 @@ permissions and limitations under the License.
 
 package org.apache.tinkerpop.gremlin.driver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,6 +58,11 @@ public class GremlinClusterCollection {
         closing.set(CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})));
 
         return closing.get();
+    }
+
+    public Cluster getFirstOrNull(){
+        Optional<Map.Entry<String, Cluster>> first = clusters.entrySet().stream().findFirst();
+        return first.map(Map.Entry::getValue).orElse(null);
     }
 
     @Override

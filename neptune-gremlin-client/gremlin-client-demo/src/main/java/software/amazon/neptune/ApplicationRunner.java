@@ -21,6 +21,7 @@ import com.github.rvesse.airline.help.Help;
         commands = {
                 RefreshAgentDemo.class,
                 RollingSubsetOfEndpointDemo.class,
+                TxDemo.class,
                 Help.class})
 public class ApplicationRunner {
 

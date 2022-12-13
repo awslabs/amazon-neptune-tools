@@ -15,9 +15,7 @@ package org.apache.tinkerpop.gremlin.driver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,14 +27,14 @@ public class GremlinCluster implements AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(GremlinCluster.class);
 
     private final List<String> defaultAddresses;
-    private final Function<String, Cluster> clusterBuilder;
+    private final Function<Collection<String>, Cluster> clusterBuilder;
     private final Collection<GremlinClusterCollection> clusterCollections = new CopyOnWriteArrayList<>();
     private final AtomicReference<CompletableFuture<Void>> closing = new AtomicReference<>(null);
     private final int refreshOnErrorThreshold;
     private final Supplier<Collection<String>> refreshOnErrorEventHandler;
 
     public GremlinCluster(List<String> defaultAddresses,
-                          Function<String, Cluster> clusterBuilder,
+                          Function<Collection<String>, Cluster> clusterBuilder,
                           int refreshOnErrorThreshold,
                           Supplier<Collection<String>> refreshOnErrorEventHandler) {
         logger.info("Created GremlinCluster, defaultAddresses: {}", defaultAddresses);
@@ -60,7 +58,7 @@ public class GremlinCluster implements AutoCloseable {
         List<GremlinClient.ClientHolder> clientHolders = new ArrayList<>();
 
         for (String address : addresses) {
-            Cluster cluster = clusterBuilder.apply(address);
+            Cluster cluster = clusterBuilder.apply(Collections.singletonList(address));
             clientHolders.add(new GremlinClient.ClientHolder(address, cluster.connect()));
             clusterCollection.add(address, cluster);
         }

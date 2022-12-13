@@ -516,7 +516,7 @@ public class GremlinClusterBuilder {
     }
 
     public GremlinCluster create() {
-        return new GremlinCluster(addresses, s -> {
+        return new GremlinCluster(addresses, addressList -> {
             Cluster.Builder builder = Cluster.build()
                     .reconnectInterval(reconnectInterval)
                     .maxWaitForConnection(maxWaitForConnection)
@@ -550,8 +550,11 @@ public class GremlinClusterBuilder {
                     .workerPoolSize(workerPoolSize)
                     .nioPoolSize(nioPoolSize)
                     .handshakeInterceptor(interceptor);
-            if (s != null) {
-                builder = builder.addContactPoint(s);
+            if (addressList != null && !addressList.isEmpty()) {
+                for (String address : addressList) {
+
+                    builder = builder.addContactPoint(address);
+                }
             }
             return builder.create();
         }, refreshOnErrorThreshold, refreshOnErrorEventHandler);
