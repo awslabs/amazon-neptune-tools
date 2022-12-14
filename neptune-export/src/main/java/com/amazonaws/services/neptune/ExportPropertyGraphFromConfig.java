@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.EventId;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -83,7 +84,8 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                         featureToggles())) {
 
                     Directories directories = target.createDirectories();
-                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    JsonResource<GraphSchema, Boolean> configFileResource = directories.configFileResource();
+                    JsonResource<ExportStats, GraphSchema> statsFileResource = directories.statsFileResource();
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
@@ -111,7 +113,8 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
                         graphSchema = exportJob.execute();
 
-                        configFileResource.save(graphSchema);
+                        configFileResource.save(graphSchema, false);
+                        statsFileResource.save(stats, graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);

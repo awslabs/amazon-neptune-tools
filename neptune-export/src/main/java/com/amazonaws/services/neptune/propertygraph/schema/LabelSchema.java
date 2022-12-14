@@ -48,13 +48,15 @@ public class LabelSchema {
         return propertySchemas.get(property);
     }
 
-    public void recordObservation(PropertySchema propertySchema, Object value, int size) {
+    public void recordObservation(PropertySchema propertySchema,
+                                  Object value,
+                                  PropertySchema.PropertyValueMetadata propertyValueMetadata) {
         if (propertySchema.isNullable()) {
             if (StringUtils.isNotEmpty(String.valueOf(value))) {
-                propertySchemaStats.get(propertySchema.property()).recordObservation(size);
+                propertySchemaStats.get(propertySchema.property()).recordObservation(propertyValueMetadata);
             }
         } else {
-            propertySchemaStats.get(propertySchema.property()).recordObservation(size);
+            propertySchemaStats.get(propertySchema.property()).recordObservation(propertyValueMetadata);
         }
     }
 

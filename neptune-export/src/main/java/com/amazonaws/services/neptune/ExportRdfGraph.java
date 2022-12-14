@@ -66,7 +66,7 @@ public class ExportRdfGraph extends NeptuneExportCommand implements Runnable {
 
                     Directories directories = target.createDirectories();
 
-                    JsonResource<EventId> eventIdFileResource = directories.lastEventIdFileResource();
+                    JsonResource<EventId, Object> eventIdFileResource = directories.lastEventIdFileResource();
 
                     GetLastEventIdStrategy getLastEventIdStrategy = streams.lastEventIdStrategy(cluster, eventIdFileResource);
                     getLastEventIdStrategy.saveLastEventId("sparql");

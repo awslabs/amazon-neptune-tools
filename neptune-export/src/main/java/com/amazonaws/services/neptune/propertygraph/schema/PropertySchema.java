@@ -12,10 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class PropertySchema {
 
@@ -48,13 +45,15 @@ public class PropertySchema {
         return property;
     }
 
-    public int accept(Object value, boolean updateDataType) {
+    public PropertyValueMetadata accept(Object value, boolean updateDataType) {
 
         /*
         What should we do of the user specifies a datatype in a filter, but the actual values cannot be cast to that type?
         At present, neptune-export will respect the user-specified type in the output schema (config.json), and in CSV headers (if appropriate for export format).
         But perhaps the tool should seek to guarantee that the output schema allows for all values in the exported dataset?
         */
+
+        PropertyValueMetadata propertyValueMetadata = new PropertyValueMetadata();
 
         int size = 1;
         if (isList(value)) {
@@ -67,6 +66,7 @@ public class PropertySchema {
                 for (Object v : values) {
                     DataType newType = DataType.dataTypeFor(v.getClass());
                     allTypes.add(newType);
+                    propertyValueMetadata.updateFor(newType);
                     dataType = DataType.getBroadestType(dataType, newType);
                 }
             }
@@ -74,11 +74,12 @@ public class PropertySchema {
             if (inferDataType || updateDataType) {
                 DataType newType = DataType.dataTypeFor(value.getClass());
                 allTypes.add(newType);
+                propertyValueMetadata.updateFor(newType);
                 dataType = DataType.getBroadestType(dataType, newType);
             }
         }
 
-        return size;
+        return propertyValueMetadata;
     }
 
     public void makeNullable() {
@@ -194,5 +195,33 @@ public class PropertySchema {
     @Override
     public int hashCode() {
         return Objects.hash(property, isNullable, dataType, isMultiValue);
+    }
+
+
+    public static class PropertyValueMetadata {
+        private final EnumMap<DataType, Integer> dataTypeCounts = new EnumMap<DataType, Integer>(DataType.class);
+
+        public int size(){
+            int i = 0;
+            for (Integer value : dataTypeCounts.values()) {
+                i += value;
+            }
+            return i;
+        }
+
+        void updateFor(DataType dataType){
+            int i = dataTypeCounts.containsKey(dataType) ?
+                    dataTypeCounts.get(dataType):
+                    0;
+            dataTypeCounts.put(dataType, i + 1);
+        }
+
+        public void  addTo(EnumMap<DataType, Integer> m){
+            for (Map.Entry<DataType, Integer> entry : dataTypeCounts.entrySet()) {
+                DataType key = entry.getKey();
+                int i = m.containsKey(key) ? m.get(key) : 0;
+                m.put(key, i + entry.getValue());
+            }
+        }
     }
 }
