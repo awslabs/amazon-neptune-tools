@@ -37,6 +37,17 @@ GremlinUtils.init_statics(globals())
 
 def get_cardinality(s):
     return Cardinality.single if s == 'single' else Cardinality.set_
+    
+def add_property(t, mapping, value):
+    cardinality = get_cardinality(mapping.cardinality)
+    if cardinality == Cardinality.set_ and mapping.is_multi_valued:
+        col = value if type(value) in [list, set, tuple] else mapping.separator.split(value)      
+        for s in col:
+            t = t.property(cardinality, mapping.name, mapping.convert(s))
+    else:
+        t = t.property(cardinality, mapping.name, mapping.convert(value))
+    return t
+        
 
 def add_vertex(t, row, **kwargs):
     
@@ -50,7 +61,7 @@ def add_vertex(t, row, **kwargs):
         if mapping.is_id_token():
             t = t.property(id, value)
         elif not mapping.is_token():
-            t = t.property(mapping.name, mapping.convert(value))
+            t = add_property(t, mapping, value)
     return t
 
 
@@ -76,12 +87,12 @@ def upsert_vertex(t, row, **kwargs):
             create_traversal = create_traversal.property(id, value)
         elif not mapping.is_token():
             if not on_upsert:
-                create_traversal = create_traversal.property(mapping.name, mapping.convert(value))              
+                create_traversal = add_property(create_traversal, mapping, value)      
             elif on_upsert == 'updateSingleCardinalityProperties':
                 if mapping.cardinality == 'single':
                     updateable_items.append((key, value))
                 else:                   
-                    create_traversal = create_traversal.property(get_cardinality(mapping.cardinality), mapping.name, mapping.convert(value))
+                    create_traversal = add_property(create_traversal, mapping, value)
             elif on_upsert == 'updateAllProperties':
                 updateable_items.append((key, value))
             elif on_upsert == 'replaceAllProperties':
@@ -92,7 +103,7 @@ def upsert_vertex(t, row, **kwargs):
     if updateable_items:
         for key, value in updateable_items:
             mapping = mappings.mapping_for(key)
-            t = t.property(get_cardinality(mapping.cardinality), mapping.name, mapping.convert(value))
+            t = add_property(t, mapping, value)
 
     return t
 
@@ -107,7 +118,7 @@ def add_edge(t, row, **kwargs):
     for key, value in row.items():
         mapping = mappings.mapping_for(key)
         if not mapping.is_token():
-            t = t.property(mapping.name, mapping.convert(value))
+            t = add_property(t, mapping, value)
     return t
 
 
@@ -127,7 +138,7 @@ def upsert_edge(t, row, **kwargs):
         for key, value in row.items():       
             mapping = mappings.mapping_for(key)
             if not mapping.is_token():
-                create_traversal = create_traversal.property(mapping.name, mapping.convert(value))
+                create_traversal = add_property(create_traversal, mapping, value)
             
     t = t.V(mappings.get_from(row)).outE(label).hasId(mappings.get_id(row)).fold().coalesce(__.unfold(), create_traversal)
     
@@ -135,7 +146,7 @@ def upsert_edge(t, row, **kwargs):
         for key, value in row.items():     
             mapping = mappings.mapping_for(key)       
             if not mapping.is_token():
-                t = t.property(mapping.name, mapping.convert(value))
+                t = add_property(t, mapping, value)
         
     
     return t
@@ -151,7 +162,7 @@ def replace_vertex_properties(t, row, **kwargs):
         for key, value in row.items(): 
             mapping = mappings.mapping_for(key) 
             if not mapping.is_token():
-                t = t.property(get_cardinality(mapping.cardinality), mapping.name, mapping.convert(value))
+                t = add_property(t, mapping, value)
     return t
     
 def replace_edge_properties(t, row, **kwargs):
@@ -166,7 +177,7 @@ def replace_edge_properties(t, row, **kwargs):
         for key, value in row.items(): 
             mapping = mappings.mapping_for(key) 
             if not mapping.is_token():
-                t = t.property(mapping.name, mapping.convert(value))
+                t = add_property(t, mapping, value)
 
     return t
 
@@ -182,7 +193,7 @@ def add_properties_to_edge(t, row, **kwargs):
         for key, value in row.items(): 
             mapping = mappings.mapping_for(key) 
             if not mapping.is_token():
-                t = t.property(mapping.name, mapping.convert(value))
+                t = add_property(t, mapping, value)
 
     return t
     

@@ -94,10 +94,7 @@ class Mapping:
     def convert(self, v):
         if self.token_mappings:
             raise Exception('Invalid operation for token mapping')
-        if self.is_multi_valued:
-            return {self.converter(s) for s in self.separator.split(v)}
-        else:
-            return self.converter(v)
+        return self.converter(v)
         
 class Mappings:
     
