@@ -197,7 +197,7 @@ public class GraphElementSchemas {
                 propertyNode.put("dataType", propertySchema.dataType().name());
                 propertyNode.put("isMultiValue", propertySchema.isMultiValue());
                 propertyNode.put("isNullable", propertySchema.isNullable());
-                propertyNode.put("allTypes", allTypesNode);
+                propertyNode.set("allTypes", allTypesNode);
                 propertiesNode.add(propertyNode);
             }
 

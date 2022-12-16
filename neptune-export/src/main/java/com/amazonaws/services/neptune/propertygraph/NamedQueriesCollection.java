@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class NamedQueriesCollection implements Jsonizable {
+public class NamedQueriesCollection implements Jsonizable<Object> {
 
     public static NamedQueriesCollection fromJson(JsonNode json) {
         List<NamedQueries> collection = new ArrayList<>();
@@ -53,7 +53,7 @@ public class NamedQueriesCollection implements Jsonizable {
     }
 
     @Override
-    public JsonNode toJson() {
+    public JsonNode toJson(Object o) {
         ArrayNode json = JsonNodeFactory.instance.arrayNode();
 
         for (NamedQueries queries : namedQueries) {
@@ -69,4 +69,5 @@ public class NamedQueriesCollection implements Jsonizable {
 
         return json;
     }
+
 }

@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class EventId implements Jsonizable {
+public class EventId implements Jsonizable<Object> {
     private final long commitNum;
     private final long opNum;
 
@@ -43,7 +43,7 @@ public class EventId implements Jsonizable {
     }
 
     @Override
-    public JsonNode toJson() {
+    public JsonNode toJson(Object o) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.put("commitNum", commitNum);
         json.put("opNum", opNum);

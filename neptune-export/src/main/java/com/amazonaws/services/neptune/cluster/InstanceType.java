@@ -13,67 +13,67 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cluster;
 
 public enum InstanceType {
-    db_r4_large{
+    db_r4_large {
         @Override
         int concurrency() {
             return 4;
         }
     },
-    db_r4_xlarge{
+    db_r4_xlarge {
         @Override
         int concurrency() {
             return 8;
         }
     },
-    db_r4_2xlarge{
+    db_r4_2xlarge {
         @Override
         int concurrency() {
             return 16;
         }
     },
-    db_r4_4xlarge{
+    db_r4_4xlarge {
         @Override
         int concurrency() {
             return 32;
         }
     },
-    db_r4_8xlarge{
+    db_r4_8xlarge {
         @Override
         int concurrency() {
             return 64;
         }
     },
-    db_r5_large{
+    db_r5_large {
         @Override
         int concurrency() {
             return 4;
         }
     },
-    db_r5_xlarge{
+    db_r5_xlarge {
         @Override
         int concurrency() {
             return 8;
         }
     },
-    db_r5_2xlarge{
+    db_r5_2xlarge {
         @Override
         int concurrency() {
             return 16;
         }
     },
-    db_r5_4xlarge{
+    db_r5_4xlarge {
         @Override
         int concurrency() {
             return 32;
         }
     },
-    db_r5_8xlarge{
+    db_r5_8xlarge {
         @Override
         int concurrency() {
             return 64;
         }
     },
-    db_r5_12xlarge{
+    db_r5_12xlarge {
         @Override
         int concurrency() {
             return 96;
@@ -89,6 +89,138 @@ public enum InstanceType {
         @Override
         int concurrency() {
             return 192;
+        }
+    },
+    db_r5d_large {
+        @Override
+        int concurrency() {
+            return 4;
+        }
+    },
+    db_r5d_xlarge {
+        @Override
+        int concurrency() {
+            return 8;
+        }
+    },
+    db_r5d_2xlarge {
+        @Override
+        int concurrency() {
+            return 16;
+        }
+    },
+    db_r5d_4xlarge {
+        @Override
+        int concurrency() {
+            return 32;
+        }
+    },
+    db_r5d_8xlarge {
+        @Override
+        int concurrency() {
+            return 64;
+        }
+    },
+    db_r5d_12xlarge {
+        @Override
+        int concurrency() {
+            return 96;
+        }
+    },
+    db_r5d_16xlarge {
+        @Override
+        int concurrency() {
+            return 128;
+        }
+    },
+    db_r5d_24xlarge {
+        @Override
+        int concurrency() {
+            return 192;
+        }
+    },
+    db_r6d_large {
+        @Override
+        int concurrency() {
+            return 4;
+        }
+    },
+    db_r6d_xlarge {
+        @Override
+        int concurrency() {
+            return 8;
+        }
+    },
+    db_r6d_2xlarge {
+        @Override
+        int concurrency() {
+            return 16;
+        }
+    },
+    db_r6d_4xlarge {
+        @Override
+        int concurrency() {
+            return 32;
+        }
+    },
+    db_r6d_8xlarge {
+        @Override
+        int concurrency() {
+            return 64;
+        }
+    },
+    db_r6d_12xlarge {
+        @Override
+        int concurrency() {
+            return 96;
+        }
+    },
+    db_r6d_16xlarge {
+        @Override
+        int concurrency() {
+            return 128;
+        }
+    },
+    db_x2g_large {
+        @Override
+        int concurrency() {
+            return 4;
+        }
+    },
+    db_x2g_xlarge {
+        @Override
+        int concurrency() {
+            return 8;
+        }
+    },
+    db_x2g_2xlarge {
+        @Override
+        int concurrency() {
+            return 16;
+        }
+    },
+    db_x2g_4xlarge {
+        @Override
+        int concurrency() {
+            return 32;
+        }
+    },
+    db_x2g_8xlarge {
+        @Override
+        int concurrency() {
+            return 64;
+        }
+    },
+    db_x2g_12xlarge {
+        @Override
+        int concurrency() {
+            return 96;
+        }
+    },
+    db_x2g_16xlarge {
+        @Override
+        int concurrency() {
+            return 128;
         }
     },
     db_m5_large {
@@ -139,14 +271,14 @@ public enum InstanceType {
             return 192;
         }
     },
-    db_t3_medium{
+    db_t3_medium {
         @Override
         int concurrency() {
             return 4;
         }
     };
 
-    public static InstanceType parse(String value){
+    public static InstanceType parse(String value) {
 
         String typeName = value.startsWith("db.") ?
                 value :
@@ -154,19 +286,17 @@ public enum InstanceType {
 
         typeName = typeName.toLowerCase().replace(".", "_");
 
-        try
-        {
+        try {
             return InstanceType.valueOf(typeName);
-
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             return db_r5_2xlarge;
         }
     }
 
     abstract int concurrency();
 
-    public String value(){
-       return name().replace("_", ".");
+    public String value() {
+        return name().replace("_", ".");
     }
 
     @Override
