@@ -179,7 +179,9 @@ public class ExportPropertyGraphJob {
                 for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
                     PropertySchemaStats propertySchemaStats = fileSpecificLabelSchema.labelSchema().getPropertySchemaStats(propertySchemaStat.property());
                     String s = fileSpecificLabelSchema.outputId();
-                    printWriter.println("    " + propertySchemaStats.toString() + " [" + new File(s).getName() + "]");
+                    if (propertySchemaStats != null){
+                        printWriter.println("    " + propertySchemaStats.toString() + " [" + new File(s).getName() + "]");
+                    }
                 }
                 printWriter.println("");
             }
