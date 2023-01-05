@@ -100,7 +100,8 @@ public class RewriteCsv implements RewriteCommand {
                                       GraphElementType graphElementType,
                                       MasterLabelSchema masterLabelSchema) throws Exception {
 
-        LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
+        LabelSchema originalLabelSchema = masterLabelSchema.labelSchema();
+        LabelSchema masterSchema = originalLabelSchema.createCopy();
         masterSchema.initStats();
 
         Collection<String> renamedFiles = new ArrayList<>();

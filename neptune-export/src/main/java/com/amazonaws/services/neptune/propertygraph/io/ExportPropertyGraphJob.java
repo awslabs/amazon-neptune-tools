@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.amazonaws.services.neptune.cluster.ConcurrencyConfig;
+import com.amazonaws.services.neptune.export.FeatureToggle;
 import com.amazonaws.services.neptune.export.FeatureToggles;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.StatusOutputFormat;
@@ -21,11 +22,15 @@ import com.amazonaws.services.neptune.propertygraph.RangeConfig;
 import com.amazonaws.services.neptune.propertygraph.RangeFactory;
 import com.amazonaws.services.neptune.propertygraph.schema.*;
 import com.amazonaws.services.neptune.util.CheckedActivity;
+import com.amazonaws.services.neptune.util.DebugFile;
 import com.amazonaws.services.neptune.util.Timer;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,6 +55,8 @@ public class ExportPropertyGraphJob {
     private final FeatureToggles featureToggles;
     private final int maxFileDescriptorCount;
 
+    private final DebugFile debugFile;
+
     public ExportPropertyGraphJob(Collection<ExportSpecification> exportSpecifications,
                                   GraphSchema graphSchema,
                                   GraphTraversalSource g,
@@ -58,7 +65,8 @@ public class ExportPropertyGraphJob {
                                   ConcurrencyConfig concurrencyConfig,
                                   PropertyGraphTargetConfig targetConfig,
                                   FeatureToggles featureToggles,
-                                  int maxFileDescriptorCount) {
+                                  int maxFileDescriptorCount,
+                                  DebugFile debugFile) {
         this.exportSpecifications = exportSpecifications;
         this.graphSchema = graphSchema;
         this.g = g;
@@ -68,6 +76,7 @@ public class ExportPropertyGraphJob {
         this.targetConfig = targetConfig;
         this.featureToggles = featureToggles;
         this.maxFileDescriptorCount = maxFileDescriptorCount;
+        this.debugFile = debugFile;
     }
 
     public GraphSchema execute() throws Exception {
@@ -143,7 +152,39 @@ public class ExportPropertyGraphJob {
 
         RewriteCommand rewriteCommand = targetConfig.createRewriteCommand(concurrencyConfig, featureToggles);
 
-        return rewriteCommand.execute(masterLabelSchemas);
+        MasterLabelSchemas rewrittenMasterLabelSchemas = rewriteCommand.execute(masterLabelSchemas);
+
+        if (featureToggles.containsFeature(FeatureToggle.Write_Schemas_To_Debug_File)){
+            writeToDebugFile(exportSpecification, masterLabelSchemas, rewrittenMasterLabelSchemas);
+        }
+
+        return rewrittenMasterLabelSchemas;
+    }
+
+    private void writeToDebugFile(ExportSpecification exportSpecification, MasterLabelSchemas masterLabelSchemas, MasterLabelSchemas rewrittenMasterLabelSchemas) throws FileNotFoundException {
+        try (PrintWriter printWriter = debugFile.create(exportSpecification.description() + "-original-schemas")){
+            writeSchemaToDebugFile(printWriter, masterLabelSchemas);
+        }
+
+        try (PrintWriter printWriter = debugFile.create(exportSpecification.description() + "-rewritten-schemas")){
+            writeSchemaToDebugFile(printWriter, rewrittenMasterLabelSchemas);
+        }
+    }
+
+    private void writeSchemaToDebugFile(PrintWriter printWriter, MasterLabelSchemas masterLabelSchemas) {
+        for (MasterLabelSchema masterLabelSchema : masterLabelSchemas.schemas()) {
+            printWriter.println(masterLabelSchema.labelSchema().label().fullyQualifiedLabel());
+            for (PropertySchemaStats propertySchemaStat : masterLabelSchema.labelSchema().propertySchemaStats()) {
+                printWriter.println("  " + propertySchemaStat.toString());
+                for (FileSpecificLabelSchema fileSpecificLabelSchema : masterLabelSchema.fileSpecificLabelSchemas()) {
+                    PropertySchemaStats propertySchemaStats = fileSpecificLabelSchema.labelSchema().getPropertySchemaStats(propertySchemaStat.property());
+                    String s = fileSpecificLabelSchema.outputId();
+                    printWriter.println("    " + propertySchemaStats.toString() + " [" + new File(s).getName() + "]");
+                }
+                printWriter.println("");
+            }
+            printWriter.println("");
+        }
     }
 
     private void updateFileSpecificLabelSchemas(
