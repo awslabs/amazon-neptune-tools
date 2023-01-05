@@ -258,6 +258,50 @@ batch.close()
 
 ```
 
+The following example creates requests that insert batches of vertices (3 vertices per batch) based on a list of supplied data where some of the properties are multi-value:
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+
+rows = [
+    {'~id': 'person-1', '~label': 'Person', 'name:String[]': 'test-1-name;test-1-name-x;test-1-name-x-2'}, 
+    {'~id': 'person-2', '~label': 'Person', 'name:String[]': 'test-2-name'},
+    {'~id': 'person-3', '~label': 'Person', 'name:String[]': 'test-3-name'},
+    {'~id': 'person-4', '~label': 'Person', 'name:String[]': 'test-4-name'},
+    {'~id': 'person-5', '~label': 'Person', 'name:String[]': 'test-5-name'},
+    {'~id': 'person-6', '~label': 'Person', 'name:String[]': 'test-6-name'},
+    {'~id': 'person-7', '~label': 'Person', 'name:String[]': 'test-7-name'}
+]
+
+batch = BatchUtils(Endpoints())
+batch.add_vertices(batch_size=3, rows=rows)
+batch.close()
+
+```
+
+The following is another example of a multi-valued property, this time supplied using a Python set (list and tuples are also supported, but because Neptune only supports set and not list cardinality for vertex properties, duplicate values will not be stored in the database):
+
+```
+from neptune_python_utils.endpoints import Endpoints
+from neptune_python_utils.batch_utils import BatchUtils
+
+rows = [
+    {'~id': 'person-1', '~label': 'Person', 'name:String[]': {'test-1-name','test-1-name-x','test-1-name-x-2'}}, 
+    {'~id': 'person-2', '~label': 'Person', 'name:String[]': 'test-2-name'},
+    {'~id': 'person-3', '~label': 'Person', 'name:String[]': 'test-3-name'},
+    {'~id': 'person-4', '~label': 'Person', 'name:String[]': 'test-4-name'},
+    {'~id': 'person-5', '~label': 'Person', 'name:String[]': 'test-5-name'},
+    {'~id': 'person-6', '~label': 'Person', 'name:String[]': 'test-6-name'},
+    {'~id': 'person-7', '~label': 'Person', 'name:String[]': 'test-7-name'}
+]
+
+batch = BatchUtils(Endpoints())
+batch.add_vertices(batch_size=3, rows=rows)
+batch.close()
+
+```
+
 The following example creates requests that _upsert_ batches of vertices (3 vertices per batch) based on a list of supplied data:
 
 ```
