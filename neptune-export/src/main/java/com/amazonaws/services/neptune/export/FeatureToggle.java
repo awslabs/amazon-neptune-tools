@@ -20,6 +20,4 @@ public enum FeatureToggle {
     Inject_Fault,
     Simulate_Cloned_Cluster,
     Keep_Rewritten_Files,
-
-    Write_Schemas_To_Debug_File
 }

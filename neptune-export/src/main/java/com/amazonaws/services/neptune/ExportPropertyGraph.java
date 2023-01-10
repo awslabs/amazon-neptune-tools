@@ -25,7 +25,6 @@ import com.amazonaws.services.neptune.propertygraph.io.PropertyGraphTargetConfig
 import com.amazonaws.services.neptune.propertygraph.schema.ExportSpecification;
 import com.amazonaws.services.neptune.propertygraph.schema.GraphSchema;
 import com.amazonaws.services.neptune.util.CheckedActivity;
-import com.amazonaws.services.neptune.util.DebugFile;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.help.Examples;
@@ -128,8 +127,8 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 cluster.concurrencyConfig(),
                                 targetConfig,
                                 featureToggles(),
-                                getMaxFileDescriptorCount(),
-                                new DebugFile(directories));
+                                getMaxFileDescriptorCount()
+                        );
 
                         graphSchema = Timer.timedActivity(
                                 "export",
