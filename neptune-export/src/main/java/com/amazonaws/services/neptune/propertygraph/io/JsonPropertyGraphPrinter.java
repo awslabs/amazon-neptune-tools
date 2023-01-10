@@ -102,7 +102,6 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
 
                     labelSchema.put(key, propertySchema);
                     labelSchema.recordObservation(propertySchema, value, propertyValueMetadata);
-                    labelSchema.recordObservation(propertySchema, value, propertyValueMetadata);
 
                     printProperty(value, propertySchema);
                 }
