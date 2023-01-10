@@ -19,7 +19,7 @@
 @license:    Apache2
 @contact:    @krlawrence
 @deffield    created:  2020-11-17
-@deffield    lastUpdated:  2020-12-03
+@deffield    lastUpdated:  2022-06-30
 
 Overview
 --------
@@ -64,8 +64,8 @@ import datetime
 import dateutil.parser as dparser
 
 class NeptuneCSVReader:
-    VERSION = 0.17
-    VERSION_DATE = '2020-12-03'
+    VERSION = 0.19
+    VERSION_DATE = '2022-06-30'
     INTEGERS = ('BYTE','SHORT','INT','LONG')
     FLOATS = ('FLOAT','DOUBLE')
     BOOLS = ('BOOL','BOOLEAN')
@@ -74,7 +74,8 @@ class NeptuneCSVReader:
 
     def __init__(self, vbatch=1, ebatch=1, java_dates=False, max_rows=sys.maxsize,
                  assume_utc=False, stop_on_error=True, silent_mode=False,
-                 escape_dollar=False, show_summary=True):
+                 escape_dollar=False, show_summary=True, double_suffix=False,
+                 skip_spaces=False):
         
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
@@ -83,7 +84,8 @@ class NeptuneCSVReader:
         self.assume_utc = assume_utc
         self.stop_on_error = stop_on_error
         self.silent_mode = silent_mode
-        self.escape_dollar=escape_dollar
+        self.escape_dollar = escape_dollar
+        self.double_suffix = double_suffix
         self.show_summary = show_summary
         self.mode = self.VERTEX
         self.current_row = 1
@@ -95,6 +97,7 @@ class NeptuneCSVReader:
         self.edge_count = 0
         self.property_count = 0
         self.verbose_summary = False
+        self.skip_spaces = skip_spaces
 
     def get_batch_sizes(self):
         return {'vbatch': self.vertex_batch_size,
@@ -104,7 +107,7 @@ class NeptuneCSVReader:
         self.vertex_batch_size = vbatch
         self.edge_batch_size = ebatch
 
-    def set_java_dates(self,f):
+    def set_java_dates(self,f:bool):
         self.use_java_date = f
     
     def get_java_dates(self):
@@ -116,35 +119,47 @@ class NeptuneCSVReader:
     def get_max_rows(self):
         return self.row_limit
 
-    def set_assume_utc(self,utc):
+    def set_assume_utc(self,utc:bool):
         self.assume_utc = utc
 
     def get_assume_utc(self):
         return self.assume_utc
 
-    def set_stop_on_error(self,stop):
+    def set_stop_on_error(self,stop:bool):
         self.stop_on_error = stop
 
     def get_stop_on_error(self):
         return self.stop_on_error
 
-    def set_silent_mode(self,silent):
+    def set_silent_mode(self,silent:bool):
         self.silent_mode = silent
 
     def get_silent_mode(self):
         return self.silent_mode
 
-    def set_escape_dollar(self,dollar):
+    def set_escape_dollar(self,dollar:bool):
         self.escape_dollar = dollar
 
     def get_escape_dollar(self):
         return self.escape_dollar
 
-    def set_show_summary(self, summary):
+    def set_show_summary(self, summary:bool):
         self.show_summary = summary
 
     def get_show_summary(self):
         return self.show_summary
+
+    def set_double_suffix(self,suffix:bool):
+        self.double_suffix = suffix
+
+    def get_double_suffix(self):
+        return self.double_suffix
+
+    def set_skip_spaces(self,skip:bool):
+        self.skip_spaces = skip
+
+    def get_skip_spaces(self):
+        return self.skip_spaces
 
     def escape(self,string):
         escaped = string.replace('"','\\"')
@@ -322,7 +337,11 @@ class NeptuneCSVReader:
                 else:
                     for p in values:
                         self.property_count += 1
-                        result += f'.property({cardinality}\"{kt[0]}\",{p})'
+                        if type(p) is float and self.double_suffix:
+                            pv = f'{p}d'
+                        else:
+                            pv = f'{p}'
+                        result += f'.property({cardinality}\"{kt[0]}\",{pv})'
         else:
             if row[key] is None:
                 result = ''
@@ -440,7 +459,7 @@ class NeptuneCSVReader:
         self.property_count = 0
         try:
             with open(fname, newline='') as csvfile:
-                reader = csv.DictReader(csvfile,escapechar="\\")
+                reader = csv.DictReader(csvfile, skipinitialspace=self.skip_spaces, escapechar="\\")
 
                 if not '~id' in reader.fieldnames:
                     self.print_error('The header row must include an ~id column')
@@ -494,6 +513,17 @@ if __name__ == '__main__':
                         help='Enable silent mode. Only errors are reported. No Gremlin is generated.')
     parser.add_argument('-no_summary', action='store_true',
                         help='Do not show a summary report after processing.')
+    parser.add_argument('-double_suffix', action='store_true',
+                        help='Suffix all floats and doubles with a "d" such as 12.34d. This is helpful\
+                        when using the Gremlin Console or Groovy scripts as it will prevent\
+                        floats and doubles automatically being created as BigDecimal objects.')
+    parser.add_argument('-skip_spaces', action='store_true',
+                        help='Skip any leading spaces in each column.\
+                        By defaut this setting is False and any leading spaces\
+                        will be considered part of the column header or data value.\
+                        This setting does not apply to values enclosed in quotes\
+                        such as "  abcd".',
+                        default=False)
     parser.add_argument('-escape_dollar', action='store_true',
                         help='For any dollar signs found convert them to an escaped\
                         form \$. This is needed if you are going to load the\
@@ -510,5 +540,7 @@ if __name__ == '__main__':
     ncsv.set_stop_on_error(not(args.all_errors))
     ncsv.set_silent_mode(args.silent)
     ncsv.set_escape_dollar(args.escape_dollar)
+    ncsv.set_double_suffix(args.double_suffix)
     ncsv.set_show_summary(not args.no_summary)
+    ncsv.set_skip_spaces(args.skip_spaces)
     ncsv.process_csv_file(args.csvfile)

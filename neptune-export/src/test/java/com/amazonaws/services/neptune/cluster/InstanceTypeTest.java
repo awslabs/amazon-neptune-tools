@@ -21,5 +21,8 @@ public class InstanceTypeTest {
     public void shouldAllowNameWithOutWithDBPrefix(){
         assertEquals(InstanceType.db_r5_8xlarge, InstanceType.parse("db.r5.8xlarge"));
         assertEquals(InstanceType.db_r5_8xlarge, InstanceType.parse("r5.8xlarge"));
+
+        assertEquals(InstanceType.db_r5d_12xlarge, InstanceType.parse("db.r5d.12xlarge"));
+        assertEquals(InstanceType.db_r5d_12xlarge, InstanceType.parse("r5d.12xlarge"));
     }
 }

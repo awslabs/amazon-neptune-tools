@@ -16,7 +16,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
 import org.apache.tinkerpop.gremlin.jsr223.GremlinScriptEngine;
 import org.apache.tinkerpop.gremlin.process.traversal.Bytecode;
-import org.apache.tinkerpop.gremlin.process.traversal.Step;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -76,15 +75,10 @@ public class GremlinFilters {
         } catch (ScriptException e) {
             throw new IllegalStateException(String.format("Invalid Gremlin filter: %s. %s", gremlin, e.getMessage()), e);
         }
-
-        for (Step<?, ?> step : whereTraversal.getSteps()) {
-
-            for (Bytecode.Instruction instruction : step.getTraversal().getBytecode().getInstructions()) {
-                String operator = instruction.getOperator();
-                validateOperator(operator);
-                t.asAdmin().getBytecode().addStep(operator, instruction.getArguments());
-            }
-            t.asAdmin().addStep(step);
+        for (Bytecode.Instruction instruction : whereTraversal.getBytecode().getInstructions()) {
+            String operator = instruction.getOperator();
+            validateOperator(operator);
+            t.asAdmin().getBytecode().addStep(operator, instruction.getArguments());
         }
 
         return t;

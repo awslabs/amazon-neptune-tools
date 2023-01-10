@@ -12,6 +12,17 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.export;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+
+import com.amazonaws.services.neptune.util.GitProperties;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.amazonaws.services.neptune.util.EnvironmentVariableUtils;
@@ -19,12 +30,8 @@ import com.amazonaws.services.neptune.util.S3ObjectInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-
+import static com.amazonaws.services.neptune.RunNeptuneExportSvc.DEFAULT_MAX_FILE_DESCRIPTOR_COUNT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class NeptuneExportLambda implements RequestStreamHandler {
@@ -33,14 +40,16 @@ public class NeptuneExportLambda implements RequestStreamHandler {
 
     private final String localOutputPath;
     private final boolean cleanOutputPath;
+    private final int maxFileDescriptorCount;
 
     public NeptuneExportLambda() {
-        this(TEMP_PATH, true);
+        this(TEMP_PATH, true, DEFAULT_MAX_FILE_DESCRIPTOR_COUNT);
     }
 
-    public NeptuneExportLambda(String localOutputPath, boolean cleanOutputPath) {
+    public NeptuneExportLambda(String localOutputPath, boolean cleanOutputPath, int maxFileDescriptorCount) {
         this.localOutputPath = localOutputPath;
         this.cleanOutputPath = cleanOutputPath;
+        this.maxFileDescriptorCount = maxFileDescriptorCount;
     }
 
     @Override
@@ -145,7 +154,8 @@ public class NeptuneExportLambda implements RequestStreamHandler {
                 completionFilePayload,
                 additionalParams,
                 maxConcurrency,
-                s3Region);
+                s3Region,
+                maxFileDescriptorCount);
 
         S3ObjectInfo outputS3ObjectInfo = neptuneExportService.execute();
 

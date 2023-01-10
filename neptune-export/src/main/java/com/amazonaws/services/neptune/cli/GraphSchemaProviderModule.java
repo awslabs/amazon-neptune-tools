@@ -42,7 +42,7 @@ public class GraphSchemaProviderModule {
 
         if (configFile != null) {
 
-            JsonResource<GraphSchema> configFileResource = new JsonResource<>(
+            JsonResource<GraphSchema, Boolean> configFileResource = new JsonResource<>(
                     "Config file",
                     configFile,
                     GraphSchema.class);

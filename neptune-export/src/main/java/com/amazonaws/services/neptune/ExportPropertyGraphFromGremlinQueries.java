@@ -47,7 +47,7 @@ import java.util.List;
 public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -86,10 +86,14 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
         try {
             Timer.timedActivity("exporting property graph from queries", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories(DirectoryStructure.GremlinQueries);
-                    JsonResource<NamedQueriesCollection> queriesResource = queriesFile != null ?
+                    JsonResource<NamedQueriesCollection, Object> queriesResource = queriesFile != null ?
                             new JsonResource<>("Queries file", queriesFile, NamedQueriesCollection.class) :
                             directories.queriesResource();
 
@@ -131,10 +135,10 @@ public class ExportPropertyGraphFromGremlinQueries extends NeptuneExportCommand 
 
     private NamedQueriesCollection getNamedQueriesCollection(List<NamedQueries> queries,
                                                              URI queriesFile,
-                                                             JsonResource<NamedQueriesCollection> queriesResource) throws IOException {
+                                                             JsonResource<NamedQueriesCollection, Object> queriesResource) throws IOException {
         if (queriesFile == null) {
             NamedQueriesCollection namedQueries = new NamedQueriesCollection(queries);
-            queriesResource.save(namedQueries);
+            queriesResource.save(namedQueries, null);
             return namedQueries;
         } else {
             return queriesResource.get();

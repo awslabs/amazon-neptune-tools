@@ -94,10 +94,7 @@ class Mapping:
     def convert(self, v):
         if self.token_mappings:
             raise Exception('Invalid operation for token mapping')
-        if self.is_multi_valued:
-            return [self.converter(s) for s in self.separator.split(v)]
-        else:
-            return self.converter(v)
+        return self.converter(v)
         
 class Mappings:
     
@@ -169,6 +166,10 @@ class Mappings:
                     cardinality = 'single'
                     kwargs['cardinality'] = cardinality
                     
+                if metadata_match.group(3) and metadata_match.group(3).lower() == 'set':
+                    kwargs['is_multi_valued'] = True
+                    kwargs['separator'] = self.separator
+                    
                 if metadata_match.group(4) and metadata_match.group(4) == '[]':
                     kwargs['is_multi_valued'] = True
                     kwargs['separator'] = self.separator
@@ -238,6 +239,16 @@ class TestMappings(unittest.TestCase):
         mappings = Mappings()
         mapping = mappings.mapping_for('email:string[]')
         self.assertEqual(mapping.key, 'email:string[]')
+        self.assertEqual(mapping.name, 'email')
+        self.assertEqual(mapping.datatype, 'string')
+        self.assertEqual(mapping.cardinality, 'set')
+        self.assertEqual(mapping.is_multi_valued, True)
+        self.assertEqual(mapping.convert('x@y;a@b'), ['x@y', 'a@b'])
+        
+    def test_header_with_type_and_cardinality_set(self):
+        mappings = Mappings()
+        mapping = mappings.mapping_for('email:string(set)')
+        self.assertEqual(mapping.key, 'email:string(set)')
         self.assertEqual(mapping.name, 'email')
         self.assertEqual(mapping.datatype, 'string')
         self.assertEqual(mapping.cardinality, 'set')

@@ -78,10 +78,4 @@ public class ConnectionConfig {
     public ProxyConfig proxyConfig() {
         return proxyConfig;
     }
-
-    public String clusterId() {
-        return StringUtils.isNotEmpty(clusterId) ?
-                clusterId :
-                NeptuneClusterMetadata.clusterIdFromEndpoint(endpoints().iterator().next());
-    }
 }

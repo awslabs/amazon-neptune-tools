@@ -44,7 +44,7 @@ public class GremlinClusterBuilder {
     private int maxInProcessPerConnection = Connection.MAX_IN_PROCESS;
     private int minInProcessPerConnection = Connection.MIN_IN_PROCESS;
     private int maxWaitForConnection = Connection.MAX_WAIT_FOR_CONNECTION;
-    private int maxWaitForSessionClose = Connection.MAX_WAIT_FOR_SESSION_CLOSE;
+    private int maxWaitForClose = Connection.MAX_WAIT_FOR_CLOSE;
     private int maxContentLength = Connection.MAX_CONTENT_LENGTH;
     private int reconnectInterval = Connection.RECONNECT_INTERVAL;
     private int resultIterationBatchSize = Connection.RESULT_ITERATION_BATCH_SIZE;
@@ -373,9 +373,8 @@ public class GremlinClusterBuilder {
      * for that session to close before timing out where the default value is 3000. Note that the server will
      * eventually clean up dead sessions itself on expiration of the session or during shutdown.
      */
-    @Deprecated
-    public GremlinClusterBuilder maxWaitForSessionClose(final int maxWait) {
-        this.maxWaitForSessionClose = maxWait;
+    public GremlinClusterBuilder maxWaitForClose(final int maxWait) {
+        this.maxWaitForClose = maxWait;
         return this;
     }
 
@@ -517,7 +516,7 @@ public class GremlinClusterBuilder {
     }
 
     public GremlinCluster create() {
-        return new GremlinCluster(addresses, s -> {
+        return new GremlinCluster(addresses, addressList -> {
             Cluster.Builder builder = Cluster.build()
                     .reconnectInterval(reconnectInterval)
                     .maxWaitForConnection(maxWaitForConnection)
@@ -530,7 +529,7 @@ public class GremlinClusterBuilder {
                     .validationRequest(validationRequest)
                     .channelizer(channelizer)
                     .maxContentLength(maxContentLength)
-                    .maxWaitForSessionClose(maxWaitForSessionClose)
+                    .maxWaitForClose(maxWaitForClose)
                     .resultIterationBatchSize(resultIterationBatchSize)
                     .minConnectionPoolSize(minConnectionPoolSize)
                     .maxConnectionPoolSize(maxConnectionPoolSize)
@@ -551,8 +550,11 @@ public class GremlinClusterBuilder {
                     .workerPoolSize(workerPoolSize)
                     .nioPoolSize(nioPoolSize)
                     .handshakeInterceptor(interceptor);
-            if (s != null) {
-                builder = builder.addContactPoint(s);
+            if (addressList != null && !addressList.isEmpty()) {
+                for (String address : addressList) {
+
+                    builder = builder.addContactPoint(address);
+                }
             }
             return builder.create();
         }, refreshOnErrorThreshold, refreshOnErrorEventHandler);

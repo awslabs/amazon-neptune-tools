@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package software.amazon.neptune;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import software.amazon.neptune.cluster.*;
 import com.github.rvesse.airline.annotations.Command;
@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.utils.RegionUtils;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,7 @@ public class RefreshAgentDemo implements Runnable {
             GremlinClient client = cluster.connect();
 
             refreshAgent.startPollingNeptuneAPI(
-                    addresses -> client.refreshEndpoints(addresses.get(endpointsSelector)),
+                    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(endpointsSelector)),
                     intervalSeconds,
                     TimeUnit.SECONDS);
 

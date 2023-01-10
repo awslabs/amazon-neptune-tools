@@ -23,7 +23,7 @@ public class NeptuneStreamsModule {
     @Once
     private boolean includeLastEventId = false;
 
-    public GetLastEventIdStrategy lastEventIdStrategy(Cluster cluster, JsonResource<EventId> eventIdResource){
+    public GetLastEventIdStrategy lastEventIdStrategy(Cluster cluster, JsonResource<EventId, Object> eventIdResource){
         if (includeLastEventId){
             return new GetLastEventIdTask(cluster, eventIdResource);
         } else {

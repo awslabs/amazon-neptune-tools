@@ -52,7 +52,7 @@ import java.util.Collection;
 public class ExportPropertyGraph extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -89,12 +89,17 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
 
         try {
             Timer.timedActivity("exporting property graph", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories();
 
-                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                    JsonResource<EventId> eventIdFileResource = directories.lastEventIdFileResource();
+                    JsonResource<GraphSchema, Boolean> configFileResource = directories.configFileResource();
+                    JsonResource<EventId, Object> eventIdFileResource = directories.lastEventIdFileResource();
+                    JsonResource<ExportStats, GraphSchema> statsFileResource = directories.statsFileResource();
 
                     GetLastEventIdStrategy getLastEventIdStrategy = streams.lastEventIdStrategy(cluster, eventIdFileResource);
                     getLastEventIdStrategy.saveLastEventId("gremlin");
@@ -121,13 +126,15 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
                                 targetConfig,
-                                featureToggles());
+                                featureToggles(),
+                                getMaxFileDescriptorCount());
 
                         graphSchema = Timer.timedActivity(
                                 "export",
                                 (CheckedActivity.Callable<GraphSchema>) exportJob::execute);
 
-                        configFileResource.save(graphSchema);
+                        configFileResource.save(graphSchema, false);
+                        statsFileResource.save(stats, graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);

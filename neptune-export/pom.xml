@@ -19,9 +19,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javac.target>1.8</javac.target>
         <uberjar.name>neptune-export</uberjar.name>
-        <aws.sdk.version>1.11.982</aws.sdk.version>
+        <aws.sdk.version>1.12.359</aws.sdk.version>
         <gremlin.version>3.4.8</gremlin.version>
-        <slf4j.version>1.8.0-beta2</slf4j.version>
+        <slf4j.version>2.0.5</slf4j.version>
         <rdf4j.version>3.5.0</rdf4j.version>
         <amazon.neptune.sigv4.signer.version>2.1.1</amazon.neptune.sigv4.signer.version>
         <amazon.neptune.gremlin.java.sigv4.version>2.1.1</amazon.neptune.gremlin.java.sigv4.version>
@@ -42,12 +42,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>1.9.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
         </dependency>
 
         <dependency>
@@ -95,7 +89,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
-            <version>1.2.1</version>
+            <version>1.2.2</version>
         </dependency>
 
         <dependency>
@@ -119,25 +113,25 @@
         <dependency>
             <groupId>com.github.rvesse</groupId>
             <artifactId>airline</artifactId>
-            <version>2.8.1</version>
+            <version>2.9.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.12.2</version>
+            <version>2.12.7.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-cbor</artifactId>
-            <version>2.12.2</version>
+            <version>2.14.1</version>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-utils</artifactId>
-            <version>3.2.0</version>
+            <version>3.5.0</version>
         </dependency>
 
         <dependency>
@@ -285,6 +279,34 @@
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.17</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.github.git-commit-id</groupId>
+                    <artifactId>git-commit-id-maven-plugin</artifactId>
+                    <version>5.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>get-the-git-infos</id>
+                            <goals>
+                                <goal>revision</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>validate-the-git-infos</id>
+                            <goals>
+                                <goal>validateRevision</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <includeOnlyProperties>
+                            <includeOnlyProperty>git.commit.id</includeOnlyProperty>
+                            <includeOnlyProperty>git.commit.time</includeOnlyProperty>
+                            <includeOnlyProperty>git.build.time</includeOnlyProperty>
+                            <includeOnlyProperty>git.build.version</includeOnlyProperty>
+                        </includeOnlyProperties>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

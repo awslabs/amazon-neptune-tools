@@ -184,9 +184,8 @@ public class NeptuneGremlinClusterBuilder {
         return this;
     }
 
-    @Deprecated
-    public NeptuneGremlinClusterBuilder maxWaitForSessionClose(final int maxWait) {
-        innerBuilder.maxWaitForSessionClose(maxWait);
+    public NeptuneGremlinClusterBuilder maxWaitForClose(final int maxWait) {
+        innerBuilder.maxWaitForClose(maxWait);
         return this;
     }
 

@@ -72,11 +72,15 @@ public class TrainingDataWriterConfigV2 {
         Collection<TfIdfConfigV2> tfIdfNodeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeNodeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecNodeFeatures = new ArrayList<>();
+        Collection<FastTextConfig> fastTextNodeFeatures = new ArrayList<>();
+        Collection<SbertConfig> sbertNodeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfigV2> numericalBucketNodeFeatures = new ArrayList<>();
         Collection<NoneFeatureConfig> noneEdgeFeatures = new ArrayList<>();
         Collection<TfIdfConfigV2> tfIdfEdgeFeatures = new ArrayList<>();
         Collection<DatetimeConfigV2> datetimeEdgeFeatures = new ArrayList<>();
         Collection<Word2VecConfig> word2VecEdgeFeatures = new ArrayList<>();
+        Collection<FastTextConfig> fastTextEdgeFeatures = new ArrayList<>();
+        Collection<SbertConfig> sbertEdgeFeatures = new ArrayList<>();
         Collection<NumericalBucketFeatureConfigV2> numericalBucketEdgeFeatures = new ArrayList<>();
         Collection<FeatureOverrideConfigV2> nodeFeatureOverrides = new ArrayList<>();
         Collection<FeatureOverrideConfigV2> edgeFeatureOverrides = new ArrayList<>();
@@ -128,12 +132,16 @@ public class TrainingDataWriterConfigV2 {
             tfIdfNodeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             datetimeNodeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             word2VecNodeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            fastTextNodeFeatures.addAll(parseFeatures.parseFastTextFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
+            sbertNodeFeatures.addAll(parseFeatures.parseSbertFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
             numericalBucketNodeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.NodeFeatureFilter, ParseFeaturesV2.NodeLabelSupplier));
 
             noneEdgeFeatures.addAll(parseFeatures.parseNoneFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             tfIdfEdgeFeatures.addAll(parseFeatures.parseTfIdfFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             datetimeEdgeFeatures.addAll(parseFeatures.parseDatetimeFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             word2VecEdgeFeatures.addAll(parseFeatures.parseWord2VecFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            fastTextEdgeFeatures.addAll(parseFeatures.parseFastTextFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
+            sbertEdgeFeatures.addAll(parseFeatures.parseSbertFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
             numericalBucketEdgeFeatures.addAll(parseFeatures.parseNumericalBucketFeatures(ParseFeaturesV2.EdgeFeatureFilter, ParseFeaturesV2.EdgeLabelSupplier));
 
             nodeFeatureOverrides.addAll(parseFeatures.parseNodeFeatureOverrides());
@@ -141,8 +149,27 @@ public class TrainingDataWriterConfigV2 {
 
         }
 
-        ElementConfig nodeConfig = new ElementConfig(nodeClassLabels, noneNodeFeatures, tfIdfNodeFeatures, datetimeNodeFeatures, word2VecNodeFeatures, numericalBucketNodeFeatures, nodeFeatureOverrides);
-        ElementConfig edgeConfig = new ElementConfig(edgeClassLabels, noneEdgeFeatures, tfIdfEdgeFeatures, datetimeEdgeFeatures, word2VecEdgeFeatures, numericalBucketEdgeFeatures, edgeFeatureOverrides);
+        ElementConfig nodeConfig = new ElementConfig(
+                nodeClassLabels,
+                noneNodeFeatures,
+                tfIdfNodeFeatures,
+                datetimeNodeFeatures,
+                word2VecNodeFeatures,
+                fastTextNodeFeatures,
+                sbertNodeFeatures,
+                numericalBucketNodeFeatures,
+                nodeFeatureOverrides);
+
+        ElementConfig edgeConfig = new ElementConfig(
+                edgeClassLabels,
+                noneEdgeFeatures,
+                tfIdfEdgeFeatures,
+                datetimeEdgeFeatures,
+                word2VecEdgeFeatures,
+                fastTextEdgeFeatures,
+                sbertEdgeFeatures,
+                numericalBucketEdgeFeatures,
+                edgeFeatureOverrides);
 
         return new TrainingDataWriterConfigV2(name,
                 featureEncodingFlag,

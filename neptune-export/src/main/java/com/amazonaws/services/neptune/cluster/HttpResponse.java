@@ -55,7 +55,9 @@ public class HttpResponse {
 
     public <T> T getContentAsObject(Class<T> type) throws IOException {
         if (contentType.equals(JSON_CONTENT_TYPE)) {
-            return (T)MAPPER.readerFor(type).readValue(content);
+            @SuppressWarnings("unchecked")
+            T returnValue = (T) MAPPER.readerFor(type).readValue(content);
+            return returnValue;
         } else {
             throw new IllegalStateException("Content is not JSON: " + contentType);
         }

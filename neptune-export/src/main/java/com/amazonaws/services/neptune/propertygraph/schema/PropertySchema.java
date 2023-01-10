@@ -12,8 +12,7 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.propertygraph.schema;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class PropertySchema {
 
@@ -23,32 +22,38 @@ public class PropertySchema {
     private DataType dataType;
     private boolean isMultiValue;
 
+    private final EnumSet<DataType> allTypes;
+
     public PropertySchema(Object property) {
-        this(property, false, DataType.None, false);
+        this(property, false, DataType.None, false, EnumSet.noneOf(DataType.class));
     }
 
     public PropertySchema(Object property,
                           boolean isNullable,
                           DataType dataType,
-                          boolean isMultiValue) {
+                          boolean isMultiValue,
+                          EnumSet<DataType> allTypes) {
         this.property = property;
         this.inferDataType = dataType == DataType.None;
         this.isNullable = isNullable;
         this.dataType = dataType;
         this.isMultiValue = isMultiValue;
+        this.allTypes = allTypes;
     }
 
     public Object property() {
         return property;
     }
 
-    public int accept(Object value, boolean updateDataType) {
+    public PropertyValueMetadata accept(Object value, boolean updateDataType) {
 
         /*
         What should we do of the user specifies a datatype in a filter, but the actual values cannot be cast to that type?
         At present, neptune-export will respect the user-specified type in the output schema (config.json), and in CSV headers (if appropriate for export format).
         But perhaps the tool should seek to guarantee that the output schema allows for all values in the exported dataset?
         */
+
+        PropertyValueMetadata propertyValueMetadata = new PropertyValueMetadata();
 
         int size = 1;
         if (isList(value)) {
@@ -59,16 +64,22 @@ public class PropertySchema {
             }
             if (inferDataType || updateDataType) {
                 for (Object v : values) {
-                    dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(v.getClass()));
+                    DataType newType = DataType.dataTypeFor(v.getClass());
+                    allTypes.add(newType);
+                    propertyValueMetadata.updateFor(newType);
+                    dataType = DataType.getBroadestType(dataType, newType);
                 }
             }
         } else {
             if (inferDataType || updateDataType) {
-                dataType = DataType.getBroadestType(dataType, DataType.dataTypeFor(value.getClass()));
+                DataType newType = DataType.dataTypeFor(value.getClass());
+                allTypes.add(newType);
+                propertyValueMetadata.updateFor(newType);
+                dataType = DataType.getBroadestType(dataType, newType);
             }
         }
 
-        return size;
+        return propertyValueMetadata;
     }
 
     public void makeNullable() {
@@ -90,6 +101,8 @@ public class PropertySchema {
     public boolean isNullable() {
         return isNullable;
     }
+
+    public Collection<DataType> allTypes() { return allTypes; }
 
     public String nameWithDataType(boolean escapeCharacters) {
         return isMultiValue ?
@@ -136,11 +149,12 @@ public class PropertySchema {
                 ", isNullable=" + isNullable +
                 ", dataType=" + dataType +
                 ", isMultiValue=" + isMultiValue +
+                ", allTypes=" + allTypes +
                 '}';
     }
 
     public PropertySchema createCopy() {
-        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue);
+        return new PropertySchema(property.toString(), isNullable, dataType, isMultiValue, allTypes);
     }
 
     public PropertySchema union(PropertySchema other) {
@@ -155,12 +169,16 @@ public class PropertySchema {
         boolean newIsMultiValue = other.isMultiValue() || isMultiValue;
         DataType newDataType = DataType.getBroadestType(dataType, other.dataType());
 
+        EnumSet<DataType> unionAllTypes = allTypes.clone();
+        unionAllTypes.addAll(other.allTypes);
+
         return new PropertySchema(
                 property.toString(),
                 newIsNullable,
                 newDataType,
-                newIsMultiValue
-        );
+                newIsMultiValue,
+                unionAllTypes
+                );
     }
 
     @Override
@@ -177,5 +195,33 @@ public class PropertySchema {
     @Override
     public int hashCode() {
         return Objects.hash(property, isNullable, dataType, isMultiValue);
+    }
+
+
+    public static class PropertyValueMetadata {
+        private final EnumMap<DataType, Integer> dataTypeCounts = new EnumMap<DataType, Integer>(DataType.class);
+
+        public int size(){
+            int i = 0;
+            for (Integer value : dataTypeCounts.values()) {
+                i += value;
+            }
+            return i;
+        }
+
+        void updateFor(DataType dataType){
+            int i = dataTypeCounts.containsKey(dataType) ?
+                    dataTypeCounts.get(dataType):
+                    0;
+            dataTypeCounts.put(dataType, i + 1);
+        }
+
+        public void  addTo(EnumMap<DataType, Integer> m){
+            for (Map.Entry<DataType, Integer> entry : dataTypeCounts.entrySet()) {
+                DataType key = entry.getKey();
+                int i = m.containsKey(key) ? m.get(key) : 0;
+                m.put(key, i + entry.getValue());
+            }
+        }
     }
 }

@@ -12,33 +12,88 @@ permissions and limitations under the License.
 
 package software.amazon.neptune.cluster;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public class NeptuneInstanceProperties {
+public class NeptuneInstanceMetadata {
 
-    private final String instanceId;
-    private final String role;
-    private final String endpoint;
-    private final String status;
-    private final String availabilityZone;
-    private final String instanceType;
+    private String instanceId;
+    private String role;
+    private String endpoint;
+    private String status;
+    private String availabilityZone;
+    private String instanceType;
 
-    private final Map<String, String> tags;
+    private final Map<String, String> tags = new HashMap<>();
 
-    public NeptuneInstanceProperties(String instanceId,
-                                     String role,
-                                     String endpoint,
-                                     String status,
-                                     String availabilityZone,
-                                     String instanceType,
-                                     Map<String, String> tags) {
+    public NeptuneInstanceMetadata(){
+
+    }
+
+    public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
+    }
+
+    public void setRole(String role) {
         this.role = role;
+    }
+
+    public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+    }
+
+    public void setStatus(String status) {
         this.status = status;
+    }
+
+    public void setAvailabilityZone(String availabilityZone) {
         this.availabilityZone = availabilityZone;
+    }
+
+    public void setInstanceType(String instanceType) {
         this.instanceType = instanceType;
-        this.tags = tags;
+    }
+
+    public void setTags(Map<String, String> tags) {
+        this.tags.clear();
+        this.tags.putAll(tags);
+    }
+
+    public NeptuneInstanceMetadata withInstanceId(String instanceId) {
+        setInstanceId(instanceId);
+        return this;
+    }
+
+    public NeptuneInstanceMetadata withRole(String role) {
+        setRole(role);
+        return this;
+    }
+
+    public NeptuneInstanceMetadata withEndpoint(String endpoint) {
+        setEndpoint(endpoint);
+        return this;
+    }
+
+    public NeptuneInstanceMetadata withStatus(String status) {
+        setStatus(status);
+        return this;
+    }
+
+    public NeptuneInstanceMetadata withAvailabilityZone(String availabilityZone) {
+        setAvailabilityZone(availabilityZone);
+        return this;
+    }
+
+    public NeptuneInstanceMetadata withInstanceType(String instanceType) {
+        setInstanceType(instanceType);
+        return this;
+    }
+
+    public NeptuneInstanceMetadata withTags(Map<String, String> tags) {
+        setTags(tags);
+        return this;
     }
 
     public String getInstanceId() {
@@ -65,6 +120,10 @@ public class NeptuneInstanceProperties {
         return instanceType;
     }
 
+    public Map<String, String> getTags() {
+        return tags;
+    }
+
     public boolean hasTag(String tag){
         return tags.containsKey(tag);
     }
@@ -84,14 +143,17 @@ public class NeptuneInstanceProperties {
         return hasTag(tag) && getTag(tag).equals(value);
     }
 
+    @JsonIgnore
     public boolean isAvailable(){
-        return getStatus().equalsIgnoreCase("Available");
+        return getStatus().equalsIgnoreCase("Available") && endpoint != null;
     }
 
+    @JsonIgnore
     public boolean isPrimary() {
         return getRole().equalsIgnoreCase("writer");
     }
 
+    @JsonIgnore
     public boolean isReader() {
         return getRole().equalsIgnoreCase("reader");
     }

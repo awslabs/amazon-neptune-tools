@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GraphSchema implements Jsonizable {
+public class GraphSchema implements Jsonizable<Boolean> {
 
     public static GraphSchema fromJson(JsonNode json) {
 
@@ -80,11 +80,7 @@ public class GraphSchema implements Jsonizable {
     }
 
     @Override
-    public JsonNode toJson() {
-        return toJson(false);
-    }
-
-    public JsonNode toJson(boolean includeFilenames) {
+    public JsonNode toJson(Boolean includeFilenames) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
 
         for (Map.Entry<GraphElementType, GraphElementSchemas> entry : graphElementsSchemas.entrySet()) {

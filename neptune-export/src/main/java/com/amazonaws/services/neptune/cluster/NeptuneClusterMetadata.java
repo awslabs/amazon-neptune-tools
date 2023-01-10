@@ -13,13 +13,13 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.cluster;
 
 import com.amazonaws.services.neptune.AmazonNeptune;
+import com.amazonaws.services.neptune.export.EndpointValidator;
 import com.amazonaws.services.neptune.model.*;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class NeptuneClusterMetadata {
 
@@ -28,10 +28,65 @@ public class NeptuneClusterMetadata {
 
     public static String clusterIdFromEndpoint(String endpoint) {
         int index = endpoint.indexOf(".");
-        if (index < 0){
+        if (index < 0) {
             throw new IllegalArgumentException(String.format("Unable to identify cluster ID from endpoint '%s'. Use the clusterId export parameter instead.", endpoint));
         }
         return endpoint.substring(0, index);
+    }
+
+    public static NeptuneClusterMetadata createFromEndpoints(Collection<String> endpoints, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
+        AmazonNeptune neptune = amazonNeptuneClientSupplier.get();
+
+        String paginationToken = null;
+
+        do {
+            DescribeDBClustersResult describeDBClustersResult = neptune
+                    .describeDBClusters(new DescribeDBClustersRequest()
+                            .withMarker(paginationToken)
+                            .withFilters(new Filter().withName("engine").withValues("neptune")));
+
+            paginationToken = describeDBClustersResult.getMarker();
+
+            for (DBCluster dbCluster : describeDBClustersResult.getDBClusters()) {
+                for (String endpoint : endpoints) {
+                    String endpointValue = getEndpointValue(endpoint);
+                    if (endpointValue.equals(getEndpointValue(dbCluster.getEndpoint()))){
+                        return createFromClusterId(dbCluster.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                    } else if (endpointValue.equals(getEndpointValue(dbCluster.getReaderEndpoint()))){
+                        return createFromClusterId(dbCluster.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                    }
+                }
+            }
+        } while (paginationToken != null);
+
+        paginationToken = null;
+
+        do {
+
+            DescribeDBInstancesResult describeDBInstancesResult = neptune.describeDBInstances(
+                    new DescribeDBInstancesRequest()
+                            .withMarker(paginationToken)
+                            .withFilters(new Filter().withName("engine").withValues("neptune")));
+
+            paginationToken = describeDBInstancesResult.getMarker();
+
+            for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
+                for (String endpoint : endpoints) {
+                    String endpointValue = getEndpointValue(endpoint);
+                    if (endpointValue.equals(getEndpointValue(dbInstance.getEndpoint().getAddress()))){
+                        return createFromClusterId(dbInstance.getDBClusterIdentifier(), amazonNeptuneClientSupplier);
+                    }
+                }
+            }
+
+        } while (paginationToken != null);
+
+        throw new IllegalStateException(String.format("Unable to identify cluster ID from endpoints: %s", endpoints));
+
+    }
+
+    private static String getEndpointValue(String endpoint) {
+        return EndpointValidator.validate(endpoint).toLowerCase();
     }
 
     public static NeptuneClusterMetadata createFromClusterId(String clusterId, Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
@@ -57,6 +112,35 @@ public class NeptuneClusterMetadata {
         boolean isIAMDatabaseAuthenticationEnabled = dbCluster.isIAMDatabaseAuthenticationEnabled();
         Integer port = dbCluster.getPort();
         String dbClusterParameterGroup = dbCluster.getDBClusterParameterGroup();
+        String engineVersion = dbCluster.getEngineVersion();
+
+        String dbParameterGroupFamily;
+
+        try {
+            DescribeDBClusterParameterGroupsResult describeDBClusterParameterGroupsResult = neptune.describeDBClusterParameterGroups(
+                    new DescribeDBClusterParameterGroupsRequest()
+                            .withDBClusterParameterGroupName(dbClusterParameterGroup));
+
+            Optional<DBClusterParameterGroup> parameterGroup = describeDBClusterParameterGroupsResult
+                    .getDBClusterParameterGroups().stream().findFirst();
+
+            dbParameterGroupFamily = parameterGroup.isPresent() ?
+                    parameterGroup.get().getDBParameterGroupFamily() :
+                    "neptune1";
+
+        } catch (AmazonNeptuneException e) {
+
+            // Older deployments of Neptune Export service may not have requisite permissions to
+            // describe cluster parameter group, so we'll try and guess the group family.
+
+
+            if (StringUtils.isNotEmpty(engineVersion) && engineVersion.contains(".")) {
+                int v = Integer.parseInt(engineVersion.split("\\.")[1]);
+                dbParameterGroupFamily = v > 1 ? "neptune1.2" : "neptune1";
+            } else {
+                dbParameterGroupFamily = "neptune1";
+            }
+        }
 
         DescribeDBClusterParametersResult describeDBClusterParametersResult = neptune.describeDBClusterParameters(
                 new DescribeDBClusterParametersRequest()
@@ -107,7 +191,9 @@ public class NeptuneClusterMetadata {
 
         return new NeptuneClusterMetadata(clusterId,
                 port,
+                engineVersion,
                 dbClusterParameterGroup,
+                dbParameterGroupFamily,
                 isIAMDatabaseAuthenticationEnabled,
                 isStreamEnabled,
                 dbSubnetGroup,
@@ -115,13 +201,15 @@ public class NeptuneClusterMetadata {
                 primary,
                 replicas,
                 instanceTypes,
-                clusterTags);
+                clusterTags,
+                amazonNeptuneClientSupplier);
     }
 
     private final String clusterId;
-
     private final int port;
+    private final String engineVersion;
     private final String dbClusterParameterGroupName;
+    private final String dbParameterGroupFamily;
     private final Boolean isIAMDatabaseAuthenticationEnabled;
     private final Boolean isStreamEnabled;
     private final String dbSubnetGroupName;
@@ -131,9 +219,13 @@ public class NeptuneClusterMetadata {
     private final Map<String, NeptuneInstanceMetadata> instanceMetadata;
     private final Map<String, String> clusterTags;
 
+    private final Supplier<AmazonNeptune> amazonNeptuneClientSupplier;
+
     private NeptuneClusterMetadata(String clusterId,
                                    int port,
+                                   String engineVersion,
                                    String dbClusterParameterGroupName,
+                                   String dbParameterGroupFamily,
                                    Boolean isIAMDatabaseAuthenticationEnabled,
                                    Boolean isStreamEnabled,
                                    String dbSubnetGroupName,
@@ -141,10 +233,13 @@ public class NeptuneClusterMetadata {
                                    String primary,
                                    Collection<String> replicas,
                                    Map<String, NeptuneInstanceMetadata> instanceMetadata,
-                                   Map<String, String> clusterTags) {
+                                   Map<String, String> clusterTags,
+                                   Supplier<AmazonNeptune> amazonNeptuneClientSupplier) {
         this.clusterId = clusterId;
         this.port = port;
+        this.engineVersion = engineVersion;
         this.dbClusterParameterGroupName = dbClusterParameterGroupName;
+        this.dbParameterGroupFamily = dbParameterGroupFamily;
         this.isIAMDatabaseAuthenticationEnabled = isIAMDatabaseAuthenticationEnabled;
         this.isStreamEnabled = isStreamEnabled;
         this.dbSubnetGroupName = dbSubnetGroupName;
@@ -153,6 +248,7 @@ public class NeptuneClusterMetadata {
         this.replicas = replicas;
         this.instanceMetadata = instanceMetadata;
         this.clusterTags = clusterTags;
+        this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
     public String clusterId() {
@@ -163,8 +259,16 @@ public class NeptuneClusterMetadata {
         return port;
     }
 
+    public String engineVersion() {
+        return engineVersion;
+    }
+
     public String dbClusterParameterGroupName() {
         return dbClusterParameterGroupName;
+    }
+
+    public String dbParameterGroupFamily() {
+        return dbParameterGroupFamily;
     }
 
     public Boolean isIAMDatabaseAuthenticationEnabled() {
@@ -199,9 +303,46 @@ public class NeptuneClusterMetadata {
         return instanceMetadata.values().stream().map(i -> i.endpoint().getAddress()).collect(Collectors.toList());
     }
 
-    public boolean isTaggedWithNeptuneExport(){
+    public boolean isTaggedWithNeptuneExport() {
         return clusterTags.containsKey("application") &&
                 clusterTags.get("application").equalsIgnoreCase(NEPTUNE_EXPORT_APPLICATION_TAG);
+    }
+
+    public Supplier<AmazonNeptune> clientSupplier() {
+        return amazonNeptuneClientSupplier;
+    }
+
+    public void printDetails(){
+        System.err.println("Cluster ID              : " + clusterId());
+        System.err.println("Port                    : " + port());
+        System.err.println("Engine                  : " + engineVersion());
+        System.err.println("IAM DB Auth             : " + isIAMDatabaseAuthenticationEnabled());
+        System.err.println("Streams enabled         : " + isStreamEnabled());
+        System.err.println("Parameter group family  : " + dbParameterGroupFamily());
+        System.err.println("Cluster parameter group : " + dbClusterParameterGroupName());
+        System.err.println("Subnet group            : " + dbSubnetGroupName());
+        System.err.println("Security group IDs      : " + String.join(", ", vpcSecurityGroupIds()));
+        System.err.println("Instance endpoints      : " + String.join(", ", endpoints()));
+
+        NeptuneClusterMetadata.NeptuneInstanceMetadata primary = instanceMetadataFor(primary());
+        System.err.println();
+        System.err.println("Primary");
+        System.err.println("  Instance ID              : " + primary());
+        System.err.println("  Instance type            : " + primary.instanceType());
+        System.err.println("  Endpoint                 : " + primary.endpoint().getAddress());
+        System.err.println("  Database parameter group : " + primary.dbParameterGroupName());
+
+        if (!replicas().isEmpty()) {
+            for (String replicaId : replicas()) {
+                NeptuneClusterMetadata.NeptuneInstanceMetadata replica = instanceMetadataFor(replicaId);
+                System.err.println();
+                System.err.println("Replica");
+                System.err.println("  Instance ID              : " + replicaId);
+                System.err.println("  Instance type            : " + replica.instanceType());
+                System.err.println("  Endpoint                 : " + replica.endpoint().getAddress());
+                System.err.println("  Database parameter group : " + replica.dbParameterGroupName());
+            }
+        }
     }
 
     public static class NeptuneInstanceMetadata {
@@ -227,5 +368,4 @@ public class NeptuneClusterMetadata {
             return endpoint;
         }
     }
-
 }

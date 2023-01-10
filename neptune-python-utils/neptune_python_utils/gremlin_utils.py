@@ -38,12 +38,9 @@ class GremlinUtils:
         
         statics.load_statics(globals)
 
-        del globals['range']
-        del globals['map']
-        del globals['min']
-        del globals['sum']
-        del globals['property']
-        del globals['max']
+        for s in ['range', 'map', 'min', 'sum', 'property', 'max']:
+            if s in globals:
+                del globals[s]
     
     def __init__(self, endpoints=None):
                 

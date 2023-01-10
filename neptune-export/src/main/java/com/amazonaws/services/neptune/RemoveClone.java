@@ -13,14 +13,13 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.AwsCliModule;
-import com.amazonaws.services.neptune.cli.CloneClusterModule;
 import com.amazonaws.services.neptune.cluster.GetClusterIdFromCorrelationId;
+import com.amazonaws.services.neptune.cluster.NeptuneClusterMetadata;
 import com.amazonaws.services.neptune.cluster.RemoveCloneTask;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.RequireOnlyOne;
-import com.github.rvesse.airline.annotations.restrictions.Required;
 import org.apache.commons.lang.StringUtils;
 
 import javax.inject.Inject;
@@ -44,16 +43,16 @@ public class RemoveClone implements Runnable {
     @Override
     public void run() {
 
-        if (StringUtils.isEmpty(cloneClusterId) && StringUtils.isNotEmpty(correlationId)){
+        if (StringUtils.isEmpty(cloneClusterId) && StringUtils.isNotEmpty(correlationId)) {
             cloneClusterId = new GetClusterIdFromCorrelationId(correlationId, awsCli).execute();
-            if (StringUtils.isEmpty(cloneClusterId)){
+            if (StringUtils.isEmpty(cloneClusterId)) {
                 System.err.println(String.format("Unable to get a cloned Amazon Neptune database cluster ID for correlation ID %s", correlationId));
                 System.exit(0);
             }
         }
 
         try {
-            new RemoveCloneTask(cloneClusterId, awsCli).execute();
+            new RemoveCloneTask(NeptuneClusterMetadata.createFromClusterId(cloneClusterId, awsCli)).execute();
         } catch (Exception e) {
             System.err.println("An error occurred while removing a cloned Amazon Neptune database cluster:");
             e.printStackTrace();

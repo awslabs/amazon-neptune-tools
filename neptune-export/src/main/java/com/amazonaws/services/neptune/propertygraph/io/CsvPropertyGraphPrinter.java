@@ -93,8 +93,8 @@ public class CsvPropertyGraphPrinter implements PropertyGraphPrinter {
 
             if (properties.containsKey(property)) {
                 Object value = properties.get(property);
-                int size = propertySchema.accept(value, allowUpdateSchema);
-                labelSchema.recordObservation(propertySchema, value, size);
+                PropertySchema.PropertyValueMetadata propertyValueMetadata = propertySchema.accept(value, allowUpdateSchema);
+                labelSchema.recordObservation(propertySchema, value, propertyValueMetadata);
                 printProperty(propertySchema, value, applyFormatting);
             } else {
                 commaPrinter.printComma();

@@ -15,12 +15,12 @@ package com.amazonaws.services.neptune.rdf.io;
 import com.amazonaws.services.neptune.io.OutputWriter;
 import com.amazonaws.services.neptune.io.Status;
 import com.amazonaws.services.neptune.io.StatusOutputFormat;
+import com.amazonaws.services.neptune.util.NotImplementedException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.*;
 import org.eclipse.rdf4j.rio.nquads.NQuadsWriter;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.IOException;
 import java.io.StringWriter;

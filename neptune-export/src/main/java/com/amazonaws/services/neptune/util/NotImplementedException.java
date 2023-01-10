@@ -10,9 +10,7 @@ express or implied. See the License for the specific language governing
 permissions and limitations under the License.
 */
 
-package com.amazonaws.services.neptune.profiles.neptune_ml.common.config;
+package com.amazonaws.services.neptune.util;
 
-public enum SupportedLanguages {
-    en_core_web_lg,
-    fr_core_news_lg
+public class NotImplementedException extends RuntimeException {
 }

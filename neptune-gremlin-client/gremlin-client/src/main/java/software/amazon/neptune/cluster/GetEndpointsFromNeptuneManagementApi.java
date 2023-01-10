@@ -17,7 +17,7 @@ import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.services.neptune.AmazonNeptune;
 import com.amazonaws.services.neptune.AmazonNeptuneClientBuilder;
 import com.amazonaws.services.neptune.model.*;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,18 +27,20 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFetchStrategy {
+public class GetEndpointsFromNeptuneManagementApi implements
+        ClusterEndpointsFetchStrategy,
+        ClusterMetadataFetchStrategy {
 
     private static final Logger logger = LoggerFactory.getLogger(GetEndpointsFromNeptuneManagementApi.class);
 
     private static final Map<String, Map<String, String>> instanceTags = new HashMap<>();
-
     private final String clusterId;
     private final String region;
     private final String iamProfile;
     private final AWSCredentialsProvider credentials;
     private final Collection<EndpointsSelector> selectors;
     private final AtomicReference<Map<EndpointsSelector, Collection<String>>> previousResults = new AtomicReference<>();
+    private final AtomicReference<NeptuneClusterMetadata> previousClusterMetadata = new AtomicReference<>();
 
     public GetEndpointsFromNeptuneManagementApi(String clusterId, Collection<EndpointsSelector> selectors) {
         this(clusterId, selectors, RegionUtils.getCurrentRegionName());
@@ -65,10 +67,10 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
     }
 
     private GetEndpointsFromNeptuneManagementApi(String clusterId,
-                                                Collection<EndpointsSelector> selectors,
-                                                String region,
-                                                String iamProfile,
-                                                AWSCredentialsProvider credentials) {
+                                                 Collection<EndpointsSelector> selectors,
+                                                 String region,
+                                                 String iamProfile,
+                                                 AWSCredentialsProvider credentials) {
         this.clusterId = clusterId;
         this.selectors = selectors;
         this.region = region;
@@ -77,18 +79,17 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
     }
 
     @Override
-    public Map<EndpointsSelector, Collection<String>> getAddresses() {
-
+    public NeptuneClusterMetadata getClusterMetadata() {
         try {
             AmazonNeptuneClientBuilder builder = AmazonNeptuneClientBuilder.standard();
 
-            if (StringUtils.isNotEmpty(region)){
+            if (StringUtils.isNotEmpty(region)) {
                 builder = builder.withRegion(region);
             }
 
-            if (credentials != null){
+            if (credentials != null) {
                 builder = builder.withCredentials(credentials);
-            } else if (!iamProfile.equals(IamAuthConfig.DEFAULT_PROFILE)){
+            } else if (!iamProfile.equals(IamAuthConfig.DEFAULT_PROFILE)) {
                 builder = builder.withCredentials(new ProfileCredentialsProvider(iamProfile));
             }
 
@@ -126,7 +127,7 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
             DescribeDBInstancesResult describeDBInstancesResult = neptune
                     .describeDBInstances(describeDBInstancesRequest);
 
-            Collection<NeptuneInstanceProperties> instances = new ArrayList<>();
+            Collection<NeptuneInstanceMetadata> instances = new ArrayList<>();
             describeDBInstancesResult.getDBInstances()
                     .forEach(c -> {
                                 String role = "unknown";
@@ -136,36 +137,32 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
                                 if (replicas.contains(c.getDBInstanceIdentifier())) {
                                     role = "reader";
                                 }
+                                String address = c.getEndpoint() == null ? null : c.getEndpoint().getAddress();
                                 instances.add(
-                                        new NeptuneInstanceProperties(
-                                                c.getDBInstanceIdentifier(),
-                                                role,
-                                                c.getEndpoint().getAddress(),
-                                                c.getDBInstanceStatus(),
-                                                c.getAvailabilityZone(),
-                                                c.getDBInstanceClass(),
-                                                getTags(c.getDBInstanceArn(), neptune)));
+                                        new NeptuneInstanceMetadata()
+                                                .withInstanceId(c.getDBInstanceIdentifier())
+                                                .withRole(role)
+                                                .withEndpoint(address)
+                                                .withStatus(c.getDBInstanceStatus())
+                                                .withAvailabilityZone(c.getAvailabilityZone())
+                                                .withInstanceType(c.getDBInstanceClass())
+                                                .withTags(getTags(c.getDBInstanceArn(), neptune)));
                             }
                     );
 
             neptune.shutdown();
 
-            Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
-
-            for (EndpointsSelector selector : selectors) {
-                results.put(selector, selector.getEndpoints(clusterEndpoint, readerEndpoint, instances));
-            }
-
-            previousResults.set(results);
-
-            return results;
+            return new NeptuneClusterMetadata()
+                    .withInstances(instances)
+                    .withClusterEndpoint(clusterEndpoint)
+                    .withReaderEndpoint(readerEndpoint);
 
         } catch (AmazonNeptuneException e) {
             if (e.getErrorCode().equals("Throttling")) {
-                Map<EndpointsSelector, Collection<String>> results = previousResults.get();
-                if (results != null) {
-                    logger.warn("Calls to the Neptune Management API are being throttled. Reduce the refresh rate and stagger refresh agent requests, or use a NeptuneEndpointsInfoLambda proxy.");
-                    return results;
+                logger.warn("Calls to the Neptune Management API are being throttled. Reduce the refresh rate and stagger refresh agent requests, or use a NeptuneEndpointsInfoLambda proxy.");
+                NeptuneClusterMetadata previous = previousClusterMetadata.get();
+                if (previous != null) {
+                    return previous;
                 } else {
                     throw e;
                 }
@@ -173,6 +170,24 @@ public class GetEndpointsFromNeptuneManagementApi implements ClusterEndpointsFet
                 throw e;
             }
         }
+
+    }
+
+    @Override
+    public Map<EndpointsSelector, Collection<String>> getAddresses() {
+
+        NeptuneClusterMetadata clusterMetadata = getClusterMetadata();
+
+        Map<EndpointsSelector, Collection<String>> results = new HashMap<>();
+
+        for (EndpointsSelector selector : selectors) {
+            results.put(selector, selector.getEndpoints(
+                    clusterMetadata.getClusterEndpoint(),
+                    clusterMetadata.getReaderEndpoint(),
+                    clusterMetadata.getInstances()));
+        }
+
+        return results;
     }
 
     private Map<String, String> getTags(String dbInstanceArn, AmazonNeptune neptune) {

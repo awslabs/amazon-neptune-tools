@@ -12,7 +12,7 @@ permissions and limitations under the License.
 
 package software.amazon.neptune;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import software.amazon.neptune.cluster.EndpointsSelector;
 import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
@@ -29,7 +29,6 @@ import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.neptune.cluster.NeptuneInstanceProperties;
 
 import java.util.*;
 import java.util.concurrent.Executors;

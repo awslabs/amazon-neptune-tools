@@ -102,7 +102,8 @@ public class ExportSpecification {
                                                                          RangeFactory rangeFactory,
                                                                          Status status,
                                                                          AtomicInteger index,
-                                                                         AtomicInteger fileDescriptorCount) {
+                                                                         AtomicInteger fileDescriptorCount,
+                                                                         int maxFileDescriptorCount) {
         return new ExportPropertyGraphTask<>(
                 graphSchema.copyOfGraphElementSchemasFor(graphElementType),
                 labelsFilter,
@@ -113,7 +114,8 @@ public class ExportSpecification {
                 gremlinFilters,
                 status,
                 index,
-                fileDescriptorCount
+                fileDescriptorCount,
+                maxFileDescriptorCount
         );
     }
 

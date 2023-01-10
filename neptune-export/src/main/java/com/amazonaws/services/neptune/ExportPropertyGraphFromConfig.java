@@ -14,6 +14,7 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
+import com.amazonaws.services.neptune.cluster.EventId;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.NeptuneGremlinClient;
@@ -42,7 +43,7 @@ import java.util.Collection;
 public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implements Runnable {
 
     @Inject
-    private CloneClusterModule cloneStrategy = new CloneClusterModule(awsCli);
+    private CloneClusterModule cloneStrategy = new CloneClusterModule();
 
     @Inject
     private CommonConnectionModule connection = new CommonConnectionModule(awsCli);
@@ -76,10 +77,15 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
 
         try {
             Timer.timedActivity("exporting property graph from config", (CheckedActivity.Runnable) () -> {
-                try (Cluster cluster = cloneStrategy.cloneCluster(connection.config(), concurrency.config(), featureToggles())) {
+                try (Cluster cluster = cloneStrategy.cloneCluster(
+                        connection.clusterMetadata(),
+                        connection.config(),
+                        concurrency.config(),
+                        featureToggles())) {
 
                     Directories directories = target.createDirectories();
-                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    JsonResource<GraphSchema, Boolean> configFileResource = directories.configFileResource();
+                    JsonResource<ExportStats, GraphSchema> statsFileResource = directories.statsFileResource();
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
@@ -102,11 +108,13 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                                 range.config(),
                                 gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
-                                targetConfig, featureToggles());
+                                targetConfig, featureToggles(),
+                                getMaxFileDescriptorCount());
 
                         graphSchema = exportJob.execute();
 
-                        configFileResource.save(graphSchema);
+                        configFileResource.save(graphSchema, false);
+                        statsFileResource.save(stats, graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);

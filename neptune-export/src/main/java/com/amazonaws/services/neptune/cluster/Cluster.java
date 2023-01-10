@@ -19,6 +19,5 @@ import java.util.function.Supplier;
 public interface Cluster extends AutoCloseable {
     ConnectionConfig connectionConfig();
     ConcurrencyConfig concurrencyConfig();
-    Supplier<AmazonNeptune> clientSupplier();
     NeptuneClusterMetadata clusterMetadata();
 }

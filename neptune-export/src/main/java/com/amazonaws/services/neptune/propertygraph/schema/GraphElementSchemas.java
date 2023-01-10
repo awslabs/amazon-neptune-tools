@@ -57,14 +57,23 @@ public class GraphElementSchemas {
                         boolean isNullable = propertyNode.has("isNullable") &&
                                 propertyNode.path("isNullable").booleanValue();
 
+                        EnumSet<DataType> allTypes = EnumSet.noneOf(DataType.class);
+
+                        if (propertyNode.has("allTypes") ){
+                            ArrayNode allTypesNode = (ArrayNode) propertyNode.path("allTypes");
+                            for (JsonNode jsonNode : allTypesNode) {
+                                allTypes.add(DataType.valueOf(jsonNode.textValue()));
+                            }
+                        }
+
                         graphElementSchemas.getSchemaFor(label).put(
                                 key,
-                                new PropertySchema(key, isNullable, dataType, isMultiValue));
+                                new PropertySchema(key, isNullable, dataType, isMultiValue, allTypes));
                     } else {
                         String property = propertyNode.textValue();
                         graphElementSchemas.getSchemaFor(label).put(
                                 property,
-                                new PropertySchema(property, false, DataType.None, false));
+                                new PropertySchema(property, false, DataType.None, false, EnumSet.noneOf(DataType.class)));
                     }
                 }
             }
@@ -114,9 +123,15 @@ public class GraphElementSchemas {
 
         Object value = properties.get(T.label);
 
-        Label label = List.class.isAssignableFrom(value.getClass()) ?
-                new Label((List<String>) value) :
-                new Label(String.valueOf(value));
+        Label label;
+
+        if (List.class.isAssignableFrom(value.getClass())){
+            @SuppressWarnings("unchecked")
+            List<String> values = (List<String>) value;
+            label = new Label(values);
+        } else {
+            label = new Label(String.valueOf(value));
+        }
 
         update(label, properties, allowStructuralElements);
     }
@@ -172,11 +187,17 @@ public class GraphElementSchemas {
 
             for (PropertySchema propertySchema : labelSchema.propertySchemas()) {
 
+                ArrayNode allTypesNode = JsonNodeFactory.instance.arrayNode();
+                for (DataType dataType : propertySchema.allTypes()) {
+                    allTypesNode.add(dataType.name());
+                }
+
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
                 propertyNode.put("property", propertySchema.property().toString());
                 propertyNode.put("dataType", propertySchema.dataType().name());
                 propertyNode.put("isMultiValue", propertySchema.isMultiValue());
                 propertyNode.put("isNullable", propertySchema.isNullable());
+                propertyNode.set("allTypes", allTypesNode);
                 propertiesNode.add(propertyNode);
             }
 

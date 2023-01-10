@@ -89,11 +89,18 @@ public class CommonConnectionModule {
         this.amazonNeptuneClientSupplier = amazonNeptuneClientSupplier;
     }
 
+    public NeptuneClusterMetadata clusterMetadata(){
+        if (StringUtils.isNotEmpty(clusterId)) {
+            return NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
+        } else {
+            return NeptuneClusterMetadata.createFromEndpoints(endpoints, amazonNeptuneClientSupplier);
+        }
+    }
+
     public ConnectionConfig config() {
 
         if (StringUtils.isNotEmpty(clusterId)) {
-            NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(clusterId, amazonNeptuneClientSupplier);
-            endpoints.addAll(clusterMetadata.endpoints());
+            endpoints.addAll(clusterMetadata().endpoints());
         }
 
         if (endpoints.isEmpty()) {

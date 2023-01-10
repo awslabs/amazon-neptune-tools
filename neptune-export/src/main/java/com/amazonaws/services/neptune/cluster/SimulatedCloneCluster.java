@@ -12,16 +12,12 @@ permissions and limitations under the License.
 
 package com.amazonaws.services.neptune.cluster;
 
-import com.amazonaws.services.neptune.AmazonNeptune;
-
-import java.util.function.Supplier;
-
 public class SimulatedCloneCluster implements CloneClusterStrategy {
 
-    private final Supplier<AmazonNeptune> clientSupplier;
+    private final NeptuneClusterMetadata clusterMetadata;
 
-    public SimulatedCloneCluster(Supplier<AmazonNeptune> clientSupplier) {
-        this.clientSupplier = clientSupplier;
+    public SimulatedCloneCluster(NeptuneClusterMetadata clusterMetadata) {
+        this.clusterMetadata = clusterMetadata;
     }
 
     @Override
@@ -41,13 +37,8 @@ public class SimulatedCloneCluster implements CloneClusterStrategy {
             }
 
             @Override
-            public Supplier<AmazonNeptune> clientSupplier() {
-                return clientSupplier;
-            }
-
-            @Override
             public NeptuneClusterMetadata clusterMetadata() {
-                return NeptuneClusterMetadata.createFromClusterId(connectionConfig.clusterId(), clientSupplier);
+                return clusterMetadata;
             }
 
             @Override

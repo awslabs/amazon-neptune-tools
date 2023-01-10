@@ -14,14 +14,16 @@ package com.amazonaws.services.neptune.propertygraph.schema;
 
 import org.junit.Test;
 
+import java.util.EnumSet;
+
 import static org.junit.Assert.*;
 
 public class PropertySchemaTest {
 
     @Test
     public void revisionWhereAtLeastOneSchemaIsMultiValueShouldResultInMultiValue(){
-        PropertySchema schema1 = new PropertySchema("p1", false, DataType.Integer, false);
-        PropertySchema schema2 = new PropertySchema("p1", false, DataType.Integer, true);
+        PropertySchema schema1 = new PropertySchema("p1", false, DataType.Integer, false, EnumSet.noneOf(DataType.class));
+        PropertySchema schema2 = new PropertySchema("p1", false, DataType.Integer, true, EnumSet.noneOf(DataType.class));
 
         assertTrue(schema1.union(schema2).isMultiValue());
         assertTrue(schema2.union(schema1).isMultiValue());
@@ -29,8 +31,8 @@ public class PropertySchemaTest {
 
     @Test
     public void revisionWhereAtLeastOneSchemaIsNullableShouldResultInNullable(){
-        PropertySchema schema1 = new PropertySchema("p1", false, DataType.Integer, false);
-        PropertySchema schema2 = new PropertySchema("p1", true, DataType.Integer, false);
+        PropertySchema schema1 = new PropertySchema("p1", false, DataType.Integer, false, EnumSet.noneOf(DataType.class));
+        PropertySchema schema2 = new PropertySchema("p1", true, DataType.Integer, false, EnumSet.noneOf(DataType.class));
 
         assertTrue(schema1.union(schema2).isNullable());
         assertTrue(schema2.union(schema1).isNullable());
@@ -38,7 +40,7 @@ public class PropertySchemaTest {
 
     @Test
     public void shouldEscapePropertyNameContainingColons(){
-        PropertySchema schema = new PropertySchema("p1:a:b:c", false, DataType.Integer, false);
+        PropertySchema schema = new PropertySchema("p1:a:b:c", false, DataType.Integer, false, EnumSet.noneOf(DataType.class));
         assertEquals("p1\\:a\\:b\\:c:int", schema.nameWithDataType(true));
         assertEquals("p1\\:a\\:b\\:c", schema.nameWithoutDataType(true));
 

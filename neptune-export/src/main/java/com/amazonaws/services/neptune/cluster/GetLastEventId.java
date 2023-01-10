@@ -16,10 +16,32 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 public class GetLastEventId {
+
+    public static final String MaxCommitNumValueForEngine(String engineVersion){
+        List<Integer> parts = Arrays.stream(engineVersion.split("\\."))
+                .mapToInt(Integer::valueOf)
+                .boxed()
+                .collect(Collectors.toList());
+
+
+
+        if (parts.get(1) == 0){
+            if (parts.get(2) < 4){
+                return String.valueOf(Integer.MAX_VALUE);
+            } else if (parts.get(2) == 4 && parts.get(3) < 2){
+                return String.valueOf(Integer.MAX_VALUE);
+            } else {
+                return String.valueOf(Long.MAX_VALUE);
+            }
+        } else {
+            return String.valueOf(Long.MAX_VALUE);
+        }
+    }
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(GetLastEventId.class);
 
@@ -50,7 +72,7 @@ public class GetLastEventId {
             NeptuneHttpsClient neptuneHttpsClient = new NeptuneHttpsClient(streamsEndpoint, region, endpoint.equals("localhost"));
 
             Map<String, String> params = new HashMap<>();
-            params.put("commitNum", String.valueOf(Long.MAX_VALUE));
+            params.put("commitNum", MaxCommitNumValueForEngine(clusterMetadata.engineVersion()));
             params.put("limit", "1");
 
             HttpResponse httpResponse = neptuneHttpsClient.get(params);
@@ -75,6 +97,4 @@ public class GetLastEventId {
             return null;
         }
     }
-
-
 }

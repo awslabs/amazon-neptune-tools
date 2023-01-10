@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GetLastEventIdTask implements GetLastEventIdStrategy{
 
     private final Cluster cluster;
-    private final JsonResource<EventId> lastEventIdResource;
+    private final JsonResource<EventId, Object> lastEventIdResource;
     private final AtomicReference<EventId> lastEventId = new AtomicReference<>();
 
-    public GetLastEventIdTask(Cluster cluster, JsonResource<EventId> lastEventIdResource) {
+    public GetLastEventIdTask(Cluster cluster, JsonResource<EventId, Object> lastEventIdResource) {
         this.cluster = cluster;
         this.lastEventIdResource = lastEventIdResource;
     }
@@ -32,15 +32,14 @@ public class GetLastEventIdTask implements GetLastEventIdStrategy{
     @Override
     public void saveLastEventId(String streamEndpointType) throws IOException {
 
-        NeptuneClusterMetadata clusterMetadata = NeptuneClusterMetadata.createFromClusterId(
-                cluster.connectionConfig().clusterId(),
-                cluster.clientSupplier());
-
-        EventId eventId = new GetLastEventId(clusterMetadata, cluster.connectionConfig(), streamEndpointType).execute();
+        EventId eventId = new GetLastEventId(
+                cluster.clusterMetadata(),
+                cluster.connectionConfig(),
+                streamEndpointType).execute();
 
         if (eventId != null){
             lastEventId.set(eventId);
-            lastEventIdResource.save(eventId);
+            lastEventIdResource.save(eventId, null);
         }
     }
 
