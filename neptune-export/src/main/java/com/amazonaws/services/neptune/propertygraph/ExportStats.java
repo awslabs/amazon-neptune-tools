@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -119,7 +120,8 @@ public class ExportStats implements Jsonizable<GraphSchema> {
 
             ObjectNode nodeNode = JsonNodeFactory.instance.objectNode();
             nodesArrayNode.add(nodeNode);
-            nodeNode.put("label", label.fullyQualifiedLabel());
+            nodeNode.put("description", label.fullyQualifiedLabel());
+            nodeNode.set("labels", arrayNodeFromList(label.labels()));
             nodeNode.put("count", labelStats.count());
 
             ArrayNode propertiesArray = JsonNodeFactory.instance.arrayNode();
@@ -156,7 +158,15 @@ public class ExportStats implements Jsonizable<GraphSchema> {
 
             ObjectNode edgeNode = JsonNodeFactory.instance.objectNode();
             edgesArrayNode.add(edgeNode);
-            edgeNode.put("label", label.fullyQualifiedLabel());
+            edgeNode.put("description", label.fullyQualifiedLabel());
+            ObjectNode labelsNode = JsonNodeFactory.instance.objectNode();
+            labelsNode.set("edge", arrayNodeFromList(label.labels()));
+            if (label.hasFromAndToLabels()) {
+                labelsNode.set("from", arrayNodeFromList(label.fromLabels().labels()));
+                labelsNode.set("to", arrayNodeFromList(label.toLabels().labels()));
+            }
+            edgeNode.set("labels", labelsNode);
+
             edgeNode.put("count", labelStats.count());
 
             ArrayNode propertiesArray = JsonNodeFactory.instance.arrayNode();
@@ -181,6 +191,14 @@ public class ExportStats implements Jsonizable<GraphSchema> {
 
             edgeNode.set("properties", propertiesArray);
         }
+    }
+
+    private ArrayNode arrayNodeFromList(Collection<String> c) {
+        ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+        for (String s : c) {
+            arrayNode.add(s);
+        }
+        return arrayNode;
     }
 
     @Override

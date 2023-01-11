@@ -141,7 +141,7 @@ public class Label {
         return allLabelsFound && allFromLabelsFound && allToLabelsFound;
     }
 
-    public List<String> label() {
+    public List<String> labels() {
         return labels;
     }
 
