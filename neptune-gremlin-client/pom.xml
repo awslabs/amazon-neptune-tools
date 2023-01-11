@@ -7,7 +7,7 @@
     <groupId>software.amazon.neptune</groupId>
     <artifactId>neptune-gremlin-client</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.9-SNAPSHOT</version>
 
     <licenses>
         <license>
@@ -16,125 +16,11 @@
         </license>
     </licenses>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <javac.target>1.8</javac.target>
-        <aws.sdk.version>1.12.38</aws.sdk.version>
-        <gremlin.driver.version>3.5.2</gremlin.driver.version>
-        <jackson.databind.version>2.13.4.1</jackson.databind.version>
-        <jackson.dataformat.version>2.13.2</jackson.dataformat.version>
-        <sigv4.version>2.4.0</sigv4.version>
-    </properties>
-
     <modules>
         <module>gremlin-client</module>
         <module>gremlin-client-demo</module>
         <module>neptune-endpoints-info-lambda</module>
     </modules>
-
-    <dependencyManagement>
-        <dependencies>
-
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.databind.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-cbor</artifactId>
-                <version>${jackson.dataformat.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.tinkerpop</groupId>
-                <artifactId>gremlin-driver</artifactId>
-                <version>${gremlin.driver.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>amazon-neptune-sigv4-signer</artifactId>
-                <version>${sigv4.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-java-sdk-core</artifactId>
-                <version>${aws.sdk.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-java-sdk-neptune</artifactId>
-                <version>${aws.sdk.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-java-sdk-lambda</artifactId>
-                <version>${aws.sdk.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.amazonaws</groupId>
-                <artifactId>aws-lambda-java-core</artifactId>
-                <version>1.2.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.evanlennick</groupId>
-                <artifactId>retry4j</artifactId>
-                <version>0.15.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.github.rvesse</groupId>
-                <artifactId>airline</artifactId>
-                <version>2.6.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.8.0-beta2</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>jcl-over-slf4j</artifactId>
-                <version>1.8.0-beta2</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-simple</artifactId>
-                <version>1.8.0-beta2</version>
-            </dependency>
-
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.1</version>
-                <scope>test</scope>
-            </dependency>
-
-        </dependencies>
-    </dependencyManagement>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://aws.oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://aws.oss.sonatype.org/content/groups/staging/</url>
-        </repository>
-    </distributionManagement>
 
     <build>
         <pluginManagement>

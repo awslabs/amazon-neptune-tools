@@ -6,9 +6,9 @@ The client also provides support for IAM database authentication, and for connec
 
 If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
 
-  - **[New December 2022]** Now supports transactions against a writer or cluster endpoint.
+  - **[New December 2022 – version 1.0.8]** Now supports transactions against a writer or cluster endpoint.
 	
-  - **[New November 2022]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
+  - **[New November 2022 – version 1.0.8]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
 
   - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
   

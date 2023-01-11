@@ -2,19 +2,31 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>neptune-gremlin-client</artifactId>
-        <groupId>software.amazon.neptune</groupId>
-        <version>1.0.7-SNAPSHOT</version>
-    </parent>
+
+    <groupId>software.amazon.neptune</groupId>
+    <artifactId>gremlin-client</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0.9-SNAPSHOT</version>
+
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gremlin-client</artifactId>
     <name>gremlin-client</name>
     <description>
         A Java Gremlin client for Amazon Neptune that allows you to change the endpoints used by the client as it is running.
     </description>
     <url>https://github.com/awslabs/amazon-neptune-tools.git</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <javac.target>1.8</javac.target>
+        <aws.sdk.version>1.12.38</aws.sdk.version>
+        <gremlin.driver.version>3.5.2</gremlin.driver.version>
+        <jackson.databind.version>2.13.4.1</jackson.databind.version>
+        <jackson.dataformat.version>2.13.2</jackson.dataformat.version>
+        <sigv4.version>2.4.0</sigv4.version>
+    </properties>
 
     <scm>
         <connection>scm:git:git@github.com:awslabs/amazon-neptune-tools.git</connection>
@@ -41,51 +53,71 @@
         </developer>
     </developers>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://aws.oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://aws.oss.sonatype.org/content/groups/staging/</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
 
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>
             <artifactId>gremlin-driver</artifactId>
+            <version>${gremlin.driver.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-neptune-sigv4-signer</artifactId>
+            <version>${sigv4.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-core</artifactId>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-neptune</artifactId>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-lambda</artifactId>
+            <version>${aws.sdk.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
+            <version>1.2.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.evanlennick</groupId>
             <artifactId>retry4j</artifactId>
+            <version>0.15.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.rvesse</groupId>
             <artifactId>airline</artifactId>
+            <version>2.6.0</version>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
 

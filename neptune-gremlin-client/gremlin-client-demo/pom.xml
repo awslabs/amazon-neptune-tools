@@ -2,14 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>neptune-gremlin-client</artifactId>
-        <groupId>software.amazon.neptune</groupId>
-        <version>1.0.7-SNAPSHOT</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
 
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>software.amazon.neptune</groupId>
     <artifactId>gremlin-client-demo</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0.9-SNAPSHOT</version>
 
     <licenses>
         <license>
@@ -20,6 +18,10 @@
 
     <properties>
         <uberjar.name>gremlin-client-demo</uberjar.name>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <javac.target>1.8</javac.target>
     </properties>
 
     <dependencies>
@@ -27,27 +29,13 @@
         <dependency>
             <groupId>software.amazon.neptune</groupId>
             <artifactId>gremlin-client</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
 
