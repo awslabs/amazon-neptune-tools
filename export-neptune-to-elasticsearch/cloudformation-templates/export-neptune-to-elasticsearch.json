@@ -550,7 +550,7 @@
           }
         },
         "MemorySize": 128,
-        "Runtime": "python3.8",
+        "Runtime": "python3.9",
         "Timeout": "30",
         "ReservedConcurrentExecutions": 1
       }
@@ -658,7 +658,7 @@
           }
         },
         "MemorySize": 1024,
-        "Runtime": "python3.8",
+        "Runtime": "python3.9",
         "Timeout": "900",
         "ReservedConcurrentExecutions": {
           "Ref": "KinesisShardCount"
