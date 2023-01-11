@@ -7,7 +7,6 @@
 
     <groupId>software.amazon.neptune</groupId>
     <artifactId>neptune-endpoints-info-lambda</artifactId>
-    <packaging>jar</packaging>
     <version>1.0.9-SNAPSHOT</version>
 
     <name>neptune-endpoints-info-lambda</name>

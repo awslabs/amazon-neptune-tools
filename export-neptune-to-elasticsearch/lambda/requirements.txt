@@ -1,7 +1,7 @@
 protobuf==3.18.3
 six==1.16.0
 elasticsearch==6.4.0
-rdflib==6.1.1
+rdflib==6.2.0
 retrying
 requests
 requests_aws4auth
