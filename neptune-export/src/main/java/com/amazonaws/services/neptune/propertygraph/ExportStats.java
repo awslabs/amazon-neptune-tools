@@ -160,9 +160,11 @@ public class ExportStats implements Jsonizable<GraphSchema> {
             edgesArrayNode.add(edgeNode);
             edgeNode.put("description", label.fullyQualifiedLabel());
             ObjectNode labelsNode = JsonNodeFactory.instance.objectNode();
-            labelsNode.set("edge", arrayNodeFromList(label.labels()));
-            if (label.hasFromAndToLabels()) {
+            if (label.hasFromLabels()) {
                 labelsNode.set("from", arrayNodeFromList(label.fromLabels().labels()));
+            }
+            labelsNode.set("edge", arrayNodeFromList(label.labels()));
+            if (label.hasToLabels()) {
                 labelsNode.set("to", arrayNodeFromList(label.toLabels().labels()));
             }
             edgeNode.set("labels", labelsNode);
