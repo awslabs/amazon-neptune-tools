@@ -128,9 +128,10 @@ public class ExportStats implements Jsonizable<GraphSchema> {
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
                 propertyNode.put("name", stats.property().toString());
                 propertyNode.put("count", stats.observationCount());
-                propertyNode.put("numberOfValues", stats.numberValuesCount());
+                propertyNode.put("numberOfRecords", stats.numberValuesCount());
                 propertyNode.put("minCardinality", stats.minCardinality());
                 propertyNode.put("maxCardinality", stats.maxCardinality());
+                propertyNode.put("isNullable", labelSchema.getPropertySchema(stats.property()).isNullable());
                 ArrayNode dataTypeCountsNode = JsonNodeFactory.instance.arrayNode();
                 for (Map.Entry<DataType, Integer> e : stats.dataTypeCounts().entrySet()) {
                     ObjectNode n = JsonNodeFactory.instance.objectNode();
@@ -164,7 +165,10 @@ public class ExportStats implements Jsonizable<GraphSchema> {
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
                 propertyNode.put("name", stats.property().toString());
                 propertyNode.put("count", stats.observationCount());
-                propertyNode.put("numberOfValues", stats.numberValuesCount());
+                propertyNode.put("numberOfRecords", stats.numberValuesCount());
+                propertyNode.put("minCardinality", stats.minCardinality());
+                propertyNode.put("maxCardinality", stats.maxCardinality());
+                propertyNode.put("isNullable", labelSchema.getPropertySchema(stats.property()).isNullable());
                 ArrayNode dataTypeCountsNode = JsonNodeFactory.instance.arrayNode();
                 for (Map.Entry<DataType, Integer> e : stats.dataTypeCounts().entrySet()) {
                     ObjectNode n = JsonNodeFactory.instance.objectNode();
