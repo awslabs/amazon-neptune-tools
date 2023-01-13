@@ -14,6 +14,7 @@
 
 import requests
 import os
+import time
 from neptune_python_utils.endpoints import Endpoints
 
 class EventId:
@@ -208,7 +209,29 @@ class NeptuneStream:
                 else:
                     allow_continue = False
             if allow_continue:
-                results = self.poll(token=results.token)      
+                results = self.poll(token=results.token)
+                
+                
+    def __poll_after(self, event_id, batch_size=10, wait=0):
+        while True:
+            try:
+                return self.poll(NeptuneStreamToken.after(event_id), limit=batch_size)
+            except:
+                if wait <= 0:
+                    return None
+                else:
+                    time.sleep(wait)
+        
+    def all_records_after(self, event_id, batch_size=10, wait=0):
+        
+        results = self.__poll_after(event_id, batch_size, wait)
+        allow_continue = True
+        
+        while results:
+            for record in results.records():
+                yield record
+            results = self.__poll_after(results.last_event_id, batch_size, wait)
+                    
             
     def poll(self, token=None, limit=10):
     
