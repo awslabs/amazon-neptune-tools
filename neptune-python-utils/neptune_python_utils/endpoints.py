@@ -216,6 +216,9 @@ class Endpoints:
         
     def sparql_stream_endpoint(self):
         return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql/stream')
+        
+    def propertygraph_stream_endpoint(self):
+        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'pg/stream')
     
     def __endpoint(self, protocol, neptune_endpoint, neptune_port, suffix):
         return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn, self.proxy_dns, self.proxy_port, self.remove_host_header)
