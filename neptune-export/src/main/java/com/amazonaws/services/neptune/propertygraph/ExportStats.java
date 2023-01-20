@@ -127,20 +127,27 @@ public class ExportStats implements Jsonizable<GraphSchema> {
             ArrayNode propertiesArray = JsonNodeFactory.instance.arrayNode();
 
             for (PropertySchemaStats stats : labelSchema.propertySchemaStats()) {
+                PropertySchema propertySchema = labelSchema.getPropertySchema(stats.property());
+
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
                 propertyNode.put("name", stats.property().toString());
                 propertyNode.put("count", stats.observationCount());
                 propertyNode.put("numberOfRecords", stats.numberValuesCount());
                 propertyNode.put("minCardinality", stats.minCardinality());
                 propertyNode.put("maxCardinality", stats.maxCardinality());
-                propertyNode.put("isNullable", labelSchema.getPropertySchema(stats.property()).isNullable());
+                propertyNode.put("isNullable", propertySchema.isNullable());
+
+                ObjectNode dataTypesNode = JsonNodeFactory.instance.objectNode();
                 ArrayNode dataTypeCountsNode = JsonNodeFactory.instance.arrayNode();
                 for (Map.Entry<DataType, Integer> e : stats.dataTypeCounts().entrySet()) {
                     ObjectNode n = JsonNodeFactory.instance.objectNode();
                     n.put(e.getKey().name(), e.getValue());
                     dataTypeCountsNode.add(n);
                 }
-                propertyNode.set("dataTypes", dataTypeCountsNode);
+                dataTypesNode.put("inferred", propertySchema.dataType().name());
+                dataTypesNode.set("counts", dataTypeCountsNode);
+
+                propertyNode.set("dataTypes", dataTypesNode);
                 propertiesArray.add(propertyNode);
             }
 
@@ -174,20 +181,28 @@ public class ExportStats implements Jsonizable<GraphSchema> {
             ArrayNode propertiesArray = JsonNodeFactory.instance.arrayNode();
 
             for (PropertySchemaStats stats : labelSchema.propertySchemaStats()) {
+
+                PropertySchema propertySchema = labelSchema.getPropertySchema(stats.property());
+
                 ObjectNode propertyNode = JsonNodeFactory.instance.objectNode();
                 propertyNode.put("name", stats.property().toString());
                 propertyNode.put("count", stats.observationCount());
                 propertyNode.put("numberOfRecords", stats.numberValuesCount());
                 propertyNode.put("minCardinality", stats.minCardinality());
                 propertyNode.put("maxCardinality", stats.maxCardinality());
-                propertyNode.put("isNullable", labelSchema.getPropertySchema(stats.property()).isNullable());
+                propertyNode.put("isNullable", propertySchema.isNullable());
+
+                ObjectNode dataTypesNode = JsonNodeFactory.instance.objectNode();
                 ArrayNode dataTypeCountsNode = JsonNodeFactory.instance.arrayNode();
                 for (Map.Entry<DataType, Integer> e : stats.dataTypeCounts().entrySet()) {
                     ObjectNode n = JsonNodeFactory.instance.objectNode();
                     n.put(e.getKey().name(), e.getValue());
                     dataTypeCountsNode.add(n);
                 }
-                propertyNode.set("dataTypes", dataTypeCountsNode);
+                dataTypesNode.put("inferred", propertySchema.dataType().name());
+                dataTypesNode.set("counts", dataTypeCountsNode);
+                
+                propertyNode.set("dataTypes", dataTypesNode);
                 propertiesArray.add(propertyNode);
             }
 
