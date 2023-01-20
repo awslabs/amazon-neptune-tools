@@ -14,7 +14,6 @@ package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.cli.*;
 import com.amazonaws.services.neptune.cluster.Cluster;
-import com.amazonaws.services.neptune.cluster.EventId;
 import com.amazonaws.services.neptune.io.Directories;
 import com.amazonaws.services.neptune.io.DirectoryStructure;
 import com.amazonaws.services.neptune.io.Target;
@@ -110,7 +109,8 @@ public class CreatePropertyGraphExportConfig extends NeptuneExportCommand implem
                                     gremlinFilters.filters(),
                                     cluster.concurrencyConfig(),
                                     targetConfig, featureToggles(),
-                                    getMaxFileDescriptorCount());
+                                    getMaxFileDescriptorCount()
+                            );
 
                             graphSchema = exportJob.execute();
 

@@ -133,10 +133,10 @@ public class PropertySchemaStats {
 
 
         return property + " {" +
-                "observationCount=" + observationCount +
+                "propertyCount=" + observationCount +
                 ", minCardinality=" + minCardinality +
                 ", maxCardinality=" + maxCardinality +
-                ", numberValuesCount=" + numberValuesCount +
+                ", recordCount=" + numberValuesCount +
                 ", dataTypeCounts=[" + s + "]" +
                 "}";
     }

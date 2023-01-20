@@ -127,7 +127,8 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 cluster.concurrencyConfig(),
                                 targetConfig,
                                 featureToggles(),
-                                getMaxFileDescriptorCount());
+                                getMaxFileDescriptorCount()
+                        );
 
                         graphSchema = Timer.timedActivity(
                                 "export",

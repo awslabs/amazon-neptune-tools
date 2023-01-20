@@ -49,6 +49,7 @@ public class Directories {
     private static final String LAST_EVENT_ID_FILE = "lastEventId.json";
     private static final String QUERIES_FILE = "queries.json";
 
+
     public static Directories createFor(DirectoryStructure directoryStructure,
                                         File root,
                                         String exportId,
@@ -303,6 +304,10 @@ public class Directories {
 
     private Path queriesFilePath() {
         return directory.resolve(QUERIES_FILE).toAbsolutePath();
+    }
+
+    public Path debugFilePath(String name) {
+        return directory.resolve(name + ".txt").toAbsolutePath();
     }
 
 }

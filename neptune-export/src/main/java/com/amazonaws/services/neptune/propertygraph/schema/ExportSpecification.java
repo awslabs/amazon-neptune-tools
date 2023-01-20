@@ -134,10 +134,14 @@ public class ExportSpecification {
 
             for (FileSpecificLabelSchemas fileSpecificLabelSchemasForTask : fileSpecificLabelSchemasCollection) {
                 if (fileSpecificLabelSchemasForTask.hasSchemasForLabel(label)) {
+                    Set<LabelSchema> labelSchemaSet = new HashSet<>();
                     for (FileSpecificLabelSchema fileSpecificLabelSchema :
                             fileSpecificLabelSchemasForTask.fileSpecificLabelSchemasFor(label)) {
-                        masterLabelSchema = masterLabelSchema.union(fileSpecificLabelSchema.labelSchema());
                         fileSpecificLabelSchemas.add(fileSpecificLabelSchema);
+                        labelSchemaSet.add(fileSpecificLabelSchema.labelSchema());
+                    }
+                    for (LabelSchema labelSchema : labelSchemaSet) {
+                        masterLabelSchema = masterLabelSchema.union(labelSchema);
                     }
                 }
             }

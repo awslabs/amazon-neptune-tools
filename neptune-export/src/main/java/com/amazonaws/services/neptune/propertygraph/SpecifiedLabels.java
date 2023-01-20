@@ -48,7 +48,7 @@ public class SpecifiedLabels implements LabelsFilter {
         if (simpleEdgeLabels || featureToggles.containsFeature(FeatureToggle.ExportByIndividualLabels)) {
 
             List<String> labelList = labels.stream()
-                    .flatMap((Function<Label, Stream<String>>) label -> label.label().stream())
+                    .flatMap((Function<Label, Stream<String>>) label -> label.labels().stream())
                     .collect(Collectors.toList());
 
             String firstLabel = labelList.stream().findFirst().orElseThrow(() -> new IllegalStateException("No labels specified"));
@@ -83,7 +83,7 @@ public class SpecifiedLabels implements LabelsFilter {
     private GraphTraversal<? extends Element, ?> createFilterForLabel(Label label, GraphTraversal<? extends Element, ?> t) {
 
 
-        for (String labelValue : label.label()) {
+        for (String labelValue : label.labels()) {
             if (t == null) {
                 t = hasLabel(labelValue);
             } else {

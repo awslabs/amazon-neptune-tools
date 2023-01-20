@@ -100,7 +100,8 @@ public class RewriteCsv implements RewriteCommand {
                                       GraphElementType graphElementType,
                                       MasterLabelSchema masterLabelSchema) throws Exception {
 
-        LabelSchema masterSchema = masterLabelSchema.labelSchema().createCopy();
+        LabelSchema originalLabelSchema = masterLabelSchema.labelSchema();
+        LabelSchema masterSchema = originalLabelSchema.createCopy();
         masterSchema.initStats();
 
         Collection<String> renamedFiles = new ArrayList<>();
@@ -113,7 +114,7 @@ public class RewriteCsv implements RewriteCommand {
 
 
             if (!sourceCsvFile.exists()) {
-                if (label.label().size() > 1) {
+                if (label.labels().size() > 1) {
                     logger.warn("Skipping multi-label file {} because it has already been rewritten under another label", sourceCsvFile);
                     continue;
                 }
