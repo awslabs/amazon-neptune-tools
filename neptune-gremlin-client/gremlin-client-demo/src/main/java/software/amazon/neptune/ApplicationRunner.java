@@ -38,7 +38,7 @@ public class ApplicationRunner {
         }
 
         System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
-        System.setProperty("org.slf4j.simpleLogger.log.org.apache.tinkerpop.gremlin.driver.TopologyAwareClient", logLevel);
+        System.setProperty("org.slf4j.simpleLogger.log.org.apache.tinkerpop.gremlin.driver.GremlinClient", logLevel);
         System.setProperty("org.slf4j.simpleLogger.log.org.apache.tinkerpop.gremlin.driver", logLevel);
         System.setProperty("org.slf4j.simpleLogger.log.software.amazon.awssdk", "info");
         System.setProperty("org.slf4j.simpleLogger.log.io.netty", "info");
