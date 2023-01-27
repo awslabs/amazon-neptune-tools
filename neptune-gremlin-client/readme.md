@@ -33,9 +33,8 @@ The Amazon CloudWatch screenshot below shows requests being distributed over 5 i
 You create a `GremlinCluster` and `GremlinClient` much as you would a normal cluster and client:
 
 ```
-GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
+GremlinCluster cluster = GremlinClusterBuilder.build()
         .enableSsl(true)
-				.enableIamAuth(true)
         .addContactPoints("replica-endpoint-1", "replica-endpoint-2", "replica-endpoint-3")
         .port(8182)
         .create();       
@@ -77,8 +76,7 @@ ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
         selector);
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
-        .enableSsl
-				.enableIamAuth(true)
+        .enableSsl(true)
         .addContactPoints(refreshAgent.getAddresses().get(selector))
         .port(8182)
         .create();
@@ -98,10 +96,10 @@ The `ClusterEndpointsRefreshAgent` constructor accepts an `EndpointsSelector` th
 ```
 EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
     instances.stream()
-        .filter(NeptuneInstanceProperties::isReader)
+        .filter(NeptuneInstanceMetadata::isReader)
         .filter(i -> i.hasTag("workload", "analytics"))
-        .filter(NeptuneInstanceProperties::isAvailable)
-        .map(NeptuneInstanceProperties::getEndpoint)
+        .filter(NeptuneInstanceMetadata::isAvailable)
+        .map(NeptuneInstanceMetadata::getEndpoint)
         .collect(Collectors.toList());
 
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
@@ -110,8 +108,7 @@ ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-		.enableIamAuth(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(selector))
     .port(8182)
     .create();
 
@@ -151,8 +148,7 @@ ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaP
 	
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-		.enableIamAuth(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
     .port(8182)
     .create();
 
@@ -169,10 +165,10 @@ You can also supply a custom endpoints selector when using the Lambda proxy:
 ```
 EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
     instances.stream()
-        .filter(NeptuneInstanceProperties::isReader)
+        .filter(NeptuneInstanceMetadata::isReader)
         .filter(i -> i.hasTag("workload", "analytics"))
-        .filter(NeptuneInstanceProperties::isAvailable)
-        .map(NeptuneInstanceProperties::getEndpoint)
+        .filter(NeptuneInstanceMetadata::isAvailable)
+        .map(NeptuneInstanceMetadata::getEndpoint)
         .collect(Collectors.toList());
 
 ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
@@ -182,8 +178,7 @@ ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaP
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-		.enableIamAuth(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(selector))
     .port(8182)
     .create();
 
@@ -194,6 +189,13 @@ refreshAgent.startPollingNeptuneAPI(
     60,
     TimeUnit.SECONDS);
 ```
+
+#### Installing the neptune-endpoints-info AWS Lambda function
+
+  1. Build the AWS Lambda proxy from [source](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-gremlin-client/neptune-endpoints-info-lambda) and put it an Amazon S3 bucket. 
+  2. Install the Lambda proxy in your using [this CloudFormation template](https://github.com/awslabs/amazon-neptune-tools/blob/master/neptune-gremlin-client/cloudformation-templates/neptune-endpoints-info-lambda.json). The template includes parameters for the current Neptune cluster ID, and the S3 source for the Lambda proxy jar (from step 1).
+  3. Ensure all parts of your application are using the latest Gremlin Client for Amazon Neptune to connect to and query Neptune.
+  4. The Gremlin Client for Amazon Neptune should be configured to fetch the cluster topology information from the Lambda proxy using the `ClusterEndpointsRefreshAgent.lambdaProxy()` method, as per the [examples above](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-gremlin-client#connect-the-clusterendpointsrefreshagent-to-a-lambda-proxy-when-you-have-many-clients).
 
 ## GremlinClusterBuilder and NeptuneGremlinClusterBuilder
 
@@ -301,15 +303,16 @@ Whenever a `GremlinClient` attempts to acquire a connection, it iterates through
 Using `GremlinClusterBuilder.refreshOnErrorThreshold()` and `GremlinClusterBuilder.refreshOnErrorEventHandler()` (and the `NeptuneGremlinClusterBuilder` equivalents), you can instruct a `GremlinClinet` to refresh its endpoints after a certain number of consecutive failures to acquire a connection. The following example shows how to create a `GremlinClient` that will refresh its endpoints after 1000 consecutive failures to acquire a connection:
 
 ```
+EndpointsType selector = EndpointsType.ReadReplicas;
 
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
     clusterId,
-    EndpointsType.ReadReplicas);
+    selector);
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
         .addContactPoints(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
         .refreshOnErrorThreshold(1000)
-        .refreshOnErrorEventHandler(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
+        .refreshOnErrorEventHandler(() -> refreshAgent.getAddresses().get(selector))
         .maxWaitForConnection(20000)
         .create();
 
@@ -333,13 +336,12 @@ The Gremlin Client for Amazon Neptune support executing Gremlin transactions, as
 EndpointsType selector = EndpointsType.ClusterEndpoint;
 
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
-    'my-cluster-id',
+    "my-cluster-id",
     selector);
 	
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-    .enableIamAuth(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(selector))
     .create();
     
 GremlinClient client = cluster.connect();
