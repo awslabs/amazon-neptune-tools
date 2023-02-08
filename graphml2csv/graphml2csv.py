@@ -34,7 +34,6 @@ __updated__ = '2018-01-31'
 
 import sys
 import os
-
 from optparse import OptionParser
 import csv
 
@@ -57,6 +56,8 @@ class GraphML2CSV:
 
     @staticmethod
     def py_compat_str(encoding, data):
+        if data is None:
+            return
         if sys.hexversion >= 0x3000000:
             return data.encode(encoding).decode('utf-8')
         else:
@@ -66,7 +67,7 @@ class GraphML2CSV:
 
         outfname_prefix = os.path.splitext(fname)[0]
 
-        with open(fname, 'r') as f:
+        with open(fname, 'r', encoding=encoding) as f:
 
             # Initialize headers and dictionary
             vtx_header = []
@@ -86,7 +87,7 @@ class GraphML2CSV:
             edge_header.append("~to")
             edge_header.append("~label")
 
-            with open(outfname_prefix+'-nodes.csv', 'w') as node_csvfile, open(outfname_prefix+'-edges.csv', 'w') as edge_csvfile:
+            with open(outfname_prefix+'-nodes.csv', 'w', encoding=encoding) as node_csvfile, open(outfname_prefix+'-edges.csv', 'w', encoding=encoding) as edge_csvfile:
 
                 # Initialize these after we've read the header.
                 node_writer = None
