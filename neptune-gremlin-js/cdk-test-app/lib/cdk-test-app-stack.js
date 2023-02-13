@@ -25,6 +25,7 @@ class CdkTestAppStack extends Stack {
                 parameters: {
                     neptune_enable_audit_log: "1",
                 },
+                family: neptune.ParameterGroupFamily.NEPTUNE_1_2,
             },
         )
 
@@ -34,6 +35,7 @@ class CdkTestAppStack extends Stack {
             parameters: {
                 neptune_query_timeout: "10000",
             },
+            family: neptune.ParameterGroupFamily.NEPTUNE_1_2,
         })
 
         // Create the security group for the cluster
