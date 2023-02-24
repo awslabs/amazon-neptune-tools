@@ -123,6 +123,7 @@ public class GremlinClient extends Client implements AutoCloseable {
     protected Connection chooseConnection(RequestMessage msg) throws TimeoutException, ConnectionException {
 
         long start = System.currentTimeMillis();
+        int maxWaitForConnection = cluster.connectionPoolSettings().maxWaitForConnection;
 
         logger.debug("Choosing connection");
 
@@ -139,6 +140,10 @@ public class GremlinClient extends Client implements AutoCloseable {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
+
+                if ((System.currentTimeMillis() - start) > maxWaitForConnection){
+                    throw new TimeoutException("Timed-out waiting for connection");
+                }
             }
 
             ClientHolder clientHolder = currentClientHolders.get((int) (index.getAndIncrement() % currentClientHolders.size()));
@@ -151,7 +156,7 @@ public class GremlinClient extends Client implements AutoCloseable {
 
             if (connection == null){
 
-                if ((System.currentTimeMillis() - start) > cluster.connectionPoolSettings().maxWaitForConnection){
+                if ((System.currentTimeMillis() - start) > maxWaitForConnection){
                     throw new TimeoutException("Timed-out waiting for connection");
                 }
 

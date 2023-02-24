@@ -6,6 +6,32 @@ The client also provides support for IAM database authentication, and for connec
 
 If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
 
+## Documentation
+
+  - [Recent features](#recent-features)
+  - [Using the topology aware cluster and client](#using-the-topology-aware-cluster-and-client)
+  - [Refreshing endpoints using the ClusterEndpointsRefreshAgent](#refreshing-endpoints-using-the-clusterendpointsrefreshagent)
+    - [Providing custom endpoint selection logic using EndpointsSelector](#providing-custom-endpoint-selection-logic-using-endpointsselector)
+    - [Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients](#connect-the-clusterendpointsrefreshAgent-to-a-lambda-proxy-when-you-have-many-clients)
+       - [Lambda proxy environment variables](#lambda-proxy-environment-variables)
+       - [Marking specific endpoints as unavailable](#marking-specific-endpoints-as-unavailable)
+       - [Installing the neptune-endpoints-info AWS Lambda function](#installing-the-neptune-endpoints-info-aws-lambda-function)
+  - [GremlinClusterBuilder and NeptuneGremlinClusterBuilder](#gremlinclusterbuilder-and-neptunegremlinclusterbuilder)
+    - [Credentials](#credentials)
+    - [Service region](#service-region)
+    - [Connection timeouts and refreshing endpoint addresses after connection failures](#connection-timeouts-and-refreshing-endpoint-addresses-after-connection-failures)
+    - [Transactions](#transactions)
+  - [Demos](#demos)
+    - [RollingSubsetOfEndpointsDemo](#rollingsubsetofendpointsdemo)
+    - [RefreshAgentDemo](#refreshagentdemo)
+    - [TxDemo](#txdemo)
+
+## Recent features
+
+  - **[Breaking Change February 2023 – version 1.1.0]** The behavior of the `EndpointsType.Primary` and `EndpointsType.ReadReplicas` selectors has changed. Prior to 1.1.0, `EndpointsType.Primary` would return the cluster endpoint if no primary was available, and `EndpointsType.ReadReplicas` would return the reader endpoint if no read replicas were available. Now these selectors return an empty list if the specified type of endpoint is not available. If you want to retain th eold behaviour, use `EndpointsType.PrimaryOrClusterEndpoint` and `EndpointsType.ReadReplicasOrReaderEndpoint` instead.
+
+  - **[New February 2023]** AWS Lamba proxy now allows you to mark specific endpoints as being unavailable.
+
   - **[New December 2022 – version 1.0.8]** Now supports transactions against a writer or cluster endpoint.
 	
   - **[New November 2022 – version 1.0.8]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
@@ -62,7 +88,7 @@ client.refreshEndpoints("new-replica-endpoint-1", "new-replica-endpoint-2", "new
  
 Because the cluster topology can change at any moment as a result of both planned and unplanned events, you should wrap all queries with an exception handler. Should a query fail because the underlying client connection has been closed, you can attempt a retry.
 
-## ClusterEndpointsRefreshAgent
+## Refreshing endpoints using the ClusterEndpointsRefreshAgent
 
 The `ClusterEndpointsRefreshAgent` allows you to schedule endpoint updates to a client based on a Neptune cluster ID.  The identity under which you're running the agent must be authorized to perform `rds:DescribeDBClusters`,  `rds:DescribeDBInstances` and `rds:ListTagsForResource` for your Neptune cluster.
 
@@ -89,7 +115,7 @@ refreshAgent.startPollingNeptuneAPI(
         TimeUnit.SECONDS);
 ```
 
-### EndpointsSelector
+### Providing custom endpoint selection logic using EndpointsSelector
 
 The `ClusterEndpointsRefreshAgent` constructor accepts an `EndpointsSelector` that allows you to add custom endpoint selection logic. The following example shows how to select endpoints for all **Available** instances with a **workload** tag whose value is **analytics**:
 
@@ -122,11 +148,13 @@ refreshAgent.startPollingNeptuneAPI(
 
 The `EndpointsType` enum provides implementations of `EndpointsSelector` for some common use cases:
 
-  * `EndpointsType.All` –  return all available instance (primary and read replicas) endpoints
-  * `EndpointsType.Primary` – returns the primary instance endpoint if it is available, or the cluster endpoint if the primary instance endpoint is not available
-  * `EndpointsType.ReadReplicas` – returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the reader endpoint
-  * `EndpointsType.ClusterEndpoint` – returns the cluster endpoint
-  * `EndpointsType.ReaderEndpoint` – return the reader endpoint
+  * `EndpointsType.All` –  Return all available instance (primary and read replicas) endpoints.
+  * `EndpointsType.Primary` – Returns the primary (writer) instance endpoint if it is available. (Prior to 1.1.0 this returns the cluster endpoint if the primary instance endpoint is not available.)
+  * `EndpointsType.ReadReplicas` – Returns all available read replica instance endpoints. (Prior to 1.1.0 this returns the reader endpoint if there are no replica instance endpoints.)
+  * `EndpointsType.ClusterEndpoint` – Returns the [cluster endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html).
+  * `EndpointsType.ReaderEndpoint` – Returns the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html).
+  * `EndpointsType.PrimaryOrClusterEndpoint` – (From 1.1.0) Returns the primary (writer) instance endpoint if it is available, or the cluster endpoint if the primary instance endpoint is not available.
+  * `EndpointsType.ReadReplicasOrReaderEndpoint` – (From 1.1.0) Returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the reader endpoint.
 
 ### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
 
@@ -190,10 +218,39 @@ refreshAgent.startPollingNeptuneAPI(
     TimeUnit.SECONDS);
 ```
 
+#### Lambda proxy environment variables
+
+The AWS Lambda proxy has the following environment variables:
+
+  - `clusterId` – The cluster ID of the Amazon Neptune cluster to be polled for endpoint information.
+  - `pollingIntervalSeconds` – The number of seconds between polls.
+  - `unavailable` – Determines whether specific endpoints will be marked as `unavailable`. Valid values are: `none`, `all`, `writer`, `reader`. 
+  
+#### Marking specific endpoints as unavailable
+
+The AWS Lambda proxy has an `unavailable` environment variable that accepts the following values: `none`, `all`, `writer`, `reader`. You can use this environment variable to set the status of specific types of endpoint to `unavailable` – even if the Management API says they are available. In this way, you can apply back pressure in the client, preventing it from sending queries while you make changes to your Neptune cluster. To manage this back pressure, your application will have to handle two different kinds of exception – see below. The endpoints are only marked as `unavailable` in the responses returned from the Lambda proxy: the real endpoints remain unaffected.
+
+For example, if you set the `unavailable` environment variable to `reader`, then all read replica endpoints will be marked as `unavailable`. The following selector will, therefore, return an empty list of endpoints:
+
+```
+EndpointsSelector availableReadReplicasSelector = (clusterEndpoint, readerEndpoint, instances) ->
+    instances.stream()
+        .filter(NeptuneInstanceMetadata::isReader)
+        .filter(NeptuneInstanceMetadata::isAvailable)
+        .map(NeptuneInstanceMetadata::getEndpoint)
+        .collect(Collectors.toList());
+```
+
+An empty list of endpoints can trigger two different exceptions in the Neptune Gremlin Client:
+
+  - If you try to build a new cluster (using `NeptuneGremlinClusterBuilder` or `GremlinClusterBuilder`) with an empty list of endpoints, the builders's `create()` method will throw an `IllegalArgumentException` with the following message: "The list of endpoint addresses is empty. You must supply one or more endpoints."
+  – If an existing cluster is refreshed with an empty list of endpoints, the next query will trigger a `TimeoutException` with the following message: "Timed-out waiting for connection".
+
+
 #### Installing the neptune-endpoints-info AWS Lambda function
 
   1. Build the AWS Lambda proxy from [source](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-gremlin-client/neptune-endpoints-info-lambda) and put it an Amazon S3 bucket. 
-  2. Install the Lambda proxy in your using [this CloudFormation template](https://github.com/awslabs/amazon-neptune-tools/blob/master/neptune-gremlin-client/cloudformation-templates/neptune-endpoints-info-lambda.json). The template includes parameters for the current Neptune cluster ID, and the S3 source for the Lambda proxy jar (from step 1).
+  2. Install the Lambda proxy in your account using [this CloudFormation template](https://github.com/awslabs/amazon-neptune-tools/blob/master/neptune-gremlin-client/cloudformation-templates/neptune-endpoints-info-lambda.json). The template includes parameters for the current Neptune cluster ID, and the S3 source for the Lambda proxy jar (from step 1).
   3. Ensure all parts of your application are using the latest Gremlin Client for Amazon Neptune to connect to and query Neptune.
   4. The Gremlin Client for Amazon Neptune should be configured to fetch the cluster topology information from the Lambda proxy using the `ClusterEndpointsRefreshAgent.lambdaProxy()` method, as per the [examples above](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-gremlin-client#connect-the-clusterendpointsrefreshagent-to-a-lambda-proxy-when-you-have-many-clients).
 
