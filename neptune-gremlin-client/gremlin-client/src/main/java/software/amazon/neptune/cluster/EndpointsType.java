@@ -27,10 +27,16 @@ public enum EndpointsType implements EndpointsSelector {
         public Collection<String> getEndpoints(String clusterEndpoint,
                                                String readerEndpoint,
                                                Collection<NeptuneInstanceMetadata> instances) {
-            return instances.stream()
+            List<String> results = instances.stream()
                     .filter(NeptuneInstanceMetadata::isAvailable)
                     .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
+
+            if (results.isEmpty()) {
+                logger.warn("No available endpoints");
+            }
+
+            return results;
         }
     },
     Primary {
@@ -44,9 +50,8 @@ public enum EndpointsType implements EndpointsSelector {
                     .map(NeptuneInstanceMetadata::getEndpoint)
                     .collect(Collectors.toList());
 
-            if (results.isEmpty()){
-                logger.warn("Unable to get Primary endpoint so getting ClusterEndpoint instead");
-                return ClusterEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
+            if (results.isEmpty()) {
+                logger.warn("No available primary endpoint");
             }
 
             return results;
@@ -65,8 +70,7 @@ public enum EndpointsType implements EndpointsSelector {
                     .collect(Collectors.toList());
 
             if (results.isEmpty()) {
-                logger.warn("Unable to get ReadReplicas endpoints so getting ReaderEndpoint instead");
-                return ReaderEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
+                logger.warn("No available read replica endpoints");
             }
 
             return results;
@@ -88,6 +92,46 @@ public enum EndpointsType implements EndpointsSelector {
                                                Collection<NeptuneInstanceMetadata> instances) {
 
             return Collections.singletonList(readerEndpoint);
+        }
+    },
+
+    PrimaryOrClusterEndpoint {
+        @Override
+        public Collection<String> getEndpoints(String clusterEndpoint,
+                                               String readerEndpoint,
+                                               Collection<NeptuneInstanceMetadata> instances) {
+            List<String> results = instances.stream()
+                    .filter(NeptuneInstanceMetadata::isPrimary)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
+                    .collect(Collectors.toList());
+
+            if (results.isEmpty()) {
+                logger.warn("Unable to get Primary endpoint so getting ClusterEndpoint instead");
+                return ClusterEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
+            }
+
+            return results;
+        }
+    },
+    ReadReplicasOrReaderEndpoint {
+        @Override
+        public Collection<String> getEndpoints(String clusterEndpoint,
+                                               String readerEndpoint,
+                                               Collection<NeptuneInstanceMetadata> instances) {
+
+            List<String> results = instances.stream()
+                    .filter(NeptuneInstanceMetadata::isReader)
+                    .filter(NeptuneInstanceMetadata::isAvailable)
+                    .map(NeptuneInstanceMetadata::getEndpoint)
+                    .collect(Collectors.toList());
+
+            if (results.isEmpty()) {
+                logger.warn("Unable to get ReadReplicas endpoints so getting ReaderEndpoint instead");
+                return ReaderEndpoint.getEndpoints(clusterEndpoint, readerEndpoint, instances);
+            }
+
+            return results;
         }
     };
 

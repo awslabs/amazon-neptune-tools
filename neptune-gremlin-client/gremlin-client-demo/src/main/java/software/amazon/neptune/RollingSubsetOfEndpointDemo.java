@@ -36,6 +36,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.apache.tinkerpop.gremlin.driver.Tokens.ARGS_EVAL_TIMEOUT;
+
 @Command(name = "rolling-endpoints-demo", description = "Demo using rolling set of endpoints with topology aware cluster and client")
 public class RollingSubsetOfEndpointDemo implements Runnable {
 

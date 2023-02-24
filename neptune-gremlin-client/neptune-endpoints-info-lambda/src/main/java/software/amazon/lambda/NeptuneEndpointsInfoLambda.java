@@ -15,11 +15,7 @@ package software.amazon.lambda;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import software.amazon.neptune.cluster.ClusterEndpointsRefreshAgent;
-import software.amazon.neptune.cluster.EndpointsType;
-import software.amazon.neptune.cluster.NeptuneClusterMetadata;
-import software.amazon.neptune.cluster.OnNewClusterMetadata;
+import software.amazon.neptune.cluster.*;
 import software.amazon.utils.EnvironmentVariableUtils;
 
 import java.io.*;
@@ -34,19 +30,24 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
 
     private final ClusterEndpointsRefreshAgent refreshAgent;
     private final AtomicReference<NeptuneClusterMetadata> neptuneClusterMetadata = new AtomicReference<>();
+    private final String unavailable;
 
     public NeptuneEndpointsInfoLambda() {
-        this(EnvironmentVariableUtils.getMandatoryEnv("clusterId"),
-                Integer.parseInt(
-                        EnvironmentVariableUtils.getOptionalEnv("pollingIntervalSeconds", "15")));
+        this(
+                EnvironmentVariableUtils.getMandatoryEnv("clusterId"),
+                Integer.parseInt(EnvironmentVariableUtils.getOptionalEnv("pollingIntervalSeconds", "15")),
+                EnvironmentVariableUtils.getOptionalEnv("unavailable", "none")
+        );
     }
 
-    public NeptuneEndpointsInfoLambda(String clusterId, int pollingIntervalSeconds) {
+    public NeptuneEndpointsInfoLambda(String clusterId, int pollingIntervalSeconds, String unavailable) {
         refreshAgent = new ClusterEndpointsRefreshAgent(clusterId, EndpointsType.All);
         neptuneClusterMetadata.set(refreshAgent.getClusterMetadata());
+        this.unavailable = unavailable.toLowerCase();
 
         System.out.println(String.format("clusterId: %s", clusterId));
         System.out.println(String.format("pollingIntervalSeconds: %s", pollingIntervalSeconds));
+        System.out.println(String.format("unavailable: %s", this.unavailable));
 
         refreshAgent.startPollingNeptuneAPI(
                 (OnNewClusterMetadata) metadata -> neptuneClusterMetadata.set(metadata),
@@ -80,7 +81,7 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
 
         logger.log("Returning cluster metadata");
 
-        NeptuneClusterMetadata clusterMetadata = neptuneClusterMetadata.get();
+        NeptuneClusterMetadata clusterMetadata = filterMetadataForUnavailableEndpoints(neptuneClusterMetadata.get());
         String results = clusterMetadata.toJsonString();
 
         logger.log("Results: " + results);
@@ -97,7 +98,7 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
 
         logger.log("Returning list of endpoints for EndpointsType: " + endpointsType);
 
-        NeptuneClusterMetadata clusterMetadata = neptuneClusterMetadata.get();
+        NeptuneClusterMetadata clusterMetadata = filterMetadataForUnavailableEndpoints(neptuneClusterMetadata.get());
         Collection<String> endpoints = endpointsType.getEndpoints(
                 clusterMetadata.getClusterEndpoint(),
                 clusterMetadata.getReaderEndpoint(),
@@ -110,5 +111,22 @@ public class NeptuneEndpointsInfoLambda implements RequestStreamHandler {
             writer.write(results);
             writer.flush();
         }
+    }
+
+    private NeptuneClusterMetadata filterMetadataForUnavailableEndpoints(NeptuneClusterMetadata clusterMetadata){
+        for (NeptuneInstanceMetadata instance : clusterMetadata.getInstances()) {
+            if (instance.isAvailable()){
+                if (unavailable.equals("all")){
+                    instance.setStatus("unavailable");
+                }
+                else if (unavailable.equals("writer") && instance.isPrimary()){
+                    instance.setStatus("unavailable");
+                }
+                else if (unavailable.equals("reader") && instance.isReader()){
+                    instance.setStatus("unavailable");
+                }
+            }
+        }
+        return clusterMetadata;
     }
 }
