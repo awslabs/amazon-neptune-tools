@@ -26,7 +26,7 @@ When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket.
 
 ### neptune-python-utils and the Neptune Workbench
 
-_neptune-python-utils_ supports Gremlin Python 3.5.x. As such, it is not compatible with the [Neptune Workbench](https://docs.aws.amazon.com/neptune/latest/userguide/graph-notebooks.html), which currently supports 3.4.x.
+_neptune-python-utils_ supports Gremlin Python 3.5.x. As such, it may have conflicts with older instances of [Neptune Workbench](https://docs.aws.amazon.com/neptune/latest/userguide/graph-notebooks.html) that run on 3.4.x. To ensure compatibility, please ensure that you have `graph-notebook==3.0.7` or higher installed.
 
 ## Examples
 
