@@ -126,9 +126,7 @@ export default function Layout({ children, home, login }) {
             <hr />
             <footer class="footer">
                 <div class="container">
-                    <p> email: 
-                        <a href="mailto:neptune-developer-feedbac@amazon.com">wwso-neptune-ssa@amazon.com</a>
-                    </p>
+                    contact <a href="mailto:neptune-developer-feedbac@amazon.com">wwso-neptune-ssa@amazon.com</a>for any feedback or questions
                 </div>
             </footer>
 

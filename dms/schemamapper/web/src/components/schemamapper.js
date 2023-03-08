@@ -61,6 +61,8 @@ function SchemaMapper() {
   function csvToArray(str, delimiter = ",") {
     // slice from start of text to the first \n index
     // use split to create an array from string by delimiter
+
+    str = str.replace("\r", "");
     const headers = str.slice(0, str.indexOf("\n")).split(delimiter);
 
     // slice from \n index + 1 to the end of the text
@@ -94,14 +96,14 @@ function SchemaMapper() {
     array.forEach(element => {
       if (element.TABLE_NAME !== undefined && element.TABLE_NAME !== "")
         var refObject = null;
-      refObject = root.tables.find(table => table.name === element.TABLE_NAME);
+      refObject = root.tables.find(table => table.name.toLowerCase() === element.TABLE_NAME.toLowerCase());
 
       if (refObject === undefined) {
         root.tables.push({
           "name": element.TABLE_NAME
         })
 
-        refObject = root.tables.find(table => table.name === element.TABLE_NAME);
+        refObject = root.tables.find(table => table.name.toLowerCase() === element.TABLE_NAME.toLowerCase());
         refObject.columns = [];
       }
 
@@ -355,6 +357,8 @@ function SchemaMapper() {
     }
 
     switch (sqltype) {
+      case "smallint":
+        return "Int";
       case "bigint":
         return "Long";
       case "varchar":
@@ -372,11 +376,27 @@ function SchemaMapper() {
     if (vertex.attributes === undefined)
       vertex.attributes = []
 
-    vertex.attributes.push({ key: "", value: "" })
+    vertex.attributes.push({ id: uuidv4(), key: "", value: "" })
 
     setCurrentVertex(vertex);
   }
 
+  function cancelNewVertexAttribute(e, vertexid, vertexAttributeId) {
+    alert(vertexAttributeId);
+
+    var vertex = JSON.parse(JSON.stringify(currentVertex));
+    vertex.attributes = vertex.attributes.filter(attribute => attribute.id !== vertexAttributeId);
+
+    setCurrentVertex(vertex);
+  }
+
+  function setAttributeValue(e, vertexid, vertexAttributeId) {
+
+  }
+
+  function setAttributeKey(e, vertexid, vertexAttributeId) {
+
+  }
 
   function addNewEdgeAttribute(e, vertexid) {
     var edge = JSON.parse(JSON.stringify(currentEdge));
@@ -485,17 +505,16 @@ function SchemaMapper() {
       <Row>
         <Col>
           <div>
-            <blockquote>Use this utility to create Graph Schema Mapping for Property Graph in Amazon Neptune.
-              The schema mapping json is needed by AWS Database Migration Service
-              to create csv ready to be imported inside Amazon Neptune.
+            <br/>
+            <blockquote>Use this utility to create Graph Schema Mapping for Property Graph in Amazon Neptune, used by AWS Database Migration Service to migrate data from RDBMS systems to Amazon Neptune.
+              {/* The schema mapping json is needed by AWS Database Migration Service
+              to create csv ready to be imported inside Amazon Neptune. */}
             </blockquote>
           </div>
           <div>
             <Row>
               <Col>
-                <br />
                 <Row>
-
                   <Col md={8}>
                     <div>
                       Upload Schema for your database tables as csv <a href="/sample_sql_schema.csv">(click to download mysql schema sample) </a>
@@ -504,41 +523,30 @@ function SchemaMapper() {
                   <Col md={4}>
                     <div>
                       <input className="primary" type="file" onChange={e => onFileChange(e)} />
-                      {/* <button onClick={onFileUpload}>
-                        Upload!
-                    </button> */}
                     </div>
                     {fileData()}
                   </Col>
                 </Row>
                 <hr />
-
+                <Row>
+                  <Col>Queries to generate schema:</Col>
+                </Row>
+                <Row>
+                  <Col> <div className='text-muted'> MySql :  SELECT
+                    TABLE_NAME,
+                    COLUMN_NAME,
+                    ORDINAL_POSITION,
+                    IS_NULLABLE,
+                    COLUMN_TYPE
+                    FROM
+                    information_schema.columns
+                    WHERE
+                    table_schema = &lt;DBName&gt;</div>
+                  </Col>
+                </Row>
+                <hr />
                 <Row>
                   <Col md={3}>
-                    <Row>
-                      <Col>
-                        SQL Schema
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col>
-                        <p>
-                          <b>Query(MySql)</b>:
-                          <i>
-                            SELECT
-                            TABLE_NAME,
-                            COLUMN_NAME,
-                            ORDINAL_POSITION,
-                            IS_NULLABLE,
-                            COLUMN_TYPE
-                            FROM
-                            information_schema.columns
-                            WHERE
-                            table_schema = &lt;DBName&gt;
-                          </i>
-                        </p>
-                      </Col>
-                    </Row>
                     <Row>
                       <Col>
                         <Card>
@@ -593,16 +601,16 @@ function SchemaMapper() {
                                     <div className="NCForm">
                                       <Form>
                                         <Form.Group className="mb-3" controlId="formVLabel">
-                                          <Form.Label>vertex label</Form.Label>
+                                          <Form.Label>Vertex label</Form.Label>
                                           <Form.Control type="text" placeholder="Enter title" />
                                           {/* <Form.Text className="text-muted">
                                                                         Enter Label as per graph model
                                                                     </Form.Text> */}
                                         </Form.Group>
                                         <Form.Group className="mb-1" controlId="formVTables">
-                                          <Form.Label>sql table to refer</Form.Label>
+                                          <Form.Label>Relational table to refer</Form.Label>
                                           <Form.Select aria-label="Default select example" onChange={e => updateColumList(e)}>
-                                            <option>Select table</option>
+                                            <option>Select schema</option>
                                             {tableList.map((table, index) => (
                                               <option>{table.name}</option>
                                             ))}
@@ -648,20 +656,30 @@ function SchemaMapper() {
                                           <Row>
                                             <Col>
                                               <Form.Group className="mb-1" controlId={currentVertex?.id + "-propertyValueTemplate-" + index}>
-                                                <Form.Select aria-label="Default select example">
+                                                <Form.Text className="text-muted">
+                                                  Select table Column
+                                                </Form.Text>
+                                                <Form.Select aria-label="Default select example" onChange={e => setAttributeKey(e, attribute?.id)}>
                                                   <option>Select Column</option>
                                                   {columnList?.map((column, columnIndex) => (
                                                     <option type={column.type}>{column.name}</option>
                                                   ))}
                                                 </Form.Select>
-                                                <Form.Text className="text-muted">
-                                                  Select Column
-                                                </Form.Text>
+
                                               </Form.Group>
                                             </Col>
 
                                             <Col>
-                                              <Form.Control id={currentVertex?.id + "-propertyName-" + index} type="text" placeholder="Enter title"></Form.Control>
+                                              <Form.Group className="mb-1" >
+                                                <Form.Text className="text-muted">
+                                                  Enter Vertex Property Name
+                                                </Form.Text>
+                                                <Form.Control id={currentVertex?.id + "-propertyName-" + index} type="text" placeholder="Enter title" onChange={e => setAttributeValue(e, attribute?.id)}></Form.Control>
+                                              </Form.Group>
+                                            </Col>
+                                            <Col>
+                                              <br />
+                                              {/* <Button slot="end" variant="primary" size="sm" onClick={e => cancelNewVertexAttribute(e, currentVertex?.id, attribute?.id)}>cancel</Button> */}
                                             </Col>
                                           </Row>
                                         ))}
@@ -752,16 +770,19 @@ function SchemaMapper() {
                                                                             </Row> */}
                                               <Row>
                                                 <Col>
-                                                  {attribute?.key !== "edge_id_template" &&
-                                                    <Form.Group className="mb-1" controlId={currentEdge?.id + "-vertexidtemplate-" + index} onChange={e => setEdgeTemplate(e, attribute?.key, currentEdge?.id, "-vertexidtemplate-", index)}>
-                                                      <Form.Select aria-label="Default select example">
-                                                        <option>Select table column</option>
-                                                        {columnList?.map((column, columnIndex) => (
-                                                          <option type={column.type} value={column.name}>{column.name}</option>
-                                                        ))}
-                                                      </Form.Select>
-                                                    </Form.Group>
-                                                  }
+
+                                                  <div>
+                                                    {attribute?.key !== "edge_id_template" &&
+                                                      <Form.Group className="mb-1" controlId={currentEdge?.id + "-vertexidtemplate-" + index} onChange={e => setEdgeTemplate(e, attribute?.key, currentEdge?.id, "-vertexidtemplate-", index)}>
+                                                        <Form.Select aria-label="Default select example">
+                                                          <option>Select table column</option>
+                                                          {columnList?.map((column, columnIndex) => (
+                                                            <option type={column.type} value={column.name}>{column.name}</option>
+                                                          ))}
+                                                        </Form.Select>
+                                                      </Form.Group>
+                                                    }
+                                                  </div>
                                                 </Col>
                                               </Row>
                                             </Col>
@@ -831,7 +852,6 @@ function SchemaMapper() {
                           <Card.Body>
                             {/* <textarea class="ace_text-input" id="myTextarea" width="100%" autocorrect="off" autocapitalize="none" spellcheck="false" wrap="off"></textarea> */}
                             <pre id="preTemplate">{JSON.stringify(finalMapping, null, 2)} </pre>
-
                           </Card.Body>
                         </Card>
                       </Col>
