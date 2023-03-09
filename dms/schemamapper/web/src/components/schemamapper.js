@@ -356,6 +356,12 @@ function SchemaMapper() {
       sqltype = "varchar";
     }
 
+    // MSSql Specific data type
+    if (sqltype.indexOf("hierarchyid") !== -1) {
+      sqltype = "varchar";
+    }
+
+
     switch (sqltype) {
       case "smallint":
         return "Int";
@@ -529,10 +535,10 @@ function SchemaMapper() {
                 </Row>
                 <hr />
                 <Row>
-                  <Col>Queries to generate schema:</Col>
+                  <Col>Sql Query to generate schema:</Col>
                 </Row>
                 <Row>
-                  <Col> <div className='text-muted'> MySql :  SELECT
+                  <Col> <div className='text-muted'> <b>MySql</b> :  SELECT
                     TABLE_NAME,
                     COLUMN_NAME,
                     ORDINAL_POSITION,
@@ -544,9 +550,20 @@ function SchemaMapper() {
                     table_schema = &lt;DBName&gt;</div>
                   </Col>
                 </Row>
+                <Row>
+                  <Col>
+                  <div className='text-muted'>
+                  <b>MSSql</b> : SELECT TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION, IS_NULLABLE, DATA_TYPE + CASE WHEN CHARACTER_MAXIMUM_LENGTH IS NOT NULL THEN '(' + CAST(CHARACTER_MAXIMUM_LENGTH AS VARCHAR) + ')' ELSE '' END AS COLUMN_TYPE
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = &lt;DBName&gt;</div>
+                  </Col>
+                </Row>
                 <hr />
                 <Row>
                   <Col md={3}>
+                    <Row>
+                      <Col>RDBMS tables</Col>
+                    </Row>
                     <Row>
                       <Col>
                         <Card>
@@ -608,7 +625,7 @@ function SchemaMapper() {
                                                                     </Form.Text> */}
                                         </Form.Group>
                                         <Form.Group className="mb-1" controlId="formVTables">
-                                          <Form.Label>Relational table to refer</Form.Label>
+                                          <Form.Label>Table to refer</Form.Label>
                                           <Form.Select aria-label="Default select example" onChange={e => updateColumList(e)}>
                                             <option>Select schema</option>
                                             {tableList.map((table, index) => (
@@ -705,14 +722,14 @@ function SchemaMapper() {
                                     <div className="NCForm">
                                       <Form>
                                         <Form.Group className="mb-3" controlId="formELabel">
-                                          <Form.Label>enter Label for edge</Form.Label>
+                                          <Form.Label>Edge Label</Form.Label>
                                           <Form.Control type="text" placeholder="Enter title" />
                                           {/* <Form.Text className="text-muted">
                                                                         Enter Label as per graph model
                                                                     </Form.Text> */}
                                         </Form.Group>
                                         <Form.Group className="mb-1" controlId="formETables">
-                                          <Form.Label>select table for edge</Form.Label>
+                                          <Form.Label>Table to refer</Form.Label>
                                           <Form.Select aria-label="Default select example" onChange={e => updateColumListE(e)}>
                                             <option>Select table</option>
                                             {tableList.map((table, index) => (

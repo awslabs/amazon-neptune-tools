@@ -541,3 +541,7 @@ footer {
 blockquote {
   font-size: large;
 }
+
+.container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+  width: 100% !important;
+}
