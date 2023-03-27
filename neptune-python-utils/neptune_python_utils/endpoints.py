@@ -135,8 +135,11 @@ class Endpoint:
             return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
         
         
-    def prepare_request(self, method='GET', payload=None, querystring={}, headers={}):
-        
+    def prepare_request(self, method='GET', payload=None, querystring=None, headers=None):
+
+        querystring = querystring or {}
+        headers = headers or {}
+
         def get_headers():
             
             service = 'neptune-db'
