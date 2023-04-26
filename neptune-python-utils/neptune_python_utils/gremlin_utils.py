@@ -14,6 +14,8 @@
 
 import os
 import uuid
+import nest_asyncio
+
 
 from neptune_python_utils.endpoints import Endpoints
 from gremlin_python.driver.client import Client
@@ -44,6 +46,8 @@ class GremlinUtils:
     
     def __init__(self, endpoints=None):
                 
+        nest_asyncio.apply()
+        
         if endpoints is None:
             self.endpoints = Endpoints()
         else:
