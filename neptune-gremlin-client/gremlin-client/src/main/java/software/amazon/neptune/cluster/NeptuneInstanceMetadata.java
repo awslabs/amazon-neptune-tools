@@ -14,10 +14,14 @@ package software.amazon.neptune.cluster;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class NeptuneInstanceMetadata {
+
+    private static final Collection<String> AVAILABLE_STATES = Arrays.asList("available", "backing-up", "modifying", "upgrading");
 
     private String instanceId;
     private String role;
@@ -28,7 +32,7 @@ public class NeptuneInstanceMetadata {
 
     private final Map<String, String> tags = new HashMap<>();
 
-    public NeptuneInstanceMetadata(){
+    public NeptuneInstanceMetadata() {
 
     }
 
@@ -124,28 +128,28 @@ public class NeptuneInstanceMetadata {
         return tags;
     }
 
-    public boolean hasTag(String tag){
+    public boolean hasTag(String tag) {
         return tags.containsKey(tag);
     }
 
-    public String getTag(String tag){
+    public String getTag(String tag) {
         return tags.get(tag);
     }
 
-    public String getTag(String tag, String defaultValue){
-        if (!tags.containsKey(tag)){
-           return defaultValue;
+    public String getTag(String tag, String defaultValue) {
+        if (!tags.containsKey(tag)) {
+            return defaultValue;
         }
         return tags.get(tag);
     }
 
-    public boolean hasTag(String tag, String value){
+    public boolean hasTag(String tag, String value) {
         return hasTag(tag) && getTag(tag).equals(value);
     }
 
     @JsonIgnore
-    public boolean isAvailable(){
-        return getStatus().equalsIgnoreCase("Available") && endpoint != null;
+    public boolean isAvailable() {
+        return endpoint != null && AVAILABLE_STATES.contains(getStatus().toLowerCase());
     }
 
     @JsonIgnore
