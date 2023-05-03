@@ -1,3 +1,13 @@
+# Deprecation Notice
+
+The Gremlin Client for Amazon Neptune has been migrated to a [new standalone repository](https://github.com/aws/neptune-gremlin-client). Ongoing development and releases will take place in the new repository, and this module here will no longer be maintained.
+
+Any Neptune Gremlin Client related issues should be reported in the Issues section under the new repository.
+
+Version 1.1.0 of the client is the last release of the client from this repository. The new repository is accompanied by a release of version 2.0.0 of the Neptune Gremlin Client.
+
+See [Migrating from version 1 of the Neptune Gremlin Client](https://github.com/aws/neptune-gremlin-client#migrating-from-version-1-of-the-neptune-gremlin-client) if you are migrating an application from version 1.x.x of the Neptune Gremlin Client to version 2.x.x.
+
 # Gremlin Client for Amazon Neptune
 
 A Java Gremlin client for Amazon Neptune that allows you to change the endpoints used by the client as it is running. Includes an agent that can query the Amazon Neptune API for cluster details, and update the client on a periodic basis. You can supply your own custom endpoint selectors to configure the client for a subset of instances in your cluster based on tags, instance types, instance IDs, AZs, etc.
