@@ -14,7 +14,7 @@ If your application uses a lot of concurrent clients, you should proxy endpoint 
 <dependency>
     <groupId>software.amazon.neptune</groupId>
     <artifactId>gremlin-client</artifactId>
-    <version>1.0.8</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -40,6 +40,8 @@ If your application uses a lot of concurrent clients, you should proxy endpoint 
 
 ## Recent features
 
+  - **[New May 2023 – version 1.1.0]** Upgraded to version 3.6.2 of the Java Gremlin driver.
+  
   - **[New February 2023]** AWS Lamba proxy now allows you to mark specific endpoints as being unavailable.
 
   - **[New December 2022 – version 1.0.8]** Now supports transactions against a writer or cluster endpoint.

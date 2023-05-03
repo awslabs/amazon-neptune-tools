@@ -7,7 +7,7 @@
     <groupId>software.amazon.neptune</groupId>
     <artifactId>neptune-gremlin-client</artifactId>
     <packaging>pom</packaging>
-    <version>1.1.0</version>
+    <version>1.1.1-SNAPSHOT</version>
 
     <licenses>
         <license>
