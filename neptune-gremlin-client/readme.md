@@ -1,3 +1,13 @@
+# Deprecation Notice
+
+The Gremlin Client for Amazon Neptune has been migrated to a [new standalone repository](https://github.com/aws/neptune-gremlin-client). Ongoing development and releases will take place in the new repository, and this module here will no longer be maintained.
+
+Any Neptune Gremlin Client related issues should be reported in the Issues section under the new repository.
+
+Version 1.1.0 of the client is the last release of the client from this repository. The new repository is accompanied by a release of version 2.0.0 of the Neptune Gremlin Client.
+
+See [Migrating from version 1 of the Neptune Gremlin Client](https://github.com/aws/neptune-gremlin-client#migrating-from-version-1-of-the-neptune-gremlin-client) if you are migrating an application from version 1.x.x of the Neptune Gremlin Client to version 2.x.x.
+
 # Gremlin Client for Amazon Neptune
 
 A Java Gremlin client for Amazon Neptune that allows you to change the endpoints used by the client as it is running. Includes an agent that can query the Amazon Neptune API for cluster details, and update the client on a periodic basis. You can supply your own custom endpoint selectors to configure the client for a subset of instances in your cluster based on tags, instance types, instance IDs, AZs, etc.
@@ -5,6 +15,18 @@ A Java Gremlin client for Amazon Neptune that allows you to change the endpoints
 The client also provides support for IAM database authentication, and for connecting to Neptune via a network or application load balancer.
 
 If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
+
+## Dependencies
+
+### Maven
+
+```
+<dependency>
+    <groupId>software.amazon.neptune</groupId>
+    <artifactId>gremlin-client</artifactId>
+    <version>1.1.0</version>
+</dependency>
+```
 
 ## Documentation
 
@@ -28,8 +50,8 @@ If your application uses a lot of concurrent clients, you should proxy endpoint 
 
 ## Recent features
 
-  - **[Breaking Change February 2023 – version 1.1.0]** The behavior of the `EndpointsType.Primary` and `EndpointsType.ReadReplicas` selectors has changed. Prior to 1.1.0, `EndpointsType.Primary` would return the cluster endpoint if no primary was available, and `EndpointsType.ReadReplicas` would return the reader endpoint if no read replicas were available. Now these selectors return an empty list if the specified type of endpoint is not available. If you want to retain th eold behaviour, use `EndpointsType.PrimaryOrClusterEndpoint` and `EndpointsType.ReadReplicasOrReaderEndpoint` instead.
-
+  - **[New May 2023 – version 1.1.0]** Upgraded to version 3.6.2 of the Java Gremlin driver.
+  
   - **[New February 2023]** AWS Lamba proxy now allows you to mark specific endpoints as being unavailable.
 
   - **[New December 2022 – version 1.0.8]** Now supports transactions against a writer or cluster endpoint.
@@ -148,13 +170,12 @@ refreshAgent.startPollingNeptuneAPI(
 
 The `EndpointsType` enum provides implementations of `EndpointsSelector` for some common use cases:
 
-  * `EndpointsType.All` –  Return all available instance (primary and read replicas) endpoints.
-  * `EndpointsType.Primary` – Returns the primary (writer) instance endpoint if it is available. (Prior to 1.1.0 this returns the cluster endpoint if the primary instance endpoint is not available.)
-  * `EndpointsType.ReadReplicas` – Returns all available read replica instance endpoints. (Prior to 1.1.0 this returns the reader endpoint if there are no replica instance endpoints.)
-  * `EndpointsType.ClusterEndpoint` – Returns the [cluster endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html).
-  * `EndpointsType.ReaderEndpoint` – Returns the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html).
-  * `EndpointsType.PrimaryOrClusterEndpoint` – (From 1.1.0) Returns the primary (writer) instance endpoint if it is available, or the cluster endpoint if the primary instance endpoint is not available.
-  * `EndpointsType.ReadReplicasOrReaderEndpoint` – (From 1.1.0) Returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the reader endpoint.
+  * `EndpointsType.All` –  Returns all available instance (writer and read replicas) endpoints, or, if there are no available instance endpoints, the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-reader-endpoints).
+  * `EndpointsType.Primary` – Returns the primary (writer) instance endpoint if it is available, or the [cluster endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-cluster-endpoints) if the primary instance endpoint is not available.
+  * `EndpointsType.ReadReplicas` – Returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-reader-endpoints).
+  * `EndpointsType.ClusterEndpoint` – Returns the [cluster endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-cluster-endpoints).
+  * `EndpointsType.ReaderEndpoint` – Returns the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-reader-endpoints).
+
 
 ### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
 
