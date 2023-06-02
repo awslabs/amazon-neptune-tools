@@ -551,8 +551,7 @@
         },
         "MemorySize": 128,
         "Runtime": "python3.9",
-        "Timeout": "30",
-        "ReservedConcurrentExecutions": 1
+        "Timeout": "30"
       }
     },
     "KinesisToElasticSearchLambda": {
@@ -660,9 +659,6 @@
         "MemorySize": 1024,
         "Runtime": "python3.9",
         "Timeout": "900",
-        "ReservedConcurrentExecutions": {
-          "Ref": "KinesisShardCount"
-        },
         "VpcConfig": {
           "SecurityGroupIds": [
             {
