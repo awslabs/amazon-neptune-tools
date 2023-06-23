@@ -16,14 +16,61 @@ import os
 import boto3
 import logging
 from datetime import datetime
+from opensearchpy import OpenSearch, RequestsHttpConnection, AWSV4SignerAuth
 
 client = boto3.client('batch')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+def pre_trigger():
+    # clears `amazon_neptune` indices before we run rest of the job
+    print("Started PreTrigger Job")
+    host = os.environ['ELASTIC_SEARCH_ENDPOINT'] # cluster endpoint, for example: my-test-domain.us-east-1.es.amazonaws.com
+    region = os.environ['AWS_REGION']
+    service = 'es'
+    credentials = boto3.Session().get_credentials()
+    auth = AWSV4SignerAuth(credentials, region, service)
+
+    client = OpenSearch(
+        hosts = [{'host': host, 'port': 443}],
+        http_auth = auth,
+        use_ssl = True,
+        verify_certs = True,
+        connection_class = RequestsHttpConnection,
+        pool_maxsize = 20
+    )
+
+    logger.info("Listing Indices Now")
+    response = client.indices.get_alias("*")
+    logger.info(response)
+
+    logger.info("Creating Index Now")
+    index_name = "your_index_name"
+    index_body = {
+        "settings": {
+            "number_of_shards": 3,
+            "number_of_replicas": 2,
+        },
+    }
+    response = client.indices.create(index=index_name, body=index_body)
+    logger.info(response)
+    
+    logger.info("Listing Indices Now")
+    response = client.indices.get_alias("*")
+    logger.info(response)
+    
+    logger.info("Deleting Index Now")    
+    response = client.indices.delete(index="your_index_name")
+    logger.info(response)
+    
+    logger.info("Listing Indices Now")
+    response = client.indices.get_alias("*")
+    logger.info(response)
+
 def trigger_neptune_export():
 
+    pre_trigger()
     neptune_export_jar_uri = os.environ['NEPTUNE_EXPORT_JAR_URI']
     neptune_endpoint = os.environ['NEPTUNE_ENDPOINT']
     neptune_port = os.environ['NEPTUNE_PORT']

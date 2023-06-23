@@ -653,6 +653,9 @@
             "STREAM_NAME": {
               "Ref": "KinesisStream"
             },
+            "ELASTIC_SEARCH_ENDPOINT": {
+              "Ref": "ElasticSearchEndpoint"
+            },
             "log_commit_nums": "false"
           }
         },
