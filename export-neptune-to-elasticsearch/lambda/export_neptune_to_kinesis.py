@@ -46,7 +46,7 @@ def pre_trigger():
     logger.info(response)
 
     logger.info("Creating Index Now")
-    index_name = "your_index_name"
+    index_name = "amazon_neptune"
     index_body = {
         "settings": {
             "number_of_shards": 3,
