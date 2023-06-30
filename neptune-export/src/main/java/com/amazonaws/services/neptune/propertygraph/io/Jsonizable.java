@@ -14,6 +14,6 @@ package com.amazonaws.services.neptune.propertygraph.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public interface Jsonizable {
-    JsonNode toJson();
+public interface Jsonizable<T> {
+    JsonNode toJson(T o);
 }

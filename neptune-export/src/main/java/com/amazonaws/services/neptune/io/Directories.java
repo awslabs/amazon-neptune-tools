@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.io;
 
 import com.amazonaws.services.neptune.cluster.EventId;
+import com.amazonaws.services.neptune.propertygraph.ExportStats;
 import com.amazonaws.services.neptune.propertygraph.Label;
 import com.amazonaws.services.neptune.propertygraph.NamedQueriesCollection;
 import com.amazonaws.services.neptune.propertygraph.io.JsonResource;
@@ -44,8 +45,10 @@ public class Directories {
     }
 
     private static final String CONFIG_FILE = "config.json";
+    private static final String STATS_FILE = "stats.json";
     private static final String LAST_EVENT_ID_FILE = "lastEventId.json";
     private static final String QUERIES_FILE = "queries.json";
+
 
     public static Directories createFor(DirectoryStructure directoryStructure,
                                         File root,
@@ -250,19 +253,25 @@ public class Directories {
         }
     }
 
-    public JsonResource<GraphSchema> configFileResource() {
+    public JsonResource<GraphSchema, Boolean> configFileResource() {
         return new JsonResource<>("Config file",
                 configFilePath().toUri(),
                 GraphSchema.class);
     }
 
-    public JsonResource<EventId> lastEventIdFileResource() {
+    public JsonResource<ExportStats, GraphSchema> statsFileResource() {
+        return new JsonResource<>("Stats file",
+                statsFilePath().toUri(),
+                ExportStats.class);
+    }
+
+    public JsonResource<EventId, Object> lastEventIdFileResource() {
         return new JsonResource<>("LastEventId file",
                 lastEventIdFilePath().toUri(),
                 EventId.class);
     }
 
-    public JsonResource<NamedQueriesCollection> queriesResource() {
+    public JsonResource<NamedQueriesCollection, Object> queriesResource() {
         return new JsonResource<>("Queries file",
                 queriesFilePath().toUri(),
                 NamedQueriesCollection.class);
@@ -285,12 +294,20 @@ public class Directories {
         return directory.resolve(CONFIG_FILE).toAbsolutePath();
     }
 
+    private Path statsFilePath() {
+        return directory.resolve(STATS_FILE).toAbsolutePath();
+    }
+
     private Path lastEventIdFilePath() {
         return directory.resolve(LAST_EVENT_ID_FILE).toAbsolutePath();
     }
 
     private Path queriesFilePath() {
         return directory.resolve(QUERIES_FILE).toAbsolutePath();
+    }
+
+    public Path debugFilePath(String name) {
+        return directory.resolve(name + ".txt").toAbsolutePath();
     }
 
 }

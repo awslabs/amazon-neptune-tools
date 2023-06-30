@@ -97,8 +97,9 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
 
                     Directories directories = target.createDirectories();
 
-                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
-                    JsonResource<EventId> eventIdFileResource = directories.lastEventIdFileResource();
+                    JsonResource<GraphSchema, Boolean> configFileResource = directories.configFileResource();
+                    JsonResource<EventId, Object> eventIdFileResource = directories.lastEventIdFileResource();
+                    JsonResource<ExportStats, GraphSchema> statsFileResource = directories.statsFileResource();
 
                     GetLastEventIdStrategy getLastEventIdStrategy = streams.lastEventIdStrategy(cluster, eventIdFileResource);
                     getLastEventIdStrategy.saveLastEventId("gremlin");
@@ -126,13 +127,15 @@ public class ExportPropertyGraph extends NeptuneExportCommand implements Runnabl
                                 cluster.concurrencyConfig(),
                                 targetConfig,
                                 featureToggles(),
-                                getMaxFileDescriptorCount());
+                                getMaxFileDescriptorCount()
+                        );
 
                         graphSchema = Timer.timedActivity(
                                 "export",
                                 (CheckedActivity.Callable<GraphSchema>) exportJob::execute);
 
-                        configFileResource.save(graphSchema);
+                        configFileResource.save(graphSchema, false);
+                        statsFileResource.save(stats, graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);

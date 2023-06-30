@@ -23,7 +23,6 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from typing import Tuple, Iterable
 
-
 def synchronized_method(method):
     
     outer_lock = threading.Lock()
@@ -38,19 +37,26 @@ def synchronized_method(method):
 
     return sync_method
 
-class LazyHttpHeaders:
+class LazyHttpHeaders():
     
     def __init__(self, lazy_headers):
         self.lazy_headers = lazy_headers
+        self.additional_headers = {}
     
     def get_all(self) -> Iterable[Tuple[str, str]]:
         return self.items()
         
     def items(self):
-        return self.lazy_headers().items()
+        return self.lazy_headers(self.additional_headers).items()
         
     def __iter__(self):
-        return iter(self.items())   
+        return iter(self.items()) 
+        
+    def __setitem__(self, key, value):
+        self.additional_headers[key] = value
+
+    def __getitem__(self, key):
+        return self.items()[key]  
         
 class RequestParameters:
     
@@ -137,9 +143,12 @@ class Endpoint:
         
     def prepare_request(self, method='GET', payload=None, querystring={}, headers={}):
         
-        def get_headers():
+        def get_headers(additional_headers={}):
             
             service = 'neptune-db'
+            
+            for k,v in additional_headers.items():
+                headers[k] = v
             
             if 'host' not in headers and 'Host' not in headers:
                 headers['Host'] = self.neptune_endpoint
@@ -216,6 +225,9 @@ class Endpoints:
         
     def sparql_stream_endpoint(self):
         return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql/stream')
+        
+    def propertygraph_stream_endpoint(self):
+        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'pg/stream')
     
     def __endpoint(self, protocol, neptune_endpoint, neptune_port, suffix):
         return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn, self.proxy_dns, self.proxy_port, self.remove_host_header)

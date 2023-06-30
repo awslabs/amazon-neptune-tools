@@ -29,7 +29,7 @@ import java.nio.file.Files;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class JsonResource<T extends Jsonizable> {
+public class JsonResource<T extends Jsonizable<E>, E> {
 
     private final String title;
     private final URI resourcePath;
@@ -41,7 +41,7 @@ public class JsonResource<T extends Jsonizable> {
         this.clazz = clazz;
     }
 
-    public void save(Jsonizable object) throws IOException {
+    public void save(Jsonizable<E> object, E param) throws IOException {
 
         if (resourcePath == null) {
             return;
@@ -56,7 +56,7 @@ public class JsonResource<T extends Jsonizable> {
 
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(resourceFile.toPath()), UTF_8))) {
             ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-            String json = objectWriter.writeValueAsString(object.toJson());
+            String json = objectWriter.writeValueAsString(object.toJson(param));
             writer.write(json);
         }
     }

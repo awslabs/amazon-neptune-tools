@@ -330,8 +330,6 @@ public class ExportToS3NeptuneExportEventHandler implements NeptuneExportEventHa
         while (allowRetry){
             try {
 
-                //deleteS3Directories(directory, outputS3ObjectInfo);
-
                 ObjectMetadataProvider metadataProvider = (file, objectMetadata) -> {
                     objectMetadata.setContentLength(file.length());
                     objectMetadata.setSSEAlgorithm(ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION);

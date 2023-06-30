@@ -493,7 +493,7 @@ public class PropertyGraphTrainingDataConfigWriterV1 {
 
         if (isSinglePropertyFeature) {
             PropertySchemaStats propertySchemaStats = labelSchema.getPropertySchemaStats(firstPropertySchema.property());
-            if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformMultiValueSize()) {
+            if (firstPropertySchema.isMultiValue() && !propertySchemaStats.isUniformCardinality()) {
                 warnings.add(String.format("Unable to add numerical edge feature: Edge of type '%s' has a multi-value numerical property '%s' with differing numbers of values.",
                         label.fullyQualifiedLabel(),
                         firstPropertySchema.property()));

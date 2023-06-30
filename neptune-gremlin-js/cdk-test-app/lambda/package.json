@@ -9,17 +9,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-crypto/sha256-js": "^2.0.1",
+    "@aws-sdk/signature-v4": "^3.110.0",
     "async": "^3.2.1",
     "aws4": "^1.11.0",
     "axios": "^0.24.0",
     "gremlin": "^3.5.1",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "jwk-to-pem": "^2.0.5",
     "qs": "^6.10.1",
     "util": "^0.12.4",
-    "uuid": "^8.3.2",
-    "@aws-crypto/sha256-js": "^2.0.1",
-    "@aws-sdk/signature-v4": "^3.110.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "aws-sdk": "^2.1025.0",

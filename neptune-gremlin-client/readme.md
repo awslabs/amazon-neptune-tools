@@ -1,3 +1,13 @@
+# Deprecation Notice
+
+The Gremlin Client for Amazon Neptune has been migrated to a [new standalone repository](https://github.com/aws/neptune-gremlin-client). Ongoing development and releases will take place in the new repository, and this module here will no longer be maintained.
+
+Any Neptune Gremlin Client related issues should be reported in the Issues section under the new repository.
+
+Version 1.1.0 of the client is the last release of the client from this repository. The new repository is accompanied by a release of version 2.0.0 of the Neptune Gremlin Client.
+
+See [Migrating from version 1 of the Neptune Gremlin Client](https://github.com/aws/neptune-gremlin-client#migrating-from-version-1-of-the-neptune-gremlin-client) if you are migrating an application from version 1.x.x of the Neptune Gremlin Client to version 2.x.x.
+
 # Gremlin Client for Amazon Neptune
 
 A Java Gremlin client for Amazon Neptune that allows you to change the endpoints used by the client as it is running. Includes an agent that can query the Amazon Neptune API for cluster details, and update the client on a periodic basis. You can supply your own custom endpoint selectors to configure the client for a subset of instances in your cluster based on tags, instance types, instance IDs, AZs, etc.
@@ -6,7 +16,47 @@ The client also provides support for IAM database authentication, and for connec
 
 If your application uses a lot of concurrent clients, you should proxy endpoint refresh requests through a Lambda function that periodically queries the Management API and then caches the results on behalf of your clients. This repository includes an AWS Lambda function that can act as a Neptune endpoints information proxy.
 
-  - **[New November 2022]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
+## Dependencies
+
+### Maven
+
+```
+<dependency>
+    <groupId>software.amazon.neptune</groupId>
+    <artifactId>gremlin-client</artifactId>
+    <version>1.1.0</version>
+</dependency>
+```
+
+## Documentation
+
+  - [Recent features](#recent-features)
+  - [Using the topology aware cluster and client](#using-the-topology-aware-cluster-and-client)
+  - [Refreshing endpoints using the ClusterEndpointsRefreshAgent](#refreshing-endpoints-using-the-clusterendpointsrefreshagent)
+    - [Providing custom endpoint selection logic using EndpointsSelector](#providing-custom-endpoint-selection-logic-using-endpointsselector)
+    - [Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients](#connect-the-clusterendpointsrefreshAgent-to-a-lambda-proxy-when-you-have-many-clients)
+       - [Lambda proxy environment variables](#lambda-proxy-environment-variables)
+       - [Marking specific endpoints as unavailable](#marking-specific-endpoints-as-unavailable)
+       - [Installing the neptune-endpoints-info AWS Lambda function](#installing-the-neptune-endpoints-info-aws-lambda-function)
+  - [GremlinClusterBuilder and NeptuneGremlinClusterBuilder](#gremlinclusterbuilder-and-neptunegremlinclusterbuilder)
+    - [Credentials](#credentials)
+    - [Service region](#service-region)
+    - [Connection timeouts and refreshing endpoint addresses after connection failures](#connection-timeouts-and-refreshing-endpoint-addresses-after-connection-failures)
+    - [Transactions](#transactions)
+  - [Demos](#demos)
+    - [RollingSubsetOfEndpointsDemo](#rollingsubsetofendpointsdemo)
+    - [RefreshAgentDemo](#refreshagentdemo)
+    - [TxDemo](#txdemo)
+
+## Recent features
+
+  - **[New May 2023 – version 1.1.0]** Upgraded to version 3.6.2 of the Java Gremlin driver.
+  
+  - **[New February 2023]** AWS Lamba proxy now allows you to mark specific endpoints as being unavailable.
+
+  - **[New December 2022 – version 1.0.8]** Now supports transactions against a writer or cluster endpoint.
+	
+  - **[New November 2022 – version 1.0.8]** The `ClusterEndpointsRefreshAgent.lambdaProxy()` factory method, which creates a `ClusterEndpointsRefreshAgent` that queries an endpoints AWS Lambda proxy, now accepts a custom `EndpointsSelector`, allowing you to use custom endpoint selection strategies with the Lambda proxy.
 
   - **[New May 24 2022 – version 1.0.6]** Upgraded to version 3.5.2 of the Java Gremlin driver.
   
@@ -31,7 +81,7 @@ The Amazon CloudWatch screenshot below shows requests being distributed over 5 i
 You create a `GremlinCluster` and `GremlinClient` much as you would a normal cluster and client:
 
 ```
-GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
+GremlinCluster cluster = GremlinClusterBuilder.build()
         .enableSsl(true)
         .addContactPoints("replica-endpoint-1", "replica-endpoint-2", "replica-endpoint-3")
         .port(8182)
@@ -60,7 +110,7 @@ client.refreshEndpoints("new-replica-endpoint-1", "new-replica-endpoint-2", "new
  
 Because the cluster topology can change at any moment as a result of both planned and unplanned events, you should wrap all queries with an exception handler. Should a query fail because the underlying client connection has been closed, you can attempt a retry.
 
-## ClusterEndpointsRefreshAgent
+## Refreshing endpoints using the ClusterEndpointsRefreshAgent
 
 The `ClusterEndpointsRefreshAgent` allows you to schedule endpoint updates to a client based on a Neptune cluster ID.  The identity under which you're running the agent must be authorized to perform `rds:DescribeDBClusters`,  `rds:DescribeDBInstances` and `rds:ListTagsForResource` for your Neptune cluster.
 
@@ -87,17 +137,17 @@ refreshAgent.startPollingNeptuneAPI(
         TimeUnit.SECONDS);
 ```
 
-### EndpointsSelector
+### Providing custom endpoint selection logic using EndpointsSelector
 
 The `ClusterEndpointsRefreshAgent` constructor accepts an `EndpointsSelector` that allows you to add custom endpoint selection logic. The following example shows how to select endpoints for all **Available** instances with a **workload** tag whose value is **analytics**:
 
 ```
 EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
     instances.stream()
-        .filter(NeptuneInstanceProperties::isReader)
+        .filter(NeptuneInstanceMetadata::isReader)
         .filter(i -> i.hasTag("workload", "analytics"))
-        .filter(NeptuneInstanceProperties::isAvailable)
-        .map(NeptuneInstanceProperties::getEndpoint)
+        .filter(NeptuneInstanceMetadata::isAvailable)
+        .map(NeptuneInstanceMetadata::getEndpoint)
         .collect(Collectors.toList());
 
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
@@ -106,7 +156,7 @@ ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(selector))
     .port(8182)
     .create();
 
@@ -120,11 +170,12 @@ refreshAgent.startPollingNeptuneAPI(
 
 The `EndpointsType` enum provides implementations of `EndpointsSelector` for some common use cases:
 
-  * `EndpointsType.All` –  return all available instance (primary and read replicas) endpoints
-  * `EndpointsType.Primary` – returns the primary instance endpoint if it is available, or the cluster endpoint if the primary instance endpoint is not available
-  * `EndpointsType.ReadReplicas` – returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the reader endpoint
-  * `EndpointsType.ClusterEndpoint` – returns the cluster endpoint
-  * `EndpointsType.ReaderEndpoint` – return the reader endpoint
+  * `EndpointsType.All` –  Returns all available instance (writer and read replicas) endpoints, or, if there are no available instance endpoints, the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-reader-endpoints).
+  * `EndpointsType.Primary` – Returns the primary (writer) instance endpoint if it is available, or the [cluster endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-cluster-endpoints) if the primary instance endpoint is not available.
+  * `EndpointsType.ReadReplicas` – Returns all available read replica instance endpoints, or, if there are no replica instance endpoints, the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-reader-endpoints).
+  * `EndpointsType.ClusterEndpoint` – Returns the [cluster endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-cluster-endpoints).
+  * `EndpointsType.ReaderEndpoint` – Returns the [reader endpoint](https://docs.aws.amazon.com/neptune/latest/userguide/feature-overview-endpoints.html#feature-overview-reader-endpoints).
+
 
 ### Connect the ClusterEndpointsRefreshAgent to a Lambda Proxy when you have many clients
 
@@ -134,7 +185,7 @@ Because of this throttling behaviour, if your application uses a lot of concurre
 
 This repository includes an AWS CloudFormation template that creates a Lambda function which polls the Management API, and which you can configure with a Neptune database cluster ID and a polling interval. After it's deployed, this function is named _neptune-endpoint-info_<cluster-id>_. In your application code, you can then create a `ClusterEndpointsRefreshAgent` using the `lambdaProxy()` factory method, supplying the type of endpoint information to be retrieved (for example, `All`, `Primary`, `ReadReplicas`, `ClusterEndpoint` or `ReaderEndpoint`), the name of the proxy Lambda function, and the AWS Region in which the proxy Lambda function is located.
 
-The identity under which you're running your aoplication must be authorized to perform `lambda:Invoke` for your proxy Lambda function.
+The identity under which you're running your application must be authorized to perform `lambda:Invoke` for your proxy Lambda function.
 
 The following code shows how to create a refresh agent that gets endpoint information from a proxy Lambda function named _neptune-endpoint-info_my-cluster_:
 
@@ -146,14 +197,14 @@ ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaP
 	
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
     .port(8182)
     .create();
 
 GremlinClient client = cluster.connect();
 
 refreshAgent.startPollingNeptuneAPI(
-    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(EndpointsType.ReadReplicas)),
     60,
     TimeUnit.SECONDS);
 ```
@@ -163,10 +214,10 @@ You can also supply a custom endpoints selector when using the Lambda proxy:
 ```
 EndpointsSelector selector = (clusterEndpoint, readerEndpoint, instances) ->
     instances.stream()
-        .filter(NeptuneInstanceProperties::isReader)
+        .filter(NeptuneInstanceMetadata::isReader)
         .filter(i -> i.hasTag("workload", "analytics"))
-        .filter(NeptuneInstanceProperties::isAvailable)
-        .map(NeptuneInstanceProperties::getEndpoint)
+        .filter(NeptuneInstanceMetadata::isAvailable)
+        .map(NeptuneInstanceMetadata::getEndpoint)
         .collect(Collectors.toList());
 
 ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaProxy(
@@ -176,7 +227,7 @@ ClusterEndpointsRefreshAgent refreshAgent = ClusterEndpointsRefreshAgent.lambdaP
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
     .enableSsl(true)
-    .addContactPoints(refreshAgent.getAddresses())
+    .addContactPoints(refreshAgent.getAddresses().get(selector))
     .port(8182)
     .create();
 
@@ -187,6 +238,42 @@ refreshAgent.startPollingNeptuneAPI(
     60,
     TimeUnit.SECONDS);
 ```
+
+#### Lambda proxy environment variables
+
+The AWS Lambda proxy has the following environment variables:
+
+  - `clusterId` – The cluster ID of the Amazon Neptune cluster to be polled for endpoint information.
+  - `pollingIntervalSeconds` – The number of seconds between polls.
+  - `unavailable` – Determines whether specific endpoints will be marked as `unavailable`. Valid values are: `none`, `all`, `writer`, `reader`. 
+  
+#### Marking specific endpoints as unavailable
+
+The AWS Lambda proxy has an `unavailable` environment variable that accepts the following values: `none`, `all`, `writer`, `reader`. You can use this environment variable to set the status of specific types of endpoint to `unavailable` – even if the Management API says they are available. In this way, you can apply back pressure in the client, preventing it from sending queries while you make changes to your Neptune cluster. To manage this back pressure, your application will have to handle two different kinds of exception – see below. The endpoints are only marked as `unavailable` in the responses returned from the Lambda proxy: the real endpoints remain unaffected.
+
+For example, if you set the `unavailable` environment variable to `reader`, then all read replica endpoints will be marked as `unavailable`. The following selector will, therefore, return an empty list of endpoints:
+
+```
+EndpointsSelector availableReadReplicasSelector = (clusterEndpoint, readerEndpoint, instances) ->
+    instances.stream()
+        .filter(NeptuneInstanceMetadata::isReader)
+        .filter(NeptuneInstanceMetadata::isAvailable)
+        .map(NeptuneInstanceMetadata::getEndpoint)
+        .collect(Collectors.toList());
+```
+
+An empty list of endpoints can trigger two different exceptions in the Neptune Gremlin Client:
+
+  - If you try to build a new cluster (using `NeptuneGremlinClusterBuilder` or `GremlinClusterBuilder`) with an empty list of endpoints, the builders's `create()` method will throw an `IllegalArgumentException` with the following message: "The list of endpoint addresses is empty. You must supply one or more endpoints."
+  – If an existing cluster is refreshed with an empty list of endpoints, the next query will trigger a `TimeoutException` with the following message: "Timed-out waiting for connection".
+
+
+#### Installing the neptune-endpoints-info AWS Lambda function
+
+  1. Build the AWS Lambda proxy from [source](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-gremlin-client/neptune-endpoints-info-lambda) and put it an Amazon S3 bucket. 
+  2. Install the Lambda proxy in your account using [this CloudFormation template](https://github.com/awslabs/amazon-neptune-tools/blob/master/neptune-gremlin-client/cloudformation-templates/neptune-endpoints-info-lambda.json). The template includes parameters for the current Neptune cluster ID, and the S3 source for the Lambda proxy jar (from step 1).
+  3. Ensure all parts of your application are using the latest Gremlin Client for Amazon Neptune to connect to and query Neptune.
+  4. The Gremlin Client for Amazon Neptune should be configured to fetch the cluster topology information from the Lambda proxy using the `ClusterEndpointsRefreshAgent.lambdaProxy()` method, as per the [examples above](https://github.com/awslabs/amazon-neptune-tools/tree/master/neptune-gremlin-client#connect-the-clusterendpointsrefreshagent-to-a-lambda-proxy-when-you-have-many-clients).
 
 ## GremlinClusterBuilder and NeptuneGremlinClusterBuilder
 
@@ -238,6 +325,7 @@ The client includes a load balancer-aware handshake interceptor that will [sign 
 ```
 GremlinCluster cluster = NeptuneGremlinClusterBuilder.build()
         .enableSsl(true)
+				.enableIamAuth(true)
         .addContactPoint(neptuneClusterEndpoint)
         .networkLoadBalancerEndpoint(networkLoadBalancerEndpoint)
         .handshakeInterceptor(r -> { 
@@ -293,15 +381,16 @@ Whenever a `GremlinClient` attempts to acquire a connection, it iterates through
 Using `GremlinClusterBuilder.refreshOnErrorThreshold()` and `GremlinClusterBuilder.refreshOnErrorEventHandler()` (and the `NeptuneGremlinClusterBuilder` equivalents), you can instruct a `GremlinClinet` to refresh its endpoints after a certain number of consecutive failures to acquire a connection. The following example shows how to create a `GremlinClient` that will refresh its endpoints after 1000 consecutive failures to acquire a connection:
 
 ```
+EndpointsType selector = EndpointsType.ReadReplicas;
 
 ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
     clusterId,
-    EndpointsType.ReadReplicas);
+    selector);
 
 GremlinCluster cluster = GremlinClusterBuilder.build()
         .addContactPoints(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
         .refreshOnErrorThreshold(1000)
-        .refreshOnErrorEventHandler(refreshAgent.getAddresses().get(EndpointsType.ReadReplicas))
+        .refreshOnErrorEventHandler(() -> refreshAgent.getAddresses().get(selector))
         .maxWaitForConnection(20000)
         .create();
 
@@ -317,9 +406,65 @@ The `refreshAgent` here is configured to find the endpoint addresses of all data
 
 With this setup, then, the `GremlinClient` will refresh its endpoint addresses once every minute. It will also refresh its endpoints after 1000 consecutive failed attempts to get a connection. If any attempt to get a connection takes longer than 20 seconds, the client will throw a `TimeoutException`.
 
+### Transactions
+
+The Gremlin Client for Amazon Neptune support executing Gremlin transactions, as long as the transactions are issued against a writer endpoint:
+
+```
+EndpointsType selector = EndpointsType.ClusterEndpoint;
+
+ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(
+    "my-cluster-id",
+    selector);
+	
+GremlinCluster cluster = GremlinClusterBuilder.build()
+    .enableSsl(true)
+    .addContactPoints(refreshAgent.getAddresses().get(selector))
+    .create();
+    
+GremlinClient client = cluster.connect();
+
+refreshAgent.startPollingNeptuneAPI(
+    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(selector)),
+    60,
+    TimeUnit.SECONDS);
+
+DriverRemoteConnection connection = DriverRemoteConnection.using(client);
+
+Transaction tx = traversal().withRemote(connection).tx();
+
+GraphTraversalSource g = tx.begin();
+
+try {
+
+    String id1 = UUID.randomUUID().toString();
+    String id2 = UUID.randomUUID().toString();
+    
+    g.addV("testNode").property(T.id, id1).iterate();
+    g.addV("testNode").property(T.id, id2).iterate();
+    g.addE("testEdge").from(__.V(id1)).to(__.V(id2)).iterate();
+    
+    tx.commit();
+
+} catch (Exception e) {
+    tx.rollback();
+}
+
+
+refreshAgent.close();
+client.close();
+cluster.close();
+```
+
+If you attempt to issue transactions against a read replica, the client returns an error:
+
+```
+org.apache.tinkerpop.gremlin.driver.exception.ResponseException: {"detailedMessage":"Gremlin update operation attempted on a read-only replica.","requestId":"05074a8e-c9ef-42b7-9f3e-1c388cd35ae0","code":"ReadOnlyViolationException"}
+```
+
 ## Demos
  
-The demo includes two sample scenarios:
+The demo includes three sample scenarios:
  
 ### RollingSubsetOfEndpointsDemo
  
@@ -350,4 +495,17 @@ java -jar gremlin-client-demo.jar refresh-agent-demo \
 ```
  
 With this demo, try triggering a failover in the cluster. After approx 15 seconds you should see a new endpoint added to the client, and the old endpoint removed. While the failover is occurring, you may see some queries fail: I've used a simple exception handler to log these errors.
+
+### TxDemo
+ 
+This demo demonstrates using the Neptune Gremlin client to issue transactions.
+ 
+The command for this demo requires a `--cluster-id` parameter. The identity under which you're running the demo must be authorized to perform `rds:DescribeDBClusters`,  `rds:DescribeDBInstances` and `rds:ListTagsForResource` for your Neptune cluster.
+ 
+```
+java -jar gremlin-client-demo.jar tx-demo \
+  --enable-ssl \
+  --cluster-id <my-cluster-id>
+```
+
  

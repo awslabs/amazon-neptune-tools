@@ -2,14 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>neptune-gremlin-client</artifactId>
-        <groupId>software.amazon.neptune</groupId>
-        <version>1.0.7-SNAPSHOT</version>
-    </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>software.amazon.neptune</groupId>
     <artifactId>neptune-endpoints-info-lambda</artifactId>
+    <version>1.1.1-SNAPSHOT</version>
+
     <name>neptune-endpoints-info-lambda</name>
     <description>
         An AWS Lambda function that retrieves details of Amazon Neptune endpoints.
@@ -43,18 +42,23 @@
 
     <properties>
         <uberjar.name>neptune-endpoints-info-lambda</uberjar.name>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <javac.target>1.8</javac.target>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>software.amazon.neptune</groupId>
             <artifactId>gremlin-client</artifactId>
-            <version>${project.version}</version>
+            <version>1.1.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

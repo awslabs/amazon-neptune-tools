@@ -83,7 +83,8 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                         featureToggles())) {
 
                     Directories directories = target.createDirectories();
-                    JsonResource<GraphSchema> configFileResource = directories.configFileResource();
+                    JsonResource<GraphSchema, Boolean> configFileResource = directories.configFileResource();
+                    JsonResource<ExportStats, GraphSchema> statsFileResource = directories.statsFileResource();
 
                     GraphSchema graphSchema = graphSchemaProvider.graphSchema();
                     ExportStats stats = new ExportStats();
@@ -107,11 +108,13 @@ public class ExportPropertyGraphFromConfig extends NeptuneExportCommand implemen
                                 gremlinFilters.filters(),
                                 cluster.concurrencyConfig(),
                                 targetConfig, featureToggles(),
-                                getMaxFileDescriptorCount());
+                                getMaxFileDescriptorCount()
+                        );
 
                         graphSchema = exportJob.execute();
 
-                        configFileResource.save(graphSchema);
+                        configFileResource.save(graphSchema, false);
+                        statsFileResource.save(stats, graphSchema);
                     }
 
                     directories.writeRootDirectoryPathAsMessage(target.description(), target);

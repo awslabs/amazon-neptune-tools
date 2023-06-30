@@ -133,6 +133,7 @@ public class NeptuneExportLambda implements RequestStreamHandler {
         logger.log("s3Region                  : " + s3Region);
         logger.log("completionFilePayload     : " + completionFilePayload.toPrettyString());
         logger.log("additionalParams          : " + additionalParams.toPrettyString());
+        logger.log("maxFileDescriptorCount    : " + maxFileDescriptorCount);
 
         if (!cmd.contains(" ") && !params.isEmpty()) {
             cmd = ParamConverter.fromJson(cmd, params).toString();

@@ -12,40 +12,40 @@ permissions and limitations under the License.
 
 package software.amazon.neptune;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
-import software.amazon.neptune.cluster.EndpointsSelector;
-import software.amazon.neptune.cluster.NeptuneGremlinClusterBuilder;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.Once;
 import com.github.rvesse.airline.annotations.restrictions.Port;
 import com.github.rvesse.airline.annotations.restrictions.PortType;
 import com.github.rvesse.airline.annotations.restrictions.Required;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.GremlinClient;
 import org.apache.tinkerpop.gremlin.driver.GremlinCluster;
+import org.apache.tinkerpop.gremlin.driver.IamAuthConfig;
 import org.apache.tinkerpop.gremlin.driver.remote.DriverRemoteConnection;
-import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.neptune.cluster.*;
+import software.amazon.utils.RegionUtils;
 
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-import static org.apache.tinkerpop.gremlin.driver.Tokens.ARGS_EVAL_TIMEOUT;
+import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
 
-@Command(name = "rolling-endpoints-demo", description = "Demo using rolling set of endpoints with topology aware cluster and client")
-public class RollingSubsetOfEndpointDemo implements Runnable {
+@Command(name = "tx-demo", description = "Transactional writes demo using the Neptune Gremlin Client")
+public class TxDemo implements Runnable {
+    private static final Logger logger = LoggerFactory.getLogger(TxDemo.class);
 
-    private static final Logger logger = LoggerFactory.getLogger(RollingSubsetOfEndpointDemo.class);
-
-    @Option(name = {"--endpoint"}, description = "Neptune endpoint(s)")
+    @Option(name = {"--cluster-id"}, description = "Amazon Neptune cluster ID")
+    @Once
     @Required
-    private Queue<String> endpoints = new LinkedList<>();
+    private String clusterId;
 
     @Option(name = {"--port"}, description = "Neptune port (optional, default 8182)")
     @Port(acceptablePorts = {PortType.SYSTEM, PortType.USER})
@@ -60,17 +60,13 @@ public class RollingSubsetOfEndpointDemo implements Runnable {
     @Once
     private boolean enableIam = false;
 
-    @Option(name = {"--query-count"}, description = "Number of queries to execute")
+    @Option(name = {"--tx-count"}, description = "Number of transactions to execute")
     @Once
-    private int queryCount = 1000000;
+    private int txCount = 10;
 
     @Option(name = {"--log-level"}, description = "Log level")
     @Once
     private String logLevel = "info";
-
-    @Option(name = {"--interval"}, description = "Interval (in seconds) between rolling endpoints")
-    @Once
-    private int intervalSeconds = 60;
 
     @Option(name = {"--profile"}, description = "Credentials profile")
     @Once
@@ -80,51 +76,76 @@ public class RollingSubsetOfEndpointDemo implements Runnable {
     @Once
     private String serviceRegion = null;
 
+    @Option(name = {"--interval"}, description = "Interval (in seconds) between refreshing addresses")
+    @Once
+    private int intervalSeconds = 15;
+
     @Override
     public void run() {
 
         try {
 
+            EndpointsSelector endpointsSelector = EndpointsType.ClusterEndpoint;
+
+            GetEndpointsFromNeptuneManagementApi fetchStrategy = new GetEndpointsFromNeptuneManagementApi(
+                    clusterId,
+                    Collections.singletonList(endpointsSelector),
+                    RegionUtils.getCurrentRegionName(),
+                    profile
+            );
+
+            ClusterEndpointsRefreshAgent refreshAgent = new ClusterEndpointsRefreshAgent(fetchStrategy);
+
             NeptuneGremlinClusterBuilder builder = NeptuneGremlinClusterBuilder.build()
                     .enableSsl(enableSsl)
                     .enableIamAuth(enableIam)
-                    .addContactPoints(nextSetOfAddresses())
-                    .port(neptunePort)
-                    .iamProfile(profile);
+                    .iamProfile(profile)
+                    .addContactPoints(refreshAgent.getAddresses().get(endpointsSelector))
+                    .minConnectionPoolSize(3)
+                    .maxConnectionPoolSize(3)
+                    .port(neptunePort);
 
-            if (StringUtils.isNotEmpty(serviceRegion)){
+            if (StringUtils.isNotEmpty(serviceRegion)) {
                 builder = builder.serviceRegion(serviceRegion);
             }
 
             GremlinCluster cluster = builder.create();
-
             GremlinClient client = cluster.connect();
 
-            ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-            scheduledExecutorService.scheduleAtFixedRate(() -> {
-                client.refreshEndpoints(nextSetOfAddresses());
-            }, intervalSeconds, intervalSeconds, TimeUnit.SECONDS);
+            refreshAgent.startPollingNeptuneAPI(
+                    (OnNewAddresses) addresses -> client.refreshEndpoints(addresses.get(endpointsSelector)),
+                    intervalSeconds,
+                    TimeUnit.SECONDS);
 
             DriverRemoteConnection connection = DriverRemoteConnection.using(client);
-            GraphTraversalSource g = AnonymousTraversalSource.traversal().withRemote(connection);
 
-            for (int i = 0; i < queryCount; i++) {
+            for (int i = 0; i < txCount; i++) {
+
+                Transaction tx = traversal().withRemote(connection).tx();
+                GraphTraversalSource g = tx.begin();
+
                 try {
-                    List<Map<Object, Object>> results = g.V().limit(10).valueMap(true).toList();
-                    for (Map<Object, Object> result : results) {
-                        //Do nothing
-                    }
-                    if (i % 10000 == 0) {
-                        System.out.println();
-                        System.out.println("Number of queries: " + i);
-                    }
+
+                    String id1 = UUID.randomUUID().toString();
+                    String id2 = UUID.randomUUID().toString();
+
+                    g.addV("testNode").property(T.id, id1).iterate();
+                    g.addV("testNode").property(T.id, id2).iterate();
+                    g.addE("testEdge").from(__.V(id1)).to(__.V(id2)).iterate();
+
+                    tx.commit();
+
+                    System.out.println("Tx complete: " + i);
+                    System.out.println("id1        : " + id1);
+                    System.out.println("id2        : " + id2);
+
                 } catch (Exception e) {
                     logger.warn("Error processing query: {}", e.getMessage());
+                    tx.rollback();
                 }
             }
 
-            scheduledExecutorService.shutdownNow();
-
+            refreshAgent.close();
             client.close();
             cluster.close();
 
@@ -133,21 +154,5 @@ public class RollingSubsetOfEndpointDemo implements Runnable {
             e.printStackTrace();
             System.exit(-1);
         }
-
-    }
-
-    public int approxTwoThirds(int i) {
-        int v = (int) Math.floor(((double) 2 / (double) 3) * i);
-        return v == 0 ? 1 : v;
-    }
-
-    public Collection<String> nextSetOfAddresses() {
-        List<String> currentAddresses = new ArrayList<>();
-        for (int i = 0; i < approxTwoThirds(endpoints.size()); i++) {
-            String a = endpoints.poll();
-            currentAddresses.add(a);
-            endpoints.offer(a);
-        }
-        return currentAddresses;
     }
 }

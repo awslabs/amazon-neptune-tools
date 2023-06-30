@@ -74,8 +74,8 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
             Object value = properties.get(key);
 
             if (properties.containsKey(key)) {
-                int size = propertySchema.accept(value, allowUpdateSchema);
-                labelSchema.recordObservation(propertySchema, value, size);
+                PropertySchema.PropertyValueMetadata propertyValueMetadata = propertySchema.accept(value, allowUpdateSchema);
+                labelSchema.recordObservation(propertySchema, value, propertyValueMetadata);
                 printProperty(value, propertySchema);
             } else {
                 if (allowUpdateSchema) {
@@ -95,13 +95,13 @@ public class JsonPropertyGraphPrinter implements PropertyGraphPrinter {
                     Object value = property.getValue();
 
                     PropertySchema propertySchema = new PropertySchema(key);
-                    int size = propertySchema.accept(value, true);
+                    PropertySchema.PropertyValueMetadata propertyValueMetadata = propertySchema.accept(value, true);
                     if (isNullable) {
                         propertySchema.makeNullable();
                     }
 
                     labelSchema.put(key, propertySchema);
-                    labelSchema.recordObservation(propertySchema, value, size);
+                    labelSchema.recordObservation(propertySchema, value, propertyValueMetadata);
 
                     printProperty(value, propertySchema);
                 }

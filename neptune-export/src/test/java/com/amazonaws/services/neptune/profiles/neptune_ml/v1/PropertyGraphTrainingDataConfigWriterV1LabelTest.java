@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
 
 public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
 
@@ -38,7 +39,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
-        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -100,7 +101,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
-        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -141,7 +142,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         GraphElementSchemas nodeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.nodes);
 
         LabelSchema labelSchema = new LabelSchema(personLabel);
-        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue));
+        labelSchema.put("role", new PropertySchema("role", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         nodeSchemas.addLabelSchema(labelSchema, Collections.singletonList("person-1.csv"));
 
@@ -186,7 +187,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
-        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 
@@ -256,7 +257,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
-        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 
@@ -300,7 +301,7 @@ public class PropertyGraphTrainingDataConfigWriterV1LabelTest {
         GraphElementSchemas edgeSchemas = graphSchema.graphElementSchemasFor(GraphElementType.edges);
 
         LabelSchema labelSchema = new LabelSchema(knowsLabel);
-        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue));
+        labelSchema.put("contact", new PropertySchema("contact", isNullable, dataType, isMultiValue, EnumSet.noneOf(DataType.class)));
 
         edgeSchemas.addLabelSchema(labelSchema, Collections.singletonList("knows-1.csv"));
 

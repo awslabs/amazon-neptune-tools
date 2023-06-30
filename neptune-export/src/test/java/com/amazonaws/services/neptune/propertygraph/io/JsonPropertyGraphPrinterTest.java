@@ -56,8 +56,8 @@ public class JsonPropertyGraphPrinterTest {
     public void shouldPrintEmptyListAsListIrrespectiveOfWhetherMultiValueIsTrue() throws Exception {
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
-        PropertySchema propertySchema2 = new PropertySchema("property2", false, DataType.String, false);
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true, EnumSet.noneOf(DataType.class));
+        PropertySchema propertySchema2 = new PropertySchema("property2", false, DataType.String, false, EnumSet.noneOf(DataType.class));
 
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("property1", propertySchema1);
@@ -83,7 +83,7 @@ public class JsonPropertyGraphPrinterTest {
     public void shouldPrintSingleValueListAsSingleValueWhenIsMultiValueIsFalse() throws Exception {
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, false);
+        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, false, EnumSet.noneOf(DataType.class));
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("tags", propertySchema);
 
@@ -106,7 +106,7 @@ public class JsonPropertyGraphPrinterTest {
     public void shouldPrintSingleValueListAsSingleValueWhenIsMultiValueIsFalseButStrictCardinalityIsEnforced() throws Exception {
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, false);
+        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, false, EnumSet.noneOf(DataType.class));
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("tags", propertySchema);
 
@@ -131,7 +131,7 @@ public class JsonPropertyGraphPrinterTest {
     public void shouldPrintSingleValueListAsArrayWhenIsMultiValueIsTrue() throws Exception {
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, true);
+        PropertySchema propertySchema = new PropertySchema("tags", false, DataType.String, true, EnumSet.noneOf(DataType.class));
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("tags", propertySchema);
 
@@ -154,8 +154,8 @@ public class JsonPropertyGraphPrinterTest {
     public void shouldPrintMultiValueListAsArrayIrrespectiveOfWhetherMultiValueIsTrue() throws Exception {
         StringWriter stringWriter = new StringWriter();
 
-        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true);
-        PropertySchema propertySchema2 = new PropertySchema("property2", false, DataType.String, false);
+        PropertySchema propertySchema1 = new PropertySchema("property1", false, DataType.String, true, EnumSet.noneOf(DataType.class));
+        PropertySchema propertySchema2 = new PropertySchema("property2", false, DataType.String, false, EnumSet.noneOf(DataType.class));
 
         LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
         labelSchema.put("property1", propertySchema1);

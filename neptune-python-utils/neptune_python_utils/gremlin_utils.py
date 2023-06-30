@@ -14,6 +14,8 @@
 
 import os
 import uuid
+import nest_asyncio
+
 
 from neptune_python_utils.endpoints import Endpoints
 from gremlin_python.driver.client import Client
@@ -38,15 +40,14 @@ class GremlinUtils:
         
         statics.load_statics(globals)
 
-        del globals['range']
-        del globals['map']
-        del globals['min']
-        del globals['sum']
-        del globals['property']
-        del globals['max']
+        for s in ['range', 'map', 'min', 'sum', 'property', 'max']:
+            if s in globals:
+                del globals[s]
     
     def __init__(self, endpoints=None):
                 
+        nest_asyncio.apply()
+        
         if endpoints is None:
             self.endpoints = Endpoints()
         else:

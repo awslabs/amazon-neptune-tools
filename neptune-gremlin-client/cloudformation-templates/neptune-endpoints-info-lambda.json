@@ -16,6 +16,17 @@
       "Type": "Number",
       "Default": 10
     },
+    "Unavailable": {
+      "Description": "Determines which endoints will be marked as 'unavailable' (values 'all', 'none', 'writer', 'reader'; default 'none').",
+      "Type": "String",
+      "Default": "none",
+      "AllowedValues": [
+        "all",
+        "none",
+        "writer",
+        "reader"
+      ]
+    },
     "S3Bucket": {
       "Description": "An Amazon S3 bucket containing the Lambda .jar file.",
       "Type": "String"
@@ -83,6 +94,9 @@
             },
             "pollingIntervalSeconds": {
               "Ref": "PollingIntervalSeconds"
+            },
+            "unavailable": {
+              "Ref": "Unavailable"
             }
           }
         },
