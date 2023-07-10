@@ -1,9 +1,0 @@
-TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION,IS_NULLABLE,COLUMN_TYPE
-content,content_id,1,NO,bigint
-content,author_id,2,NO,bigint
-content,title,3,YES,varchar(255)
-content,description,4,YES,text
-users,id,1,NO,bigint
-users,name,2,YES,varchar(255)
-users,email,3,YES,varchar(255)
-users,phone,4,YES,bigint
