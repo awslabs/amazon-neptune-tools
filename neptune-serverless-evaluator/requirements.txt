@@ -1,0 +1,5 @@
+beautifulsoup4==4.11.1
+boto3==1.22.8
+python_dateutil==2.8.2
+requests==2.27.1
+numpy==1.19.5
