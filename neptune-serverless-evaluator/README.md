@@ -1,22 +1,30 @@
 ## Neptune Serverless Cost Evaluator
 Neptune offers On-Demand provisioned instances and serverless instances which to accommodate variety of scaling up or down needs.   Choosing between 2 modes is often a decision of cost and requires understanding access patterns. I will walk through some of the decision factors for new workloads and also show how you can use cloudwatch logs to check if provisioned or serverless will be a better for your workload. 
- 
+
+### Minimum IAM policies required
+* AmazonRDSReadOnlyAccess
+* AWSPriceListServiceFullAccess
+
+
 ### How to run the script
+* Configure AWS Cli [https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html]
 * Install python3.7 or above 
 * install pip3
 * Clone this repository to the directory
 * Install required libraries 
 
+
 ```
 pip3 install requirements.txt
 ```
 
+
 Parameter names:
-| Parameter        | Details          | Default  | Supported Values |
+| Parameter        | Details          | Default  | 
 | ------------- |:-------------:| -----:| -----: |
-| -n, --name      | Neptune instance name |  | |
-| -r, --region     | Region name for instance      |    | |
-| -p, --period | Number of days datapoints collected from cloudwatch      |    14 | |
+| -n, --name      | Neptune instance name |  |
+| -r, --region     | Region name for instance      |    |
+| -p, --period | Number of days datapoints collected from cloudwatch      |    14 |
 
 
 Example call to evaluate if current provisioned workload will be cheaper on serverless:
@@ -53,3 +61,4 @@ Maximum NCU utilization : 5.0 ,Equivalent OnDemand Instance Costs: (db.r6g.xlarg
 Average NCU utilization : 1 ,Equivalent OnDemand Instance Costs: (db.r6g.large) $6.903
 Total data points : 1208
 ```
+
