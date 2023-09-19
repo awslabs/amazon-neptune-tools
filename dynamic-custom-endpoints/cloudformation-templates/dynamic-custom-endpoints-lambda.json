@@ -1,0 +1,273 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Lambda function for updating Amazon Neptune custom endpoints based on config",
+  "Parameters": {
+    "NeptuneClusterId": {
+      "Description": "Amazon Neptune DB cluster identifier.",
+      "Type": "String"
+    },
+    "Config": {
+      "Description": "Custom endpoint specifications (see documentation for syntax and examples).",
+      "Type": "String",
+      "Default": "{  \"customEndpoints\": [ {  \"customEndpoint\":  \"serverless-readers\",  \"specification\": {  \"role\":  \"reader\",  \"status\":  \"available\", \"instanceType\":  \"db.serverless\" } } ]}"
+    },
+    "RefreshInterval": {
+      "Type": "Number",
+      "Default": 1,
+      "MinValue": 1,
+      "MaxValue": 60,
+      "Description": "Refresh interval, in minutes."
+    },
+    "S3Bucket": {
+      "Description": "An Amazon S3 bucket containing the Lambda code zip file.",
+      "Type": "String"
+    },
+    "S3Key": {
+      "Description": "The Amazon S3 key of the Lambda code zip file (e.g. bin/dynamic_custom_endpoints.zip).",
+      "Type": "String"
+    },
+    "ResourcePrefix": {
+      "Type": "String",
+      "Default": "",
+      "Description": "If you supply a prefix, the Lambda function's IAM policy will be restricted to database instances and custom endpoints whose names begin with the prefix (optional)."
+    }
+  },
+  "Conditions": {
+    "IsSingleMinuteRefreshInterval": {
+      "Fn::Equals": [
+        {
+          "Ref": "RefreshInterval"
+        },
+        1
+      ]
+    }
+  },
+  "Resources": {
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ],
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Sub": "lambda-execution-role-${NeptuneClusterId}"
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "rds:ListTagsForResource",
+                    "rds:DescribeDBInstances"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:${ResourcePrefix}*"
+                  },
+                  "Effect": "Allow"
+                },
+                {
+                  "Action": "rds:DescribeDBClusters",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${NeptuneClusterId}"
+                  },
+                  "Effect": "Allow"
+                },
+                {
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestTag/awslabs:owner": "dynamic-custom-endpoints"
+                    }
+                  },
+                  "Action": "rds:CreateDBClusterEndpoint",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefix}*"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${NeptuneClusterId}"
+                    }
+                  ],
+                  "Effect": "Allow"
+                },
+                {
+                  "Action": [
+                    "rds:DescribeDBClusterEndpoints"
+                  ],
+                  "Resource": [
+                    "arn:aws:rds:us-east-1:757755851085:cluster-endpoint:*",
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${NeptuneClusterId}"
+                    }
+                  ],
+                  "Effect": "Allow"
+                },
+                {
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:ResourceTag/awslabs:owner": "dynamic-custom-endpoints"
+                    }
+                  },
+                  "Action": "rds:ModifyDBClusterEndpoint",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefix}*"
+                  },
+                  "Effect": "Allow"
+                },
+                {
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestTag/awslabs:owner": "dynamic-custom-endpoints"
+                    }
+                  },
+                  "Action": "rds:AddTagsToResource",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefix}*"
+                  },
+                  "Effect": "Allow"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "DynamicCustomEndpointsLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "custom-endpoints_${NeptuneClusterId}"
+        },
+        "Handler": "dynamic_custom_endpoints.lambda_handler",
+        "ReservedConcurrentExecutions": 1,
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": {
+            "Ref": "S3Bucket"
+          },
+          "S3Key": {
+            "Ref": "S3Key"
+          }
+        },
+        "Environment": {
+          "Variables": {
+            "clusterId": {
+              "Ref": "NeptuneClusterId"
+            },
+            "config": {
+              "Ref": "Config"
+            },
+            "resourcePrefix": {
+              "Ref": "ResourcePrefix"
+            }
+          }
+        },
+        "MemorySize": 512,
+        "Runtime": "python3.9",
+        "Timeout": "900"
+      }
+    },
+    "LambdaFunctionSchedule": {
+      "Properties": {
+        "ScheduleExpression": {
+          "Fn::If": [
+            "IsSingleMinuteRefreshInterval",
+            {
+              "Fn::Sub": "rate(${RefreshInterval} minute)"
+            },
+            {
+              "Fn::Sub": "rate(${RefreshInterval} minutes)"
+            }
+          ]
+        },
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "DynamicCustomEndpointsLambda",
+                "Arn"
+              ]
+            },
+            "Id": "1"
+          }
+        ]
+      },
+      "Type": "AWS::Events::Rule"
+    },
+    "LambdaFunctionCwPermission": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "DynamicCustomEndpointsLambda",
+            "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "LambdaFunctionSchedule",
+            "Arn"
+          ]
+        }
+      },
+      "Type": "AWS::Lambda::Permission"
+    }
+  },
+  "Outputs": {
+    "DynamicCustomEndpointsLambdaArn": {
+      "Description": "DynamicCustomEndpointsLambda ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "DynamicCustomEndpointsLambda",
+          "Arn"
+        ]
+      }
+    },
+    "TriggerRefreshCommand": {
+      "Description": "CLI command to manually trigger and endpoint refresh",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "aws lambda invoke --function-name ",
+            {
+              "Fn::GetAtt": [
+                "DynamicCustomEndpointsLambda",
+                "Arn"
+              ]
+            },
+            " --invocation-type Event --region ",
+            {
+              "Ref": "AWS::Region"
+            },
+            " /dev/stdout"
+          ]
+        ]
+      }
+    }
+  }
+}
