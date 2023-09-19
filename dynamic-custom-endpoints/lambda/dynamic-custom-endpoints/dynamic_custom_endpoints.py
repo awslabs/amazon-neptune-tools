@@ -793,10 +793,6 @@ def get_instances_with_tags():
           {
             'Key': 'Stack',
             'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'
-          },
-          {
-            'Key': 'StackId',
-            'Value': 'arn:aws:cloudformation:eu-west-2:757755851085:stack/NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB/57a2a620-928b-11ed-99a9-02b00bc053b8'
           }
         ]
       },
@@ -821,10 +817,6 @@ def get_instances_with_tags():
           {
             'Key': 'Stack',
             'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'
-          },
-          {
-            'Key': 'StackId',
-            'Value': 'arn:aws:cloudformation:eu-west-2:757755851085:stack/NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB/57a2a620-928b-11ed-99a9-02b00bc053b8'
           }
         ]
       }

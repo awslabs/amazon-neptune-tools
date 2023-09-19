@@ -95,7 +95,7 @@ Here's a more complex specification, illustrating the use of `and` and `or` oper
     git clone https://github.com/awslabs/amazon-neptune-tools.git
     ```
 
-2.  Build the Lambda function:
+2.  Build the Lambda function (the build script uses Python 3.9):
 
     ```
     cd amazon-neptune-tools/dynamic-custom-endpoints/lambda
