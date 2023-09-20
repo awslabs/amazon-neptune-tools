@@ -77,25 +77,27 @@ def get_batch_instance_details(cluster_id):
     
     return describe_db_instances_response['DBInstances']
     
-def get_per_instance_details(instance_ids, resource_prefix):
+def get_per_instance_details(instance_ids,  resource_prefixes):
 
     results = []
     
-    for instance_id in instance_ids:
+    for resource_prefix in resource_prefixes.split(','):
     
-        if instance_id.startswith(resource_prefix):
-    
-            describe_db_instances_response = neptune.describe_db_instances(
-                DBInstanceIdentifier=instance_id
-            )
-            
-            for i in describe_db_instances_response['DBInstances']:
-                results.append(i)
+        for instance_id in instance_ids:
+        
+            if instance_id.startswith( resource_prefix):
+        
+                describe_db_instances_response = neptune.describe_db_instances(
+                    DBInstanceIdentifier=instance_id
+                )
+                
+                for i in describe_db_instances_response['DBInstances']:
+                    results.append(i)
             
     return results
         
 
-def get_cluster_metadata(cluster_id, resource_prefix=None):
+def get_cluster_metadata(cluster_id,  resource_prefixes=None):
 
     describe_db_clusters_response = neptune.describe_db_clusters(
         DBClusterIdentifier=cluster_id,
@@ -131,8 +133,8 @@ def get_cluster_metadata(cluster_id, resource_prefix=None):
     
     instance_details = None
     
-    if resource_prefix:
-        instance_details = get_per_instance_details(instance_ids, resource_prefix)
+    if  resource_prefixes:
+        instance_details = get_per_instance_details(instance_ids,  resource_prefixes)
     else:
         instance_details = get_batch_instance_details(cluster_id)
     
@@ -741,9 +743,9 @@ def apply_config(cluster_id, config, cluster_metadata):
         
     logger.info('Finished applying config')     
 
-def update_custom_endpoints_for_cluster(cluster_id, config, resource_prefix):
+def update_custom_endpoints_for_cluster(cluster_id, config,  resource_prefixes):
 
-    cluster_metadata = get_cluster_metadata(cluster_id, resource_prefix)
+    cluster_metadata = get_cluster_metadata(cluster_id,  resource_prefixes)
         
     logger.info('cluster_metadata: {}'.format(cluster_metadata))
         
@@ -755,17 +757,17 @@ def lambda_handler(event, context):
     
     cluster_id = os.environ['clusterId']   
     config_value = os.environ.get('config')
-    resource_prefix = os.environ.get('resourcePrefix')
+    resource_prefixes = os.environ.get('resourcePrefixes')
     
     logger.info('cluster_id: {}'.format(cluster_id))
-    logger.info('resource_prefix: {}'.format(resource_prefix))
+    logger.info(' resource_prefixes: {}'.format( resource_prefixes))
     
     if config_value:
         
         config = json.loads(config_value)
         logger.info('config: {}'.format(config))
         
-        update_custom_endpoints_for_cluster(cluster_id, config, resource_prefix)
+        update_custom_endpoints_for_cluster(cluster_id, config,  resource_prefixes)
         
     else:
         logger.config('Config is empty')

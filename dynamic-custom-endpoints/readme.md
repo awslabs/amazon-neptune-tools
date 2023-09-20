@@ -111,7 +111,9 @@ Here's a more complex specification, illustrating the use of `and` and `or` oper
    - __RefreshInterval__ – The number of minutes (1-60) between each refresh of your custom endpoints.
    - __S3Bucket__ – Name of an Amazon S3 bucket in which you have put the Lambda function zip file from Step 2.
    - __S3Key__ – S3 key of the Lambda function zip file from Step 2.
-   - __ResourcePrefix__ – (Optional, but recommended) Restricts the Lambda function's access to Neptune database instances and endpoints. By default, the IAM policy for the Lambda function allows the function to describe and list the tags attached to _all_ the Neptune database instances in your account (in the region in which the function is installed), and to modify all custom endpoints in your account (again, in the region in which the function is installed). If you supply a resource prefix here, the IAM policy will be restricted to accessing database instances and custom endpoints whose names begin with this prefix. For example, if you supply `my-cluster-` as the resource prefix, the Lambda will only be able to access database instances and custom endpoints whose names begin `my-cluster`.
+   - __ResourcePrefixOne__ – (Optional, but recommended) Restricts the Lambda function's access to Neptune database instances and endpoints. By default, the IAM policy for the Lambda function allows the function to describe and list the tags attached to _all_ the Neptune database instances in your account (in the region in which the function is installed), and to modify all custom endpoints in your account (again, in the region in which the function is installed). If you supply a resource prefix here, the IAM policy will be restricted to accessing database instances and custom endpoints whose names begin with this prefix. For example, if you supply `my-cluster-` as the resource prefix, the Lambda will only be able to access database instances and custom endpoints whose names begin `my-cluster`. You can supply up to three different resource prefixes.
+   - __ResourcePrefixTwo__ – As above.
+   - __ResourcePrefixThree__ – As above.
 
 4. The solution is installed on a per-cluster basis. You can have only one installation per cluster (but you can specify multiple custom endpoints for a cluster with a single installation). The CloudFormation strack will fail if there is already an installation for a cluster.
 
@@ -144,7 +146,7 @@ Each custom endpoint specification takes the following form:
 }
 ```
 
-The value you supply for `<endpoint_id>` will form the first part of the endpoint's name. If you have chosen to restrict access to endpoints using a resource prefix (see the [installation](#installation) instructions), then the name here must begin with the resource prefix you used when installing the CloudFormation stack.
+The value you supply for `<endpoint_id>` will form the first part of the endpoint's name. If you have chosen to restrict access to endpoints using one or more resource prefixes (see the [installation](#installation) instructions), then the name here must begin with one of the resource prefixes you used when installing the CloudFormation stack.
 
 Specifications include one or more instance attributes, and the match criteria for these attributes. For example, `role`, is an attribute of all instances in a Neptune cluster; for each instance it has the value of either `writer` or `reader`. To create a custom endpoint that refers to all readers in the cluster, you use the following specification:
 
@@ -491,3 +493,13 @@ The successful creation of a new endpoint looks like this (timestamps and UUIDs 
 [INFO] Finished applying config for endpoint 'ianrob-all-instances'
 [INFO] Finished applying config
 ```
+
+### Error creating endpoint
+
+If you see the following error in the CloudWatch logs:
+
+```
+An error occurred (AccessDenied) when calling the CreateDBClusterEndpoint operation: User: arn:aws:sts::... is not authorized to perform: rds:CreateDBClusterEndpoint on resource: arn:aws:rds:::cluster-endpoint:... because no identity-based policy allows the rds:CreateDBClusterEndpoint action
+```
+
+– check that the name of the endpoint that you have specified in the config begins with one of the resource prefixes that you supplied when running the CloudFormation template.

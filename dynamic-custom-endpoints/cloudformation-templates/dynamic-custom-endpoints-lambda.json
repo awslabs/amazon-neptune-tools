@@ -26,12 +26,58 @@
       "Description": "The Amazon S3 key of the Lambda code zip file (e.g. bin/dynamic_custom_endpoints.zip).",
       "Type": "String"
     },
-    "ResourcePrefix": {
+    "ResourcePrefixOne": {
       "Type": "String",
       "Default": "",
-      "Description": "If you supply a prefix, the Lambda function's IAM policy will be restricted to database instances and custom endpoints whose names begin with the prefix (optional)."
+      "Description": "If you supply a between one and three prefixes, the Lambda function's IAM policy will be restricted to database instances and custom endpoints whose names begin with the supplied prefixes (optional)."
+    },
+    "ResourcePrefixTwo": {
+      "Type": "String",
+      "Default": "",
+      "Description": "If you supply a between one and three prefixes, the Lambda function's IAM policy will be restricted to database instances and custom endpoints whose names begin with the supplied prefixes (optional)."
+    },
+    "ResourcePrefixThree": {
+      "Type": "String",
+      "Default": "",
+      "Description": "If you supply a between one and three prefixes, the Lambda function's IAM policy will be restricted to database instances and custom endpoints whose names begin with the supplied prefixes (optional)."
     }
   },
+	"Metadata": {
+		"AWS::CloudFormation::Interface": {
+			"ParameterGroups": [
+				{
+					"Label": {
+						"default": "Neptune"
+					},
+					"Parameters": [
+						"NeptuneClusterId"
+					]
+				},
+				{
+					"Label": {
+						"default": "Lambda"
+					},
+					"Parameters": [
+						"Config",
+            "RefreshInterval",
+            "S3Bucket",
+            "S3Key"
+					]
+				},
+				{
+					"Label": {
+						"default": "IAM"
+					},
+					"Parameters": [
+						"ResourcePrefixOne",
+						"ResourcePrefixTwo",
+						"ResourcePrefixThree"
+            
+					]
+				}
+			]
+		}
+	},
   "Conditions": {
     "IsSingleMinuteRefreshInterval": {
       "Fn::Equals": [
@@ -39,6 +85,70 @@
           "Ref": "RefreshInterval"
         },
         1
+      ]
+    },
+    "AllowAll": {
+      "Fn::And": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ResourcePrefixOne"
+            },
+            ""
+          ]
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ResourcePrefixTwo"
+            },
+            ""
+          ]
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ResourcePrefixThree"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasPrefixOne": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ResourcePrefixOne"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasPrefixTwo": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ResourcePrefixTwo"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasPrefixThree": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ResourcePrefixThree"
+            },
+            ""
+          ]
+        }
       ]
     }
   },
@@ -79,9 +189,52 @@
                     "rds:ListTagsForResource",
                     "rds:DescribeDBInstances"
                   ],
-                  "Resource": {
-                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:${ResourcePrefix}*"
-                  },
+                  "Resource": [
+                    {
+                      "Fn::If": [
+                        "AllowAll",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixOne",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:${ResourcePrefixOne}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixTwo",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:${ResourcePrefixTwo}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixThree",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:${ResourcePrefixThree}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    }
+                  ],
                   "Effect": "Allow"
                 },
                 {
@@ -100,7 +253,48 @@
                   "Action": "rds:CreateDBClusterEndpoint",
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefix}*"
+                      "Fn::If": [
+                        "AllowAll",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixOne",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixOne}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixTwo",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixTwo}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixThree",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixThree}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
                     },
                     {
                       "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${NeptuneClusterId}"
@@ -113,7 +307,50 @@
                     "rds:DescribeDBClusterEndpoints"
                   ],
                   "Resource": [
-                    "arn:aws:rds:us-east-1:757755851085:cluster-endpoint:*",
+                    {
+                      "Fn::If": [
+                        "AllowAll",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixOne",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixOne}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixTwo",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixTwo}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixThree",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixThree}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
                     {
                       "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${NeptuneClusterId}"
                     }
@@ -127,9 +364,52 @@
                     }
                   },
                   "Action": "rds:ModifyDBClusterEndpoint",
-                  "Resource": {
-                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefix}*"
-                  },
+                  "Resource": [
+                    {
+                      "Fn::If": [
+                        "AllowAll",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixOne",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixOne}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixTwo",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixTwo}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixThree",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixThree}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    }
+                  ],
                   "Effect": "Allow"
                 },
                 {
@@ -139,9 +419,52 @@
                     }
                   },
                   "Action": "rds:AddTagsToResource",
-                  "Resource": {
-                    "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefix}*"
-                  },
+                  "Resource": [
+                    {
+                      "Fn::If": [
+                        "AllowAll",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixOne",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixOne}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixTwo",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixTwo}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    },
+                    {
+                      "Fn::If": [
+                        "HasPrefixThree",
+                        {
+                          "Fn::Sub": "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster-endpoint:${ResourcePrefixThree}*"
+                        },
+                        {
+                          "Ref": "AWS::NoValue"
+                        }
+                      ]
+                    }
+                  ],
                   "Effect": "Allow"
                 }
               ]
@@ -180,8 +503,45 @@
             "config": {
               "Ref": "Config"
             },
-            "resourcePrefix": {
-              "Ref": "ResourcePrefix"
+            "resourcePrefixes": {
+              "Fn::Join": [
+                ",",
+                [
+                  {
+                    "Fn::If": [
+                      "HasPrefixOne",
+                      {
+                        "Ref": "ResourcePrefixOne"
+                      },
+                      {
+                        "Ref": "AWS::NoValue"
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::If": [
+                      "HasPrefixTwo",
+                      {
+                        "Ref": "ResourcePrefixTwo"
+                      },
+                      {
+                        "Ref": "AWS::NoValue"
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::If": [
+                      "HasPrefixThree",
+                      {
+                        "Ref": "ResourcePrefixThree"
+                      },
+                      {
+                        "Ref": "AWS::NoValue"
+                      }
+                    ]
+                  }
+                ]
+              ]
             }
           }
         },
