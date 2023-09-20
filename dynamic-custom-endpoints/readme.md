@@ -439,6 +439,33 @@ You can also use `equals`, `notEquals`, and `startsWith` operators to match a ta
 }
 ```
 
+You can combine `none` with `any` or `all` to match instances that have vertain tags, but do _not_ have other tags:
+
+```
+{
+  "tags": {
+    "and": [
+      {
+        "any": [
+          {
+            "key": "Group",
+            "value": "online"
+          }
+        ]
+      },
+      {
+        "none": [
+          {
+            "key": "Cache",
+            "value": "cold"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ## Troubleshooting
 
 Check the CloudWatch logs for the Lambda function.
