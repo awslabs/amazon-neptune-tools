@@ -37,6 +37,9 @@ def get_writer(cluster_members):
 def get_readers(cluster_members):
     return list(filter(lambda m: m['IsClusterWriter'] == False, cluster_members))
     
+def to_lower_case_tag(t):
+    return {'key': t['Key'], 'value': t['Value']}
+    
 def get_tags(arn):
 
     if cache_instance_tags:
@@ -46,7 +49,7 @@ def get_tags(arn):
             return tags
         
     list_tags_for_resource_response = neptune.list_tags_for_resource(ResourceName=arn)
-    tags =  list_tags_for_resource_response['TagList']
+    tags = [to_lower_case_tag(t) for t in list_tags_for_resource_response['TagList']]
     
     if cache_instance_tags:    
         instance_tags[arn] = tags
@@ -342,10 +345,10 @@ class TagComparator(Comparator):
     def are_equal(self, x, y):
         if not x or not y:
             return False
-        return x['Key'] == y['Key'] and x['Value'] == y['Value']
+        return x['key'] == y['key'] and x['value'] == y['value']
         
     def are_not_equal(self, x, y):
-        return x['Key'] != y['Key'] or x['Value'] != y['Value']
+        return x['key'] != y['key'] or x['value'] != y['value']
         
     def greater_than(self, x, y):
         raise Exception('Unsupported operation: greater_than')
@@ -548,12 +551,12 @@ class TagOperator(ComparisonOperator):
     def apply(self, o):
         if not is_tag(o):
             raise Exception('Expected tag, but received: {}'.format(o))
-        k = o['Key']
-        value = o['Value']
+        k = o['key']
+        value = o['value']
         return k == self.key and self.value_operator.apply(value)
         
     def as_string(self):
-        return '{{tag with Key == \'{}\' and Value {}}}'.format(self.key, self.value_operator.as_string())
+        return '{{tag with key == \'{}\' and Value {}}}'.format(self.key, self.value_operator.as_string())
         
     def __repr__(self):
         return self.as_string()
@@ -602,12 +605,12 @@ def default_wrapper(x):
         return x
         
 def is_tag(x):
-    return len(x) == 2 and 'Key' in x and 'Value' in x
+    return len(x) == 2 and 'key' in x and 'value' in x
     
 def parse_tag(tag):
-    value = tag['Value']
+    value = tag['value']
     if type(value) is dict:
-        key = tag['Key']
+        key = tag['key']
         value_operator = parse(value)
         return TagOperator(key, value_operator)
     else:
@@ -783,16 +786,16 @@ def get_instances_with_tags():
         'promotionTier': 1,
         'tags': [
           {
-            'Key': 'Application',
-            'Value': 'NeptuneCloudformation'
+            'key': 'Application',
+            'value': 'NeptuneCloudformation'
           },
           {
-            'Key': 'Name',
-            'Value': 'Neptune-test'
+            'key': 'Name',
+            'value': 'Neptune-test'
           },
           {
-            'Key': 'Stack',
-            'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'
+            'key': 'Stack',
+            'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'
           }
         ]
       },
@@ -807,16 +810,20 @@ def get_instances_with_tags():
         'promotionTier': 2,
         'tags': [
           {
-            'Key': 'Application',
-            'Value': 'NeptuneCloudformation'
+            'key': 'Application',
+            'value': 'NeptuneCloudformation'
           },
           {
-            'Key': 'Name',
-            'Value': 'Neptune-demo'
+            'key': 'Name',
+            'value': 'Neptune-demo'
           },
           {
-            'Key': 'Stack',
-            'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'
+            'key': 'Cache',
+            'value': 'cold'
+          },
+          {
+            'key': 'Stack',
+            'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'
           }
         ]
       }
@@ -880,8 +887,8 @@ class TestParsing(unittest.TestCase):
         
     def test_implicit_any_for_tags(self): 
     
-        specification1 = { 'tags': [{ 'Key': 'Stack', 'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}] }
-        specification2 = { 'tags': [{ 'Key': 'Name', 'Value': 'another-app'}] }
+        specification1 = { 'tags': [{ 'key': 'Stack', 'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}] }
+        specification2 = { 'tags': [{ 'key': 'Name', 'value': 'another-app'}] }
         
         (instances_ids1, _) = get_instance_ids_for_specification(specification1, get_instances_with_tags())
         (instances_ids2, _) = get_instance_ids_for_specification(specification2, get_instances_with_tags())
@@ -973,31 +980,31 @@ class TestParsing(unittest.TestCase):
     
         specification1 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                    { 'Key': 'Stack', 'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                    { 'key': 'Stack', 'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
                 ] 
             }
         }
         
         specification2 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                    { 'Key': 'Name', 'Value': 'Neptune-test'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                    { 'key': 'Name', 'value': 'Neptune-test'}
                  ] 
             }
         }
         
         specification3 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                    { 'Key': 'Name', 'Value': 'Neptune-prod'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                    { 'key': 'Name', 'value': 'Neptune-prod'}
                  ] 
             }
         }
         
         specification4 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'}
                  ] 
             }
         }
@@ -1016,31 +1023,31 @@ class TestParsing(unittest.TestCase):
     
         specification1 = { 'tags': 
             { 'any': [
-                    { 'Key': 'Application', 'Value': 'AnotherApp'},
-                    { 'Key': 'Stack', 'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
+                    { 'key': 'Application', 'value': 'AnotherApp'},
+                    { 'key': 'Stack', 'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
                 ] 
             }
         }
         
         specification2 = { 'tags': 
             { 'any': [
-                    { 'Key': 'Application', 'Value': 'AnotherApp'},
-                    { 'Key': 'Name', 'Value': 'Neptune-test'}
+                    { 'key': 'Application', 'value': 'AnotherApp'},
+                    { 'key': 'Name', 'value': 'Neptune-test'}
                  ] 
             }
         }
         
         specification3 = { 'tags': 
             { 'any': [
-                    { 'Key': 'Application', 'Value': 'AnotherApp'},
-                    { 'Key': 'Name', 'Value': 'Neptune-prod'}
+                    { 'key': 'Application', 'value': 'AnotherApp'},
+                    { 'key': 'Name', 'value': 'Neptune-prod'}
                  ] 
             }
         }
         
         specification4 = { 'tags': 
             { 'any': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'}
                  ] 
             }
         }
@@ -1079,31 +1086,31 @@ class TestParsing(unittest.TestCase):
     
         specification1 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                    { 'Key': 'Stack', 'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                    { 'key': 'Stack', 'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
                 ] 
             }
         }
         
         specification2 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': 'AnotherApp'},
-                    { 'Key': 'Name', 'Value': 'Neptune-test'}
+                    { 'key': 'Application', 'value': 'AnotherApp'},
+                    { 'key': 'Name', 'value': 'Neptune-test'}
                  ] 
             }
         }
         
         specification3 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': 'AnotherApp'},
-                    { 'Key': 'Name', 'Value': 'Neptune-prod'}
+                    { 'key': 'Application', 'value': 'AnotherApp'},
+                    { 'key': 'Name', 'value': 'Neptune-prod'}
                  ] 
             }
         }
         
         specification4 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'}
                  ] 
             }
         }
@@ -1118,14 +1125,32 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(instances_ids3, ['neptunedbinstance-1', 'neptunedbinstance-2'])
         self.assertEqual(instances_ids4, [])
         
+    def test_any_and_none(self): 
+    
+        specification1 = { 'tags': 
+            {'and': [
+                {'any': [
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'}
+                ]},
+                {'none': [
+                    { 'key': 'Cache', 'value': 'cold'}
+                ]}
+            ]}  
+        }
+        
+        
+        (instances_ids1, _) = get_instance_ids_for_specification(specification1, get_instances_with_tags())
+        
+        self.assertEqual(instances_ids1, ['neptunedbinstance-1'])
+        
     def test_multiple_conditions_with_implicit_operators(self):
         
         specification1 = { 
             'role': 'writer',
             'status': 'available',
             'tags': [
-                { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                { 'Key': 'Stack', 'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
+                { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                { 'key': 'Stack', 'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
             ]
         }
         
@@ -1140,8 +1165,8 @@ class TestParsing(unittest.TestCase):
             'status': {'eq': 'available'},
             'tags': {
                 'all': [
-                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                    { 'Key': 'Stack', 'Value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
+                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                    { 'key': 'Stack', 'value': 'eu-west-2-NeptuneQuickStart-NeptuneStack-VJJA7BYK1MMB'}
                 ]
             } 
         }
@@ -1159,8 +1184,8 @@ class TestParsing(unittest.TestCase):
                     'status': {'eq': 'available'},
                     'tags': {
                         'all': [
-                            { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                            { 'Key': 'Name', 'Value': 'Neptune-test'}
+                            { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                            { 'key': 'Name', 'value': 'Neptune-test'}
                         ]
                     } 
                 },
@@ -1169,8 +1194,8 @@ class TestParsing(unittest.TestCase):
                     'status': {'eq': 'available'},
                     'tags': {
                         'all': [
-                            { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                            { 'Key': 'Name', 'Value': 'Neptune-demo'}
+                            { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                            { 'key': 'Name', 'value': 'Neptune-demo'}
                         ]
                     } 
                 }
@@ -1192,8 +1217,8 @@ class TestParsing(unittest.TestCase):
                             'role': 'writer',
                             'tags': {
                                 'all': [
-                                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                                    { 'Key': 'Name', 'Value': 'Neptune-test'}
+                                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                                    { 'key': 'Name', 'value': 'Neptune-test'}
                                 ]
                             } 
                         },
@@ -1201,8 +1226,8 @@ class TestParsing(unittest.TestCase):
                             'role': 'reader',
                             'tags': {
                                 'all': [
-                                    { 'Key': 'Application', 'Value': 'NeptuneCloudformation'},
-                                    { 'Key': 'Name', 'Value': 'Neptune-demo'}
+                                    { 'key': 'Application', 'value': 'NeptuneCloudformation'},
+                                    { 'key': 'Name', 'value': 'Neptune-demo'}
                                 ]
                             } 
                         }
@@ -1231,12 +1256,12 @@ class TestParsing(unittest.TestCase):
                   "tags": {
                     "all": [
                       {
-                        "Key": "Application",
-                        "Value": "NeptuneCloudformation"
+                        "key": "Application",
+                        "value": "NeptuneCloudformation"
                       },
                       {
-                        "Key": "Name",
-                        "Value": "Neptune-test"
+                        "key": "Name",
+                        "value": "Neptune-test"
                       }
                     ]
                   }
@@ -1246,12 +1271,12 @@ class TestParsing(unittest.TestCase):
                   "tags": {
                     "all": [
                       {
-                        "Key": "Application",
-                        "Value": "NeptuneCloudformation"
+                        "key": "Application",
+                        "value": "NeptuneCloudformation"
                       },
                       {
-                        "Key": "Name",
-                        "Value": "Neptune-demo"
+                        "key": "Name",
+                        "value": "Neptune-demo"
                       }
                     ]
                   }
@@ -1272,24 +1297,24 @@ class TestParsing(unittest.TestCase):
     
         specification1 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'Neptune-'}}
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'Neptune-'}}
                 ] 
             }
         }
         
         specification2 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'NeptuneDB-'}}
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'NeptuneDB-'}}
                 ] 
             }
         }
         
         specification3 = { 'tags': 
             { 'all': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'Neptune-d'} }
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'Neptune-d'} }
                 ] 
             }
         }
@@ -1306,24 +1331,24 @@ class TestParsing(unittest.TestCase):
     
         specification1 = { 'tags': 
             { 'any': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'MyTag', 'Value':  {'startsWith': 'Neptune-'}}
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'MyTag', 'value':  {'startsWith': 'Neptune-'}}
                 ] 
             }
         }
         
         specification2 = { 'tags': 
             { 'any': [
-                    { 'Key': 'FirstTag', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'MyTag', 'Value':  {'startsWith': 'NeptuneDB-'}}
+                    { 'key': 'FirstTag', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'MyTag', 'value':  {'startsWith': 'NeptuneDB-'}}
                 ] 
             }
         }
         
         specification3 = { 'tags': 
             { 'any': [
-                    { 'Key': 'FirstTag', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'Neptune-d'} }
+                    { 'key': 'FirstTag', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'Neptune-d'} }
                 ] 
             }
         }
@@ -1340,24 +1365,24 @@ class TestParsing(unittest.TestCase):
     
         specification1 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'Neptune-'}}
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'Neptune-'}}
                 ] 
             }
         }
         
         specification2 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloudDB'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'NeptuneDB-'}}
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloudDB'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'NeptuneDB-'}}
                 ] 
             }
         }
         
         specification3 = { 'tags': 
             { 'none': [
-                    { 'Key': 'Application', 'Value': {'startsWith': 'NeptuneCloud'} },
-                    { 'Key': 'Name', 'Value':  {'startsWith': 'Neptune-d'} }
+                    { 'key': 'Application', 'value': {'startsWith': 'NeptuneCloud'} },
+                    { 'key': 'Name', 'value':  {'startsWith': 'Neptune-d'} }
                 ] 
             }
         }

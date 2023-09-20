@@ -21,8 +21,8 @@ Here's an example of a dynamic custom endpoint specification:
         "tags": {
           "any": [
             {
-              "Key": "Group",
-              "Value": "analytics"
+              "key": "Group",
+              "value": "analytics"
             }
           ]
         }
@@ -50,12 +50,12 @@ Here's a more complex specification, illustrating the use of `and` and `or` oper
                 "tags": {
                   "all": [
                     {
-                      "Key": "Application",
-                      "Value": "NeptuneCloudformation"
+                      "key": "Application",
+                      "value": "NeptuneCloudformation"
                     },
                     {
-                      "Key": "Name",
-                      "Value": "Neptune-test"
+                      "key": "Name",
+                      "value": "Neptune-test"
                     }
                   ]
                 }
@@ -65,12 +65,12 @@ Here's a more complex specification, illustrating the use of `and` and `or` oper
                 "tags": {
                   "all": [
                     {
-                      "Key": "Application",
-                      "Value": "NeptuneCloudformation"
+                      "key": "Application",
+                      "value": "NeptuneCloudformation"
                     },
                     {
-                      "Key": "Name",
-                      "Value": "Neptune-demo"
+                      "key": "Name",
+                      "value": "Neptune-demo"
                     }
                   ]
                 }
@@ -189,7 +189,7 @@ You can select Neptune instances based on the following attributes:
   - `endpoint` - __string__
   - `availabilityZone` - __string__
   - `promotionTier` - __number__
-  - `tags` - array of `{"Key": "<key>", "Value": "<value>"}` objects
+  - `tags` - array of `{"key": "<key>", "value": "<value>"}` objects
     
 ### Instance endpoint availability
 
@@ -205,7 +205,7 @@ One of the most useful instance attributes is `tags`.
 
 Neptune allows you to attach [Amazon Neptune tags](https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html) in the form of name-value pairs to instances in your cluster. Using tags, you can attach application- or domain-meaningful information to your instances, and then use this information to select instances for inclusion in a custom endpoint. 
 
-For example, you could add __Application__ tags (`Key=Application`) to your all your instances, with those dedicated to your sales use cases taking the value __Sales__ (`Value=Sales`). You could then further divide the workload using a __Group__ tag (`Key=Group`) with the values __Reporting__ (`Value=Reporting`) and __Billing__ (`Value=Billing`). With these tags, you can then create a custom endpoint for reporting clients:
+For example, you could add __Application__ tags (`key=Application`) to your all your instances, with those dedicated to your sales use cases taking the value __Sales__ (`value=Sales`). You could then further divide the workload using a __Group__ tag (`key=Group`) with the values __Reporting__ (`value=Reporting`) and __Billing__ (`value=Billing`). With these tags, you can then create a custom endpoint for reporting clients:
 
  ```
  {
@@ -214,8 +214,8 @@ For example, you could add __Application__ tags (`Key=Application`) to your all 
      "role": "reader",
      "status": "available",
      "tags": [
-       { "Key": "Application", "Value": "Sales" },
-       { "Key": "Group", "Value": "Reporting" }
+       { "key": "Application", "value": "Sales" },
+       { "key": "Group", "value": "Reporting" }
      ]
    }
  }
@@ -311,31 +311,31 @@ Match instances with any of the following tags:
   "tags": {
     "any": [
       {
-        "Key": "Application",
-        "Value": "AnotherApp"
+        "key": "Application",
+        "value": "AnotherApp"
       },
       {
-        "Key": "Name",
-        "Value": "Neptune-test"
+        "key": "Name",
+        "value": "Neptune-test"
       }
     ]
   }
 }
 ```
 
-You can also use `equals`, `notEquals`, and `startsWith` operators to match a tag __Value__ (but not its __Key__):
+You can also use `equals`, `notEquals`, and `startsWith` operators to match a tag __value__ (but not its __key__):
 
 ```
 {
   "tags": {
     "any": [
       {
-        "Key": "Application",
-        "Value": { "notEquals": "AnotherApp" }
+        "key": "Application",
+        "value": { "notEquals": "AnotherApp" }
       },
       {
-        "Key": "Name",
-        "Value": { "startsWith": "Neptune-" }
+        "key": "Name",
+        "value": { "startsWith": "Neptune-" }
       }
     ]
   }
@@ -351,12 +351,12 @@ Match instances that have all of the following tags:
   "tags": {
     "all": [
       {
-        "Key": "Application",
-        "Value": "AnotherApp"
+        "key": "Application",
+        "value": "AnotherApp"
       },
       {
-        "Key": "Name",
-        "Value": "Neptune-test"
+        "key": "Name",
+        "value": "Neptune-test"
       }
     ]
   }
@@ -369,30 +369,30 @@ Match instances that have all of the following tags:
 {
   "tags": [
     {
-      "Key": "Application",
-      "Value": "AnotherApp"
+      "key": "Application",
+      "value": "AnotherApp"
     },
     {
-      "Key": "Name",
-      "Value": "Neptune-test"
+      "key": "Name",
+      "value": "Neptune-test"
     }
   ]  
 }
 ```
 
-You can also use `equals`, `notEquals`, and `startsWith` operators to match a tag __Value__ (but not its __Key__):
+You can also use `equals`, `notEquals`, and `startsWith` operators to match a tag __value__ (but not its __key__):
 
 ```
 {
   "tags": {
     "all": [
       {
-        "Key": "Application",
-        "Value": { "notEquals": "AnotherApp" }
+        "key": "Application",
+        "value": { "notEquals": "AnotherApp" }
       },
       {
-        "Key": "Name",
-        "Value": { "startsWith": "Neptune-" }
+        "key": "Name",
+        "value": { "startsWith": "Neptune-" }
       }
     ]
   }
@@ -408,31 +408,31 @@ Match instances with none of the following tags:
   "tags": {
     "none": [
       {
-        "Key": "Application",
-        "Value": "AnotherApp"
+        "key": "Application",
+        "value": "AnotherApp"
       },
       {
-        "Key": "Name",
-        "Value": "Neptune-test"
+        "key": "Name",
+        "value": "Neptune-test"
       }
     ]
   }
 }
 ```
 
-You can also use `equals`, `notEquals`, and `startsWith` operators to match a tag __Value__ (but not its __Key__):
+You can also use `equals`, `notEquals`, and `startsWith` operators to match a tag __value__ (but not its __key__):
 
 ```
 {
   "tags": {
     "none": [
       {
-        "Key": "Application",
-        "Value": { "notEquals": "AnotherApp" }
+        "key": "Application",
+        "value": { "notEquals": "AnotherApp" }
       },
       {
-        "Key": "Name",
-        "Value": { "startsWith": "Neptune-" }
+        "key": "Name",
+        "value": { "startsWith": "Neptune-" }
       }
     ]
   }
@@ -449,7 +449,7 @@ The successful creation of a new endpoint looks like this (timestamps and UUIDs 
 [INFO] cluster_id: ianrob-target
 [INFO] resource_prefix: ianrob-
 [INFO] config: {'customEndpoints': [{'customEndpoint': 'ianrob-all-instances', 'specification': {'endpointIsAvailable': True, 'instanceType': 'db.serverless'}}]}
-[INFO] cluster_metadata: {'clusterEndpoint': 'ianrob-target.cluster-abcdefghijkl.us-east-1.neptune.amazonaws.com', 'readerEndpoint': 'ianrob-target.cluster-ro-abcdefghijkl.us-east-1.neptune.amazonaws.com', 'instances': [{'instanceId': 'ianrob-target-instance-0', 'role': 'writer', 'endpoint': 'ianrob-target-instance-0.abcdefghijkl.us-east-1.neptune.amazonaws.com', 'status': 'available', 'endpointIsAvailable': True, 'availabilityZone': 'us-east-1c', 'instanceType': 'db.serverless', 'promotionTier': 1, 'tags': [{'Key': 'Application', 'Value': 'MyApp'}]}, {'instanceId': 'ianrob-target-instance-1', 'role': 'reader', 'endpoint': 'ianrob-target-instance-1.abcdefghijkl.us-east-1.neptune.amazonaws.com', 'status': 'available', 'endpointIsAvailable': True, 'availabilityZone': 'us-east-1b', 'instanceType': 'db.serverless', 'promotionTier': 1, 'tags': [{'Key': 'Application', 'Value': 'MyApp'}]}]}
+[INFO] cluster_metadata: {'clusterEndpoint': 'ianrob-target.cluster-abcdefghijkl.us-east-1.neptune.amazonaws.com', 'readerEndpoint': 'ianrob-target.cluster-ro-abcdefghijkl.us-east-1.neptune.amazonaws.com', 'instances': [{'instanceId': 'ianrob-target-instance-0', 'role': 'writer', 'endpoint': 'ianrob-target-instance-0.abcdefghijkl.us-east-1.neptune.amazonaws.com', 'status': 'available', 'endpointIsAvailable': True, 'availabilityZone': 'us-east-1c', 'instanceType': 'db.serverless', 'promotionTier': 1, 'tags': [{'key': 'Application', 'value': 'MyApp'}]}, {'instanceId': 'ianrob-target-instance-1', 'role': 'reader', 'endpoint': 'ianrob-target-instance-1.abcdefghijkl.us-east-1.neptune.amazonaws.com', 'status': 'available', 'endpointIsAvailable': True, 'availabilityZone': 'us-east-1b', 'instanceType': 'db.serverless', 'promotionTier': 1, 'tags': [{'key': 'Application', 'value': 'MyApp'}]}]}
 [INFO] Starting applying config...
 [INFO] Starting applying config for endpoint 'ianrob-all-instances'
 [INFO] specification: {'endpointIsAvailable': True, 'instanceType': 'db.serverless'}
