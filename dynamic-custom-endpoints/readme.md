@@ -499,7 +499,10 @@ The successful creation of a new endpoint looks like this (timestamps and UUIDs 
 If you see the following error in the CloudWatch logs:
 
 ```
-An error occurred (AccessDenied) when calling the CreateDBClusterEndpoint operation: User: arn:aws:sts::... is not authorized to perform: rds:CreateDBClusterEndpoint on resource: arn:aws:rds:::cluster-endpoint:... because no identity-based policy allows the rds:CreateDBClusterEndpoint action
+An error occurred (AccessDenied) when calling the CreateDBClusterEndpoint operation: 
+User: arn:aws:sts::... is not authorized to perform: rds:CreateDBClusterEndpoint on 
+resource: arn:aws:rds:::cluster-endpoint:... because no identity-based policy allows 
+the rds:CreateDBClusterEndpoint action
 ```
 
-– check that the name of the endpoint that you have specified in the config begins with one of the resource prefixes that you supplied when running the CloudFormation template.
+check that the name of the endpoint that you have specified in the config begins with one of the resource prefixes that you supplied when running the CloudFormation template.
