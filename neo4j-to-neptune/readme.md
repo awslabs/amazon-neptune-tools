@@ -22,7 +22,7 @@ mvn clean install
 
 Migration of data from Neo4j to Neptune is a multi-step process:
 
- 1. [**Export CSV from Neo4j**](#export-csv-from-neo4j) – Use the APOC export procedures to export data from Neptune to CSV.
+ 1. [**Export CSV from Neo4j**](#export-csv-from-neo4j) – Use the APOC export procedures to export data from Neo4j to CSV.
  2. [**Convert CSV**](#convert-csv) – Use the `convert-csv` command-line utility to convert the exported CSV into the Neptune Gremlin bulk load CSV format.
  3. [**Bulk Load into Neptune**](#bulk-load-into-neptune) – Use the Neptune bulk load API to load data into Neptune.
  
