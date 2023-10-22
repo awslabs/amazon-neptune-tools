@@ -44,17 +44,13 @@ public class S3ObjectInfo {
     }
 
     public S3ObjectInfo withNewKeySuffix(String suffix) {
-        File file = StringUtils.isNotEmpty(key) ? new File(key, suffix) : new File(suffix);
-        return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  file.getPath()));
+        String newKey = StringUtils.isNotEmpty(key) ? key.replaceFirst("([^/])$","$1/") + suffix : suffix;
+        return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  newKey));
     }
 
     public S3ObjectInfo replaceOrAppendKey(String placeholder, String ifPresent, String ifAbsent) {
-
-        File file = key.contains(placeholder) ?
-                new File(key.replace(placeholder, ifPresent)) :
-                new File(key, ifAbsent);
-
-        return new S3ObjectInfo( String.format("s3://%s/%s", bucket,  file.getPath()));
+        String finalKey = key.contains(placeholder) ? key.replace(placeholder, ifPresent) : key.replaceFirst("([^/])$|^$","$1/") + ifAbsent;
+        return new S3ObjectInfo( String.format("s3://%s/%s", bucket, finalKey));
     }
 
     public S3ObjectInfo replaceOrAppendKey(String placeholder, String ifPresent) {

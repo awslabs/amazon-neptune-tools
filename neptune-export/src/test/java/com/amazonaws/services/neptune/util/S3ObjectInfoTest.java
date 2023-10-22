@@ -14,6 +14,8 @@ package com.amazonaws.services.neptune.util;
 
 import org.junit.Test;
 
+import java.io.File;
+
 import static org.junit.Assert.assertEquals;
 
 public class S3ObjectInfoTest {
@@ -51,7 +53,9 @@ public class S3ObjectInfoTest {
 
         S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
 
-        assertEquals("/temp/c.txt", s3ObjectInfo.createDownloadFile("/temp").getAbsolutePath());
+        String parent = new File(System.getProperty("java.io.tmpdir")).getAbsolutePath();
+        String absolutePath = s3ObjectInfo.createDownloadFile(parent).getAbsolutePath();
+        assertEquals(parent + File.separator + "c.txt", absolutePath);
     }
 
     @Test
@@ -60,7 +64,9 @@ public class S3ObjectInfoTest {
 
         S3ObjectInfo s3ObjectInfo = new S3ObjectInfo(s3Uri);
 
-        assertEquals("/temp/c", s3ObjectInfo.createDownloadFile("/temp").getAbsolutePath());
+        String parent = new File(System.getProperty("java.io.tmpdir")).getAbsolutePath();
+        String absolutePath = s3ObjectInfo.createDownloadFile(parent).getAbsolutePath();
+        assertEquals(parent + File.separator + "c", absolutePath);
     }
 
     @Test

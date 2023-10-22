@@ -178,6 +178,30 @@ public class JsonPropertyGraphPrinterTest {
     }
 
     @Test
+    public void shouldPrintNestedPropertiesMapAsJsonObject() throws Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        PropertySchema propertySchema1 = new PropertySchema("property", false, DataType.String, true);
+
+        LabelSchema labelSchema = new LabelSchema(new Label("Entity"));
+        labelSchema.put("property", propertySchema1);
+
+        Map<?, ?> props = map(entry("property", map(
+                entry("nestedProperty1", "value1"),
+                entry("nestedProperty2", "value2"))));
+
+        try (PropertyGraphPrinter propertyGraphPrinter = PropertyGraphExportFormat.json.createPrinter(new PrintOutputWriter("outputId", stringWriter), labelSchema, PrinterOptions.NULL_OPTIONS)) {
+            propertyGraphPrinter.printStartRow();
+            propertyGraphPrinter.printProperties(props);
+            propertyGraphPrinter.printEndRow();
+        }
+
+        assertEquals(
+                "{\"property\":{\"nestedProperty1\":\"value1\",\"nestedProperty2\":\"value2\"}}",
+                stringWriter.toString());
+    }
+
+    @Test
     public void appendsPreviouslyUnseenValuesToObjectWhenInferringSchema() throws IOException {
 
         StringWriter stringWriter = new StringWriter();
@@ -197,10 +221,10 @@ public class JsonPropertyGraphPrinterTest {
                 map(entry("fname", "fname5"), entry("lname", "lname5"), entry("age", 50))
         );
 
-        String expectedOutput = "{\"fname\":\"fname1\"}\n" +
-                "{\"fname\":\"fname2\",\"lname\":\"lname2\"}\n" +
-                "{\"fname\":\"fname3\",\"age\":30}\n" +
-                "{\"lname\":\"lname4\",\"age\":40}\n" +
+        String expectedOutput = "{\"fname\":\"fname1\"}" + System.lineSeparator() +
+                "{\"fname\":\"fname2\",\"lname\":\"lname2\"}" + System.lineSeparator() +
+                "{\"fname\":\"fname3\",\"age\":30}" + System.lineSeparator() +
+                "{\"lname\":\"lname4\",\"age\":40}" + System.lineSeparator() +
                 "{\"fname\":\"fname5\",\"lname\":\"lname5\",\"age\":50}";
 
         assertEquals(expectedOutput, stringWriter.toString());
