@@ -257,7 +257,8 @@ def main():
    if args.instance_type == 'db.serverless':
        parse_serverless_cw_logs(output)
    else:
-       parse_metrics(output)
+       print("\nInstance name '{}' is of type provisioned. \nThis evaluator only current Neptune Serverless workload for Neptune Provisioned.\n ".format(args.name))
+       #parse_metrics(output)
    
    
 
