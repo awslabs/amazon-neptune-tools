@@ -23,6 +23,6 @@
   },
   "devDependencies": {
     "aws-sdk": "^2.1025.0",
-    "jest": "^26.4.2"
+    "jest": "^29.7.0"
   }
 }
