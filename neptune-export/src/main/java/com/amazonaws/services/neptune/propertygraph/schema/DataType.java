@@ -257,7 +257,7 @@ public enum DataType {
         }
 
         private String escapeNewlineChar(String value) {
-            return value.replace("\n", "\\n");
+            return value.replace("\r", "\\r").replace("\n", "\\n");
         }
 
 
