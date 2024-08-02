@@ -317,6 +317,17 @@
                     "batch:SubmitJob"
                   ],
                   "Resource": "*"
+                },
+                {
+                  "Action": [
+                    "aoss:APIAccessAll"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:aoss:${AWS::Region}:${AWS::AccountId}:collection/*"
+                    }
+                  ]
                 }
               ]
             }
@@ -341,7 +352,7 @@
                 "neptune-stream",
                 "lambda",
                 "python39",
-		"release_2022_07_27",
+		        "release_2023_09_04",
                 "neptune-streams-layer.zip"
               ]
             ]
@@ -397,7 +408,7 @@
                 "neptune-stream",
                 "lambda",
                 "python39",
-		"release_2022_07_27",
+		        "release_2023_09_04",
                 "neptune-es-layer.zip"
               ]
             ]
