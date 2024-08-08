@@ -562,8 +562,7 @@
         },
         "MemorySize": 128,
         "Runtime": "python3.9",
-        "Timeout": "30",
-        "ReservedConcurrentExecutions": 1
+        "Timeout": "30"
       }
     },
     "KinesisToElasticSearchLambda": {
@@ -665,15 +664,15 @@
             "STREAM_NAME": {
               "Ref": "KinesisStream"
             },
+            "ELASTIC_SEARCH_ENDPOINT": {
+              "Ref": "ElasticSearchEndpoint"
+            },
             "log_commit_nums": "false"
           }
         },
         "MemorySize": 1024,
         "Runtime": "python3.9",
         "Timeout": "900",
-        "ReservedConcurrentExecutions": {
-          "Ref": "KinesisShardCount"
-        },
         "VpcConfig": {
           "SecurityGroupIds": [
             {
