@@ -41,6 +41,10 @@ os.environ["MaxPollingInterval"] = "1"
 os.environ["NeptuneStreamEndpoint"] = ""
 os.environ["StreamRecordsHandler"] = handler_name
 
+from stream_records_processor import StreamRecordsProcessor
+
+stream_records_processor = StreamRecordsProcessor()
+
 #metrics_publisher_client = MetricsPublisher()
 
 def get_handler_instance(handler_name, retry_count=0):
@@ -148,14 +152,17 @@ def lambda_bulk_handler(event, context):
     logger.info('Last record: (commitNum: {}, opNum: {})'.format(prev_commit_num, prev_op_num))
 
     if log_commit_nums:
-        logger.info('Commit nums: {}'.format(commit_nums))  
-        
-    for result in handler.handle_records(log_stream, Queue(maxsize=0)):
+        logger.info('Commit nums: {}'.format(commit_nums))
+
+    query_queue = Queue(maxsize=0)
+    for result in handler.handle_records(log_stream, query_queue):
         records_processed = result.records_processed
         logger.info('{} records processed'.format(records_processed))
         #metrics_publisher_client.publish_metrics(metrics_publisher_client.generate_record_processed_metrics(records_processed))
-        
+
+    logger.info('Executing Opensearch queries')
+
+    while not query_queue.empty():
+        stream_records_processor.write(query_queue)
+
     logger.info('Finished bulk loading')
-        
-
-
