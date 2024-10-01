@@ -139,11 +139,14 @@ class Endpoint:
             return '{}://{}:{}/{}'.format(self.protocol, self.proxy_dns, self.proxy_port, self.suffix)
         else:
             return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
-        
-        
-    def prepare_request(self, method='GET', payload=None, querystring={}, headers={}):
-        
-        def get_headers(additional_headers={}):
+ 
+    def prepare_request(self, method='GET', payload=None, querystring=None, headers=None):
+
+        querystring = querystring or {}
+        headers = headers or {}
+
+        def get_headers(additional_headers=None):
+            additional_headers = additional_headers or {}
             
             service = 'neptune-db'
             
