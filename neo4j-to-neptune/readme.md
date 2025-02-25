@@ -51,6 +51,8 @@ CALL apoc.export.csv.all(
 )
 ```
 
+**Note:** When running this command please use the syntax above, do not include `{stream:true}` in the command.  Streaming the results back to the browser and then downloading them as a CSV will result in a file that will not be correctly processed by the conversion utility.
+
 The path that you specify for the export file will be resolved relative to the Neo4j _import_ directory. `apoc.export.csv.all` creates a single CSV file containing data for all nodes and relationships.
  
 ### Convert CSV
