@@ -20,7 +20,7 @@ const {DriverRemoteConnection} = gremlin.driver
 const { PartitionStrategy } = require("gremlin/lib/process/traversal-strategy")
 const __ = gremlin.process.statics
 const { Sha256 } = require("@aws-crypto/sha256-js")
-const { SignatureV4 } = require("@aws-sdk/signature-v4")
+const { SignatureV4 } = require("@smithy/signature-v4")
 
 /**
  * Represents a connection to Neptune's gremlin endpoint.
