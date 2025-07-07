@@ -13,6 +13,7 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune;
 
 import com.amazonaws.services.neptune.io.Directories;
+import com.amazonaws.services.neptune.io.Neo4jStreamWriter;
 import com.amazonaws.services.neptune.io.OutputFile;
 import com.amazonaws.services.neptune.metadata.*;
 import com.amazonaws.services.neptune.util.CSVUtils;
@@ -20,10 +21,12 @@ import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.*;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Iterator;
 
 @Command(name = "convert-csv", description = "Converts CSV file exported from Neo4j via 'apoc.export.csv.all' to Neptune Gremlin import CSV files")
@@ -35,8 +38,27 @@ public class ConvertCsv implements Runnable {
     @Once
     private File outputDirectory;
 
+    @Option(name = {"-df", "--dotenv-file"}, description = "Path to the Dotenv file for Neo4j AuraDB connection.")
+    @RequireOnlyOne(tag = "input")
+    @Path(mustExist = true, kind = PathKind.FILE)
+    @Once
+    private File envFile;
+
+    @Option(name = {"-u", "--uri"}, description = "URI of the Neo4j Database to stream data from")
+    @RequireOnlyOne(tag = "input")
+    @Once
+    private String uri;
+
+    @Option(name = {"-n", "--username"}, description = "Neo4j Database username")
+    @Once
+    private String username;
+
+    @Option(name = {"-pw", "--password"}, description = "Neo4j Database password")
+    @Once
+    private String password;
+
     @Option(name = {"-i", "--input"}, description = "Path to Neo4j CSV file")
-    @Required
+    @RequireOnlyOne(tag = "input")
     @Path(mustExist = true, kind = PathKind.FILE)
     @Once
     private File inputFile;
@@ -66,10 +88,36 @@ public class ConvertCsv implements Runnable {
 
             Directories directories = Directories.createFor(outputDirectory);
 
+            File input = inputFile;
+            File tempDataFile = null;
+
+            // if no input file provided, it is via streaming
+            if (input == null) {
+                String uriInput, usernameInput, passwordInput;
+                if (envFile != null) {
+                    Dotenv dotenv = Dotenv.configure()
+                            .directory(envFile.getParent())
+                            .filename(envFile.getName())
+                            .load();
+                    uriInput = dotenv.get("NEO4J_URI");
+                    usernameInput = dotenv.get("NEO4J_USERNAME");
+                    passwordInput = dotenv.get("NEO4J_PASSWORD");
+                } else {
+                    uriInput = uri;
+                    usernameInput = username;
+                    passwordInput = password;
+                }
+                try (Neo4jStreamWriter writer = new Neo4jStreamWriter(uriInput, usernameInput, passwordInput, directories)) {
+                    tempDataFile = writer.streamToFile();
+                }
+
+                input = tempDataFile;
+            }
+
             try (Timer timer = new Timer();
                  OutputFile vertexFile = new OutputFile(directories, "vertices");
                  OutputFile edgeFile = new OutputFile(directories, "edges");
-                 CSVParser parser = CSVUtils.newParser(inputFile)) {
+                 CSVParser parser = CSVUtils.newParser(input)) {
 
                 Iterator<CSVRecord> iterator = parser.iterator();
 
@@ -106,7 +154,11 @@ public class ConvertCsv implements Runnable {
                     System.err.println("Edges   : " + edgeCount);
                     System.err.println("Output  : " + directories.outputDirectory());
                     System.out.println(directories.outputDirectory());
+
+                    // delete streamed data file after conversion
+                    if (tempDataFile != null) Files.deleteIfExists(tempDataFile.toPath());
                 }
+
             }
 
 
