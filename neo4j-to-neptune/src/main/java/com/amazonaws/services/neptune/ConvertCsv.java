@@ -17,6 +17,7 @@ import com.amazonaws.services.neptune.io.Neo4jStreamWriter;
 import com.amazonaws.services.neptune.io.OutputFile;
 import com.amazonaws.services.neptune.metadata.*;
 import com.amazonaws.services.neptune.util.CSVUtils;
+import com.amazonaws.services.neptune.util.NeptuneBulkLoader;
 import com.amazonaws.services.neptune.util.Timer;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
@@ -33,9 +34,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.Iterator;
 
-@Command(name = "convert-csv", description = "Converts CSV file exported from Neo4j via 'apoc.export.csv.all' to Neptune Gremlin import CSV files")
+@Command(name = "convert-csv", description = "Converts CSV file exported from Neo4j via 'apoc.export.csv.all' to Neptune Gremlin load data formatted CSV files, \n" + //
+        "and optionally automates the bulk loading of the converted data into Amazon Neptune.")
 public class ConvertCsv implements Runnable {
 
+    // Neo4j CSV file conversion options
     @Option(name = {"-d", "--dir"}, description = "Root directory for output")
     @Required
     @Path(mustExist = false, kind = PathKind.DIRECTORY)
@@ -90,6 +93,43 @@ public class ConvertCsv implements Runnable {
     @Option(name = {"--infer-types"}, description = "Infer data types for CSV column headings")
     @Once
     private boolean inferTypes = false;
+
+    // Neptune bulk load options
+    @Option(name = {"--bulk-load"}, description = "Enable bulk load to Neptune. If true, the output will be uploaded to S3 and loaded into Neptune using the bulk loader (default: false)")
+    @Once
+    private boolean bulkLoad = false;
+
+    @Option(name = {"--bucket-name"}, description = "S3 bucket name for CSV files to be stored")
+    @RequiredOnlyIf(names = "--bulk-load")
+    @Once
+    private String bucketName;
+
+    @Option(name = {"--s3-prefix"}, description = "S3 prefix for uploaded file (default: neptune)")
+    @Once
+    private String s3Prefix = "neptune";
+
+    @Option(name = {"--neptune-endpoint"}, description =
+        "Neptune cluster endpoint. Example: my-neptune-cluster.cluster-abc123.<region>.neptune.amazonaws.com")
+    @RequiredOnlyIf(names = "--bulk-load")
+    @Once
+    private String neptuneEndpoint;
+
+    @Option(name = {"--iam-role-arn"}, description = "IAM role ARN for Neptune bulk loading. It will need S3 and Neptune access permissions. \n" +
+        "Refer to the following documentation for the specific policies/permissions required:\n" + //
+        "https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-IAM-CreateRole.html\n" + //
+        "https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-IAM-add-role-cluster.html")
+    @RequiredOnlyIf(names = "--bulk-load")
+    @Once
+    private String iamRoleArn;
+
+    @Option(name = {"--parallelism"}, description = "Parallelism level for Neptune bulk loading (default: OVERSUBSCRIBE)")
+    @Once
+    @AllowedValues(allowedValues = {"LOW", "MEDIUM", "HIGH", "OVERSUBSCRIBE"})
+    private String parallelism = "OVERSUBSCRIBE";
+
+    @Option(name = {"--monitor"}, description = "Monitor Neptune bulk load progress until completion (default: true)")
+    @Once
+    private boolean monitor = true;
 
     @Override
     public void run() {
@@ -206,9 +246,26 @@ public class ConvertCsv implements Runnable {
 
             }
 
+            // Only perform bulk load operations if --bulk-load is enabled
+            if (bulkLoad) {
+                try (NeptuneBulkLoader neptuneBulkLoader = new NeptuneBulkLoader(
+                        bucketName,
+                        s3Prefix,
+                        neptuneEndpoint,
+                        iamRoleArn,
+                        parallelism)) {
 
+                    String uri = directories.outputDirectory().toFile().getAbsolutePath();
+                    String s3SourceUri = neptuneBulkLoader.uploadCsvFilesToS3(uri);
+                    String loadId = neptuneBulkLoader.startNeptuneBulkLoad(s3SourceUri);
+
+                    if (monitor) {
+                        neptuneBulkLoader.monitorLoadProgress(loadId);
+                    }
+                }
+            }
         } catch (Exception e) {
-            System.err.println("An error occurred while converting Neo4j CSV file:");
+            System.err.println("An error occurred while running convert-csv:");
             e.printStackTrace();
         }
     }
