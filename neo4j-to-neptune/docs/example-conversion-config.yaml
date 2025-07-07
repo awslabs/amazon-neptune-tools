@@ -1,0 +1,43 @@
+# Example label mapping and filtering configuration for Neo4j to Neptune conversion
+# This file demonstrates how to map vertex and edge labels and skip certain records during conversion
+
+# Vertex label mappings
+# Format: OldLabel: NewLabel
+vertexLabels:
+  Person: Individual
+  Company: Organization
+  Product: Item
+  Location: Place
+  User: Customer
+
+# Edge label mappings
+# Format: OLD_RELATIONSHIP_TYPE: NEW_RELATIONSHIP_TYPE
+edgeLabels:
+  WORKS_FOR: EMPLOYED_BY
+  LIVES_IN: RESIDES_IN
+  OWNS: POSSESSES
+  KNOWS: CONNECTED_TO
+  PURCHASED: BOUGHT
+  MANAGES: SUPERVISES
+
+# Skip vertices configuration
+skipVertices:
+  # Skip vertices by their specific IDs
+  byId:
+    - "vertex_123"
+    - "vertex_456"
+    - "user_999"
+
+  # Skip vertices by their labels (any vertex with these labels will be skipped)
+  byLabel:
+    - "TestData"
+    - "Deprecated"
+    - "TempNode"
+
+# Skip edges configuration
+skipEdges:
+  # Skip edges by their relationship types
+  byLabel:
+    - "TEMP_RELATIONSHIP"
+    - "DEBUG_LINK"
+    - "OLD_CONNECTION"

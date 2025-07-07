@@ -4,7 +4,9 @@
     
     SYNOPSIS
             neo4j-to-neptune.sh convert-csv {-d | --dir} <outputDirectory>
-                    {-i | --input} <inputFile> [ --infer-types ]
+                    {-i | --input} <inputFile> 
+                    [ --conversion-config <conversionConfigYAMLFile> ]
+                    [ --infer-types ]
                     [ --node-property-policy <multiValuedNodePropertyPolicy> ]
                     [ --relationship-property-policy <multiValuedRelationshipPropertyPolicy> ]
                     [ --semi-colon-replacement <semiColonReplacement> ]
@@ -30,6 +32,14 @@
                 exist on the file system. The provided path must be readable and
                 writable.
     
+            --conversion-config <conversionConfigYAMLFile>
+                Path to conversion configuration YAML file
+    
+                This option may occur a maximum of 1 times
+    
+    
+                This options value must be a path to a file. The provided path must
+                exist on the file system. The provided path must be readable.
     
             --infer-types
                 Infer data types for CSV column headings
