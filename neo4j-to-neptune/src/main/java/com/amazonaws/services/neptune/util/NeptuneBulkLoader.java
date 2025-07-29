@@ -13,28 +13,31 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.util;
 
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import software.amazon.awssdk.core.async.AsyncRequestBody;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
+import software.amazon.awssdk.transfer.s3.model.FileUpload;
+import software.amazon.awssdk.transfer.s3.model.UploadFileRequest;
 
 import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.amazonaws.services.neptune.metadata.BulkLoadConfig;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -73,84 +76,100 @@ public class NeptuneBulkLoader implements AutoCloseable {
     }
 
     private static final String NEPTUNE_PORT = "8182"; // Default Neptune port for HTTP API
-    private final S3AsyncClient s3AsyncClient;
+    private final S3TransferManager transferManager;
     private final String bucketName;
     private final String s3Prefix;
     private final Region region;
     private final String neptuneEndpoint;
     private final String iamRoleArn;
     private final String parallelism;
+    private final Boolean monitor;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public NeptuneBulkLoader(
-            String bucketName, String s3Prefix, String neptuneEndpoint, String iamRoleArn, String parallelism) {
+    public NeptuneBulkLoader(BulkLoadConfig bulkLoadConfig) {
+        this.bucketName = bulkLoadConfig.getBucketName().replaceAll("/+$", "");
+        this.s3Prefix = bulkLoadConfig.getS3Prefix().replaceAll("/+$", "");
+        this.neptuneEndpoint = bulkLoadConfig.getNeptuneEndpoint();
+        this.region = extractRegionFromEndpoint(this.neptuneEndpoint);
+        this.iamRoleArn = bulkLoadConfig.getIamRoleArn();
+        this.parallelism = bulkLoadConfig.getParallelism().toUpperCase();
+        this.monitor = bulkLoadConfig.isMonitor();
 
-        if (bucketName == null || bucketName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Bucket name cannot be null or empty");
-        }
-        this.bucketName = bucketName.replaceAll("/+$", "");
-
-        if (s3Prefix == null || s3Prefix.trim().isEmpty()) {
-            throw new IllegalArgumentException("S3 prefix cannot be empty");
-        }
-        this.s3Prefix = s3Prefix.replaceAll("/+$", "");
-
-        if (neptuneEndpoint == null || neptuneEndpoint.trim().isEmpty()) {
-            throw new IllegalArgumentException("Neptune endpoint cannot be null or empty");
-        }
-        this.neptuneEndpoint = neptuneEndpoint;
-
-        // Example endpoint: my-neptune-cluster.cluster[-custom]-abc123.<region>.neptune.amazonaws.com
-        String[] endpointParts = neptuneEndpoint.split("\\.");
-        if (endpointParts.length < 4) {
-            throw new IllegalArgumentException("Invalid Neptune endpoint format: " + neptuneEndpoint);
-        }
-        this.region = Region.of(endpointParts[2]);
-
-        if (iamRoleArn == null || iamRoleArn.trim().isEmpty()) {
-            throw new IllegalArgumentException("IAM role ARN cannot be null or empty");
-        }
-        this.iamRoleArn = iamRoleArn;
-
-        if (parallelism == null || parallelism.trim().isEmpty()) {
-            throw new IllegalArgumentException("Parallelism cannot be null or empty");
-        }
-        this.parallelism = parallelism;
-
+        // Initialize clients
         this.objectMapper = new ObjectMapper();
 
-        this.s3AsyncClient = S3AsyncClient.builder()
+        // Create S3AsyncClient with optimized configuration for large file uploads
+        S3AsyncClient s3AsyncClient = S3AsyncClient.builder()
                 .region(region)
                 .credentialsProvider(DefaultCredentialsProvider.create())
+                .multipartEnabled(true)
+                .httpClientBuilder(NettyNioAsyncHttpClient.builder()
+                    .maxConcurrency(200) // Increase max concurrent connections further
+                    .maxPendingConnectionAcquires(2000) // Increase pending connection queue
+                    .connectionAcquisitionTimeout(Duration.ofMinutes(10)) // 10 minute timeout
+                    .connectionTimeout(Duration.ofMinutes(5)) // 5 minute connection timeout
+                    .readTimeout(Duration.ofMinutes(15)) // 15 minute read timeout
+                    .writeTimeout(Duration.ofMinutes(15)) // 15 minute write timeout
+                )
+                .overrideConfiguration(ClientOverrideConfiguration.builder()
+                    .apiCallTimeout(Duration.ofMinutes(30)) // 30 minute API call timeout
+                    .apiCallAttemptTimeout(Duration.ofMinutes(15)) // 15 minute per attempt
+                    .build())
+                .build();
+
+        // Initialize S3 Transfer Manager with the configured S3 client
+        this.transferManager = S3TransferManager.builder()
+                .s3Client(s3AsyncClient)
                 .build();
 
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(REQUEST_TIMEOUT_SECONDS))
                 .build();
 
-        // Validate for not empty parameters
+        // Log configuration
+        logConfiguration();
+    }
+
+    /**
+     * Extracts the AWS region from the Neptune endpoint
+     * @param endpoint The Neptune endpoint
+     * @return The AWS region
+     * @throws IllegalArgumentException if the endpoint format is invalid
+     */
+    private Region extractRegionFromEndpoint(String endpoint) {
+        // Example endpoint: my-neptune-cluster.cluster[-custom]-abc123.<region>.neptune.amazonaws.com
+        String[] endpointParts = endpoint.split("\\.");
+        if (endpointParts.length < 4) {
+            throw new IllegalArgumentException("Invalid Neptune endpoint format: " + endpoint);
+        }
+        return Region.of(endpointParts[2]);
+    }
+
+    /**
+     * Logs the configuration for debugging purposes
+     */
+    private void logConfiguration() {
         System.err.println("S3 Bucket: " + this.bucketName);
         System.err.println("S3 Prefix: " + this.s3Prefix);
         System.err.println("AWS Region: " + this.region);
         System.err.println("IAM Role ARN: " + this.iamRoleArn);
         System.err.println("Neptune Endpoint: " + this.neptuneEndpoint);
         System.err.println("Bulk Load Parallelism: " + this.parallelism);
+        System.err.println("Bulk Load Monitor: " + this.monitor);
     }
 
     // Constructor for testing
-    public NeptuneBulkLoader(String bucketName, String s3Prefix,
-            String neptuneEndpoint, String iamRoleArn, String parallelism,
-            HttpClient httpClient, S3AsyncClient s3AsyncClient) {
-        this.bucketName = bucketName;
-        this.s3Prefix = s3Prefix;
-        this.neptuneEndpoint = neptuneEndpoint;
-        // Example endpoint: my-neptune-cluster.cluster[-custom]-abc123.<region>.neptune.amazonaws.com
+    public NeptuneBulkLoader(BulkLoadConfig bulkLoadConfig, HttpClient httpClient, S3TransferManager transferManager) {
+        this.bucketName = bulkLoadConfig.getBucketName().replaceAll("/+$", "");
+        this.s3Prefix = bulkLoadConfig.getS3Prefix().replaceAll("/+$", "");
+        this.neptuneEndpoint = bulkLoadConfig.getNeptuneEndpoint();
         this.region = Region.of(neptuneEndpoint.split("\\.")[2]);
-        this.iamRoleArn = iamRoleArn;
-        this.parallelism = parallelism;
+        this.iamRoleArn = bulkLoadConfig.getIamRoleArn();
+        this.parallelism = bulkLoadConfig.getParallelism();
+        this.monitor = bulkLoadConfig.isMonitor();
         this.objectMapper = new ObjectMapper();
-        this.s3AsyncClient = s3AsyncClient;
+        this.transferManager = transferManager;
         this.httpClient = httpClient;
     }
 
@@ -187,7 +206,7 @@ public class NeptuneBulkLoader implements AutoCloseable {
     }
 
     /**
-     * Upload all files from a directory to S3 asynchronously
+     * Upload all files from a directory to S3 sequentially to avoid connection pool exhaustion
      */
     protected CompletableFuture<Boolean> uploadFileAsync(String directoryPath, String s3Prefix) throws Exception {
         // Create a File object to check existence
@@ -197,52 +216,67 @@ public class NeptuneBulkLoader implements AutoCloseable {
             throw new IllegalStateException("Directory does not exist: " + directoryPath);
         }
 
-        System.err.println("Starting async upload of files from " +
+        System.err.println("Starting sequential upload of files from " +
             directoryPath + " to s3://" + bucketName + "/" + s3Prefix);
 
         // Get all CSV files in the directory
-        File[] csvFiles = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
+        File[] csvFiles = directory.listFiles((dir, name) ->
+            name.toLowerCase().endsWith(".csv") || name.toLowerCase().endsWith(".gz"));
 
         if (csvFiles == null || csvFiles.length == 0) {
             System.err.println("No files with correct extension were found in " + directoryPath);
             return CompletableFuture.completedFuture(false);
         }
 
-        // Create a list to hold all upload futures
-        List<CompletableFuture<Boolean>> uploadFutures = new ArrayList<>();
+        // Sort files to upload vertices first, then edges (for better organization)
+        java.util.Arrays.sort(csvFiles, (a, b) -> {
+            if (a.getName().contains("vertices") && b.getName().contains("edges")) return -1;
+            if (a.getName().contains("edges") && b.getName().contains("vertices")) return 1;
+            return a.getName().compareTo(b.getName());
+        });
 
-        // Start upload for each CSV file
-        for (File csvFile : csvFiles) {
-            String csvFilePath = s3Prefix + "/" + csvFile.getName();
-            CompletableFuture<Boolean> uploadFuture = uploadSingleFileAsync(csvFile.getAbsolutePath(), csvFilePath);
-            uploadFutures.add(uploadFuture);
-        }
-
-        // Combine all futures and return true only if all uploads succeed
-        return CompletableFuture.allOf(uploadFutures.toArray(new CompletableFuture[0]))
-            .thenApply(v -> {
-                boolean allSuccessful = uploadFutures.stream()
-                    .allMatch(future -> {
-                        try {
-                            return future.get();
-                        } catch (Exception e) {
-                            System.err.println("Error getting upload result: " + e.getMessage());
-                            return false;
-                        }
-                    });
-
-                if (allSuccessful) {
-                    System.err.println("Successfully uploaded " + csvFiles.length + " files from " + directoryPath);
-                } else {
-                    System.err.println("Failed uploading file(s) from " + directoryPath);
-                }
-
-                return allSuccessful;
-            });
+        // Upload files sequentially to avoid connection pool exhaustion
+        return uploadFilesSequentially(csvFiles, s3Prefix, 0);
     }
 
     /**
-     * Upload a single CSV file to S3 asynchronously (helper method)
+     * Upload files sequentially (one at a time) to avoid overwhelming the connection pool
+     */
+    private CompletableFuture<Boolean> uploadFilesSequentially(File[] files, String s3Prefix, int index) {
+        if (index >= files.length) {
+            System.err.println("Successfully uploaded all " + files.length + " files sequentially");
+            return CompletableFuture.completedFuture(true);
+        }
+
+        File currentFile = files[index];
+        String csvFilePath = s3Prefix + "/" + currentFile.getName();
+
+        System.err.println("Uploading file " + (index + 1) + " of " + files.length + ": " + currentFile.getName());
+
+        try {
+            CompletableFuture<Boolean> currentUpload = uploadSingleFileAsync(currentFile.getAbsolutePath(), csvFilePath);
+
+            return currentUpload.thenCompose(success -> {
+                if (!success) {
+                    System.err.println("Failed to upload " + currentFile.getName() + ", stopping sequential upload");
+                    return CompletableFuture.completedFuture(false);
+                }
+
+                System.err.println("Successfully uploaded " + currentFile.getName() +
+                    " (" + (index + 1) + "/" + files.length + ")");
+
+                // Upload next file
+                return uploadFilesSequentially(files, s3Prefix, index + 1);
+            });
+
+        } catch (Exception e) {
+            System.err.println("Error initiating upload for " + currentFile.getName() + ": " + e.getMessage());
+            return CompletableFuture.completedFuture(false);
+        }
+    }
+
+    /**
+     * Upload a single CSV file to S3 asynchronously using S3TransferManager
      */
     protected CompletableFuture<Boolean> uploadSingleFileAsync(String localFilePath, String s3Prefix) throws Exception {
         // Create a File object to check existence
@@ -255,32 +289,48 @@ public class NeptuneBulkLoader implements AutoCloseable {
         String s3SourceUri = "s3://" + bucketName + "/" + s3Prefix;
         System.err.println("Starting async upload of " + localFilePath + " to " + s3SourceUri);
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(s3Prefix)
-                .contentType("text/csv")
-                .build();
+        System.err.println("File size: " + file.length() + " Bytes");
+        System.err.println("Using S3 Transfer Manager for upload...");
 
-        // Create async request body from file
-        AsyncRequestBody requestBody = AsyncRequestBody.fromFile(file);
+        try {
+            UploadFileRequest uploadRequest = UploadFileRequest.builder()
+                    .putObjectRequest(PutObjectRequest.builder()
+                            .bucket(bucketName)
+                            .key(s3Prefix)
+                            .contentType(file.getName().endsWith(".gz") ? "application/gzip" : "text/csv")
+                            .build())
+                    .source(Paths.get(localFilePath))
+                    .build();
 
-        // Start async upload
-        CompletableFuture<PutObjectResponse> uploadFuture = s3AsyncClient.putObject(putObjectRequest, requestBody);
+            System.err.println("Initiating Transfer Manager upload...");
+            FileUpload upload = transferManager.uploadFile(uploadRequest);
 
-        // Return a future that resolves to boolean success
-        return uploadFuture.handle((response, throwable) -> {
-            if (throwable != null) {
-                if (throwable instanceof S3Exception) {
-                    System.err.println("S3 error uploading file " + localFilePath + ": " + throwable);
+            // Return a future that resolves to boolean success
+            return upload.completionFuture().handle((completedUpload, throwable) -> {
+                if (throwable != null) {
+                    System.err.println("Transfer Manager upload failed for " + localFilePath);
+                    System.err.println("Error type: " + throwable.getClass().getSimpleName());
+                    System.err.println("Error message: " + throwable.getMessage());
+
+                    if (throwable.getCause() instanceof S3Exception) {
+                        S3Exception s3Exception = (S3Exception) throwable.getCause();
+                        System.err.println("S3 error code: " + s3Exception.awsErrorDetails().errorCode());
+                        System.err.println("S3 error message: " + s3Exception.awsErrorDetails().errorMessage());
+                        System.err.println("S3 status code: " + s3Exception.statusCode());
+                    }
+                    return false;
                 } else {
-                    System.err.println("Unexpected error uploading file " + localFilePath + ": " + throwable);
+                    System.err.println("Successfully uploaded " + file.getName() + " using Transfer Manager - ETag: " +
+                            completedUpload.response().eTag());
+                    return true;
                 }
-                return false;
-            } else {
-                System.err.println("Successfully uploaded " + file.getName() + " - ETag: " + response.eTag());
-                return true;
-            }
-        });
+            });
+
+        } catch (Exception e) {
+            System.err.println("Error initiating Transfer Manager upload for " + localFilePath + ": " + e.getMessage());
+            e.printStackTrace();
+            return CompletableFuture.completedFuture(false);
+        }
     }
 
     /**
@@ -472,12 +522,12 @@ public class NeptuneBulkLoader implements AutoCloseable {
     }
 
     /**
-     * Close the S3 async client and release resources (AutoCloseable implementation)
+     * Close the transfer manager and release resources (AutoCloseable implementation)
      */
     @Override
     public void close() {
-        if (s3AsyncClient != null) {
-            s3AsyncClient.close();
+        if (transferManager != null) {
+            transferManager.close();
         }
     }
 }

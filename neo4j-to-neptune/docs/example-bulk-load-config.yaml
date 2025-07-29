@@ -1,0 +1,21 @@
+# Example bulk load configuration for Neptune
+# This file demonstrates the configuration options for automated bulk loading
+# of converted CSV data into Amazon Neptune
+
+# Required S3 Configuration
+bucketName: my-neptune-data-bucket
+
+# Required Neptune Configuration
+neptuneEndpoint: my-cluster.cluster-abc123.us-east-1.neptune.amazonaws.com
+
+# IAM Configuration
+iamRoleArn: arn:aws:iam::123456789012:role/NeptuneLoadFromS3Role
+
+# Optional S3 Configuration
+s3Prefix: neptune
+
+# Optional Load Performance Configuration
+parallelism: OVERSUBSCRIBE  # Options: LOW, MEDIUM, HIGH, OVERSUBSCRIBE
+
+# Optional Monitoring Configuration
+monitor: true # Set to false if you want to manually monitor load progress

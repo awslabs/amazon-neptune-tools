@@ -1,6 +1,16 @@
 # Example label mapping and filtering configuration for Neo4j to Neptune conversion
 # This file demonstrates how to map vertex and edge labels and skip certain records during conversion
 
+# Vertex id transformation configuration
+vertexIdTransformation:
+  ~id: "{_labels}_{born}_{name}_{releases}_{tagline}_{title}_{_id}"
+
+# Edge id transformation configuration
+# You can use {_from} or {~from} to reference the transformed source vertex ID
+# You can use {_to} or {~to} to reference the transformed target vertex ID
+edgeIdTransformation:
+  ~id: "{_start}!{_end}!{_type}!{~from}!{~to}!{~label}!{_id}"
+
 # Vertex label mappings
 # Format: OldLabel: NewLabel
 vertexLabels:

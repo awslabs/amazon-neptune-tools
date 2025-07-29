@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2025 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -33,6 +33,10 @@ import java.util.*;
  * edgeLabels:
  *   OLD_EDGE_TYPE: NEW_EDGE_TYPE
  *   ANOTHER_OLD_TYPE: ANOTHER_NEW_TYPE
+ * vertexIdTransformation:
+ *   ~id: "{_labels}_{_id}"
+ * edgeIdTransformation:
+ *   ~id: "{_type}_{_start}_{_end}"
  * skipVertices:
  *   byId:
  *     - "vertex_id_1"
@@ -52,6 +56,10 @@ public class ConversionConfig {
     // Label mapping configurations
     private Map<String, String> vertexLabels = new HashMap<>();
     private Map<String, String> edgeLabels = new HashMap<>();
+
+    // ID transformation configurations
+    private Map<String, String> vertexIdTransformation = new HashMap<>();
+    private Map<String, String> edgeIdTransformation = new HashMap<>();
 
     // Skip configurations
     private SkipVertices skipVertices = new SkipVertices();
@@ -108,6 +116,12 @@ public class ConversionConfig {
             if (config.edgeLabels == null) {
                 config.edgeLabels = new HashMap<>();
             }
+            if (config.vertexIdTransformation == null) {
+                config.vertexIdTransformation = new HashMap<>();
+            }
+            if (config.edgeIdTransformation == null) {
+                config.edgeIdTransformation = new HashMap<>();
+            }
 
             // Ensure nested sets are initialized
             if (config.skipVertices.byId == null) {
@@ -131,4 +145,10 @@ public class ConversionConfig {
         return !skipVertices.byId.isEmpty() || !skipVertices.byLabel.isEmpty() || !skipEdges.byLabel.isEmpty();
     }
 
+    /**
+     * Checks if any ID transformations are configured.
+     */
+    public boolean hasIdTransformations() {
+        return !vertexIdTransformation.isEmpty() || !edgeIdTransformation.isEmpty();
+    }
 }
