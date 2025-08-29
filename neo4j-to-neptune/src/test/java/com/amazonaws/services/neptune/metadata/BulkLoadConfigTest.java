@@ -13,6 +13,9 @@ permissions and limitations under the License.
 package com.amazonaws.services.neptune.metadata;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import com.amazonaws.services.neptune.TestDataProvider;
 
@@ -36,7 +39,7 @@ public class BulkLoadConfigTest {
             writer.write("neptune-endpoint: \"" + TestDataProvider.NEPTUNE_ENDPOINT + "\"\n");
             writer.write("iam-role-arn: \"" + TestDataProvider.IAM_ROLE_ARN + "\"\n");
             writer.write("parallelism: \"" + TestDataProvider.BULK_LOAD_PARALLELISM_LOW + "\"\n");
-            writer.write("monitor: " + TestDataProvider.BULK_LOAD_MONITOR_TRUE+ "\n");
+            writer.write("monitor: " + TestDataProvider.BOOLEAN_TRUE + "\n");
         }
 
         BulkLoadConfig config = BulkLoadConfig.fromFile(tempFile);
@@ -72,7 +75,7 @@ public class BulkLoadConfigTest {
         // Test default values for optional fields
         assertEquals("", config.getS3Prefix());
         assertEquals("OVERSUBSCRIBE", config.getParallelism());
-        assertFalse(config.isMonitor()); // boolean default is false
+        assertFalse(config.isMonitor());
     }
 
     @Test
@@ -93,7 +96,7 @@ public class BulkLoadConfigTest {
         assertNull(config.getNeptuneEndpoint());
         assertNull(config.getIamRoleArn());
         assertNull(config.getParallelism());
-        assertFalse(config.isMonitor()); // boolean default is false
+        assertFalse(config.isMonitor());
     }
 
     @Test
@@ -107,7 +110,7 @@ public class BulkLoadConfigTest {
         assertNull(config.getNeptuneEndpoint());
         assertNull(config.getIamRoleArn());
         assertNull(config.getParallelism());
-        assertFalse(config.isMonitor()); // boolean default is false
+        assertFalse(config.isMonitor());
     }
 
     @Test
@@ -120,7 +123,7 @@ public class BulkLoadConfigTest {
             writer.write("bucket-name: \"" + TestDataProvider.BUCKET + "\"\n");
             writer.write("neptune-endpoint: \"" + TestDataProvider.NEPTUNE_ENDPOINT + "\"\n");
             writer.write("iam-role-arn: \"" + TestDataProvider.IAM_ROLE_ARN + "\"\n");
-            writer.write("monitor: " + TestDataProvider.BULK_LOAD_MONITOR_FALSE + "\n");
+            writer.write("monitor: " + TestDataProvider.BOOLEAN_FALSE + "\n");
         }
 
         BulkLoadConfig config = BulkLoadConfig.fromFile(tempFile);
@@ -131,7 +134,7 @@ public class BulkLoadConfigTest {
             writer.write("bucket-name: \"" + TestDataProvider.BUCKET + "\"\n");
             writer.write("neptune-endpoint: \"" + TestDataProvider.NEPTUNE_ENDPOINT + "\"\n");
             writer.write("iam-role-arn: \"" + TestDataProvider.IAM_ROLE_ARN + "\"\n");
-            writer.write("monitor: " + TestDataProvider.BULK_LOAD_MONITOR_TRUE + "\n");
+            writer.write("monitor: " + TestDataProvider.BOOLEAN_TRUE + "\n");
         }
 
         config = BulkLoadConfig.fromFile(tempFile);
@@ -198,7 +201,7 @@ public class BulkLoadConfigTest {
             .withIamRoleArn(TestDataProvider.IAM_ROLE_ARN);
 
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(validConfig);
+            BulkLoadConfig.validateBulkLoadConfigValues(validConfig);
         } catch (Exception e) {
             fail("Valid config should not throw exception: " + e.getMessage());
         }
@@ -210,7 +213,7 @@ public class BulkLoadConfigTest {
         BulkLoadConfig emptyConfig = new BulkLoadConfig();
 
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(emptyConfig);
+            BulkLoadConfig.validateBulkLoadConfigValues(emptyConfig);
             fail("Should throw exception for missing required fields");
         } catch (IllegalArgumentException e) {
             // Verify that the error message contains all missing fields
@@ -232,7 +235,7 @@ public class BulkLoadConfigTest {
             .withIamRoleArn(TestDataProvider.IAM_ROLE_ARN);
 
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(missingBucket);
+            BulkLoadConfig.validateBulkLoadConfigValues(missingBucket);
             fail("Should throw exception for missing bucket name");
         } catch (IllegalArgumentException e) {
             assertTrue("Error message should mention S3 bucket name",
@@ -252,7 +255,7 @@ public class BulkLoadConfigTest {
             .withIamRoleArn(TestDataProvider.IAM_ROLE_ARN);
 
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(missingEndpoint);
+            BulkLoadConfig.validateBulkLoadConfigValues(missingEndpoint);
             fail("Should throw exception for missing Neptune endpoint");
         } catch (IllegalArgumentException e) {
             assertTrue("Error message should mention Neptune endpoint",
@@ -272,7 +275,7 @@ public class BulkLoadConfigTest {
             .withNeptuneEndpoint(TestDataProvider.NEPTUNE_ENDPOINT);
 
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(missingRole);
+            BulkLoadConfig.validateBulkLoadConfigValues(missingRole);
             fail("Should throw exception for missing IAM role ARN");
         } catch (IllegalArgumentException e) {
             assertTrue("Error message should mention IAM role ARN",
@@ -296,7 +299,7 @@ public class BulkLoadConfigTest {
         invalidParallelism.setParallelism("INVALID_VALUE");
 
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(invalidParallelism);
+            BulkLoadConfig.validateBulkLoadConfigValues(invalidParallelism);
             fail("Should throw exception for invalid parallelism");
         } catch (IllegalArgumentException e) {
             assertTrue("Error message should mention valid parallelism options",
@@ -317,7 +320,7 @@ public class BulkLoadConfigTest {
 
         // This should not throw an exception since we now allow null parallelism
         try {
-            BulkLoadConfig.validateBulkLoadConfigFile(nullParallelism);
+            BulkLoadConfig.validateBulkLoadConfigValues(nullParallelism);
         } catch (Exception e) {
             fail("Should not throw exception for null parallelism: " + e.getMessage());
         }
@@ -334,7 +337,7 @@ public class BulkLoadConfigTest {
         config.setNeptuneEndpoint(TestDataProvider.NEPTUNE_ENDPOINT);
         config.setIamRoleArn(TestDataProvider.IAM_ROLE_ARN);
         config.setParallelism(TestDataProvider.BULK_LOAD_PARALLELISM_HIGH);
-        config.setMonitor(TestDataProvider.BULK_LOAD_MONITOR_FALSE);
+        config.setMonitor(TestDataProvider.BOOLEAN_FALSE);
 
         // Test getters (generated by Lombok)
         assertEquals(TestDataProvider.BUCKET, config.getBucketName());
@@ -342,7 +345,7 @@ public class BulkLoadConfigTest {
         assertEquals(TestDataProvider.NEPTUNE_ENDPOINT, config.getNeptuneEndpoint());
         assertEquals(TestDataProvider.IAM_ROLE_ARN, config.getIamRoleArn());
         assertEquals(TestDataProvider.BULK_LOAD_PARALLELISM_HIGH, config.getParallelism());
-        assertFalse(config.isMonitor()); // boolean default is false
+        assertFalse(config.isMonitor());
 
         // Test toString method (generated by Lombok)
         String toString = config.toString();
@@ -350,5 +353,55 @@ public class BulkLoadConfigTest {
         assertTrue(toString.contains("BulkLoadConfig"));
         assertTrue(toString.contains(TestDataProvider.BUCKET));
         assertTrue(toString.contains(TestDataProvider.NEPTUNE_ENDPOINT));
+    }
+
+    @RunWith(Parameterized.class)
+    public static class S3BucketNameValidationTest {
+
+        @Parameters(name = "{0}")
+        public static Object[][] data() {
+            return new Object[][] {
+                {"ab", "S3 bucket name must be between 3 and 63 characters"},
+                {"a".repeat(64), "S3 bucket name must be between 3 and 63 characters"},
+                {"My-Bucket", "S3 bucket name must only contain lowercase letters, numbers, hyphens, and periods"},
+                {"$$$", "S3 bucket name must only contain lowercase letters, numbers, hyphens, and periods"},
+                {"-bucket", "S3 bucket name must begin and end with a letter or number"},
+                {"bucket-", "S3 bucket name must begin and end with a letter or number"},
+                {"my..bucket", "S3 bucket name cannot contain consecutive periods"},
+                {"192.168.1.1", "S3 bucket name cannot be formatted as an IP address"},
+                {"xn--bucket", "S3 bucket name has an invalid prefix or suffix"},
+                {"sthree-bucket", "S3 bucket name has an invalid prefix or suffix"},
+                {"amzn-s3-demo-bucket", "S3 bucket name has an invalid prefix or suffix"},
+                {"bucket-s3alias", "S3 bucket name has an invalid prefix or suffix"},
+                {"bucket--ol-s3", "S3 bucket name has an invalid prefix or suffix"},
+                {"bucket.mrap", "S3 bucket name has an invalid prefix or suffix"},
+                {"bucket--x-s3", "S3 bucket name has an invalid prefix or suffix"},
+                {"bucket--table-s3", "S3 bucket name has an invalid prefix or suffix"}
+            };
+        }
+
+        private final String bucketName;
+        private final String expectedMessage;
+
+        public S3BucketNameValidationTest(String bucketName, String expectedMessage) {
+            this.bucketName = bucketName;
+            this.expectedMessage = expectedMessage;
+        }
+
+        @Test
+        public void testS3BucketNameValidation() {
+            BulkLoadConfig config = new BulkLoadConfig()
+                .withNeptuneEndpoint(TestDataProvider.NEPTUNE_ENDPOINT)
+                .withIamRoleArn(TestDataProvider.IAM_ROLE_ARN);
+
+            config.setBucketName(bucketName);
+
+            try {
+                BulkLoadConfig.validateBulkLoadConfigValues(config);
+                fail("Expected IllegalArgumentException");
+            } catch (IllegalArgumentException e) {
+                assertEquals(expectedMessage, e.getMessage());
+            }
+        }
     }
 }

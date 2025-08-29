@@ -246,7 +246,7 @@ public class ConvertCsv implements Runnable {
             config.setMonitor(monitor);
         }
 
-        BulkLoadConfig.validateBulkLoadConfigFile(config);
+        BulkLoadConfig.validateBulkLoadConfigValues(config);
         return config;
     }
 

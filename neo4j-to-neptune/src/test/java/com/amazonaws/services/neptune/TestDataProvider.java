@@ -44,25 +44,21 @@ public class TestDataProvider {
     // Test constants
     public static final String BUCKET = "test-neptune-bucket";
     public static final String S3_PREFIX = "test-prefix";
-    public static final String S3_DEFAULT = "";
     public static final String CONVERT_CSV_TIMESTAMP = "1751659751530";
-    public static final String S3_SOURCE_URI = "s3://" + BUCKET + "/" + S3_PREFIX + CONVERT_CSV_TIMESTAMP + "/";
     public static final Region REGION_US_EAST_2 = Region.US_EAST_2;
     public static final String NEPTUNE_ENDPOINT = "test-neptune.cluster-abc123." + REGION_US_EAST_2 + ".neptune.amazonaws.com";
     public static final String IAM_ROLE_ARN = "arn:aws:iam::123456789012:role/TestNeptuneRole";
     public static final String TEMP_FOLDER_NAME = "TEST_TEMP_FOLDER";
-    public static final String VERTICIES_CSV = "vertices.csv";
+    public static final String VERTICES_CSV = "vertices.csv";
     public static final String EDGES_CSV = "edges.csv";
-    public static final String S3_KEY_FOR_UPLOAD_FILE_ASYNC_VERTICES = S3_PREFIX + "/" + VERTICIES_CSV;
-    public static final String S3_KEY_FOR_UPLOAD_FILE_ASYNC_EDGES = S3_PREFIX + "/" + EDGES_CSV;
+    public static final String S3_KEY_FOR_UPLOAD_FILE_ASYNC_VERTICES = S3_PREFIX + "/" + VERTICES_CSV;
     public static final String LOAD_ID_0 = "00000000-0000-0000-0000-000000000000";
-    public static final String LOAD_ID_1 = "00000000-0000-0000-0000-000000000001";
     public static final String BULK_LOAD_PARALLELISM_LOW = "LOW";
     public static final String BULK_LOAD_PARALLELISM_MEDIUM = "MEDIUM";
     public static final String BULK_LOAD_PARALLELISM_HIGH = "HIGH";
     public static final String BULK_LOAD_PARALLELISM_OVERSUBSCRIBE = "OVERSUBSCRIBE";
-    public static final Boolean BULK_LOAD_MONITOR_TRUE = true;
-    public static final Boolean BULK_LOAD_MONITOR_FALSE = false;
+    public static final Boolean BOOLEAN_TRUE = true;
+    public static final Boolean BOOLEAN_FALSE = false;
 
     // Load status constants - completed statuses
     public static final String LOAD_COMPLETED = "LOAD_COMPLETED";
@@ -101,7 +97,7 @@ public class TestDataProvider {
 
     public static NeptuneBulkLoader createNeptuneBulkLoader() {
         BulkLoadConfig bulkLoadConfig =
-            createBulkLoadConfig(BUCKET, S3_PREFIX, NEPTUNE_ENDPOINT, IAM_ROLE_ARN, BULK_LOAD_PARALLELISM_MEDIUM, BULK_LOAD_MONITOR_FALSE);
+            createBulkLoadConfig(BUCKET, S3_PREFIX, NEPTUNE_ENDPOINT, IAM_ROLE_ARN, BULK_LOAD_PARALLELISM_MEDIUM, BOOLEAN_FALSE);
         try (NeptuneBulkLoader loader = new NeptuneBulkLoader(bulkLoadConfig)) {
             return loader;
         }
@@ -115,7 +111,7 @@ public class TestDataProvider {
      */
     public static NeptuneBulkLoader createNeptuneBulkLoader(HttpClient httpClient, S3TransferManager transferManager) {
         BulkLoadConfig bulkLoadConfig =
-            createBulkLoadConfig(BUCKET, S3_PREFIX, NEPTUNE_ENDPOINT, IAM_ROLE_ARN, BULK_LOAD_PARALLELISM_MEDIUM, BULK_LOAD_MONITOR_FALSE);
+            createBulkLoadConfig(BUCKET, S3_PREFIX, NEPTUNE_ENDPOINT, IAM_ROLE_ARN, BULK_LOAD_PARALLELISM_MEDIUM, BOOLEAN_FALSE);
         return new NeptuneBulkLoader(
             bulkLoadConfig,
             httpClient,
@@ -141,7 +137,7 @@ public class TestDataProvider {
      * @throws IOException If file creation fails
      */
     public static void createMockCsvFiles(File directory) throws IOException {
-        File testVerticiesFile = new File(directory, TestDataProvider.VERTICIES_CSV);
+        File testVerticiesFile = new File(directory, TestDataProvider.VERTICES_CSV);
         File testEdgesFile = new File(directory, TestDataProvider.EDGES_CSV);
         createMockVerticesFile(directory, testVerticiesFile);
         createMockEdgesFile(directory, testEdgesFile);

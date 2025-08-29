@@ -45,7 +45,7 @@ public class BulkLoadConfig {
     private boolean monitor;
     private static final String DEFAULT_S3_PREFIX = "";
     private static final String DEFAULT_PARALLELISM = "OVERSUBSCRIBE";
-    private static final boolean DEFAULT_MONITOR = false;
+    private static final boolean DEFAULT_BOOLEAN_FALSE = false;
 
     public static BulkLoadConfig fromFile(File configFile) throws IOException {
         BulkLoadConfig config = new BulkLoadConfig();
@@ -68,7 +68,7 @@ public class BulkLoadConfig {
             this.neptuneEndpoint = getStringValue(yamlData, "neptune-endpoint");
             this.iamRoleArn = getStringValue(yamlData, "iam-role-arn");
             this.parallelism = getStringValue(yamlData, "parallelism", DEFAULT_PARALLELISM);
-            this.monitor = getBooleanValue(yamlData, "monitor", DEFAULT_MONITOR);
+            this.monitor = getBooleanValue(yamlData, "monitor", DEFAULT_BOOLEAN_FALSE);
         }
     }
 
@@ -118,7 +118,7 @@ public class BulkLoadConfig {
      * @param config The configuration to validate
      * @throws IllegalArgumentException if the configuration is invalid
      */
-    public static void validateBulkLoadConfigFile(BulkLoadConfig config) throws IllegalArgumentException {
+    public static void validateBulkLoadConfigValues(BulkLoadConfig config) throws IllegalArgumentException {
         // Collect missing required parameters
         StringBuilder errorMsg = new StringBuilder();
 
@@ -142,6 +142,8 @@ public class BulkLoadConfig {
                 "Please ensure the following are provided either via CLI or config file:\n" + errorMsg);
         }
 
+        validateS3BucketName(config.getBucketName());
+
         // Validate parallelism if present
         String parallelism = config.getParallelism();
         if (!isNullOrEmpty(parallelism)) {
@@ -149,6 +151,30 @@ public class BulkLoadConfig {
             if (!validParallelismOptions.contains(parallelism.toUpperCase())) {
                 throw new IllegalArgumentException("Parallelism must be one of: LOW, MEDIUM, HIGH, OVERSUBSCRIBE");
             }
+        }
+    }
+
+    private static void validateS3BucketName(String bucketName) throws IllegalArgumentException {
+        if (bucketName.length() < 3 || bucketName.length() > 63) {
+            throw new IllegalArgumentException("S3 bucket name must be between 3 and 63 characters");
+        }
+        if (!bucketName.matches("^[a-z0-9.-]+$")) {
+            throw new IllegalArgumentException("S3 bucket name must only contain lowercase letters, numbers, hyphens, and periods");
+        }
+        if (!Character.isLetterOrDigit(bucketName.charAt(0)) || !Character.isLetterOrDigit(bucketName.charAt(bucketName.length() - 1))) {
+            throw new IllegalArgumentException("S3 bucket name must begin and end with a letter or number");
+        }
+        if (bucketName.contains("..")) {
+            throw new IllegalArgumentException("S3 bucket name cannot contain consecutive periods");
+        }
+        if (bucketName.matches("^(\\d{1,3}\\.){3}\\d{1,3}$")) {
+            throw new IllegalArgumentException("S3 bucket name cannot be formatted as an IP address");
+        }
+        if (bucketName.startsWith("xn--") || bucketName.startsWith("sthree-") ||
+                bucketName.startsWith("amzn-s3-demo-") || bucketName.endsWith("-s3alias") ||
+                bucketName.endsWith("--ol-s3") || bucketName.endsWith(".mrap") || bucketName.endsWith("--x-s3") ||
+                bucketName.endsWith("--table-s3")) {
+            throw new IllegalArgumentException("S3 bucket name has an invalid prefix or suffix");
         }
     }
 
