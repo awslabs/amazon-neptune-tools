@@ -34,7 +34,7 @@ public class Neo4jStreamWriter implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(Neo4jStreamWriter.class.getName());
     private static final String TEMP_FILE = "neo4j-stream-data";
-    
+
     private final Directories directories;
     private final Driver driver;
     private final Neo4jStreamWriterConfig config;
@@ -61,13 +61,14 @@ public class Neo4jStreamWriter implements AutoCloseable {
      * @param directories The directories helper for file management
      * @param config The configuration for the Neo4j driver
      * @throws IllegalArgumentException if any parameter is null or invalid
+     * @throws RuntimeException if not able to connect to the database
      */
     public Neo4jStreamWriter(String uri, String username, String password, Directories directories, Neo4jStreamWriterConfig config) {
         validateInputs(uri, username, password, directories, config);
-        
+
         this.directories = directories;
         this.config = config;
-        
+
         try {
             this.driver = GraphDatabase.driver(uri, AuthTokens.basic(username, password),
                 Config.builder()
@@ -77,9 +78,9 @@ public class Neo4jStreamWriter implements AutoCloseable {
 
             driver.verifyConnectivity();
 
-            LOGGER.info("Successfully connected to Neo4j database at: " + uri);
+            LOGGER.log(Level.INFO, "Successfully connected to Neo4j database at: {0}", uri);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Neo4j database at: " + uri, e);
+            LOGGER.log(Level.SEVERE, "Failed to connect to Neo4j database at: {0}", new Object[]{uri});
             throw new RuntimeException("Failed to connect to Neo4j database", e);
         }
     }
@@ -108,41 +109,41 @@ public class Neo4jStreamWriter implements AutoCloseable {
 
         Path tempFilePath = directories.createFilePath(baseFileName, "temp");
         File file = tempFilePath.toFile();
-        
-        LOGGER.info("Starting data export to file: " + file.getAbsolutePath());
+
+        LOGGER.log(Level.INFO, "Starting data export to file: {0}", file.getAbsolutePath());
 
         try (BufferedWriter writer = Files.newBufferedWriter(tempFilePath, StandardCharsets.UTF_8);
              Session session = driver.session()) {
 
             String exportQuery = buildExportQuery();
-            LOGGER.fine("Executing query: " + exportQuery);
+            LOGGER.log(Level.FINE, "Executing query: {0}", exportQuery);
 
             Result result = session.run(exportQuery);
             long recordCount = 0;
             long lineCount = 0;
 
             while (result.hasNext()) {
-                Record record = result.next();
+                Record currRecord = result.next();
                 recordCount++;
-                
-                Map<String, Object> recordMap = record.asMap();
+
+                Map<String, Object> recordMap = currRecord.asMap();
                 logRecordInfo(recordMap, recordCount);
-                
+
                 Object dataObject = recordMap.get("data");
                 if (dataObject != null) {
                     lineCount += processDataObject(dataObject, writer);
                 }
             }
 
-            LOGGER.info(String.format("Successfully exported %d records (%d lines) to file: %s", 
-                recordCount, lineCount, file.getAbsolutePath()));
+            LOGGER.log(Level.INFO, "Successfully exported {0} records ({1} lines) to file: {2}",
+                new Object[]{recordCount, lineCount, file.getAbsolutePath()});
             return file;
 
         } catch (Neo4jException e) {
             LOGGER.log(Level.SEVERE, "Neo4j database error during export", e);
             return null;
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "IO error while writing to file: " + file.getAbsolutePath(), e);
+            LOGGER.log(Level.SEVERE, "IO error while writing to file: {0}", new Object[]{file.getAbsolutePath()});
             return null;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Unexpected error during data export", e);
@@ -168,35 +169,36 @@ public class Neo4jStreamWriter implements AutoCloseable {
         Path tempFilePath = directories.createFilePath(baseFileName, "custom");
         File file = tempFilePath.toFile();
 
-        LOGGER.info("Starting custom query export to file: " + file.getAbsolutePath());
+        LOGGER.log(Level.INFO, "Starting custom query export to file: {0}", file.getAbsolutePath());
 
         try (BufferedWriter writer = Files.newBufferedWriter(tempFilePath, StandardCharsets.UTF_8);
              Session session = driver.session()) {
 
-            LOGGER.fine("Executing custom query: " + query);
+            LOGGER.log(Level.FINE, "Executing custom query: {0}", query);
 
             Result result = session.run(query);
             long recordCount = 0;
 
             while (result.hasNext()) {
-                Record record = result.next();
+                Record currRecord = result.next();
                 recordCount++;
 
                 // Write the entire record as a line
-                writer.write(record.toString());
+                writer.write(currRecord.toString());
                 writer.newLine();
             }
             writer.flush();
-            
-            LOGGER.info(String.format("Successfully exported %d records from custom query to file: %s",
-                recordCount, file.getAbsolutePath()));
+
+            LOGGER.log(Level.INFO, "Successfully exported {0} records from custom query to file: {1}",
+                new Object[]{recordCount, file.getAbsolutePath()});
             return file;
 
         } catch (Neo4jException e) {
             LOGGER.log(Level.SEVERE, "Neo4j database error during custom query export", e);
             return null;
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "IO error while writing to file: " + file.getAbsolutePath(), e);
+            LOGGER.log(Level.SEVERE,
+                "IO error while writing to file {0}: {1}",new Object[]{file.getAbsolutePath(), e.getMessage()});
             return null;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Unexpected error during custom query export", e);
@@ -237,15 +239,15 @@ public class Neo4jStreamWriter implements AutoCloseable {
     private String buildExportQuery() {
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append("CALL apoc.export.csv.all(null, {stream:true");
-        
+
         if (config.getBatchSize() > 0) {
             queryBuilder.append(", batchSize:").append(config.getBatchSize());
         }
-        
+
         queryBuilder.append("})\n")
                    .append("YIELD file, nodes, relationships, properties, data\n")
                    .append("RETURN file, nodes, relationships, properties, data");
-        
+
         return queryBuilder.toString();
     }
 
@@ -254,19 +256,19 @@ public class Neo4jStreamWriter implements AutoCloseable {
             Object nodes = recordMap.get("nodes");
             Object relationships = recordMap.get("relationships");
             Object properties = recordMap.get("properties");
-            
-            LOGGER.fine(String.format("Processing record %d - Nodes: %s, Relationships: %s, Properties: %s", 
+
+            LOGGER.fine(String.format("Processing record %d - Nodes: %s, Relationships: %s, Properties: %s",
                 recordCount, nodes, relationships, properties));
         }
     }
 
     private long processDataObject(Object dataObject, BufferedWriter writer) throws IOException {
         String dataString = dataObject.toString();
-        
+
         // Handle different line separator patterns
         String[] lines = dataString.split("\\r?\\n|%n");
         long lineCount = 0;
-        
+
         for (String line : lines) {
             if (!line.trim().isEmpty()) {
                 writer.write(line);
@@ -275,7 +277,7 @@ public class Neo4jStreamWriter implements AutoCloseable {
             }
         }
         writer.flush();
-        
+
         return lineCount;
     }
 

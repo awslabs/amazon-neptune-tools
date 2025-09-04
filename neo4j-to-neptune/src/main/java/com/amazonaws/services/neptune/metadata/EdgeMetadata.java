@@ -22,12 +22,12 @@ public class EdgeMetadata {
     private static final Supplier<String> ID_GENERATOR = () -> UUID.randomUUID().toString();
     private static final String EDGE_ID_KEY = "~id";
 
-    public static EdgeMetadata parse(CSVRecord record, PropertyValueParser parser,
+    public static EdgeMetadata parse(CSVRecord csvRecord, PropertyValueParser parser,
             ConversionConfig conversionConfig, Set<String> skippedVertexIds, Map<String, String> vertexIdMap) {
-        return parse(record, ID_GENERATOR, parser, conversionConfig, skippedVertexIds, vertexIdMap);
+        return parse(csvRecord, ID_GENERATOR, parser, conversionConfig, skippedVertexIds, vertexIdMap);
     }
 
-    public static EdgeMetadata parse(CSVRecord record, Supplier<String> idGenerator, PropertyValueParser parser,
+    public static EdgeMetadata parse(CSVRecord csvRecord, Supplier<String> idGenerator, PropertyValueParser parser,
             ConversionConfig conversionConfig, Set<String> skippedVertexIds, Map<String, String> vertexIdMap) {
 
         Headers headers = new Headers();
@@ -36,7 +36,7 @@ public class EdgeMetadata {
         boolean isEdgeHeader = false;
         int firstColumnIndex = 0;
 
-        for (String header : record) {
+        for (String header : csvRecord) {
             if (header.equalsIgnoreCase("_start")) {
                 isEdgeHeader = true;
             }
@@ -105,9 +105,9 @@ public class EdgeMetadata {
         // Pre-compute property name to index mapping for faster lookups
         for (int i = 1; i < headers.count(); i++) {
             Header header = headers.get(i);
-            if (header instanceof Property) {
+            if (header instanceof Property property) {
                 int recordIndex = firstColumnIndex + i - 1;
-                propertyIndexMap.put(((Property) header).getName(), recordIndex);
+                propertyIndexMap.put(property.getName(), recordIndex);
             }
         }
     }
@@ -120,131 +120,195 @@ public class EdgeMetadata {
         return firstColumnIndex;
     }
 
-    public boolean isEdge(CSVRecord record) {
-        return record.size() > firstColumnIndex + 2 &&
-            !record.get(firstColumnIndex).isEmpty() &&
-            !record.get(firstColumnIndex + 1).isEmpty() &&
-            !record.get(firstColumnIndex + 2).isEmpty();
+    public boolean isEdge(CSVRecord csvRecord) {
+        return csvRecord.size() > firstColumnIndex + 2 &&
+            !csvRecord.get(firstColumnIndex).isEmpty() &&
+            !csvRecord.get(firstColumnIndex + 1).isEmpty() &&
+            !csvRecord.get(firstColumnIndex + 2).isEmpty();
     }
 
-    public Optional<Iterable<String>> toIterable(CSVRecord record) {
-        if (shouldSkipEdge(record)) {
+    public Optional<Iterable<String>> toIterable(CSVRecord csvRecord) {
+        if (shouldSkipEdge(csvRecord)) {
             return Optional.empty();
         }
-
-        return Optional.of(() -> new Iterator<String>() {
-            int currentColumnIndex = firstColumnIndex - 1;
-
-            @Override
-            public boolean hasNext() {
-                return currentColumnIndex < record.size();
-            }
-
-            @Override
-            public String next() {
-                if (currentColumnIndex < firstColumnIndex) {
-                    currentColumnIndex++;
-                    return mapEdgeId(idGenerator.get(), record);
-                } else {
-                    int headerIndex = currentColumnIndex - firstColumnIndex + 1;
-                    Header header = headers.get(headerIndex);
-                    String value = record.get(currentColumnIndex++);
-
-                    if (header.equals(Token.NEO4J_LABELS)) {
-                        return value;
-                    } else if (header.equals(Token.GREMLIN_FROM) || header.equals(Token.NEO4J_START)) {
-                        return transformVertexId(value);
-                    } else if (header.equals(Token.GREMLIN_TO) || header.equals(Token.NEO4J_END)) {
-                        return transformVertexId(value);
-                    } else if (header.equals(Token.GREMLIN_LABEL) || header.equals(Token.NEO4J_TYPE)) {
-                        return mapEdgeLabel(value);
-                    } else {
-                        PropertyValue propertyValue = propertyValueParser.parse(value);
-                        header.updateDataType(propertyValue.dataType());
-                        return propertyValue.value();
-                    }
-                }
-            }
-        });
+        return Optional.of(() -> new EdgeIterator(csvRecord));
     }
 
-    String mapEdgeId(String originalId, CSVRecord record) {
+    boolean shouldSkipEdge(CSVRecord csvRecord) {
+        if (hasNoSkipRules()) {
+            return false;
+        }
+        if (hasInsufficientHeaderColumns(csvRecord)) {
+            return false;
+        }
+        return shouldSkipBasedOnVertices(csvRecord) || shouldSkipBasedOnLabel(csvRecord);
+    }
+
+    private boolean hasNoSkipRules() {
+        return conversionConfig == null || (!conversionConfig.hasSkipRules() && skippedVertexIds.isEmpty());
+    }
+
+    private boolean hasInsufficientHeaderColumns(CSVRecord csvRecord) {
+        return csvRecord.size() <= firstColumnIndex + 2;
+    }
+
+    private boolean shouldSkipBasedOnVertices(CSVRecord csvRecord) {
+        String startVertexId = csvRecord.get(firstColumnIndex);
+        String endVertexId = csvRecord.get(firstColumnIndex + 1);
+        return skippedVertexIds.contains(startVertexId) || skippedVertexIds.contains(endVertexId);
+    }
+
+    private boolean shouldSkipBasedOnLabel(CSVRecord csvRecord) {
+        Set<String> skipEdgeLabels = conversionConfig.getSkipEdges().getByLabel();
+        String edgeType = csvRecord.get(firstColumnIndex + 2);
+
+        // Check if edge type/label should be skipped
+        return edgeType != null &&
+            !edgeType.trim().isEmpty() &&
+            !skipEdgeLabels.isEmpty() &&
+            skipEdgeLabels.contains(edgeType.trim());
+    }
+
+    private class EdgeIterator implements Iterator<String> {
+        private final CSVRecord csvRecord;
+        private int currentColumnIndex;
+
+        EdgeIterator(CSVRecord csvRecord) {
+            this.csvRecord = csvRecord;
+            this.currentColumnIndex = firstColumnIndex - 1;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return currentColumnIndex < csvRecord.size();
+        }
+
+        @Override
+        public String next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            if (currentColumnIndex < firstColumnIndex) {
+                currentColumnIndex++;
+                return mapEdgeId(idGenerator.get(), csvRecord);
+            }
+            return processHeaderValue();
+        }
+
+        private String processHeaderValue() {
+            int headerIndex = currentColumnIndex - firstColumnIndex + 1;
+            Header header = headers.get(headerIndex);
+            String value = csvRecord.get(currentColumnIndex++);
+            return transformValue(header, value);
+        }
+
+        private String transformValue(Header header, String value) {
+            if (header.equals(Token.NEO4J_LABELS)) {
+                return value;
+            }
+            if (isVertexHeader(header)) {
+                return transformVertexId(value);
+            }
+            if (isLabelHeader(header)) {
+                return mapEdgeLabel(value);
+            }
+            return processProperty(header, value);
+        }
+
+        private boolean isVertexHeader(Header header) {
+            return header.equals(Token.GREMLIN_FROM) || header.equals(Token.NEO4J_START) ||
+                   header.equals(Token.GREMLIN_TO) || header.equals(Token.NEO4J_END);
+        }
+
+        private boolean isLabelHeader(Header header) {
+            return header.equals(Token.GREMLIN_LABEL) || header.equals(Token.NEO4J_TYPE);
+        }
+
+        private String processProperty(Header header, String value) {
+            PropertyValue propertyValue = propertyValueParser.parse(value);
+            header.updateDataType(propertyValue.dataType());
+            return propertyValue.value();
+        }
+    }
+
+    String mapEdgeId(String originalId, CSVRecord csvRecord) {
         if (edgeIdTemplate == null || edgeIdTemplate.isEmpty()) {
             return originalId;
         }
-
-        // Quick check if template has no placeholders
         if (!edgeIdTemplate.contains("{")) {
             return edgeIdTemplate;
         }
-
-        // Start with the template and replace {_id}
         String result = edgeIdTemplate.replace(Token.valueWithCurlyBraces(Token.NEO4J_ID), originalId);
-
-        // Support for {_type} placeholder (Neo4j format)
-        if (result.contains(Token.valueWithCurlyBraces(Token.NEO4J_TYPE))) {
-            String edgeType = record.get(firstColumnIndex + 2);
-            result = result.replace(Token.valueWithCurlyBraces(Token.NEO4J_TYPE), mapEdgeLabel(edgeType));
-        }
-
-        // Support for {_start} placeholder (Neo4j format)
-        if (result.contains(Token.valueWithCurlyBraces(Token.NEO4J_START))) {
-            String fromId = record.get(firstColumnIndex);
-            String transformedFromId = transformVertexId(fromId);
-            result = result.replace(Token.valueWithCurlyBraces(Token.NEO4J_START), transformedFromId);
-        }
-
-        // Support for {_end} placeholder (Neo4j format)
-        if (result.contains(Token.valueWithCurlyBraces(Token.NEO4J_END))) {
-            String toId = record.get(firstColumnIndex + 1);
-            String transformedToId = transformVertexId(toId);
-            result = result.replace(Token.valueWithCurlyBraces(Token.NEO4J_END), transformedToId);
-        }
-
-        // Support for {~label} if present (Gremlin format)
-        if (result.contains(Token.valueWithCurlyBraces(Token.GREMLIN_LABEL))) {
-            String edgeType = record.get(firstColumnIndex + 2);
-            result = result.replace(Token.valueWithCurlyBraces(Token.GREMLIN_LABEL), mapEdgeLabel(edgeType));
-        }
-
-        // Support for {~from} placeholder (Gremlin format)
-        if (result.contains(Token.valueWithCurlyBraces(Token.GREMLIN_FROM))) {
-            String fromId = record.get(firstColumnIndex);
-            String transformedFromId = transformVertexId(fromId);
-            result = result.replace(Token.valueWithCurlyBraces(Token.GREMLIN_FROM), transformedFromId);
-        }
-
-        // Support for {~to} placeholder (Gremlin format)
-        if (result.contains(Token.valueWithCurlyBraces(Token.GREMLIN_TO))) {
-            String toId = record.get(firstColumnIndex + 1);
-            String transformedToId = transformVertexId(toId);
-            result = result.replace(Token.valueWithCurlyBraces(Token.GREMLIN_TO), transformedToId);
-        }
-
-        // Replace property placeholders using the cached property index map
-        for (Map.Entry<String, Integer> entry : propertyIndexMap.entrySet()) {
-            String propName = entry.getKey();
-            String placeholder = "{" + propName + "}";
-
-            if (result.contains(placeholder)) {
-                int index = entry.getValue();
-                if (index < record.size()) {
-                    result = result.replace(placeholder, record.get(index));
-                }
-            }
-        }
-
-        // Check if any placeholders remain
-        int placeholderStart = result.indexOf('{');
-        if (placeholderStart >= 0) {
-            int placeholderEnd = result.indexOf('}', placeholderStart);
-            if (placeholderEnd > placeholderStart) {
-                String placeholder = result.substring(placeholderStart + 1, placeholderEnd);
-                throw new IllegalArgumentException("Property {" + placeholder + "} not found in CSV headers");
-            }
-        }
-
+        result = replaceHeaderPlaceholders(result, csvRecord);
+        result = replacePropertyPlaceholders(result, csvRecord);
+        validateNoRemainingPlaceholders(result);
         return result;
+    }
+
+    private String replaceHeaderPlaceholders(String template, CSVRecord csvRecord) {
+        String result = template;
+        result = replaceEdgeTypePlaceholders(result, csvRecord);
+        result = replaceVertexPlaceholders(result, csvRecord);
+        return result;
+    }
+
+    private String replaceEdgeTypePlaceholders(String template, CSVRecord csvRecord) {
+        String edgeType = csvRecord.get(firstColumnIndex + 2);
+        String mappedLabel = mapEdgeLabel(edgeType);
+        String result = template;
+        result = replacePlaceholder(result, Token.NEO4J_TYPE, mappedLabel);
+        result = replacePlaceholder(result, Token.GREMLIN_LABEL, mappedLabel);
+        return result;
+    }
+
+    private String replaceVertexPlaceholders(String template, CSVRecord csvRecord) {
+        String fromId = transformVertexId(csvRecord.get(firstColumnIndex));
+        String toId = transformVertexId(csvRecord.get(firstColumnIndex + 1));
+        String result = template;
+        result = replacePlaceholder(result, Token.NEO4J_START, fromId);
+        result = replacePlaceholder(result, Token.NEO4J_END, toId);
+        result = replacePlaceholder(result, Token.GREMLIN_FROM, fromId);
+        result = replacePlaceholder(result, Token.GREMLIN_TO, toId);
+        return result;
+    }
+
+    private String replacePlaceholder(String template, Token token, String value) {
+        String placeholder = Token.valueWithCurlyBraces(token);
+        return template.contains(placeholder) ? template.replace(placeholder, value) : template;
+    }
+
+    private String replacePropertyPlaceholders(String template, CSVRecord csvRecord) {
+        String result = template;
+        for (Map.Entry<String, Integer> entry : propertyIndexMap.entrySet()) {
+            result = replacePropertyPlaceholder(result, entry, csvRecord);
+        }
+        return result;
+    }
+
+    private String replacePropertyPlaceholder(String template, Map.Entry<String, Integer> entry, CSVRecord csvRecord) {
+        String propName = entry.getKey();
+        String placeholder = "{" + propName + "}";
+        if (!template.contains(placeholder)) {
+            return template;
+        }
+        int index = entry.getValue();
+        if (index >= csvRecord.size()) {
+            return template;
+        }
+        return template.replace(placeholder, csvRecord.get(index));
+    }
+
+    private void validateNoRemainingPlaceholders(String result) {
+        int placeholderStart = result.indexOf('{');
+        if (placeholderStart < 0) {
+            return;
+        }
+        int placeholderEnd = result.indexOf('}', placeholderStart);
+        if (placeholderEnd <= placeholderStart) {
+            return;
+        }
+        String placeholder = result.substring(placeholderStart + 1, placeholderEnd);
+        throw new IllegalArgumentException("Property {" + placeholder + "} not found in CSV headers");
     }
 
     public String mapEdgeLabel(String originalLabel) {
@@ -253,37 +317,6 @@ public class EdgeMetadata {
         }
 
         return conversionConfig.getEdgeLabels().getOrDefault(originalLabel.trim(), originalLabel.trim());
-    }
-
-    boolean shouldSkipEdge(CSVRecord record) {
-        // An edge might still be skipped if its connected vertex is skipped
-        if (conversionConfig == null || !conversionConfig.hasSkipRules() && skippedVertexIds.isEmpty()) {
-            return false;
-        }
-
-        Set<String> skipEdgeLabels = conversionConfig.getSkipEdges().getByLabel();
-
-        // Make sure we have enough columns for edge data
-        if (record.size() <= firstColumnIndex + 2) {
-            return false; // Not enough data to be a valid edge
-        }
-
-        // The actual edge data starts at firstColumnIndex
-        String startVertexId = record.get(firstColumnIndex);     // _start
-        String endVertexId = record.get(firstColumnIndex + 1);   // _end
-        String edgeType = record.get(firstColumnIndex + 2);      // _type
-
-        // Skip edge if either connected vertex was skipped, note this does rely on nodes being processed first
-        if (skippedVertexIds.contains(startVertexId) || skippedVertexIds.contains(endVertexId)) {
-            return true;
-        }
-
-        // Check if edge type/label should be skipped
-        if (edgeType != null && !edgeType.trim().isEmpty() && !skipEdgeLabels.isEmpty() && skipEdgeLabels.contains(edgeType.trim())) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -296,4 +329,5 @@ public class EdgeMetadata {
     protected String transformVertexId(String originalId) {
         return vertexIdMap.getOrDefault(originalId, originalId);
     }
+
 }

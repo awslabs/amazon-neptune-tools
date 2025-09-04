@@ -29,6 +29,7 @@ import java.util.Set;
  * bucket-name: "my-s3-bucket"
  * s3-prefix: "neptune"
  * neptune-endpoint: "my-neptune-cluster.cluster-abc123.us-east-1.neptune.amazonaws.com"
+ * neptune-port: "8182"
  * iam-role-arn: "arn:aws:iam::123456789012:role/NeptuneLoadFromS3"
  * parallelism: "OVERSUBSCRIBE"
  * monitor: true
@@ -40,9 +41,11 @@ public class BulkLoadConfig {
     private String bucketName;
     private String s3Prefix;
     private String neptuneEndpoint;
+    private String neptunePort;
     private String iamRoleArn;
     private String parallelism;
     private boolean monitor;
+    private static final String DEFAULT_NEPTUNE_PORT = "8182";
     private static final String DEFAULT_S3_PREFIX = "";
     private static final String DEFAULT_PARALLELISM = "OVERSUBSCRIBE";
     private static final boolean DEFAULT_BOOLEAN_FALSE = false;
@@ -66,6 +69,7 @@ public class BulkLoadConfig {
             this.bucketName = getStringValue(yamlData, "bucket-name");
             this.s3Prefix = getStringValue(yamlData, "s3-prefix", DEFAULT_S3_PREFIX);
             this.neptuneEndpoint = getStringValue(yamlData, "neptune-endpoint");
+            this.neptunePort = getStringValue(yamlData, "neptune-port", DEFAULT_NEPTUNE_PORT);
             this.iamRoleArn = getStringValue(yamlData, "iam-role-arn");
             this.parallelism = getStringValue(yamlData, "parallelism", DEFAULT_PARALLELISM);
             this.monitor = getBooleanValue(yamlData, "monitor", DEFAULT_BOOLEAN_FALSE);
@@ -85,8 +89,8 @@ public class BulkLoadConfig {
         Object value = yamlData.get(key);
         if (value == null) {
             return defaultValue;
-        } else if (value instanceof Boolean) {
-            return (Boolean) value;
+        } else if (value instanceof Boolean booleanValue) {
+            return booleanValue;
         } else {
             throw new IllegalArgumentException("Expected boolean value for " + key);
         }
@@ -102,6 +106,13 @@ public class BulkLoadConfig {
     public BulkLoadConfig withNeptuneEndpoint(String neptuneEndpoint) {
         if (neptuneEndpoint != null && !neptuneEndpoint.trim().isEmpty()) {
             this.neptuneEndpoint = neptuneEndpoint;
+        }
+        return this;
+    }
+
+    public BulkLoadConfig withNeptunePort(String neptunePort) {
+        if (neptunePort != null && !neptunePort.trim().isEmpty()) {
+            this.neptunePort = neptunePort;
         }
         return this;
     }
@@ -136,7 +147,7 @@ public class BulkLoadConfig {
         }
 
         // If any required fields are missing, throw exception with all missing fields
-        if (errorMsg.length() > 0) {
+        if (!errorMsg.isEmpty()) {
             throw new IllegalArgumentException(
                 "Error: Missing required bulk load parameters. " +
                 "Please ensure the following are provided either via CLI or config file:\n" + errorMsg);
@@ -147,7 +158,7 @@ public class BulkLoadConfig {
         // Validate parallelism if present
         String parallelism = config.getParallelism();
         if (!isNullOrEmpty(parallelism)) {
-            Set<String> validParallelismOptions = Set.of("LOW", "MEDIUM", "HIGH", "OVERSUBSCRIBE");
+            final Set<String> validParallelismOptions = Set.of("LOW", "MEDIUM", "HIGH", "OVERSUBSCRIBE");
             if (!validParallelismOptions.contains(parallelism.toUpperCase())) {
                 throw new IllegalArgumentException("Parallelism must be one of: LOW, MEDIUM, HIGH, OVERSUBSCRIBE");
             }

@@ -47,7 +47,6 @@ public class ConversionConfigTest {
         // Create a comprehensive YAML file to test automatic mapping
         File tempFile = File.createTempFile("test-auto-mapping", ".yaml");
         tempFile.deleteOnExit();
-
         try (FileWriter writer = new FileWriter(tempFile)) {
             writer.write("vertexLabels:\n");
             writer.write("  Person: Individual\n");
@@ -69,27 +68,22 @@ public class ConversionConfigTest {
         }
 
         ConversionConfig config = ConversionConfig.fromFile(tempFile);
-
         // Test vertex label mappings
         assertEquals(2, config.getVertexLabels().size());
         assertEquals("Individual", config.getVertexLabels().get("Person"));
         assertEquals("Organization", config.getVertexLabels().get("Company"));
-
         // Test edge label mappings
         assertEquals(2, config.getEdgeLabels().size());
         assertEquals("EMPLOYED_BY", config.getEdgeLabels().get("WORKS_FOR"));
         assertEquals("CONNECTED_TO", config.getEdgeLabels().get("KNOWS"));
-
         // Test skip vertex IDs
         assertEquals(2, config.getSkipVertices().getById().size());
         assertTrue(config.getSkipVertices().getById().contains("vertex_123"));
         assertTrue(config.getSkipVertices().getById().contains("vertex_456"));
-
         // Test skip vertex labels
         assertEquals(2, config.getSkipVertices().getByLabel().size());
         assertTrue(config.getSkipVertices().getByLabel().contains("TestData"));
         assertTrue(config.getSkipVertices().getByLabel().contains("Deprecated"));
-
         // Test skip edge labels
         assertEquals(2, config.getSkipEdges().getByLabel().size());
         assertTrue(config.getSkipEdges().getByLabel().contains("TEMP_RELATIONSHIP"));
@@ -102,7 +96,6 @@ public class ConversionConfigTest {
         // Test with only some sections present
         File tempFile = File.createTempFile("test-partial", ".yaml");
         tempFile.deleteOnExit();
-
         try (FileWriter writer = new FileWriter(tempFile)) {
             writer.write("vertexLabels:\n");
             writer.write("  Person: Individual\n");

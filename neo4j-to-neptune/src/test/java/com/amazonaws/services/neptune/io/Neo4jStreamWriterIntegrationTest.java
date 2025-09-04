@@ -125,7 +125,7 @@ public class Neo4jStreamWriterIntegrationTest {
     }
 
     @Test
-    public void testStreamToFileWithCustomConfig() throws IOException {
+    public void testStreamToFileWithCustomConfig() {
         // Create writer with custom configuration
         Neo4jStreamWriter.Neo4jStreamWriterConfig customConfig = 
             new Neo4jStreamWriter.Neo4jStreamWriterConfig(60, 120, 500);
@@ -146,7 +146,7 @@ public class Neo4jStreamWriterIntegrationTest {
     }
 
     @Test
-    public void testMultipleStreamOperations() throws IOException {
+    public void testMultipleStreamOperations() {
 
         // First stream operation
         File result1 = writer.streamToFile("multi-test-1");
@@ -163,7 +163,7 @@ public class Neo4jStreamWriterIntegrationTest {
     }
 
     @Test
-    public void testErrorHandlingWithInvalidQuery() throws IOException {
+    public void testErrorHandlingWithInvalidQuery() {
         // Test with an invalid query that should fail
         File result = writer.streamCustomQueryToFile("INVALID CYPHER QUERY", "error-test");
         
@@ -172,7 +172,7 @@ public class Neo4jStreamWriterIntegrationTest {
     }
 
     @Test
-    public void testLargeDatasetHandling() throws IOException {
+    public void testLargeDatasetHandling() {
         // Test with a query that returns a larger dataset
         String largeDataQuery = "UNWIND range(1, 1000) as i RETURN i, 'test_' + toString(i) as name";
         File result = writer.streamCustomQueryToFile(largeDataQuery, "large-dataset-test");

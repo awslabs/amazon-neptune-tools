@@ -16,10 +16,17 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncRequestBodyFromInputStreamConfiguration;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.document.Document;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.neptunedata.NeptunedataClient;
+import software.amazon.awssdk.services.neptunedata.model.StartLoaderJobRequest;
+import software.amazon.awssdk.services.neptunedata.model.StartLoaderJobResponse;
+import software.amazon.awssdk.services.neptunedata.model.GetEngineStatusRequest;
+import software.amazon.awssdk.services.neptunedata.model.GetLoaderJobStatusRequest;
+import software.amazon.awssdk.services.neptunedata.model.GetLoaderJobStatusResponse;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 import software.amazon.awssdk.transfer.s3.model.UploadRequest;
 import software.amazon.awssdk.transfer.s3.model.Upload;
@@ -32,9 +39,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,9 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.zip.GZIPOutputStream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.amazonaws.services.neptune.metadata.BulkLoadConfig;
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Utility class for uploading local CSV files to Amazon S3 and loading them into Neptune
@@ -58,10 +60,9 @@ public class NeptuneBulkLoader implements AutoCloseable {
     private static final Set<String> BULK_LOAD_STATUS_CODES_FAILURES;
     private static final int MAX_RETRIES = 3;
     private static final int INITIAL_BACKOFF_MS = 1000;
-    private static final int CONNECTION_TIMEOUT_SECONDS = 30;
-    private static final int REQUEST_TIMEOUT_SECONDS = 120;
     private static final int MONITOR_SLEEP_TIME_MS = 1000;
     private static final int MONITOR_MAX_ATTEMPTS = 300;
+    private static final String FILE_SEPARATOR = File.separator;
 
     static {
         Set<String> completed = new HashSet<>();
@@ -84,31 +85,25 @@ public class NeptuneBulkLoader implements AutoCloseable {
         BULK_LOAD_STATUS_CODES_FAILURES = Collections.unmodifiableSet(failures);
     }
 
-    private static final String NEPTUNE_PORT = "8182"; // Default Neptune port for HTTP API
+    private static final String LOAD_ID = "loadId";
+    private static final String STATUS = "status";
+    private static final String OVERALL_STATUS = "overallStatus";
     private final S3TransferManager transferManager;
-    private final String bucketName;
-    private final String s3Prefix;
+    private final NeptunedataClient neptuneDataClient;
     private final Region region;
-    private final String neptuneEndpoint;
-    private final String iamRoleArn;
-    private final String parallelism;
-    private final Boolean monitor;
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
+    private final BulkLoadConfig config;
 
     public NeptuneBulkLoader(BulkLoadConfig bulkLoadConfig) {
-        this.bucketName = bulkLoadConfig.getBucketName().replaceAll("/+$", "");
-        this.s3Prefix = bulkLoadConfig.getS3Prefix().replaceAll("/+$", "");
-        this.neptuneEndpoint = bulkLoadConfig.getNeptuneEndpoint();
-        this.region = extractRegionFromEndpoint(this.neptuneEndpoint);
-        this.iamRoleArn = bulkLoadConfig.getIamRoleArn();
-        this.parallelism = bulkLoadConfig.getParallelism().toUpperCase();
-        this.monitor = bulkLoadConfig.isMonitor();
+        this.config = bulkLoadConfig;
+        this.region = extractRegionFromEndpoint(config.getNeptuneEndpoint());
+        config.setBucketName(config.getBucketName().replaceAll("/+$", ""));
+        config.setS3Prefix(config.getS3Prefix().replaceAll("/+$", ""));
+        config.setParallelism(config.getParallelism().toUpperCase());
 
-        // Initialize clients
-        this.objectMapper = new ObjectMapper();
+        // Log configuration
+        logConfiguration(config);
 
-        // Create S3AsyncClient with optimized configuration for large file uploads
+        // Create S3AsyncClient with configuration for large file uploads
         S3AsyncClient s3AsyncClient = S3AsyncClient.builder()
                 .region(region)
                 .credentialsProvider(DefaultCredentialsProvider.create())
@@ -132,12 +127,12 @@ public class NeptuneBulkLoader implements AutoCloseable {
                 .s3Client(s3AsyncClient)
                 .build();
 
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(REQUEST_TIMEOUT_SECONDS))
+        // Initialize Neptune Data client
+        this.neptuneDataClient = NeptunedataClient.builder()
+                .region(region)
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .endpointOverride(URI.create("https://" + config.getNeptuneEndpoint() + ":" + config.getNeptunePort()))
                 .build();
-
-        // Log configuration
-        logConfiguration();
     }
 
     /**
@@ -158,29 +153,16 @@ public class NeptuneBulkLoader implements AutoCloseable {
     /**
      * Logs the configuration for debugging purposes
      */
-    private void logConfiguration() {
-        System.err.println("S3 Bucket: " + this.bucketName);
-        System.err.println("S3 Prefix: " + this.s3Prefix);
-        System.err.println("AWS Region: " + this.region);
-        System.err.println("IAM Role ARN: " + this.iamRoleArn);
-        System.err.println("Neptune Endpoint: " + this.neptuneEndpoint);
-        System.err.println("Bulk Load Parallelism: " + this.parallelism);
-        System.err.println("Bulk Load Monitor: " + this.monitor);
+    private void logConfiguration(BulkLoadConfig config) {
+        System.err.println("S3 Bucket: " + config.getBucketName());
+        System.err.println("S3 Prefix: " + config.getS3Prefix());
+        System.err.println("AWS Region: " + region);
+        System.err.println("IAM Role ARN: " + config.getIamRoleArn());
+        System.err.println("Neptune Endpoint: " + config.getNeptuneEndpoint());
+        System.err.println("Neptune Port: " + config.getNeptunePort());
+        System.err.println("Bulk Load Parallelism: " + config.getParallelism());
+        System.err.println("Bulk Load Monitor: " + config.isMonitor());
         System.err.println();
-    }
-
-    // Constructor for testing
-    public NeptuneBulkLoader(BulkLoadConfig bulkLoadConfig, HttpClient httpClient, S3TransferManager transferManager) {
-        this.bucketName = bulkLoadConfig.getBucketName().replaceAll("/+$", "");
-        this.s3Prefix = bulkLoadConfig.getS3Prefix().replaceAll("/+$", "");
-        this.neptuneEndpoint = bulkLoadConfig.getNeptuneEndpoint();
-        this.region = Region.of(neptuneEndpoint.split("\\.")[2]);
-        this.iamRoleArn = bulkLoadConfig.getIamRoleArn();
-        this.parallelism = bulkLoadConfig.getParallelism();
-        this.monitor = bulkLoadConfig.isMonitor();
-        this.objectMapper = new ObjectMapper();
-        this.transferManager = transferManager;
-        this.httpClient = httpClient;
     }
 
     /**
@@ -193,9 +175,9 @@ public class NeptuneBulkLoader implements AutoCloseable {
         String convertCsvTimeStamp = filePath.substring(filePath.lastIndexOf('/') + 1);
 
         // Check if the S3 prefix is provided, and construct the full S3 prefix using convertCsvTimeStamp
-        String s3PrefixWithTimeStamp = Optional.ofNullable(s3Prefix)
+        String s3PrefixWithTimeStamp = Optional.ofNullable(config.getS3Prefix())
             .filter(prefix  -> !prefix.isEmpty())
-            .map(prefix  -> prefix + "/")
+            .map(prefix  -> prefix + FILE_SEPARATOR)
             .orElse("") + convertCsvTimeStamp;
 
         // Upload all files from the directory
@@ -206,7 +188,7 @@ public class NeptuneBulkLoader implements AutoCloseable {
             throw new RuntimeException("One or more CSV uploads failed.", e);
         }
 
-        String uploadS3Uri = "s3://" + bucketName + "/" + s3PrefixWithTimeStamp+ "/";
+        String uploadS3Uri = "s3://" + config.getBucketName() + FILE_SEPARATOR + s3PrefixWithTimeStamp + FILE_SEPARATOR;
         System.err.println("Files uploaded successfully to S3. Files available at: " + uploadS3Uri);
         return uploadS3Uri;
     }
@@ -223,7 +205,7 @@ public class NeptuneBulkLoader implements AutoCloseable {
         }
 
         System.err.println("Starting sequential upload of files from " +
-            directoryPath + " to s3://" + bucketName + "/" + s3Prefix);
+            directoryPath + " to s3://" + config.getBucketName() + FILE_SEPARATOR + s3Prefix);
 
         // Get all files in the directory with the specified extension
         File[] csvFiles = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".csv"));
@@ -241,45 +223,40 @@ public class NeptuneBulkLoader implements AutoCloseable {
     /**
      * Upload files sequentially (one at a time) to avoid overwhelming the connection pool
      */
-    private void uploadFilesSequentially(File[] files, String s3Prefix) {
+    private void uploadFilesSequentially(File[] files, String s3Prefix) throws RuntimeException{
         for (int index = 0; index < files.length; index++) {
             File currentFile = files[index];
-            String csvFilePath = s3Prefix + "/" + currentFile.getName();
+            String csvFilePath = s3Prefix + FILE_SEPARATOR + currentFile.getName();
+            final int fileNumber = index + 1;
 
-            System.err.println("Uploading file " + (index + 1) + " of " + files.length + ": " + currentFile.getName());
+            System.err.println("Uploading file " + fileNumber + " of " + files.length + ": " + currentFile.getName());
 
             try {
-                // Wait for upload to complete
-                boolean success = uploadFileWithInflightCompression(currentFile.getAbsolutePath(), csvFilePath).get();
-
-                if (!success) {
-                    System.err.println("Failed to upload " + currentFile.getName() + ", stopping sequential upload");
-                    throw new RuntimeException("Upload failed for file: " + currentFile.getName());
-                }
-
-                System.err.println("Successfully uploaded " + currentFile.getName() +
-                    " (" + (index + 1) + "/" + files.length + ")");
-
+                uploadFileWithInflightCompression(currentFile.getAbsolutePath(), csvFilePath)
+                    .thenRun(() -> {
+                        System.err.println("Successfully uploaded " + currentFile.getName() +
+                        " (" + fileNumber + "/" + files.length + ")");
+                    })
+                    .exceptionally(throwable -> {
+                        System.err.println("Failed to upload " + currentFile.getName() + ", stopping upload");
+                        throw new RuntimeException("Upload failed for file: " + currentFile.getName(), throwable);
+                    }).join();
             } catch (Exception e) {
                 logUploadError(currentFile.getAbsolutePath(), e);
                 throw new RuntimeException("Exception during upload for file: " + currentFile.getName(), e);
             }
         }
-
-        System.err.println("Successfully uploaded all " + files.length + " files sequentially");
     }
 
     /**
      * Upload a single CSV file to S3 using S3TransferManager with in-flight compression
      */
-    protected CompletableFuture<Boolean> uploadFileWithInflightCompression(String localFilePath, String s3Prefix) throws Exception {
-        File localFile = new File(localFilePath);
-        if (!localFile.exists() || !localFile.isFile()) {
-            throw new IllegalStateException("File does not exist: " + localFilePath);
-        }
+    protected CompletableFuture<Void> uploadFileWithInflightCompression(String localFilePath, String s3Prefix)
+            throws IOException, IllegalStateException {
+        File localFile = validateLocalFile(localFilePath);
 
         String s3Key = s3Prefix + ".gz";
-        String s3SourceUri = "s3://" + bucketName + "/" + s3Key;
+        String s3SourceUri = "s3://" + config.getBucketName() + FILE_SEPARATOR + s3Key;
         System.err.println("Starting upload with compression of " + localFilePath + " to " + s3SourceUri);
         System.err.println("File size: " + Utils.formatFileSize(localFile.length()));
 
@@ -294,31 +271,14 @@ public class NeptuneBulkLoader implements AutoCloseable {
             System.err.println("Initiating Transfer Manager upload...");
             Upload upload = transferManager.upload(uploadRequest);
 
-            // Wait for BOTH upload and compression to complete - fail if either fails
             return CompletableFuture.allOf(upload.completionFuture(), compressionFuture)
-                .thenApply(ignored -> {
-                    System.err.println(
-                        "Successfully uploaded " + localFile.getName() +
-                        " (compressed) - ETag: " + upload.completionFuture().join().response().eTag());
-                    return true;
-                })
-                .exceptionally(throwable -> {
-                    logUploadError(localFilePath, throwable);
-                    // Re-throw to maintain fail-fast behavior
-                    if (throwable instanceof RuntimeException) {
-                        throw (RuntimeException) throwable;
-                    } else {
-                        throw new RuntimeException("Upload or compression failed", throwable);
-                    }
-                })
                 .whenComplete((result, throwable) -> {
+                    System.err.println("Upload with compression completed for " + localFilePath);
                     closeStreams(streamExecutor, pipedOut, pipedIn);
                 });
-
         } catch (Exception e) {
-            // Cleanup for setup failures
-            closeStreams(streamExecutor, pipedOut, pipedIn);
-            throw e;
+            logUploadError(localFilePath, e);
+            throw new RuntimeException("Upload with compression failed for " + localFilePath, e);
         }
     }
 
@@ -346,7 +306,7 @@ public class NeptuneBulkLoader implements AutoCloseable {
     private UploadRequest createUploadRequest(String s3Key, PipedInputStream pipedIn, ExecutorService streamExecutor) {
         return UploadRequest.builder()
             .putObjectRequest(putBuilder -> putBuilder
-                .bucket(bucketName)
+                .bucket(config.getBucketName())
                 .key(s3Key)
                 .contentType("application/gzip")
                 .build())
@@ -367,14 +327,12 @@ public class NeptuneBulkLoader implements AutoCloseable {
         System.err.println("Error type: " + throwable.getClass().getSimpleName());
         System.err.println("Error message: " + throwable.getMessage());
 
-        if (throwable.getCause() instanceof S3Exception) {
-            S3Exception s3Exception = (S3Exception) throwable.getCause();
+        if (throwable.getCause() instanceof S3Exception s3Exception) {
             System.err.println("S3 error code: " + s3Exception.awsErrorDetails().errorCode());
             System.err.println("S3 error message: " + s3Exception.awsErrorDetails().errorMessage());
             System.err.println("S3 status code: " + s3Exception.statusCode());
         }
     }
-
 
     /**
      * Close piped streams and shutdown executor service
@@ -391,88 +349,67 @@ public class NeptuneBulkLoader implements AutoCloseable {
     }
 
     /**
-     * Start Neptune bulk load job with automatic fallback
+     * Start Neptune bulk load job
      */
     public String startNeptuneBulkLoad(String s3SourceUri) throws Exception {
         System.err.println("Starting Neptune bulk load...");
         if (!testNeptuneConnectivity()) {
-            throw new RuntimeException("Cannot connect to Neptune endpoint: " + neptuneEndpoint);
+            throw new RuntimeException("Cannot connect to Neptune endpoint: " + config.getNeptuneEndpoint());
         }
 
-        HttpRequest request = buildBulkLoadRequest(s3SourceUri);
-
-        // Retry configuration
-        HttpResponse<String> response = null;
+        StartLoaderJobRequest request = buildLoaderJobRequest(s3SourceUri);
         String loadId = null;
 
-        // Retry loop with exponential backoff
         for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
             try {
-                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() != 200) {
-                    throw new RuntimeException("Failed to start Neptune bulk load. Status: " +
-                        response.statusCode() + " Response: " + response.body());
-                }
-
-                JsonNode responseJson = objectMapper.readTree(response.body());
-
-                loadId = responseJson.get("payload").get("loadId").asText();
-                if (loadId == null) {
-                    throw new RuntimeException("Failed to start Neptune bulk load with payload: " +
-                        responseJson.get("payload"));
-                }
-                System.err.println("Neptune bulk load started successfully! Load ID: " + loadId);
+                loadId = executeLoaderJobRequest(request);
                 return loadId;
             } catch (Exception e) {
-                if (attempt == MAX_RETRIES) {
-                    // Use response null check to avoid potential NPE
-                    String errorDetails = (response != null)
-                        ? "Status: " + response.statusCode() + " Response: " + response.body()
-                        : "No response received";
-                    String errorMessage = "Failed to start Neptune bulk load after " +
-                        (MAX_RETRIES + 1) + " attempts. " + errorDetails;
-                    System.err.println(errorMessage);
-                    throw new RuntimeException(errorMessage, e);
-                }
-                System.err.println("Attempt " + (attempt + 1) + " failed: " + e.getMessage());
-                try {
-                    Thread.sleep(INITIAL_BACKOFF_MS * (1L << attempt)); // Exponential backoff
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt(); // Restore interrupt status
-                    throw new RuntimeException("Retry interrupted", ie);
-                }
+                handleRetryLogic(attempt, e);
             }
         }
         return loadId;
     }
 
-    private HttpRequest buildBulkLoadRequest(String s3SourceUri) {
-        String loaderEndpoint = "https://" + neptuneEndpoint + ":" + NEPTUNE_PORT + "/loader";
-        String requestBody = createRequestBody(s3SourceUri);
-
-        return HttpRequest.newBuilder()
-                .uri(URI.create(loaderEndpoint))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                .timeout(Duration.ofSeconds(REQUEST_TIMEOUT_SECONDS))
-                .build();
+    private StartLoaderJobRequest buildLoaderJobRequest(String s3SourceUri) {
+        return StartLoaderJobRequest.builder()
+            .source(s3SourceUri)
+            .format("csv")
+            .s3BucketRegion(region.id())
+            .iamRoleArn(config.getIamRoleArn())
+            .failOnError(false)
+            .parallelism(config.getParallelism())
+            .parserConfiguration(null)
+            .queueRequest(true)
+            .build();
     }
 
-    private String createRequestBody(String s3SourceUri) {
-        return String.format(
-            "{%n" +
-            "  \"source\": \"%s\",%n" +
-            "  \"format\": \"csv\",%n" +
-            "  \"iamRoleArn\": \"%s\",%n" +
-            "  \"region\": \"%s\",%n" +
-            "  \"failOnError\": \"FALSE\",%n" +
-            "  \"parallelism\": \"%s\",%n" +
-            "  \"updateSingleCardinalityProperties\": \"FALSE\",%n" +
-            "  \"queueRequest\": \"TRUE\"%n" +
-            "}",
-            s3SourceUri, iamRoleArn, region, parallelism
-        );
+    private String executeLoaderJobRequest(StartLoaderJobRequest request) {
+        StartLoaderJobResponse response = neptuneDataClient.startLoaderJob(request);
+        String loadId = response.payload().get(LOAD_ID);
+
+        if (loadId == null || loadId.isEmpty()) {
+            throw new RuntimeException("Failed to start Neptune bulk load - no load ID returned");
+        }
+
+        System.err.println("Neptune bulk load started successfully with load ID: " + loadId);
+        return loadId;
+    }
+
+    private void handleRetryLogic(int attempt, Exception e) throws InterruptedException, RuntimeException {
+        if (attempt == MAX_RETRIES) {
+            String errorMessage =
+                "Failed to start Neptune bulk load after " + (MAX_RETRIES + 1) + " attempts: " + e.getMessage();
+            System.err.println(errorMessage);
+            throw new RuntimeException(errorMessage, e);
+        }
+        System.err.println("Attempt " + (attempt + 1) + " failed: " + e.getMessage());
+        try {
+            Thread.sleep(INITIAL_BACKOFF_MS * (1L << attempt));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedException("Retry interrupted: " + ie.getMessage());
+        }
     }
 
     /**
@@ -481,32 +418,15 @@ public class NeptuneBulkLoader implements AutoCloseable {
     protected boolean testNeptuneConnectivity() {
         try {
             System.err.println("Testing connectivity to Neptune endpoint...");
-            String testEndpoint = "https://" + neptuneEndpoint + ":" + NEPTUNE_PORT + "/status";
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(testEndpoint))
-                    .header("Content-Type", "application/json")
-                    .GET()
-                    .timeout(Duration.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
-                    .build();
+            GetEngineStatusRequest request = GetEngineStatusRequest.builder().build();
+            var response = neptuneDataClient.getEngineStatus(request);
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                System.err.println("Failed to connect to Neptune status endpoint. Status: " + response.statusCode());
-                return false;
-            }
-
-            JsonNode responseBody = objectMapper.readTree(response.body());
-            if (!responseBody.has("status") ||
-                    !responseBody.get("status").asText().equals("healthy")) {
-                throw new RuntimeException("Status not found or instance is not healthy: " + responseBody);
-            }
-
-            System.err.println("Successful connected to Neptune. Status: " +
-                response.statusCode() + " " + responseBody.get("status").asText());
+            System.err.println("Successfully connected to Neptune. Status: " +
+                response.sdkHttpResponse().statusCode() + " " + response.status());
             return true;
         } catch (Exception e) {
-            System.err.println("Neptune connectivity test failed: " + e.getLocalizedMessage());
+            System.err.println("Neptune connectivity test failed: " + e.getMessage());
             return false;
         }
     }
@@ -517,36 +437,22 @@ public class NeptuneBulkLoader implements AutoCloseable {
     public void monitorLoadProgress(String loadId) throws Exception {
         System.err.println("Monitoring load progress for job: " + loadId);
         int attempt = 0;
+        boolean shouldContinueMonitoring = true;
 
-        while (attempt < MONITOR_MAX_ATTEMPTS) {
-            String statusResponse = checkNeptuneBulkLoadStatus(loadId);
+        while (attempt < MONITOR_MAX_ATTEMPTS && shouldContinueMonitoring) {
+            GetLoaderJobStatusResponse response = checkNeptuneBulkLoadStatus(loadId);
+            String status = extractStatusFromResponse(response);
+            shouldContinueMonitoring = processMonitoringStatus(status, response);
 
-            if (statusResponse != null) {
-                JsonNode responseJson = objectMapper.readTree(statusResponse);
-                String status = "UNKNOWN";
-
-                if (responseJson.has("payload") &&
-                        responseJson.get("payload").has("overallStatus")) {
-                    status = responseJson.get("payload")
-                        .get("overallStatus").get("status").asText();
-                } else if (responseJson.has("status")) {
-                    status = responseJson.get("status").asText();
+            if (shouldContinueMonitoring) {
+                try {
+                    Thread.sleep(MONITOR_SLEEP_TIME_MS);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Monitoring interrupted", ie);
                 }
-
-                if (BULK_LOAD_STATUS_CODES_COMPLETED.contains(status)) {
-                    System.err.println("Neptune bulk load completed with status: " + status);
-                    break;
-                } else if (BULK_LOAD_STATUS_CODES_FAILURES.contains(status)) {
-                    System.err.println("Neptune bulk load failed with status: " + status);
-                    System.err.println("Full response: " + statusResponse);
-                    break;
-                } else {
-                    System.err.println("Neptune bulk load status: " + status);
-                }
+                attempt++;
             }
-
-            Thread.sleep(MONITOR_SLEEP_TIME_MS);
-            attempt++;
         }
 
         if (attempt >= MONITOR_MAX_ATTEMPTS) {
@@ -555,36 +461,77 @@ public class NeptuneBulkLoader implements AutoCloseable {
         }
     }
 
-    /**
-     * Check the status of a Neptune bulk load job via HTTP
-     */
-    protected String checkNeptuneBulkLoadStatus(String loadId) throws Exception {
-        String statusEndpoint = "https://" + neptuneEndpoint + ":" + NEPTUNE_PORT + "/loader/" + loadId;
+    private String extractStatusFromResponse(GetLoaderJobStatusResponse response) {
+        if (response.payload() != null) {
+            Document payload = response.payload();
+            if (payload.asMap().containsKey(OVERALL_STATUS)) {
+                var overallStatus = payload.asMap().get(OVERALL_STATUS);
+                if (overallStatus.asMap().containsKey(STATUS)) {
+                    return overallStatus.asMap().get(STATUS).asString();
+                }
+            }
+        } else if (response.status() != null) {
+            return response.status();
+        }
+        return "UNKNOWN";
+    }
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(statusEndpoint))
-                .header("Content-Type", "application/json")
-                .GET()
-                .timeout(Duration.ofSeconds(CONNECTION_TIMEOUT_SECONDS))
-                .build();
-
-        HttpResponse<String> response = httpClient.send(request,
-                HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() == 200) {
-            return response.body();
+    private boolean processMonitoringStatus(String status, GetLoaderJobStatusResponse response) {
+        if (BULK_LOAD_STATUS_CODES_COMPLETED.contains(status)) {
+            System.err.println("Neptune bulk load completed with status: " + status);
+            return false;
+        } else if (BULK_LOAD_STATUS_CODES_FAILURES.contains(status)) {
+            System.err.println("Neptune bulk load failed with status: " + status);
+            System.err.println("Full response: " + response.toString());
+            return false;
         } else {
-            throw new RuntimeException("Request failed with code " + response.statusCode() + ": " + response.body());
+            System.err.println("Neptune bulk load status: " + status);
+            return true;
         }
     }
 
     /**
-     * Close the transfer manager and release resources (AutoCloseable implementation)
+     * Check the status of a Neptune bulk load job
+     */
+    protected GetLoaderJobStatusResponse checkNeptuneBulkLoadStatus(String loadId) throws Exception {
+        GetLoaderJobStatusRequest request = GetLoaderJobStatusRequest.builder()
+                .loadId(loadId)
+                .build();
+
+        GetLoaderJobStatusResponse response = neptuneDataClient.getLoaderJobStatus(request);
+
+        if (response.sdkHttpResponse().statusCode() == 200) {
+            return response;
+        } else {
+            throw new RuntimeException("Request failed with code " +
+                response.sdkHttpResponse().statusCode() + ": " + response.toString());
+        }
+    }
+
+    /**
+     * Validates the local file exists
+     * @param localFilePath The local file path
+     * @return localFile The validated File object
+     * @throws IllegalStateException if the file does not exist or is not a file
+     */
+    private File validateLocalFile(String localFilePath) {
+        File localFile = new File(localFilePath);
+        if (!localFile.exists() || !localFile.isFile()) {
+            throw new IllegalStateException("File does not exist: " + localFilePath);
+        }
+        return localFile;
+    }
+
+    /**
+     * Close the transfer manager and Neptune client, release resources (AutoCloseable implementation)
      */
     @Override
     public void close() {
         if (transferManager != null) {
             transferManager.close();
+        }
+        if (neptuneDataClient != null) {
+            neptuneDataClient.close();
         }
     }
 }
