@@ -6,7 +6,38 @@ A command-line utility for migrating data from Neo4j to Neptune.
 
 **Conversion only:**
 ```bash
-java -jar neo4j-to-neptune.jar convert-csv -i /tmp/neo4j-export.csv -d output --infer-types
+java -jar neo4j-to-neptune.jar convert-csv \
+  --input /path/to/neo4j-export.csv \
+  --dir output \
+  --infer-types
+```
+
+**Conversion only using configuration file:**
+```bash
+java -jar neo4j-to-neptune.jar convert-csv \
+  --conversion-config /path/to/conversion-config.yaml \
+  --dir output \
+  --infer-types
+```
+
+**Convert and bulk load to Neptune:**
+```bash
+java -jar neo4j-to-neptune.jar convert-csv \
+  --input /tmp/neo4j-export.csv \
+  --dir output \
+  --neptune-endpoint my-cluster.cluster-abc123.us-east-2.neptune.amazonaws.com \
+  --bucket-name my-neptune-bucket \
+  --iam-role-arn arn:aws:iam::123456789012:role/NeptuneLoadFromS3 \
+  --infer-types
+```
+
+**Convert and bulk load using configuration file:**
+```bash
+java -jar neo4j-to-neptune.jar convert-csv \
+  --input /tmp/neo4j-export.csv \
+  --dir output \
+  --bulk-load-config /path/to/bulk-load-config.yaml \
+  --infer-types
 ```
 
 **Convert and bulk load to Neptune:**
@@ -41,18 +72,23 @@ mvn clean install
 
 ## Migration Process
 
-Migration of data from Neo4j to Neptune can now be accomplished in two ways:
+Migration of data from Neo4j to Neptune can be accomplished in a few ways:
 
-### Option 1: Manual Multi-Step Process
+### Option 1: Manual Multi-Step
 
  1. [**Export CSV from Neo4j**](#export-csv-from-neo4j) – Use the APOC export procedures to export data from Neo4j to CSV.
  2. [**Convert CSV**](#convert-csv) – Use the `convert-csv` command-line utility to convert the exported CSV into the Neptune Gremlin bulk load CSV format.
  3. [**Bulk Load into Neptune**](#bulk-load-into-neptune-manual) – Use the Neptune bulk load API to load data into Neptune.
 
-### Option 2: Automated End-to-End Process
+### Option 2: Local Convert then Bulk Load
 
  1. [**Export CSV from Neo4j**](#export-csv-from-neo4j) – Use the APOC export procedures to export data from Neo4j to CSV.
- 2. [**Convert and Bulk Load**](#convert-and-bulk-load) – Use the `convert-csv` command with `--bulk-load` flag to automatically convert CSV, upload to S3, and load into Neptune.
+ 2. [**Convert and Bulk Load**](#convert-and-bulk-load) – Use the `convert-csv` command with either `--bulk-load-config` or the required combination of `--bucket-name`, `--neptune-endpoint`, and `--iam-role-arn` to automatically convert the CSV, upload it to S3, and initiate a bulk load into Neptune.
+
+### Option 3: Automatically Stream and Convert then Bulk Load
+
+ 1. [**Stream and Convert CSV**](#convert-csv) – Use the `convert-csv` command with either `--dotenv-file` or all of `--uri`, `--username` and `--password` to provide Neo4j credentials and stream the data without manually exporting it.
+ 2. [**Bulk Load**](#convert-and-bulk-load) - Specify either `--bulk-load-config` or the required combination of `--bucket-name`, `--neptune-endpoint`, and `--iam-role-arn`as the bulk load parameters.
 
 ### Export CSV from Neo4j
 
@@ -64,7 +100,7 @@ Follow the [instructions](https://neo4j.com/docs/labs/apoc/current/introduction/
 
 #### 2. Enable exports
 
-Update the _neo4j.conf_ configuration file to enable exports:
+Create or update the `apoc.conf` configuration file to enable exports:
 
 ```
 apoc.export.file.enabled=true
@@ -85,9 +121,17 @@ The path that you specify for the export file will be resolved relative to the N
 
 ### Convert CSV
 
-Use the [`convert-csv`](docs/convert-csv.md) command-line utility to convert the CSV exported from Neo4j into the Neptune Gremlin bulk load CSV format.
+Use the [`convert-csv`](docs/convert-csv.md) command-line utility to convert the CSV files exported from Neo4j into the Neptune Gremlin bulk load CSV format.
 
-The utility has two required parameters: the path to the Neo4j export file and the name of a directory where the converted CSV files will be written. There are also optional parameters that allow you to specify node, relationship multi-valued property policies, turn on data type inferencing, or to use a configuration YAML file for more granular conversion manipulation.
+The utility requires two sets of parameters:
+
+1. **Input method from Neo4j** — Provide one of the following:
+  - [Manual] A path to locally exported Neo4j CSV files using the `--input` or `-i` flag.
+  - [Stream] A path to a `.env` file using the `--dotenv-file` or `-df` flag. This file must define the variables `NEO4J_URI`, `NEO4J_USERNAME`, and `NEO4J_PASSWORD`, corresponding to the Neo4j URI, username, and password.
+  - [Stream] Directly specify the Neo4j URI, username, and password using the flags `--uri` or `-u`, `--username` or `-n`, and `--password` or `-pw`
+2. **Output directory** — The path to the local directory where the converted CSV files will be written.
+
+There are also optional parameters that allow you to specify node, relationship multi-valued property policies, turn on data type inferencing, or to use a configuration YAML file for more granular conversion manipulation.
 
 #### Multi-valued property policies
 
@@ -115,29 +159,67 @@ When importing data into Neptune using the bulk loader, you can [specify the dat
 
 Note that `convert-csv` will always use a __double__ for values with decimal or scientific notation.
 
-#### Configuration with YAML
 
-The `convert-csv` utility supports conversion configuration through the YAML file for ID transformation, label mapping, and filtering:
+#### Configuration Methods
+
+##### Method 1: Using Local Exported Neo4j CSV
+
+To convert a local CSV that was exported from Neo4j, provide the required parameters:
 
 ```bash
 java -jar neo4j-to-neptune.jar convert-csv \
-  -i /path/to/neo4j-export.csv \
-  -d /path/to/output \
-  --conversion-config conversion-config.yaml \
-  --infer-types
+  --input /path/to/neo4j-export.csv \
+  --dir /path/to/output \
+  [additional options]
 ```
 
-**Example configuration file:**
-For an example of the conversion config YAML file refer to `docs/example-conversion-config.yaml`
+##### Method 2: Using Stream with Environment files
 
-**ID Transformation Templates:**
+To stream data from Neo4j to Neptune
+
+```bash
+java -jar neo4j-to-neptune.jar convert-csv \
+  --dotenv-file /path/to/dotenv/file \
+  --dir /path/to/output \
+  [additional options]
+```
+
+##### Method 3: Using Stream with Neo4j credentials files
+
+To stream data from Neo4j to Neptune
+
+```bash
+java -jar neo4j-to-neptune.jar convert-csv \
+  --uri <Neo4j connection uri> \
+  --username <Neo4j username> \
+  --password <Neo4j password> \
+  --dir /path/to/output \
+  [additional options]
+```
+
+#### Configuration with YAML
+
+The `convert-csv` utility conversion process can be configured through the YAML file for ID transformation, label mapping, and filtering:
+
+```bash
+java -jar neo4j-to-neptune.jar convert-csv \
+  --input /path/to/neo4j-export.csv \
+  --dir /path/to/output \
+  --conversion-config conversion-config.yaml \
+  [additional options]
+```
+
+##### Example configuration file
+For an example of the conversion config YAML file refer to [`docs/example-conversion-config.yaml`](docs/example-conversion-config.yaml)
+
+##### ID Transformation Templates
 
 Templates can reference original data fields using placeholders:
 
 - **Vertex templates**: `{_id}`, `{_labels}`, `{property_name}`
 - **Edge templates**: `{_type}`, `{_start}`, `{_end}`, `{~from}`, `{~to}`, `{property_name}`
 
-**Examples:**
+##### Examples
 - `"{_labels}_{name}_{_id}"` → `"Person_John_123"`
 - `"e!{~label}_{~from}_{~to}"` → `"e!KNOWS_Person_123_Person_456"`
 
@@ -178,8 +260,8 @@ To enable bulk load using CLI parameters, provide the required Neptune configura
 
 ```bash
 java -jar neo4j-to-neptune.jar convert-csv \
-  -i /path/to/neo4j-export.csv \
-  -d /path/to/output \
+  --input /path/to/neo4j-export.csv \
+  --dir /path/to/output \
   --neptune-endpoint your-cluster.cluster-abc123.region.neptune.amazonaws.com \
   --bucket-name your-s3-bucket \
   --iam-role-arn arn:aws:iam::account:role/YourNeptuneRole \
@@ -194,10 +276,11 @@ Create a YAML configuration file with your bulk load settings:
 ```yaml
 # S3 Configuration
 bucket-name: "my-neptune-bulk-load-bucket"
-s3-prefix: "neptune-data"
+s3-prefix: "neptune"
 
 # Neptune Configuration
 neptune-endpoint: "my-neptune-cluster.cluster-abc123def456.us-east-1.neptune.amazonaws.com"
+neptune-port: "8182"
 
 # IAM Configuration
 iam-role-arn: "arn:aws:iam::123456789012:role/NeptuneLoadFromS3Role"
@@ -213,8 +296,8 @@ Then use the configuration file:
 
 ```bash
 java -jar neo4j-to-neptune.jar convert-csv \
-  -i /path/to/neo4j-export.csv \
-  -d /path/to/output \
+  --input /path/to/neo4j-export.csv \
+  --dir /path/to/output \
   --bulk-load-config bulk-load-config.yaml \
   [additional options]
 ```
@@ -225,14 +308,15 @@ You can use a configuration file and override specific parameters via CLI:
 
 ```bash
 java -jar neo4j-to-neptune.jar convert-csv \
-  -i /path/to/neo4j-export.csv \
-  -d /path/to/output \
+  --input /path/to/neo4j-export.csv \
+  --dir /path/to/output \
   --bulk-load-config bulk-load-config.yaml \
   --neptune-endpoint different-cluster.cluster-xyz789.us-west-2.neptune.amazonaws.com \
   --parallelism HIGH \
   [additional options]
 ```
 
+[!IMPORTANT]
 **Parameter Precedence:** CLI parameters override configuration file values, which override default values.
 
 #### Required Parameters
@@ -240,11 +324,12 @@ java -jar neo4j-to-neptune.jar convert-csv \
 The following parameters must be provided either via CLI or configuration file:
 
 - **Neptune endpoint**: `--neptune-endpoint` or `neptune-endpoint` in YAML
-- **S3 bucket name**: `--bucket-name` or `bucket-name` in YAML  
+- **S3 bucket name**: `--bucket-name` or `bucket-name` in YAML
 - **IAM role ARN**: `--iam-role-arn` or `iam-role-arn` in YAML
 
 #### Optional Parameters
 
+- **Neptune port**: `--neptune-port` or `neptune-port` in YAML (default: "8182")
 - **S3 prefix**: `--s3-prefix` or `s3-prefix` in YAML
 - **Parallelism**: `--parallelism` or `parallelism` in YAML (default: "OVERSUBSCRIBE")
   - Options: `LOW`, `MEDIUM`, `HIGH`, `OVERSUBSCRIBE`
@@ -265,31 +350,56 @@ When bulk load parameters are provided (either via `--bulk-load-config` or `--ne
 #### Example Output
 
 ```
-Vertices: 174
-Edges   : 255
-Output  : /tmp/output/1751656971039
-/tmp/output/1751656971039
+java -jar target/neo4j-to-neptune.jar convert-csv -d output --uri bolt://localhost:7687 --username neo4j --password password --bulk-load-config bulk-load-config.yaml
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+Sep. 04, 2025 12:14:34 P.M. com.amazonaws.services.neptune.io.Neo4jStreamWriter <init>
+INFO: Successfully connected to Neo4j database at: bolt://localhost:7687
+Sep. 04, 2025 12:14:34 P.M. com.amazonaws.services.neptune.io.Neo4jStreamWriter streamToFile
+INFO: Starting data export to file: /tmp/output/1757013274850/neo4j-stream-data-temp.csv
+Sep. 04, 2025 12:14:35 P.M. com.amazonaws.services.neptune.io.Neo4jStreamWriter streamToFile
+INFO: Successfully exported 1 records (425 lines) to file: /tmp/output/1757013274850/neo4j-stream-data-temp.csv
+Sep. 04, 2025 12:14:35 P.M. com.amazonaws.services.neptune.io.Neo4jStreamWriter close
+INFO: Neo4j driver closed successfully
+Vertices: 171
+Edges   : 253
+Output  : output/1757013274850
+output/1757013274850
 
-Completed in x second(s)
+Completed in 0 second(s)
 S3 Bucket: my-bucket
 S3 Prefix: neptune
-AWS Region: us-east-2
-IAM Role ARN: arn:aws:iam::123456789000:role/NeptunePolicy
-Neptune Endpoint: my-neptune-db.cluster-xxxxxxxxxxxx.us-east-2.neptune.amazonaws.com
-Bulk Load Parallelism: MEDIUM
+AWS Region: us-west-2
+IAM Role ARN: arn:aws:iam::123456789100:role/NeptuneReadS3
+Neptune Endpoint: db-neptune-1.cluster-xxxxxxxxxxxx.us-west-2.neptune.amazonaws.com
+Neptune Port: 8182
+Bulk Load Parallelism: OVERSUBSCRIBE
+Bulk Load Monitor: true
+
 Uploading Gremlin load data to S3...
-Starting async upload of files from /tmp/output/1751656971039 to s3://my-bucket/neptune/1751656971039
-Starting async upload of /tmp/output/1751656971039/vertices.csv to s3://my-bucket/neptune/1751656971039/vertices.csv
-Starting async upload of /tmp/output/1751656971039/edges.csv to s3://my-bucket/neptune/1751656971039/edges.csv
-Successfully uploaded vertices.csv - ETag: "abc123..."
-Successfully uploaded edges.csv - ETag: "def456..."
-Successfully uploaded 2 files from /tmp/output/1751656971039
-Files uploaded successfully to S3. Files available at: s3://my-bucket/neptune/1751656971039/
+Starting sequential upload of files from /tmp/output/1757013274850 to s3://my-bucket/neptune/1757013274850
+Uploading file 1 of 2: vertices.csv
+Starting upload with compression of /tmp/output/1757013274850/vertices.csv to s3://my-bucket/neptune/1757013274850/vertices.csv.gz
+File size: 7.2 KB
+Initiating Transfer Manager upload...
+Upload with compression completed for /tmp/output/1757013274850/vertices.csv
+Successfully uploaded vertices.csv (1/2)
+Uploading file 2 of 2: edges.csv
+Starting upload with compression of /tmp/output/1757013274850/edges.csv to s3://my-bucket/neptune/1757013274850/edges.csv.gz
+File size: 17.6 KB
+Initiating Transfer Manager upload...
+Upload with compression completed for /tmp/output/1757013274850/edges.csv
+Successfully uploaded edges.csv (2/2)
+Successfully uploaded all 2 files from /tmp/output/1757013274850
+Files uploaded successfully to S3. Files available at: s3://my-bucket/neptune/1757013274850/
 Starting Neptune bulk load...
 Testing connectivity to Neptune endpoint...
-Successful connected to Neptune. Status: 200 healthy
-Neptune bulk load started successfully! Load ID: 12345678-1234-1234-1234-123456789012
-Monitoring load progress for job: 12345678-1234-1234-1234-123456789012
+Successfully connected to Neptune. Status: 200 healthy
+Neptune bulk load started successfully with load ID: a478c673-xxxx-xxxx-xxxx-77a70a430be8
+Monitoring load progress for job: a478c673-xxxx-xxxx-xxxx-77a70a430be8
+Neptune bulk load status: LOAD_IN_PROGRESS
+Neptune bulk load status: LOAD_IN_PROGRESS
 Neptune bulk load status: LOAD_IN_PROGRESS
 Neptune bulk load status: LOAD_IN_PROGRESS
 Neptune bulk load completed with status: LOAD_COMPLETED
