@@ -1,0 +1,46 @@
+name: Neo4j-to-Neptune CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'neo4j-to-neptune/**'
+    branches:
+      - master
+  push:
+    paths:
+      - 'neo4j-to-neptune/**'
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('neo4j-to-neptune/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Maven install and tests
+      working-directory: ./neo4j-to-neptune
+      run: mvn clean install --batch-mode --fail-at-end
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: neo4j-to-neptune/target/surefire-reports/
