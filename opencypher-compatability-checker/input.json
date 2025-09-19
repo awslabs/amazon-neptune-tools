@@ -1,0 +1,33 @@
+{
+  "targetSystem": "NA",
+  "queries": [
+    {
+      "id": 1,
+      "query": "MATCH (n:Person) RETURN n LIMIT 10"
+    },
+    {
+      "id": 2,
+      "query": "MATCH (team:Team {name: 'Team C'}) CALL { WITH team MATCH (p:Player)-[:PLAYS_FOR]->(team) WITH collect(p) AS players FOREACH (player IN players | SET player.retired = false) RETURN size(players) AS updatedPlayers } RETURN updatedPlayers"
+    },
+    {
+      "id": 3,
+      "query": "MATCH (p:Product)-[:BELONGS_TO]->(c:Category) RETURN p.name, c.name"
+    },
+    {
+      "id": 4,
+      "query": "RETURN apoc.coll.intersection([1,2,3,4,5], [3,4,5]) AS output"
+    },
+    {
+      "id": 5,
+      "query": "RETURN reduce(product = 1, n IN [1, 2, 3] | product / n)"
+    },
+    {
+      "id": 6,
+      "query": "CALL apoc.json.validate('{\"foo\": [{\"baz\":  18446744062065078016838}],\"baz\": 18446744062065078016838}', '$')"
+    },
+    {
+      "id": 7,
+      "query": "gggg"
+    }
+  ]
+}

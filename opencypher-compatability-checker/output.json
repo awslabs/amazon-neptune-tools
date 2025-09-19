@@ -1,0 +1,61 @@
+{
+  "results" : [ {
+    "id" : 1,
+    "supported" : true,
+    "errorDefinitions" : [ ]
+  }, {
+    "id" : 2,
+    "supported" : false,
+    "errorDefinitions" : [ {
+      "position" : "line 1, column 43 (offset: 42)",
+      "name" : "CALL",
+      "replacement" : "",
+      "description" : "Update clauses like MERGE, CREATE, SET, REMOVE, DELETE, FOREACH not supported in call subquery"
+    }, {
+      "position" : "line 1, column 118 (offset: 117)",
+      "name" : "FOREACH",
+      "replacement" : "",
+      "description" : "FOREACH is not supported in this release"
+    } ]
+  }, {
+    "id" : 3,
+    "supported" : true,
+    "errorDefinitions" : [ ]
+  }, {
+    "id" : 4,
+    "supported" : false,
+    "errorDefinitions" : [ {
+      "position" : "line 1, column 8 (offset: 7)",
+      "name" : "apoc.coll.intersection",
+      "replacement" : "collintersection",
+      "description" : "apoc.coll.intersection is not supported in this release but try replacing with collintersection"
+    } ]
+  }, {
+    "id" : 5,
+    "supported" : false,
+    "errorDefinitions" : [ {
+      "position" : "line 1, column 8 (offset: 7)",
+      "name" : "reduce",
+      "replacement" : "",
+      "description" : "reduce only supported with add or multiply expressions"
+    } ]
+  }, {
+    "id" : 6,
+    "supported" : false,
+    "errorDefinitions" : [ {
+      "position" : "line 1, column 1 (offset: 0)",
+      "name" : "apoc.json.validate",
+      "replacement" : "",
+      "description" : "apoc.json.validate is not supported in this release"
+    } ]
+  }, {
+    "id" : 7,
+    "supported" : false,
+    "errorDefinitions" : [ {
+      "position" : "",
+      "name" : "",
+      "replacement" : "",
+      "description" : "Invalid Open Cypher Query :org.opencypher.v9_0.util.SyntaxException: Invalid input 'g': expected <init> (line 1, column 1 (offset: 0))"
+    } ]
+  } ]
+}
