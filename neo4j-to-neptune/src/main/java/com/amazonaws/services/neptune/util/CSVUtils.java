@@ -15,7 +15,6 @@ package com.amazonaws.services.neptune.util;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.csv.QuoteMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,8 +23,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class CSVUtils {
-
-    private static final CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.withEscape('\\').withQuoteMode(QuoteMode.NONE);
+    private CSVUtils() {}
 
     public static CSVParser newParser(File file) throws IOException {
         return newParser(file.toPath());
@@ -39,7 +37,7 @@ public class CSVUtils {
         try {
             CSVParser parser = CSVParser.parse(s, CSVFormat.DEFAULT);
             List<CSVRecord> records = parser.getRecords();
-            if (records.size() < 1) {
+            if (records.isEmpty()) {
                 throw new IllegalArgumentException("Unable to find first record: " + s);
             }
             return records.get(0);

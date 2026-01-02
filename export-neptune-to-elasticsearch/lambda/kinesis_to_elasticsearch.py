@@ -20,6 +20,8 @@ import six
 import os
 import json
 import neptune_to_es
+from queue import Queue
+import time
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -38,6 +40,10 @@ os.environ["LoggingLevel"] = "INFO"
 os.environ["MaxPollingInterval"] = "1"
 os.environ["NeptuneStreamEndpoint"] = ""
 os.environ["StreamRecordsHandler"] = handler_name
+
+from stream_records_processor import StreamRecordsProcessor
+
+stream_records_processor = StreamRecordsProcessor()
 
 #metrics_publisher_client = MetricsPublisher()
 
@@ -139,20 +145,24 @@ def lambda_bulk_handler(event, context):
             
     log_stream['lastEventId']['commitNum'] = prev_commit_num if prev_commit_num else -1
     log_stream['lastEventId']['opNum'] = prev_op_num if prev_op_num else 0
+    log_stream['lastTrxTimestamp'] = str(round(time.time() * 1000))
         
     logger.info('Log stream record count: {}'.format(len(log_stream['records']))) 
     logger.info('First record: (commitNum: {}, opNum: {})'.format(first_commit_num, first_op_num))
-    logger.info('Last record: (commitNum: {}, opNum: {})'.format(prev_commit_num, prev_op_num))  
-    
+    logger.info('Last record: (commitNum: {}, opNum: {})'.format(prev_commit_num, prev_op_num))
+
     if log_commit_nums:
-        logger.info('Commit nums: {}'.format(commit_nums))  
-        
-    for result in handler.handle_records(log_stream):
+        logger.info('Commit nums: {}'.format(commit_nums))
+
+    query_queue = Queue(maxsize=0)
+    for result in handler.handle_records(log_stream, query_queue):
         records_processed = result.records_processed
         logger.info('{} records processed'.format(records_processed))
         #metrics_publisher_client.publish_metrics(metrics_publisher_client.generate_record_processed_metrics(records_processed))
-        
+
+    logger.info('Executing Opensearch queries')
+
+    while not query_queue.empty():
+        stream_records_processor.write(query_queue)
+
     logger.info('Finished bulk loading')
-        
-
-

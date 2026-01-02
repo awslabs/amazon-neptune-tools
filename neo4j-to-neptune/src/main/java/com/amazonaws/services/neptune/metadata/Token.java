@@ -1,5 +1,5 @@
 /*
-Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Copyright 2025 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
 A copy of the License is located at
@@ -14,10 +14,16 @@ package com.amazonaws.services.neptune.metadata;
 
 public class Token implements Header {
 
-    static final Token ID = new Token("~id");
-    static final Token LABEL = new Token("~label");
-    static final Token FROM = new Token("~from");
-    static final Token TO = new Token("~to");
+    static final Token NEO4J_ID = new Token("_id");
+    static final Token NEO4J_LABELS = new Token("_labels");
+    static final Token NEO4J_START = new Token("_start");
+    static final Token NEO4J_END = new Token("_end");
+    static final Token NEO4J_TYPE = new Token("_type");
+
+    static final Token GREMLIN_ID = new Token("~id");
+    static final Token GREMLIN_LABEL = new Token("~label");
+    static final Token GREMLIN_FROM = new Token("~from");
+    static final Token GREMLIN_TO = new Token("~to");
 
     private final String name;
 
@@ -38,5 +44,9 @@ public class Token implements Header {
     @Override
     public String value() {
         return name;
+    }
+
+    public static String valueWithCurlyBraces(Token token) {
+        return "{" + token.value() + "}";
     }
 }

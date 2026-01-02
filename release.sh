@@ -45,7 +45,7 @@ $GIT_CMD checkout -b $RELEASE_BRANCH
 ARTIFACT_DIR=`pwd`/artifacts
 rm -rf $ARTIFACT_DIR
 mkdir -p $ARTIFACT_DIR
-MAVEN_ARTIFACTS="neo4j-to-neptune neptune-export neptune-gremlin-client"
+MAVEN_ARTIFACTS="neo4j-to-neptune"
 for artifact in $MAVEN_ARTIFACTS; do
 	pushd $artifact >& /dev/null
 	mvn versions:set -DnewVersion=${VERSION_STRING} versions:update-child-modules
@@ -57,9 +57,6 @@ for artifact in $MAVEN_ARTIFACTS; do
 	done
 	popd >& /dev/null
 done
-
-#Also get the non-shaded gremlin-client jar
-cp "neptune-gremlin-client/gremlin-client/target/gremlin-client-$VERSION_STRING.jar" $ARTIFACT_DIR
 
 #Build the neptune-python-utils artifact
 pushd neptune-python-utils >& /dev/null

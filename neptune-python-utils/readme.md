@@ -26,7 +26,7 @@ When using AWS Glue to write data to Neptune, copy the zip file to an S3 bucket.
 
 ### neptune-python-utils and the Neptune Workbench
 
-_neptune-python-utils_ supports Gremlin Python 3.5.x. As such, it is not compatible with the [Neptune Workbench](https://docs.aws.amazon.com/neptune/latest/userguide/graph-notebooks.html), which currently supports 3.4.x.
+_neptune-python-utils_ supports Gremlin Python 3.5.x. As such, it may have conflicts with older instances of [Neptune Workbench](https://docs.aws.amazon.com/neptune/latest/userguide/graph-notebooks.html) that run on 3.4.x. To ensure compatibility, please ensure that you have `graph-notebook==3.0.7` or higher installed.
 
 ## Examples
 
@@ -78,6 +78,16 @@ To pass a role ARN:
 from neptune_python_utils.endpoints import Endpoints
 
 endpoints = Endpoints(role_arn='arn:aws:iam::...')
+```
+
+If your Amazon VPC configuration doesn't have a public subnet, AWS services' endpoints like STS can be accessed via VPC endpoints (InterfaceEndpoints or GatewayEndpoints). AWS STS has regional endpoints, listed here - [Using AWS STS interface VPC endpoints](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_sts_vpce.html)
+
+To enable the library to successfully connect to STS, pass STS regional endpoint value in `endpoint_url` parameter.
+
+```
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(**other_kwargs, endpoint_url='https://sts.eu-west-1.amazonaws.com')
 ```
 
 #### Proxies
