@@ -25,6 +25,7 @@ class CdkTestAppStack extends Stack {
                 parameters: {
                     neptune_enable_audit_log: "1",
                 },
+                family: new neptune.ParameterGroupFamily('neptune1.4'),
             },
         )
 
@@ -34,6 +35,7 @@ class CdkTestAppStack extends Stack {
             parameters: {
                 neptune_query_timeout: "10000",
             },
+            family: new neptune.ParameterGroupFamily('neptune1.4'),
         })
 
         // Create the security group for the cluster
@@ -45,12 +47,13 @@ class CdkTestAppStack extends Stack {
         // Create the cluster
         const cluster = new neptune.DatabaseCluster(this, "cluster", {
             vpc: vpc,
-            instanceType: neptune.InstanceType.T3_MEDIUM,
+            instanceType: neptune.InstanceType.T4G_MEDIUM,
             clusterParameterGroup,
             parameterGroup,
             backupRetention: cdk.Duration.days(7),
             deletionProtection: true,
             securityGroups: [clusterSecurityGroup],
+            engineVersion: new neptune.EngineVersion("1.4.6.0"),
         })
 
         // Output the writer endpoint host:port
@@ -79,7 +82,7 @@ class CdkTestAppStack extends Stack {
 
         // Create the integration test Lambda
         const testLambda = new lambda.Function(this, "neptune-gremlin-test", {
-            runtime: lambda.Runtime.NODEJS_14_X,
+            runtime: lambda.Runtime.NODEJS_20_X,
             code: lambda.Code.fromAsset("lambda"),
             handler: "integration-test.handler",
             vpc: vpc,
