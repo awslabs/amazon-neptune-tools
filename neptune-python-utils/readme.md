@@ -80,6 +80,16 @@ from neptune_python_utils.endpoints import Endpoints
 endpoints = Endpoints(role_arn='arn:aws:iam::...')
 ```
 
+If your Amazon VPC configuration doesn't have a public subnet, AWS services' endpoints like STS can be accessed via VPC endpoints (InterfaceEndpoints or GatewayEndpoints). AWS STS has regional endpoints, listed here - [Using AWS STS interface VPC endpoints](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_sts_vpce.html)
+
+To enable the library to successfully connect to STS, pass STS regional endpoint value in `endpoint_url` parameter.
+
+```
+from neptune_python_utils.endpoints import Endpoints
+
+endpoints = Endpoints(**other_kwargs, endpoint_url='https://sts.eu-west-1.amazonaws.com')
+```
+
 #### Proxies
 
 If you want to connect to Neptune via a proxy – a bastion host, [application load balancer or network load balancer](https://github.com/aws-samples/aws-dbs-refarch-graph/tree/master/src/connecting-using-a-load-balancer) – you must supply the proxy DNS and port to an `Endpoints` instance:
