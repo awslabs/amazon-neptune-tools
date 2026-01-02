@@ -9,7 +9,7 @@ virtualenv temp --python=python3.8
 source temp/bin/activate
 cd temp
 pip install gremlinpython==3.5.1
-pip install requests
+pip install requests==2.29.0
 pip install backoff
 pip install cchardet
 pip install aiodns
