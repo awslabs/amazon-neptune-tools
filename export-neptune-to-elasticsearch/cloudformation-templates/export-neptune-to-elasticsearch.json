@@ -282,7 +282,7 @@
     "EbsVolumeSizeStack": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.us-west-2.amazonaws.com/scratch.us-west-2.storm.cloudwreck.com/export-neptune-to-elasticsearch/neptune-export-recommend-ebs-volume-size-stack.json",
+        "TemplateURL": "https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-sagemaker/cloudformation-templates/export-neptune-to-elasticsearch/neptune-export-recommend-ebs-volume-size-stack.json",
         "Parameters": {
           "ClusterEndpoint": {
             "Ref": "NeptuneEndpoint"
