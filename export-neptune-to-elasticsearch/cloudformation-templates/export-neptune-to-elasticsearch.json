@@ -106,6 +106,10 @@
     "GeoLocationFields": {
       "Type": "String",
       "Description": "Comma-delimited list of property keys to be mapped to Geo Point type in ElasticSearch. For example: location,area. Currently, for a field to be mapped to Geo Point type, value should be in the format 'latitude,longitude', e.g. '41.33,-11.69'"
+    },
+    "NeptuneKMSKey": {
+      "Type": "String",
+      "Description": "(Optional) ARN of AWS KMS key if using a Customer Managed Key (CMK).  If not using CMK, Neptune will use the default KMS key for the account for data decryption (if the cluster is encrypted)."
     }
   },
   "Metadata": {
@@ -129,6 +133,7 @@
             "NeptuneEndpoint",
             "NeptunePort",
             "NeptuneEngine",
+            "NeptuneKMSKey",
             "ExportScope",
             "CloneCluster",
             "NeptuneClientSecurityGroup",
@@ -257,6 +262,20 @@
       "us-gov-east-1": {
         "SamplesBucket": "aws-neptune-customer-samples-us-gov-east-1"
       }
+    }
+  },
+  "Conditions": {
+    "HasKMSKey": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "NeptuneKMSKey"
+            },
+            ""
+          ]
+        }
+      ]
     }
   },
   "Resources": {
@@ -397,6 +416,30 @@
                   "Resource": [
                     {
                       "Fn::Sub": "arn:${AWS::Partition}:aoss:${AWS::Region}:${AWS::AccountId}:collection/*"
+                    }
+                  ]
+                },
+                {
+                  "Fn::If": [
+                    "HasKMSKey",
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:GenerateDataKey",
+                        "kms:ReEncryptTo",
+                        "kms:GenerateDataKeyWithoutPlaintext",
+                        "kms:CreateGrant",
+                        "kms:ReEncryptFrom",
+                        "kms:DescribeKey"
+                      ],
+                      "Resource": {
+                        "Ref": "NeptuneKMSKey"
+                      }
+                    },
+                    {
+                      "Ref": "AWS::NoValue"
                     }
                   ]
                 }
@@ -600,7 +643,7 @@
             "NEPTUNE_ENGINE": {
               "Ref": "NeptuneEngine"
             },
-            "NEPTUNE_EXPORT_JAR_URI": "https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-export/bin/neptune-export.jar",
+            "NEPTUNE_EXPORT_JAR_URI": "https://s3.amazonaws.com/aws-neptune-customer-samples/neptune-export/bin/v2.latest/neptune-export.jar",
             "STREAM_NAME": {
               "Ref": "KinesisStream"
             },
@@ -649,7 +692,7 @@
           }
         },
         "MemorySize": 128,
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": "30",
         "ReservedConcurrentExecutions": 1
       }
@@ -762,7 +805,7 @@
           }
         },
         "MemorySize": 1024,
-        "Runtime": "python3.9",
+        "Runtime": "python3.11",
         "Timeout": "900",
         "ReservedConcurrentExecutions": {
           "Ref": "KinesisShardCount"
@@ -828,6 +871,40 @@
         "Path": "/",
         "ManagedPolicyArns": [
           "arn:aws:iam::aws:policy/service-role/AWSBatchServiceRole"
+        ],
+        "Policies": [
+          {
+            "Fn::If": [
+              "HasKMSKey",
+              {
+                "PolicyName": "KMSAccess",
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:GenerateDataKey",
+                        "kms:ReEncryptTo",
+                        "kms:GenerateDataKeyWithoutPlaintext",
+                        "kms:CreateGrant",
+                        "kms:ReEncryptFrom",
+                        "kms:DescribeKey"
+                      ],
+                      "Resource": {
+                        "Ref": "NeptuneKMSKey"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
+          }
         ]
       }
     },
@@ -941,6 +1018,8 @@
                     "rds:DescribeDBClusterParameters",
                     "rds:DescribeDBParameters",
                     "rds:ModifyDBParameterGroup",
+                    "rds:DescribeDBClusterParameterGroups",
+                    "rds:DescribeDBParameterGroups",
                     "rds:ModifyDBClusterParameterGroup",
                     "rds:RestoreDBClusterToPointInTime",
                     "rds:DeleteDBInstance",
@@ -957,6 +1036,38 @@
                 }
               ]
             }
+          },
+          {
+            "Fn::If": [
+              "HasKMSKey",
+              {
+                "PolicyName": "KMSAccess",
+                "PolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:GenerateDataKey",
+                        "kms:ReEncryptTo",
+                        "kms:GenerateDataKeyWithoutPlaintext",
+                        "kms:CreateGrant",
+                        "kms:ReEncryptFrom",
+                        "kms:DescribeKey"
+                      ],
+                      "Resource": {
+                        "Ref": "NeptuneKMSKey"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
           }
         ]
       }
@@ -1187,7 +1298,7 @@
           "Type": "EC2",
           "Ec2Configuration": [
             {
-              "ImageType": "ECS_AL2"
+              "ImageType": "ECS_AL2023"
             }
           ],
           "Subnets": [
@@ -1309,10 +1420,8 @@
             ]
           },
           "Vcpus": 8,
-          "Image": "openjdk:8",
-          "Environment": [
-
-          ],
+          "Image": "public.ecr.aws/amazoncorretto/amazoncorretto:17",
+          "Environment": [],
           "Volumes": [
             {
               "Host": {

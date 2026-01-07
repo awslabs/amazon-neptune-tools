@@ -41,13 +41,13 @@ def trigger_neptune_export():
     else:
         additional_params = ''
         
-    use_iam_auth = '' if neptune_engine == 'sparql' else ' --use-iam-auth' 
+    use_iam_auth = ' --use-iam-auth'
     export_command = 'export-pg' if neptune_engine == 'gremlin' else 'export-rdf'
     concurrency_param = ' --concurrency {}'.format(concurrency) if neptune_engine == 'gremlin' else ''
     scope_param = ' --scope {}'.format(scope) if neptune_engine == 'gremlin' else ''
     clone_cluster_param = ' --clone-cluster' if clone_cluster and clone_cluster.lower() == 'true' else ''
             
-    command = 'df -h && rm -rf neptune-export.jar && wget {} -nv && export SERVICE_REGION="{}" && java -Xms16g -Xmx16g -jar neptune-export.jar {} -e {} -p {} -d /neptune/results --output stream --stream-name {} --region {} --format neptuneStreamsJson --use-ssl{}{}{}{}{}'.format(
+    command = 'df -h && rm -rf neptune-export.jar && curl -O {} -s && export SERVICE_REGION="{}" && java -Xms16g -Xmx16g -jar neptune-export.jar {} -e {} -p {} -d /neptune/results --output stream --stream-name {} --region {} --format neptuneStreamsJson --use-ssl{}{}{}{}{}'.format(
         neptune_export_jar_uri, 
         region,
         export_command, 
