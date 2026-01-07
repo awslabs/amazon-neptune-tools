@@ -118,18 +118,17 @@ class GraphML2CSV:
                         if GraphML2CSV.graphml_tag(elem.tag) == GraphML2CSV.graphml_tag('key'):
 
                             # Assume the labelV is the vertex label, if specified
+
                             if elem.attrib['id'] != 'labelV' and elem.attrib['id'] != 'labelE':
+                                attr_type = elem.attrib.get('attr.type', 'string')
+                                
                                 if not 'for' in elem.attrib or elem.attrib['for'] == 'node':
-                                    vtx_dict[elem.attrib['id']] = elem.attrib['id'] + \
-                                        ":"+elem.attrib['attr.type']
-                                    vtx_header.append(
-                                        elem.attrib['id']+":"+elem.attrib['attr.type'])
+                                    vtx_dict[elem.attrib['id']] = elem.attrib['id'] + ":" + attr_type
+                                    vtx_header.append(elem.attrib['id'] + ":" + attr_type)
 
                                 if not 'for' in elem.attrib or elem.attrib['for'] == 'edge':
-                                    edge_dict[elem.attrib['id']] = elem.attrib['id'] + \
-                                        ":"+elem.attrib['attr.type']
-                                    edge_header.append(
-                                        elem.attrib['id']+":"+elem.attrib['attr.type'])
+                                    edge_dict[elem.attrib['id']] = elem.attrib['id'] + ":" + attr_type
+                                    edge_header.append(elem.attrib['id'] + ":" + attr_type)
 
                             elem.clear()
 
@@ -147,21 +146,20 @@ class GraphML2CSV:
                             has_label = None
 
                             for data in elem:
-                                att_val = GraphML2CSV.py_compat_str(encoding,
-                                                                    data.attrib.get('key'))
+                                att_val = GraphML2CSV.py_compat_str(encoding, data.attrib.get('key'))
 
                                 if att_val == "labelV":
-                                    node_d["~label"] = GraphML2CSV.py_compat_str(encoding,
-                                                                                 data.text)
+                                    node_d["~label"] = GraphML2CSV.py_compat_str(encoding,data.text)
                                     has_label = True
                                 else:
-                                    node_d[vtx_dict[att_val]] = GraphML2CSV.py_compat_str(encoding,
-                                                                                          data.text)
+                                    if att_val in vtx_dict:
+                                        node_d[vtx_dict[att_val]] = GraphML2CSV.py_compat_str(encoding, data.text) if data.text else ""
+
                                 node_attr_cnt += 1
 
                             if not has_label:
-                                # Use node as the label if it is unspecified
-                                node_d["~label"] = "node"
+                                # Use vertex as the label if it is unspecified - matches same for Neptune
+                                node_d["~label"] = "vertex"
 
                             node_writer.writerow(node_d)
                             elem.clear()
@@ -185,16 +183,15 @@ class GraphML2CSV:
                             edge_d["~to"] = dest
 
                             for data in elem:
-                                att_val = GraphML2CSV.py_compat_str(encoding,
-                                                                    data.attrib.get('key'))
+                                att_val = GraphML2CSV.py_compat_str(encoding, data.attrib.get('key'))
 
                                 if att_val == "labelE":
-                                    edge_d["~label"] = GraphML2CSV.py_compat_str(encoding,
-                                                                                 data.text)
+                                    edge_d["~label"] = GraphML2CSV.py_compat_str(encoding, data.text)
                                     has_label = True
                                 else:
-                                    edge_d[edge_dict[att_val]] = GraphML2CSV.py_compat_str(encoding,
-                                                                                           data.text)
+                                    if att_val in edge_dict:
+                                        edge_d[edge_dict[att_val]] = GraphML2CSV.py_compat_str(encoding, data.text) if data.text else ""
+
                                 edge_attr_cnt += 1
 
                             if not has_label:
