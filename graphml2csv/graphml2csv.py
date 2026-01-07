@@ -119,17 +119,15 @@ class GraphML2CSV:
 
                             # Assume the labelV is the vertex label, if specified
                             if elem.attrib['id'] != 'labelV' and elem.attrib['id'] != 'labelE':
-                                if not 'for' in elem.attrib or elem.attrib['for'] == 'node':
-                                    vtx_dict[elem.attrib['id']] = elem.attrib['id'] + \
-                                        ":"+elem.attrib['attr.type']
-                                    vtx_header.append(
-                                        elem.attrib['id']+":"+elem.attrib['attr.type'])
+                                attr_type = elem.attrib.get('attr.type', 'string')
+                                
+                            if not 'for' in elem.attrib or elem.attrib['for'] == 'node':
+                                vtx_dict[elem.attrib['id']] = elem.attrib['id'] + ":" + attr_type
+                                vtx_header.append(elem.attrib['id'] + ":" + attr_type)
 
-                                if not 'for' in elem.attrib or elem.attrib['for'] == 'edge':
-                                    edge_dict[elem.attrib['id']] = elem.attrib['id'] + \
-                                        ":"+elem.attrib['attr.type']
-                                    edge_header.append(
-                                        elem.attrib['id']+":"+elem.attrib['attr.type'])
+                            if not 'for' in elem.attrib or elem.attrib['for'] == 'edge':
+                                edge_dict[elem.attrib['id']] = elem.attrib['id'] + ":" + attr_type
+                                edge_header.append(elem.attrib['id'] + ":" + attr_type)
 
                             elem.clear()
 
