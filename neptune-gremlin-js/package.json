@@ -39,7 +39,7 @@
     "canvas": "^2.9.0",
     "encoding": "^0.1.13",
     "eslint": "^8.4.1",
-    "jest": "^27.4.3",
+    "jest": "^30.2.0",
     "node-notifier": "^10.0.1",
     "retire": "^4.2.1",
     "ts-node": "^10.5.0",
