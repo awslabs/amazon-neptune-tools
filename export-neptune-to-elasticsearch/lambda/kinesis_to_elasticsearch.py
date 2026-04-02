@@ -114,7 +114,7 @@ def lambda_bulk_handler(event, context):
             records = json.loads(records_json)
         except Exception as e:
             logger.error('Error parsing JSON: \'{}\': {}'.format(records_json, str(e)))
-            raise e
+            raise
         for record in records:
             
             commit_num = record['eventId']['commitNum']
