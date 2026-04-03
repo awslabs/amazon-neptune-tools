@@ -56,7 +56,7 @@ def provison_neptune_streams_handler(
         raise Exception('step_function_fallback_period_unit must be singular if step_function_fallback_period = 1: ' + step_function_fallback_period_unit)
         
     if create_cloudwatch_alarm and not notification_email:
-        raise('You must supply a notification_email if creating a CloudWatch alarm')
+        raise Exception('You must supply a notification_email if creating a CloudWatch alarm')
     
     neptune_query_engine = query_engine.lower().capitalize()
     
