@@ -23,52 +23,70 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from typing import Tuple, Iterable
 
+
 def synchronized_method(method):
-    
+
     outer_lock = threading.Lock()
-    lock_name = "__"+method.__name__+"_lock"+"__"
-    
+    lock_name = "__" + method.__name__ + "_lock" + "__"
+
     def sync_method(self, *args, **kws):
         with outer_lock:
-            if not hasattr(self, lock_name): setattr(self, lock_name, threading.Lock())
+            if not hasattr(self, lock_name):
+                setattr(self, lock_name, threading.Lock())
             lock = getattr(self, lock_name)
             with lock:
-                return method(self, *args, **kws)  
+                return method(self, *args, **kws)
 
     return sync_method
 
-class LazyHttpHeaders():
-    
+
+class LazyHttpHeaders:
+
     def __init__(self, lazy_headers):
         self.lazy_headers = lazy_headers
         self.additional_headers = {}
-    
+
     def get_all(self) -> Iterable[Tuple[str, str]]:
         return self.items()
-        
+
     def items(self):
         return self.lazy_headers(self.additional_headers).items()
-        
+
     def __iter__(self):
-        return iter(self.items()) 
-        
+        return iter(self.items())
+
     def __setitem__(self, key, value):
         self.additional_headers[key] = value
 
     def __getitem__(self, key):
-        return self.items()[key]  
-        
+        return self.items()[key]
+
+
 class RequestParameters:
-    
+
     def __init__(self, uri, querystring, headers):
         self.uri = uri
         self.querystring = querystring
         self.headers = headers
 
+
 class Endpoint:
 
-    def __init__(self, protocol, neptune_endpoint, neptune_port, suffix, region, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False, endpoint_url=None):
-        
+    def __init__(
+        self,
+        protocol,
+        neptune_endpoint,
+        neptune_port,
+        suffix,
+        region,
+        credentials=None,
+        role_arn=None,
+        proxy_dns=None,
+        proxy_port=8182,
+        remove_host_header=False,
+        endpoint_url=None,
+    ):
+
         self.protocol = protocol
         self.neptune_endpoint = neptune_endpoint
         self.neptune_port = neptune_port
@@ -88,117 +106,156 @@ class Endpoint:
         else:
             self.role_arn = None
             self.credentials = self._get_session_credentials()
-    
+
     def __str__(self):
         return self.value()
-        
+
     def _get_session_credentials(self):
         session = boto3.session.Session()
-        return session.get_credentials();       
-        
+        return session.get_credentials()
+
     @synchronized_method
-    def _get_credentials(self):        
+    def _get_credentials(self):
 
         if self.credentials is None:
             if self.endpoint_url:
-                sts = boto3.client('sts', region_name=self.region, endpoint_url=self.endpoint_url)
+                sts = boto3.client(
+                    "sts", region_name=self.region, endpoint_url=self.endpoint_url
+                )
             else:
-                sts = boto3.client('sts', region_name=self.region)
-            
+                sts = boto3.client("sts", region_name=self.region)
+
             role = sts.assume_role(
                 RoleArn=self.role_arn,
                 RoleSessionName=uuid.uuid4().hex,
-                DurationSeconds=3600
+                DurationSeconds=3600,
             )
-            
+
             self.credentials = RefreshableCredentials.create_from_metadata(
                 metadata=self._new_credentials(),
                 refresh_using=self._new_credentials,
                 method="sts-assume-role",
             )
-        
+
         return self.credentials.get_frozen_credentials()
-               
+
     def _new_credentials(self):
         if self.endpoint_url:
-            sts = boto3.client('sts', region_name=self.region, endpoint_url=self.endpoint_url)
+            sts = boto3.client(
+                "sts", region_name=self.region, endpoint_url=self.endpoint_url
+            )
         else:
-            sts = boto3.client('sts', region_name=self.region)
-        
+            sts = boto3.client("sts", region_name=self.region)
+
         role = sts.assume_role(
             RoleArn=self.role_arn,
             RoleSessionName=uuid.uuid4().hex,
-            DurationSeconds=3600
+            DurationSeconds=3600,
         )
-        
+
         return {
-            'access_key': role['Credentials']['AccessKeyId'],
-            'secret_key': role['Credentials']['SecretAccessKey'], 
-            'token': role['Credentials']['SessionToken'],
-             'expiry_time': role['Credentials']['Expiration'].isoformat()
+            "access_key": role["Credentials"]["AccessKeyId"],
+            "secret_key": role["Credentials"]["SecretAccessKey"],
+            "token": role["Credentials"]["SessionToken"],
+            "expiry_time": role["Credentials"]["Expiration"].isoformat(),
         }
-        
+
     def value(self):
-        return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
-     
+        return "{}://{}:{}/{}".format(
+            self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix
+        )
+
     def __proxied_neptune_endpoint_url(self):
         if self.proxy_dns:
-            return '{}://{}:{}/{}'.format(self.protocol, self.proxy_dns, self.proxy_port, self.suffix)
+            return "{}://{}:{}/{}".format(
+                self.protocol, self.proxy_dns, self.proxy_port, self.suffix
+            )
         else:
-            return '{}://{}:{}/{}'.format(self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix)
-        
-        
-    def prepare_request(self, method='GET', payload=None, querystring={}, headers={}):
-        
-        def get_headers(additional_headers={}):
-            
-            service = 'neptune-db'
-            
-            for k,v in additional_headers.items():
-                headers[k] = v
-            
-            if 'host' not in headers and 'Host' not in headers:
-                headers['Host'] = self.neptune_endpoint
+            return "{}://{}:{}/{}".format(
+                self.protocol, self.neptune_endpoint, self.neptune_port, self.suffix
+            )
 
-            request = AWSRequest(method=method, url=self.__proxied_neptune_endpoint_url(), headers=headers, data=payload, params=querystring)
-        
+    def prepare_request(
+        self, method="GET", payload=None, querystring=None, headers=None
+    ):
+
+        if querystring is None:
+            querystring = {}
+        if headers is None:
+            headers = {}
+
+        def get_headers(additional_headers=None):
+
+            if additional_headers is None:
+                additional_headers = {}
+            service = "neptune-db"
+
+            for k, v in additional_headers.items():
+                headers[k] = v
+
+            if "host" not in headers and "Host" not in headers:
+                headers["Host"] = self.neptune_endpoint
+
+            request = AWSRequest(
+                method=method,
+                url=self.__proxied_neptune_endpoint_url(),
+                headers=headers,
+                data=payload,
+                params=querystring,
+            )
+
             SigV4Auth(self._get_credentials(), service, self.region).add_auth(request)
-            
+
             signed_headers = {}
-            
-            for k,v in request.headers.items():
+
+            for k, v in request.headers.items():
                 signed_headers[k] = v
-            
+
             if self.remove_host_header:
-                if 'host' in signed_headers:
-                    signed_headers.pop('host')
-                if 'Host' in signed_headers:
-                    signed_headers.pop('Host')
-            
+                if "host" in signed_headers:
+                    signed_headers.pop("host")
+                if "Host" in signed_headers:
+                    signed_headers.pop("Host")
+
             return signed_headers
-            
+
         return RequestParameters(
-            self.__proxied_neptune_endpoint_url(),
-            None,
-            LazyHttpHeaders(get_headers)
+            self.__proxied_neptune_endpoint_url(), None, LazyHttpHeaders(get_headers)
         )
-        
+
 
 class Endpoints:
 
-    def __init__(self, neptune_endpoint=None, neptune_port=None, region_name=None, credentials=None, role_arn=None, proxy_dns=None, proxy_port=8182, remove_host_header=False, endpoint_url=None):
-        
+    def __init__(
+        self,
+        neptune_endpoint=None,
+        neptune_port=None,
+        region_name=None,
+        credentials=None,
+        role_arn=None,
+        proxy_dns=None,
+        proxy_port=8182,
+        remove_host_header=False,
+        endpoint_url=None,
+    ):
+
         if neptune_endpoint is None:
-            assert ('NEPTUNE_CLUSTER_ENDPOINT' in os.environ), 'neptune_endpoint is missing.'
-            self.neptune_endpoint = os.environ['NEPTUNE_CLUSTER_ENDPOINT']
+            assert (
+                "NEPTUNE_CLUSTER_ENDPOINT" in os.environ
+            ), "neptune_endpoint is missing."
+            self.neptune_endpoint = os.environ["NEPTUNE_CLUSTER_ENDPOINT"]
         else:
             self.neptune_endpoint = neptune_endpoint
-            
+
         if neptune_port is None:
-            self.neptune_port = 8182 if 'NEPTUNE_CLUSTER_PORT' not in os.environ else os.environ['NEPTUNE_CLUSTER_PORT']
+            self.neptune_port = (
+                8182
+                if "NEPTUNE_CLUSTER_PORT" not in os.environ
+                else os.environ["NEPTUNE_CLUSTER_PORT"]
+            )
         else:
             self.neptune_port = neptune_port
-            
+
         if region_name:
             self.region = region_name
         else:
@@ -211,31 +268,61 @@ class Endpoints:
         self.proxy_port = proxy_port
         self.remove_host_header = remove_host_header
         self.endpoint_url = endpoint_url
-            
-            
+
     def gremlin_endpoint(self):
-        return self.__endpoint('wss', self.neptune_endpoint, self.neptune_port, 'gremlin')
-    
+        return self.__endpoint(
+            "wss", self.neptune_endpoint, self.neptune_port, "gremlin"
+        )
+
     def sparql_endpoint(self):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql')
-    
+        return self.__endpoint(
+            "https", self.neptune_endpoint, self.neptune_port, "sparql"
+        )
+
     def loader_endpoint(self):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'loader')
-    
+        return self.__endpoint(
+            "https", self.neptune_endpoint, self.neptune_port, "loader"
+        )
+
     def load_status_endpoint(self, load_id):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'loader/{}'.format(load_id))
-        
+        return self.__endpoint(
+            "https",
+            self.neptune_endpoint,
+            self.neptune_port,
+            "loader/{}".format(load_id),
+        )
+
     def status_endpoint(self):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'status')
-        
+        return self.__endpoint(
+            "https", self.neptune_endpoint, self.neptune_port, "status"
+        )
+
     def gremlin_stream_endpoint(self):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'gremlin/stream')
-        
+        return self.__endpoint(
+            "https", self.neptune_endpoint, self.neptune_port, "gremlin/stream"
+        )
+
     def sparql_stream_endpoint(self):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'sparql/stream')
-        
+        return self.__endpoint(
+            "https", self.neptune_endpoint, self.neptune_port, "sparql/stream"
+        )
+
     def propertygraph_stream_endpoint(self):
-        return self.__endpoint('https', self.neptune_endpoint, self.neptune_port, 'pg/stream')
-    
+        return self.__endpoint(
+            "https", self.neptune_endpoint, self.neptune_port, "pg/stream"
+        )
+
     def __endpoint(self, protocol, neptune_endpoint, neptune_port, suffix):
-        return Endpoint(protocol, neptune_endpoint, neptune_port, suffix, self.region, self.credentials, self.role_arn, self.proxy_dns, self.proxy_port, self.remove_host_header, self.endpoint_url)
+        return Endpoint(
+            protocol,
+            neptune_endpoint,
+            neptune_port,
+            suffix,
+            self.region,
+            self.credentials,
+            self.role_arn,
+            self.proxy_dns,
+            self.proxy_port,
+            self.remove_host_header,
+            self.endpoint_url,
+        )
