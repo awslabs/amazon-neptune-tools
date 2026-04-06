@@ -315,6 +315,7 @@ class EdgeDef(BaseDef):
                         for prop_def in self.properties:
                             edge[prop_def.header] = self.get_indexed_value(prop_def.get_value(row), index)
                         edges.append(edge)
+                        index += 1
                 else: 
                     edge = {}
                     edge['~id'] = self.evaluate(row, self.id)
