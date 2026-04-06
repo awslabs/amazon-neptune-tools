@@ -33,10 +33,12 @@ class BulkLoad:
         named_graph_uri='http://aws.amazon.com/neptune/vocab/v01/DefaultNamedGraph',
         update_single_cardinality_properties=False,
         queue_request=False,
-        dependencies=[],
+        dependencies=None,
         endpoints=None,
         **kwargs):
-        
+
+        if dependencies is None:
+            dependencies = []
         self.source = source
         self.format = format
         
