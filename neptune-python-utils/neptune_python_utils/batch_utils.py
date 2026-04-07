@@ -341,8 +341,10 @@ class BatchUtils:
         
         return execute(self, rows, operations, **kwargs)
         
-    def execute_batch(self, rows, operations=[], batch_size=50, **kwargs):
-          
+    def execute_batch(self, rows, operations=None, batch_size=50, **kwargs):
+
+        if operations is None:
+            operations = []
         if 'mappings' not in kwargs:
             kwargs['mappings'] = Mappings()
 
