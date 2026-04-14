@@ -15,6 +15,8 @@ package com.amazonaws.services.neptune.io;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class OutputFile implements AutoCloseable {
@@ -38,6 +40,12 @@ public class OutputFile implements AutoCloseable {
 
     public void printHeaders(Iterable<String> headers) throws IOException {
 
+        List<String> cleanHeaders = new ArrayList<String>();
+
+        for (String header : headers) {
+            cleanHeaders.add(header.replace(":", "\\:"));
+        }
+
         Path originalFilePath = directories.createFilePath(filename);
         Path tempFilePath = directories.createFilePath(filename, "temp");
 
@@ -47,7 +55,8 @@ public class OutputFile implements AutoCloseable {
         try (Stream<String> stream = Files.lines(originalFilePath);
              RawCsvPrinter tempFilePrinter = RawCsvPrinter.newPrinter(tempFilePath)) {
 
-            tempFilePrinter.printRecord(headers);
+            // tempFilePrinter.printRecord(headers);
+            tempFilePrinter.printRecord(cleanHeaders);
             stream.forEach(tempFilePrinter::printRecord);
 
             tempFilePrinter.flush();
