@@ -1,0 +1,69 @@
+[
+  {
+    "15dc95a8-e5bd-4f81-9f68-02707e11d5b3": {
+      "key": {
+        "id": "15dc95a8-e5bd-4f81-9f68-02707e11d5b3",
+        "label": "Software",
+        "type": "vertex",
+        "properties": {
+          "genericKey": [
+            {
+              "id": "15dc95a8-e5bd-4f81-9f68-02707e11d5b3|genericKey",
+              "value": "neptune"
+            }
+          ],
+          "Version": [
+            {
+              "id": "972995da-32f2-495e-a983-e9da92da8e80",
+              "value": "2.0"
+            }
+          ],
+          "Name": [
+            {
+              "id": "47b1bab1-168c-4ec3-95fe-f74247474a7c",
+              "value": "neptune"
+            }
+          ]
+        }
+      },
+      "value": {
+        "ee2b819b-812f-4626-b1aa-6144f939a4fc": {
+          "key": {
+            "id": "ee2b819b-812f-4626-b1aa-6144f939a4fc",
+            "label": "createdby",
+            "type": "edge",
+            "inVLabel": "Software",
+            "outVLabel": "Developer",
+            "inV": "15dc95a8-e5bd-4f81-9f68-02707e11d5b3",
+            "outV": "9d9c900f-4f41-46ba-912f-4fe50c636553"
+          },
+          "value": {
+            "9d9c900f-4f41-46ba-912f-4fe50c636553": {
+              "key": {
+                "id": "9d9c900f-4f41-46ba-912f-4fe50c636553",
+                "label": "Developer",
+                "type": "vertex",
+                "properties": {
+                  "genericKey": [
+                    {
+                      "id": "9d9c900f-4f41-46ba-912f-4fe50c636553|genericKey",
+                      "value": "aws"
+                    }
+                  ],
+                 
+                  "name": [
+                    {
+                      "id": "6d58b7ad-8fca-4695-8fc3-26971cacaba6",
+                      "value": "amazon web services"
+                    }
+                  ]
+                }
+              },
+              "value": {}
+            }
+          }
+        }
+      }
+    }
+  }
+]
