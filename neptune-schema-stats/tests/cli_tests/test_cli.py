@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from unittest.mock import patch
+from urllib.parse import urlparse
 
 import pytest
 
@@ -432,7 +433,8 @@ class TestErrorHints:
         assert "DFE statistics limit" in stderr
         assert "support case" in stderr.lower()
         # Doc URL surfaces so the user has somewhere to go.
-        assert "docs.aws.amazon.com" in stderr
+        urls_in_stderr = [token for token in stderr.split() if "://" in token]
+        assert any(urlparse(token).hostname == "docs.aws.amazon.com" for token in urls_in_stderr)
         _ = code  # exit code is a stats-unavailable variant; specifics tested elsewhere
 
     def test_old_engine_version_hint(self, capsys):
