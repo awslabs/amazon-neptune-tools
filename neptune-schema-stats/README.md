@@ -72,24 +72,25 @@ Total edges:            51,300
 
 Node labels
 -----------
-Label              Count  Properties
----------  -------------  -------------------------------------------------------------------------------
-airport    3,503 — 3,586  city, code, country, desc, elev, icao, lat, lon, longest, region, runways, type
-continent        0 — 244  code, desc, type
-country          0 — 244  code, desc, type
-version           1 — 84  author, code, date, desc, type
+Label         Count  Properties
+---------  --------  -------------------------------------------------------------------------------
+airport       3,503  city, code, country, desc, elev, icao, lat, lon, longest, region, runways, type
+continent         7  code, desc, type
+country         237  code, desc, type
+version           1  author, code, date, desc, type
 
 Edge labels
 -----------
 Edge label      Count    Mean/src  Source → Target               Properties
 ------------  -------  ----------  ----------------------------  ------------
-route          50,532           —  airport → airport             dist
-contains          768           —  continent, country → airport  —
-
-  Some counts are ranges (min — max). Scans were skipped (--api-only). Re-run without --api-only to resolve them to exact values.
+route          50,532       14.43  airport → airport             dist
+contains          768        3.15  continent, country → airport  —
 ```
 
-Ranges appear because `airport`, `continent`, and `country` all allow characteristic sets like `{code, desc, type}` — a property signature that maps to more than one label in the schema. The default run (without `--api-only`) issues scoped `MATCH (n:L) RETURN count(n)` queries to resolve these to exact counts.
+Counts are derived from Neptune's Graph Summary and PG Schema APIs, with
+scoped `MATCH (n:L) RETURN count(n)` queries resolving ambiguous labels
+(here `continent` and `country`, which share the property signature
+`{code, desc, type}`) to exact values.
 
 ### RDF
 
