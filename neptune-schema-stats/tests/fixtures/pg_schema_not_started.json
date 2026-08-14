@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "schema": {
+        "edgeLabelDetails": {},
+        "edgeLabels": [],
+        "status": {
+          "concurrency": "0",
+          "lastComputedTimestamp": "",
+          "state": "NotStarted",
+          "progressPercentage": "0"
+        },
+        "nodeLabels": [],
+        "labelTriples": [],
+        "nodeLabelDetails": {}
+      }
+    }
+  ]
+}

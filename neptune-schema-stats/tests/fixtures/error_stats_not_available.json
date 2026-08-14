@@ -1,0 +1,5 @@
+{
+  "detailedMessage": "Statistics are not available. Summary can only be generated after statistics are available.",
+  "requestId": "48c1f788-f80b-b69c-d728-3f6df579a5f6",
+  "code": "StatisticsNotAvailableException"
+}
