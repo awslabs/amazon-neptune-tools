@@ -1,0 +1,120 @@
+{
+  "status": "200 OK",
+  "payload": {
+    "version": "v1",
+    "lastStatisticsComputationTime": "2023-03-01T14:54:13.903Z",
+    "graphSummary": {
+      "numDistinctSubjects": 54403,
+      "numDistinctPredicates": 19,
+      "numQuads": 158571,
+      "numClasses": 4,
+      "classes": [
+        "http://kelvinlawrence.net/air-routes/class/Version",
+        "http://kelvinlawrence.net/air-routes/class/Airport",
+        "http://kelvinlawrence.net/air-routes/class/Continent",
+        "http://kelvinlawrence.net/air-routes/class/Country"
+      ],
+      "predicates": [
+        {"http://kelvinlawrence.net/air-routes/objectProperty/route": 50656},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/dist": 50656},
+        {"http://kelvinlawrence.net/air-routes/objectProperty/contains": 7004},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/code": 3747},
+        {"http://www.w3.org/2000/01/rdf-schema#label": 3747},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/type": 3747},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/desc": 3747},
+        {"http://www.w3.org/1999/02/22-rdf-syntax-ns#type": 3747},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/icao": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/lat": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/region": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/runways": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/longest": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/elev": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/lon": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/country": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/city": 3502},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/author": 1},
+        {"http://kelvinlawrence.net/air-routes/datatypeProperty/date": 1}
+      ],
+      "subjectStructures": [
+        {
+          "count": 50656,
+          "predicates": [
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/dist"
+          ]
+        },
+        {
+          "count": 3471,
+          "predicates": [
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/city",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/code",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/country",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/desc",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/elev",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/icao",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/lat",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/lon",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/longest",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/region",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/runways",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/type",
+            "http://kelvinlawrence.net/air-routes/objectProperty/route",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/2000/01/rdf-schema#label"
+          ]
+        },
+        {
+          "count": 238,
+          "predicates": [
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/code",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/desc",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/type",
+            "http://kelvinlawrence.net/air-routes/objectProperty/contains",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/2000/01/rdf-schema#label"
+          ]
+        },
+        {
+          "count": 31,
+          "predicates": [
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/city",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/code",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/country",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/desc",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/elev",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/icao",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/lat",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/lon",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/longest",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/region",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/runways",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/type",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/2000/01/rdf-schema#label"
+          ]
+        },
+        {
+          "count": 6,
+          "predicates": [
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/code",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/desc",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/type",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/2000/01/rdf-schema#label"
+          ]
+        },
+        {
+          "count": 1,
+          "predicates": [
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/author",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/code",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/date",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/desc",
+            "http://kelvinlawrence.net/air-routes/datatypeProperty/type",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+            "http://www.w3.org/2000/01/rdf-schema#label"
+          ]
+        }
+      ]
+    }
+  }
+}

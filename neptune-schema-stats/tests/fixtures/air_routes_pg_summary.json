@@ -1,0 +1,105 @@
+{
+  "status": "200 OK",
+  "payload": {
+    "version": "v1",
+    "lastStatisticsComputationTime": "2023-03-01T14:35:03.804Z",
+    "graphSummary": {
+      "numNodes": 3748,
+      "numEdges": 51300,
+      "numNodeLabels": 4,
+      "numEdgeLabels": 2,
+      "nodeLabels": [
+        "continent",
+        "country",
+        "version",
+        "airport"
+      ],
+      "edgeLabels": [
+        "contains",
+        "route"
+      ],
+      "numNodeProperties": 14,
+      "numEdgeProperties": 1,
+      "nodeProperties": [
+        {"desc": 3748},
+        {"code": 3748},
+        {"type": 3748},
+        {"country": 3503},
+        {"longest": 3503},
+        {"city": 3503},
+        {"lon": 3503},
+        {"elev": 3503},
+        {"icao": 3503},
+        {"region": 3503},
+        {"runways": 3503},
+        {"lat": 3503},
+        {"date": 1},
+        {"author": 1}
+      ],
+      "edgeProperties": [
+        {"dist": 50532}
+      ],
+      "totalNodePropertyValues": 42773,
+      "totalEdgePropertyValues": 50532,
+      "nodeStructures": [
+        {
+          "count": 3471,
+          "nodeProperties": [
+            "city",
+            "code",
+            "country",
+            "desc",
+            "elev",
+            "icao",
+            "lat",
+            "lon",
+            "longest",
+            "region",
+            "runways",
+            "type"
+          ],
+          "distinctOutgoingEdgeLabels": ["route"]
+        },
+        {
+          "count": 161,
+          "nodeProperties": ["code", "desc", "type"],
+          "distinctOutgoingEdgeLabels": ["contains"]
+        },
+        {
+          "count": 83,
+          "nodeProperties": ["code", "desc", "type"],
+          "distinctOutgoingEdgeLabels": []
+        },
+        {
+          "count": 32,
+          "nodeProperties": [
+            "city",
+            "code",
+            "country",
+            "desc",
+            "elev",
+            "icao",
+            "lat",
+            "lon",
+            "longest",
+            "region",
+            "runways",
+            "type"
+          ],
+          "distinctOutgoingEdgeLabels": []
+        },
+        {
+          "count": 1,
+          "nodeProperties": ["author", "code", "date", "desc", "type"],
+          "distinctOutgoingEdgeLabels": []
+        }
+      ],
+      "edgeStructures": [
+        {
+          "count": 50532,
+          "edgeProperties": ["dist"]
+        }
+      ]
+    }
+  }
+}

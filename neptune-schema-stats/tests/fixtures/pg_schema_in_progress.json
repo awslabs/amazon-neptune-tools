@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "schema": {
+        "status": {
+          "state": "InProgress",
+          "concurrency": "16",
+          "lastComputedTimestamp": "",
+          "progressPercentage": "42",
+          "errorMessage": null
+        },
+        "nodeLabels": [],
+        "edgeLabels": [],
+        "nodeLabelDetails": {},
+        "edgeLabelDetails": {},
+        "labelTriples": []
+      }
+    }
+  ]
+}

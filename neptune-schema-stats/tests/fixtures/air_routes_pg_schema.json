@@ -1,0 +1,72 @@
+{
+  "results": [
+    {
+      "schema": {
+        "edgeLabelDetails": {
+          "route": {
+            "properties": {
+              "dist": ["Int"]
+            }
+          },
+          "contains": {
+            "properties": {}
+          }
+        },
+        "edgeLabels": ["route", "contains"],
+        "status": {
+          "concurrency": "16",
+          "lastComputedTimestamp": "2026-06-04T23:58:17Z",
+          "state": "Completed",
+          "progressPercentage": "100"
+        },
+        "nodeLabels": ["version", "continent", "airport", "country"],
+        "labelTriples": [
+          {"~type": "route", "~from": "airport", "~to": "airport"},
+          {"~type": "contains", "~from": "country", "~to": "airport"},
+          {"~type": "contains", "~from": "continent", "~to": "airport"}
+        ],
+        "nodeLabelDetails": {
+          "continent": {
+            "properties": {
+              "type": ["String"],
+              "code": ["String"],
+              "desc": ["String"]
+            }
+          },
+          "airport": {
+            "properties": {
+              "type": ["String"],
+              "city": ["String"],
+              "icao": ["String"],
+              "code": ["String"],
+              "country": ["String"],
+              "lat": ["Double"],
+              "longest": ["Int"],
+              "runways": ["Int"],
+              "desc": ["String"],
+              "lon": ["Double"],
+              "region": ["String"],
+              "elev": ["Int"]
+            }
+          },
+          "country": {
+            "properties": {
+              "type": ["String"],
+              "code": ["String"],
+              "desc": ["String"]
+            }
+          },
+          "version": {
+            "properties": {
+              "date": ["String"],
+              "desc": ["String"],
+              "author": ["String"],
+              "type": ["String"],
+              "code": ["String"]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
