@@ -28,21 +28,14 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/credential-providers": "^3.1140.0",
     "@smithy/signature-v4": "^5.0.1",
     "async": "^3.2.2",
     "gremlin": "^3.7.2"
   },
   "devDependencies": {
-    "@swc/core": "^1.2.137",
-    "@swc/wasm": "^1.2.137",
-    "bufferutil": "^4.0.6",
-    "canvas": "^2.9.0",
-    "encoding": "^0.1.13",
     "eslint": "^8.4.1",
     "jest": "^30.2.0",
-    "node-notifier": "^10.0.1",
-    "retire": "^4.2.1",
-    "ts-node": "^10.5.0",
-    "utf-8-validate": "^5.0.8"
+    "retire": "^5.7.0"
   }
 }
