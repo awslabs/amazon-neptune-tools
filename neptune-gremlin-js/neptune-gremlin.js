@@ -20,7 +20,8 @@ const {DriverRemoteConnection} = gremlin.driver
 const { PartitionStrategy } = require("gremlin/lib/process/traversal-strategy")
 const __ = gremlin.process.statics
 const { Sha256 } = require("@aws-crypto/sha256-js")
-const { SignatureV4 } = require("@aws-sdk/signature-v4")
+const { SignatureV4 } = require("@smithy/signature-v4")
+const { fromNodeProviderChain } = require("@aws-sdk/credential-providers")
 
 /**
  * Represents a connection to Neptune's gremlin endpoint.
@@ -125,11 +126,25 @@ class Connection {
         this.connection._client._connection.on("close", (code, message) => {
             console.info(`close - ${code} ${message}`)
             if (code == 1006) {
-                console.error("Connection closed prematurely")
-                throw new Error("Connection closed prematurely")
+                console.error("Connection closed prematurely (code 1006)")
             }
         })
 
+    }
+
+    /**
+     * Close the underlying connection and release the socket.
+     */
+    async disconnect() {
+        if (this.connection) {
+            try {
+                await this.connection.close()
+            } catch (err) {
+                console.warn("Error closing connection: " + err.message)
+            } finally {
+                this.connection = null
+            }
+        }
     }
 
     /**
@@ -159,8 +174,8 @@ class Connection {
      */
     async query(f) {
 
-        let g = this.getG()
         const self = this
+        let needsReconnect = false
 
         return async.retry(
             {
@@ -171,12 +186,12 @@ class Connection {
                     // Add filters here to determine whether error can be retried
                     console.warn("Determining whether retriable error: " + err.message)
 
-                    // Check for connection issues
+                    // Check for connection issues. Flag for reconnect, but do the
+                    // actual (async) reconnect inside the retried task below so it
+                    // is awaited before the next attempt runs.
                     if (err.message.startsWith("WebSocket is not open")) {
-                        console.warn("Reopening connection")
-                        self.connection.close()
-                        self.connect()
-                        g = self.getG()
+                        console.warn("Will reopen connection before retrying")
+                        needsReconnect = true
                         return true
                     }
 
@@ -197,7 +212,32 @@ class Connection {
 
             },
             async () => {
-                return await f(g)
+                if (needsReconnect) {
+                    needsReconnect = false
+                    try {
+                        if (self.connection) await self.connection.close()
+                    } catch (err) {
+                        console.warn("Error closing stale connection: " + err.message)
+                    }
+                    await self.connect()
+                }
+                const g = self.getG()
+
+                // Guard against a request that never settles (e.g. the socket
+                // was torn down mid-flight). Without this a single stalled
+                // operation hangs the whole process indefinitely.
+                const timeoutMs = self.queryTimeoutMs || 30000
+                let timer
+                const timeout = new Promise((_, reject) => {
+                    timer = setTimeout(
+                        () => reject(new Error("Query timed out after " + timeoutMs + "ms")),
+                        timeoutMs)
+                })
+                try {
+                    return await Promise.race([f(g), timeout])
+                } finally {
+                    clearTimeout(timer)
+                }
             })
     }
 
@@ -493,29 +533,38 @@ async function getHeaders(host, port, credentials, path) {
         throw new Error("Host and port are required")
     }
 
-    const accessKeyId = credentials.accessKey || credentials.accessKeyId
-        || process.env.AWS_ACCESS_KEY_ID
-    const secretAccessKey = credentials.secretKey || credentials.secretAccessKey
-        || process.env.AWS_SECRET_ACCESS_KEY
-    const sessionToken = credentials.sessionToken || process.env.AWS_SESSION_TOKEN
-    const region = credentials.region || process.env.AWS_DEFAULT_REGION
+    credentials = credentials || {}
 
-    if (!accessKeyId || !secretAccessKey) {
-        throw new Error("Access key and secret key are required")
+    const region = credentials.region
+        || process.env.AWS_REGION
+        || process.env.AWS_DEFAULT_REGION
+
+    if (!region) {
+        throw new Error("Region is required (pass credentials.region or set AWS_REGION)")
     }
 
+    const explicitAccessKeyId = credentials.accessKey || credentials.accessKeyId
+    const explicitSecretAccessKey = credentials.secretKey || credentials.secretAccessKey
+
+    const resolvedCredentials = explicitAccessKeyId && explicitSecretAccessKey
+        ? {
+            accessKeyId: explicitAccessKeyId,
+            secretAccessKey: explicitSecretAccessKey,
+            sessionToken: credentials.sessionToken,
+        }
+        : fromNodeProviderChain()
+
     const sigv4 = new SignatureV4({
-        credentials: { accessKeyId, secretAccessKey, sessionToken, region },
+        credentials: resolvedCredentials,
         service: "neptune-db",
         region,
         sha256: Sha256,
     })
 
     const signature = await sigv4.signRequest(
-        {method:"GET", headers:{host: `${host}:${port}`}, path}, 
+        {method:"GET", headers:{host: `${host}:${port}`}, path},
         new Date(),
-        region,
-        { accessKeyId, secretAccessKey, sessionToken, region })
+        region)
 
     return signature.headers
 }

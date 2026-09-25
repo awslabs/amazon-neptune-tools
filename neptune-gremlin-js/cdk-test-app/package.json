@@ -11,12 +11,12 @@
     "test": "jest"
   },
   "devDependencies": {
-    "aws-cdk": "^2.1005.0",
+    "aws-cdk": "^2.1143.0",
     "jest": "^29.7.0"
   },
   "dependencies": {
-    "@aws-cdk/aws-neptune-alpha": "^2.185.0-alpha.0",
-    "aws-cdk-lib": "2.260.0",
+    "@aws-cdk/aws-neptune-alpha": "^2.270.0-alpha.0",
+    "aws-cdk-lib": "2.270.0",
     "constructs": "^10.0.0"
   }
 }
