@@ -326,6 +326,10 @@
         },
         "ShardCount": {
           "Ref": "KinesisShardCount"
+        },
+        "StreamEncryption": {
+          "EncryptionType": "KMS",
+          "KeyId": "alias/aws/kinesis"
         }
       }
     },
