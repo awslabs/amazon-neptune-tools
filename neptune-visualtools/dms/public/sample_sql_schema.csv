@@ -1,0 +1,11 @@
+TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION,IS_NULLABLE,COLUMN_TYPE
+content,content_id,1,NO,varchar(50)
+content,author_id,2,NO,varchar(50)
+content,title,3,YES,varchar(255)
+content,description,4,YES,text
+content,datemodified,5,YES,date
+users,id,1,NO,varchar(50)
+users,name,2,YES,varchar(255)
+users,email,3,YES,varchar(255)
+users,phone,4,YES,bigint(20)
+users,datemodified,5,YES,date
