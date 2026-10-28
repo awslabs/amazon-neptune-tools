@@ -17,7 +17,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class PropertyValueParser {
@@ -27,11 +29,22 @@ public class PropertyValueParser {
     private final PropertyValueParserPolicy policy;
     private final String semicolonReplacement;
     private final boolean inferType;
+    private final String listDelimiter;
+    private final boolean appendListDelimiter;
+    private final boolean inferDateTimes;
 
     public PropertyValueParser(PropertyValueParserPolicy policy, String semicolonReplacement, boolean inferType) {
+        this(policy, semicolonReplacement, inferType, "|", false, false);
+    }
+
+    public PropertyValueParser(PropertyValueParserPolicy policy, String semicolonReplacement, boolean inferType,
+            String listDelimiter, boolean appendListDelimiter, boolean inferDateTimes) {
         this.policy = policy;
         this.semicolonReplacement = semicolonReplacement;
         this.inferType = inferType;
+        this.listDelimiter = listDelimiter;
+        this.appendListDelimiter = appendListDelimiter;
+        this.inferDateTimes = inferDateTimes;
     }
 
     public PropertyValue parse(String s){
@@ -54,7 +67,7 @@ public class PropertyValueParser {
     PropertyValue parseArrayValue(String s, ArrayNode arrayNode) {
         Set<String> values = new HashSet<>();
         for (JsonNode node : arrayNode) {
-            values.add(format(node.asText().replace(";", semicolonReplacement)));
+            values.add(node.asText().replace(";", semicolonReplacement));
         }
         if (values.size() < arrayNode.size()){
             policy.handleDuplicates(s, arrayNode, this);
@@ -62,8 +75,28 @@ public class PropertyValueParser {
         return arrayValue(values);
     }
 
+    PropertyValue parseArrayAsDelimitedString(ArrayNode arrayNode) {
+        List<String> values = new ArrayList<>();
+        for (JsonNode node : arrayNode) {
+            String value = node.asText();
+            if (value.contains(listDelimiter)) {
+                throw new IllegalArgumentException(String.format(
+                    "List value contains configured delimiter '%s': %s", listDelimiter, value));
+            }
+            values.add(value);
+        }
+
+        String value = String.join(listDelimiter, values);
+        if (appendListDelimiter && !values.isEmpty()) {
+            value += listDelimiter;
+        }
+
+        DataType dataType = inferType ? DataType.String : DataType.None;
+        return new PropertyValue(format(value), false, dataType);
+    }
+
     PropertyValue stringValue(String s){
-        DataType dataType = inferType ? DataType.identifyType(s) : DataType.None;
+        DataType dataType = inferType ? DataType.identifyType(s, inferDateTimes) : DataType.None;
         return new PropertyValue(format(s), false, dataType);
     }
 
@@ -73,11 +106,11 @@ public class PropertyValueParser {
 
         if (inferType){
             for (String value : values) {
-                dataType = DataType.getBroadestType(dataType, DataType.identifyType(value));
+                dataType = DataType.getBroadestType(dataType, DataType.identifyType(value, inferDateTimes));
             }
         }
 
-        return new PropertyValue(String.join(";", values), true, dataType);
+        return new PropertyValue(format(String.join(";", values)), true, dataType);
     }
 
     private static boolean isArrayCandidate(String s) {

@@ -10,7 +10,9 @@
                     {-d | --dir} <outputDirectory>
                     [ {-df | --dotenv-file} <envFile> ]
                     [ {-i | --input} <inputFile> ] [ --iam-role-arn <iamRoleArn> ]
-                    [ --infer-types ] [ --monitor ]
+                    [ --append-list-delimiter ] [ --infer-date-times ]
+                    [ --infer-types ] [ --list-delimiter <listDelimiter> ]
+                    [ --monitor ]
                     [ {-n | --username} <username> ]
                     [ --neptune-endpoint <neptuneEndpoint> ]
                     [ --node-property-policy <multiValuedNodePropertyPolicy> ]
@@ -112,6 +114,32 @@
                 This option may occur a maximum of 1 times
 
 
+            --infer-date-times
+                Infer ISO timestamps as dateTime instead of date when --infer-types
+                is enabled. Use this option for Neptune Analytics output; Neptune
+                Database uses date for timestamps.
+
+                This option may occur a maximum of 1 times
+
+
+            --list-delimiter <listDelimiter>
+                Delimiter used by the JoinWithDelimiter property policy (default,
+                '|')
+
+                This option may occur a maximum of 1 times
+
+
+                This options value must match the regular expression
+                '^[^\r\n]+$'. List delimiter cannot be empty or contain a newline.
+
+
+            --append-list-delimiter
+                Append the configured list delimiter after the final value when
+                using JoinWithDelimiter
+
+                This option may occur a maximum of 1 times
+
+
             --monitor
                 Monitor Neptune bulk load progress until completion (default:
                 true). Overrides monitor from bulk-load-config file if both are
@@ -142,6 +170,7 @@
 
                 This options value is restricted to the following set of values:
                     LeaveAsString
+                    JoinWithDelimiter
                     Halt
                     PutInSetIgnoringDuplicates
                     PutInSetButHaltIfDuplicates
@@ -175,6 +204,7 @@
 
                 This options value is restricted to the following set of values:
                     LeaveAsString
+                    JoinWithDelimiter
                     Halt
 
                 This option may occur a maximum of 1 times

@@ -45,6 +45,18 @@ public class MultiValuedNodePropertyPolicyTest {
     }
 
     @Test
+    public void shouldJoinArrayValuesWithConfiguredDelimiter() {
+        String value = "[\"toy\",\"electronics\",\"gifts\"]";
+
+        PropertyValueParser parser = new PropertyValueParser(
+            MultiValuedNodePropertyPolicy.JoinWithDelimiter, "", false, "|", true, false);
+        PropertyValue propertyValue = parser.parse(value);
+
+        assertEquals("toy|electronics|gifts|", propertyValue.value());
+        assertFalse(propertyValue.isMultiValued());
+    }
+
+    @Test
     public void shouldReturnSetFormattedPropertyValueIfPolicyIsPutInSetIgnoringDuplicates() {
 
         String value = "[\"toy\",\"electronics\",\"gifts\"]";

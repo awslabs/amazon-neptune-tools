@@ -44,4 +44,16 @@ public class MultiValuedRelationshipPropertyPolicyTest {
 
         }
     }
+
+    @Test
+    public void shouldJoinArrayValuesWithConfiguredDelimiter() {
+        String value = "[\"toy\",\"electronics\",\"gifts\"]";
+
+        PropertyValueParser parser = new PropertyValueParser(
+            MultiValuedRelationshipPropertyPolicy.JoinWithDelimiter, "", false, "|", true, false);
+        PropertyValue propertyValue = parser.parse(value);
+
+        assertEquals("toy|electronics|gifts|", propertyValue.value());
+        assertFalse(propertyValue.isMultiValued());
+    }
 }

@@ -84,14 +84,15 @@ public class ConvertCsv implements Runnable {
         "Conversion policy for multi-valued node properties (default, 'PutInSetIgnoringDuplicates')")
     @Once
     @AllowedValues(allowedValues =
-        {"LeaveAsString", "Halt", "PutInSetIgnoringDuplicates", "PutInSetButHaltIfDuplicates"})
+        {"LeaveAsString", "JoinWithDelimiter", "Halt", "PutInSetIgnoringDuplicates",
+            "PutInSetButHaltIfDuplicates"})
     private MultiValuedNodePropertyPolicy multiValuedNodePropertyPolicy =
         MultiValuedNodePropertyPolicy.PutInSetIgnoringDuplicates;
 
     @Option(name = {"--relationship-property-policy"}, description =
         "Conversion policy for multi-valued relationship properties (default, 'LeaveAsString')")
     @Once
-    @AllowedValues(allowedValues = {"LeaveAsString", "Halt"})
+    @AllowedValues(allowedValues = {"LeaveAsString", "JoinWithDelimiter", "Halt"})
     private MultiValuedRelationshipPropertyPolicy multiValuedRelationshipPropertyPolicy =
         MultiValuedRelationshipPropertyPolicy.LeaveAsString;
 
@@ -101,9 +102,26 @@ public class ConvertCsv implements Runnable {
     @Pattern(pattern = "^[^;]*$", description = "Replacement string cannot contain a semi-colon.")
     private String semiColonReplacement = " ";
 
+    @Option(name = {"--list-delimiter"}, description =
+        "Delimiter used by the JoinWithDelimiter property policy (default, '|')")
+    @Once
+    @Pattern(pattern = "^[^\\r\\n]+$", description = "List delimiter cannot be empty or contain a newline.")
+    private String listDelimiter = "|";
+
+    @Option(name = {"--append-list-delimiter"}, description =
+        "Append the configured list delimiter after the final value when using JoinWithDelimiter")
+    @Once
+    private boolean appendListDelimiter = false;
+
     @Option(name = {"--infer-types"}, description = "Infer data types for CSV column headings")
     @Once
     private boolean inferTypes = false;
+
+    @Option(name = {"--infer-date-times"}, description = """
+        Infer ISO timestamps as dateTime instead of date when --infer-types is enabled.
+        Use this option for Neptune Analytics output; Neptune Database uses date for timestamps.""")
+    @Once
+    private boolean inferDateTimes = false;
 
     // Neptune bulk load options
     @Option(name = {"--bulk-load-config"}, description = """
@@ -296,7 +314,8 @@ public class ConvertCsv implements Runnable {
                 headers = iterator.next();
                 VertexMetadata vertexMetadata = VertexMetadata.parse(
                     headers,
-                    new PropertyValueParser(multiValuedNodePropertyPolicy, semiColonReplacement, inferTypes),
+                    new PropertyValueParser(multiValuedNodePropertyPolicy, semiColonReplacement, inferTypes,
+                        listDelimiter, appendListDelimiter, inferDateTimes),
                     conversionConfig);
 
                 while (iterator.hasNext()) {
@@ -325,7 +344,8 @@ public class ConvertCsv implements Runnable {
                 // Create edge metadata with vertex ID mapping
                 EdgeMetadata edgeMetadata = EdgeMetadata.parse(
                     headers,
-                    new PropertyValueParser(multiValuedRelationshipPropertyPolicy, semiColonReplacement, inferTypes),
+                    new PropertyValueParser(multiValuedRelationshipPropertyPolicy, semiColonReplacement, inferTypes,
+                        listDelimiter, appendListDelimiter, inferDateTimes),
                     conversionConfig,
                     skippedVertexIds,
                     vertexIdMap);

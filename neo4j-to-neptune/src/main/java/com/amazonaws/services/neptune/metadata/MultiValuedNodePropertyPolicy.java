@@ -26,6 +26,17 @@ public enum MultiValuedNodePropertyPolicy implements PropertyValueParserPolicy {
             // Do nothing
         }
     },
+    JoinWithDelimiter {
+        @Override
+        public PropertyValue handleArray(String s, ArrayNode arrayNode, PropertyValueParser parser) {
+            return parser.parseArrayAsDelimitedString(arrayNode);
+        }
+
+        @Override
+        public void handleDuplicates(String s, ArrayNode arrayNode, PropertyValueParser parser) {
+            // Duplicates and source order are preserved in the string representation
+        }
+    },
     Halt {
         @Override
         public PropertyValue handleArray(String s, ArrayNode arrayNode, PropertyValueParser parser) {
