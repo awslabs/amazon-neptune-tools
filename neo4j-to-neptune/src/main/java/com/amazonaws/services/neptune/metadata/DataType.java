@@ -55,6 +55,12 @@ public enum DataType {
         }
     },
     Date,
+    DateTime {
+        @Override
+        public String typeDescription() {
+            return ":dateTime";
+        }
+    },
     String;
 
     public boolean isNumeric() {
@@ -66,6 +72,10 @@ public enum DataType {
     }
 
     public static DataType identifyType(String s) {
+        return identifyType(s, false);
+    }
+
+    public static DataType identifyType(String s, boolean inferDateTimes) {
 
         if (isBoolean(s)) {
             return DataType.Boolean;
@@ -85,6 +95,9 @@ public enum DataType {
             }
             try {
                 DateTimeUtils.parseISODate(s);
+                if (inferDateTimes && s.contains("T")) {
+                    return DataType.DateTime;
+                }
                 return DataType.Date;
             } catch (Exception e) {
                 return DataType.String;
@@ -169,6 +182,11 @@ public enum DataType {
             } else {
                 return oldType;
             }
+        }
+
+        if ((oldType == DataType.Date && newType == DataType.DateTime) ||
+                (oldType == DataType.DateTime && newType == DataType.Date)) {
+            return DataType.DateTime;
         }
 
         if (newType.ordinal() > oldType.ordinal()) {

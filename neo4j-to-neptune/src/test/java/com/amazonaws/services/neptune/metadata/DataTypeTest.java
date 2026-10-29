@@ -107,6 +107,25 @@ public class DataTypeTest {
     }
 
     @Test
+    public void shouldIdentifyDateTimeWhenEnabled() {
+        assertEquals(DataType.DateTime,
+            DataType.identifyType("2026-09-14T19:53:51.367Z", true));
+        assertEquals(DataType.DateTime,
+            DataType.identifyType("2015-06-24T12:50:35.556+01:00", true));
+        assertEquals(DataType.Date,
+            DataType.identifyType("1984-10-11", true));
+        assertEquals(":dateTime", DataType.DateTime.typeDescription());
+    }
+
+    @Test
+    public void shouldReturnDateTimeForDateAndDateTime() {
+        assertEquals(DataType.DateTime,
+            DataType.getBroadestType(DataType.Date, DataType.DateTime));
+        assertEquals(DataType.DateTime,
+            DataType.getBroadestType(DataType.DateTime, DataType.Date));
+    }
+
+    @Test
     public void shouldReturnStringForBooleanAndNumber() {
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Boolean, DataType.Byte));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Boolean, DataType.Short));
@@ -171,6 +190,7 @@ public class DataTypeTest {
         assertEquals(DataType.Long, DataType.getBroadestType(DataType.None, DataType.Long));
         assertEquals(DataType.Double, DataType.getBroadestType(DataType.None, DataType.Double));
         assertEquals(DataType.Date, DataType.getBroadestType(DataType.None, DataType.Date));
+        assertEquals(DataType.DateTime, DataType.getBroadestType(DataType.None, DataType.DateTime));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.None, DataType.String));
     }
 
@@ -183,6 +203,7 @@ public class DataTypeTest {
         assertEquals(DataType.Long, DataType.getBroadestType(DataType.Long, DataType.None));
         assertEquals(DataType.Double, DataType.getBroadestType(DataType.Double, DataType.None));
         assertEquals(DataType.Date, DataType.getBroadestType(DataType.Date, DataType.None));
+        assertEquals(DataType.DateTime, DataType.getBroadestType(DataType.DateTime, DataType.None));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.String, DataType.None));
     }
 
@@ -196,6 +217,7 @@ public class DataTypeTest {
         assertEquals(DataType.String, DataType.getBroadestType(DataType.String, DataType.Long));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.String, DataType.Double));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.String, DataType.Date));
+        assertEquals(DataType.String, DataType.getBroadestType(DataType.String, DataType.DateTime));
 
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Boolean, DataType.String));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Byte, DataType.String));
@@ -204,6 +226,7 @@ public class DataTypeTest {
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Long, DataType.String));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Double, DataType.String));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.Date, DataType.String));
+        assertEquals(DataType.String, DataType.getBroadestType(DataType.DateTime, DataType.String));
     }
 
     @Test
@@ -216,6 +239,7 @@ public class DataTypeTest {
         assertEquals(DataType.Long, DataType.getBroadestType(DataType.Long, DataType.Long));
         assertEquals(DataType.Double, DataType.getBroadestType(DataType.Double, DataType.Double));
         assertEquals(DataType.Date, DataType.getBroadestType(DataType.Date, DataType.Date));
+        assertEquals(DataType.DateTime, DataType.getBroadestType(DataType.DateTime, DataType.DateTime));
         assertEquals(DataType.String, DataType.getBroadestType(DataType.String, DataType.String));
     }
 

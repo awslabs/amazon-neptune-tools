@@ -54,4 +54,64 @@ public class PropertyValueParserTest {
         assertTrue(propertyValue.isMultiValued());
     }
 
+    @Test
+    public void shouldQuoteCompleteMultiValuePropertyWhenAnElementContainsCommas() {
+        String originalValue = "[\"A1ADVO\",\"Total Display, Video, and Audio (incl. SD/STV)\"]";
+        PropertyValue propertyValue = new PropertyValueParser(
+            MultiValuedNodePropertyPolicy.PutInSetIgnoringDuplicates, "", false).parse(originalValue);
+
+        assertEquals("\"A1ADVO;Total Display, Video, and Audio (incl. SD/STV)\"",
+            propertyValue.value());
+        assertTrue(propertyValue.isMultiValued());
+    }
+
+    @Test
+    public void shouldJoinArrayAsDelimitedStringPreservingOrderAndDuplicates() {
+        String originalValue = "[\"kpi definitions\",\"base kpi\",\"kpi metadata\",\"base kpi\"]";
+        PropertyValue propertyValue = new PropertyValueParser(
+            MultiValuedNodePropertyPolicy.JoinWithDelimiter, "", true, "|", false, false)
+            .parse(originalValue);
+
+        assertEquals("kpi definitions|base kpi|kpi metadata|base kpi", propertyValue.value());
+        assertFalse(propertyValue.isMultiValued());
+        assertEquals(DataType.String, propertyValue.dataType());
+    }
+
+    @Test
+    public void shouldAppendDelimiterAndQuoteJoinedStringWhenRequired() {
+        String originalValue = "[\"A1ADVO\",\"Total Display, Video, and Audio (incl. SD/STV)\"]";
+        PropertyValue propertyValue = new PropertyValueParser(
+            MultiValuedNodePropertyPolicy.JoinWithDelimiter, "", true, "|", true, true)
+            .parse(originalValue);
+
+        assertEquals("\"A1ADVO|Total Display, Video, and Audio (incl. SD/STV)|\"",
+            propertyValue.value());
+        assertFalse(propertyValue.isMultiValued());
+        assertEquals(DataType.String, propertyValue.dataType());
+    }
+
+    @Test
+    public void shouldRejectJoinedStringWhenAValueContainsTheDelimiter() {
+        String originalValue = "[\"first\",\"contains|delimiter\"]";
+        PropertyValueParser parser = new PropertyValueParser(
+            MultiValuedNodePropertyPolicy.JoinWithDelimiter, "", true, "|", false, false);
+
+        try {
+            parser.parse(originalValue);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("List value contains configured delimiter '|': contains|delimiter",
+                e.getMessage());
+        }
+    }
+
+    @Test
+    public void shouldInferDateTimeWhenEnabled() {
+        PropertyValue propertyValue = new PropertyValueParser(
+            MultiValuedNodePropertyPolicy.LeaveAsString, "", true, "|", false, true)
+            .parse("2026-09-14T19:53:51.367Z");
+
+        assertEquals(DataType.DateTime, propertyValue.dataType());
+    }
+
 }

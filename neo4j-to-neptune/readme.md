@@ -141,23 +141,45 @@ Neptune provides for set and single cardinality for vertex properties, and singl
 
 The `--node-property-policy` and `--relationship-property-policy` parameters allow you to control the migration of multi-valued properties into Neptune.
 
-`--node-property-policy` takes one of four values, the default being `PutInSetIgnoringDuplicates`:
+`--node-property-policy` takes one of five values, the default being `PutInSetIgnoringDuplicates`:
 
   - `LeaveAsString` – Store a multi-valued Neo4j node property as a string representation of a JSON-formatted list
+  - `JoinWithDelimiter` – Store a multi-valued Neo4j node property as a single delimiter-joined string, preserving source order and duplicates
   - `Halt` – Halt (throw an exception) if a multi-valued Neo4j node property is encountered
   - `PutInSetIgnoringDuplicates` – Convert a multi-valued Neo4j node property to a set cardinality Neptune property, discarding duplicate values
   - `PutInSetButHaltIfDuplicates` – Convert a multi-valued Neo4j node property to a set cardinality Neptune property, discarding duplicate values but halt (throw an exception) if a multi-valued Neo4j node property containing duplicate values is encountered
 
-`--relationship-property-policy` takes one of two values, the default being `LeaveAsString`:
+`--relationship-property-policy` takes one of three values, the default being `LeaveAsString`:
 
   - `LeaveAsString` – Store a multi-valued Neo4j relationship property as a string representation of a JSON-formatted list
+  - `JoinWithDelimiter` – Store a multi-valued Neo4j relationship property as a single delimiter-joined string, preserving source order and duplicates
   - `Halt` – Halt (throw an exception) if a multi-valued Neo4j relationship property is encountered
+
+Use `--list-delimiter` to configure the delimiter for `JoinWithDelimiter` (the default is `|`). Add
+`--append-list-delimiter` to append the delimiter after the final value. Conversion stops if a source value contains
+the configured delimiter, preventing an ambiguous result.
+
+For example:
+
+```bash
+java -jar target/neo4j-to-neptune.jar convert-csv \
+  -d output \
+  -i neo4j-export.csv \
+  --node-property-policy JoinWithDelimiter \
+  --relationship-property-policy JoinWithDelimiter \
+  --list-delimiter "|" \
+  --append-list-delimiter
+```
 
 #### Data type inferencing
 
 When importing data into Neptune using the bulk loader, you can [specify the data type for each property](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-gremlin.html). If you supply an `--infer-types` flag to `convert-csv`, the utility will attempt to infer the narrowest supported type for each column in the output CSV.
 
 Note that `convert-csv` will always use a __double__ for values with decimal or scientific notation.
+
+By default, ISO dates and timestamps are emitted as `date` for compatibility with Neptune Database. When generating
+CSV for Neptune Analytics, add `--infer-date-times` with `--infer-types` to emit timestamps as `dateTime` while
+retaining date-only values as `date`.
 
 
 #### Configuration Methods
