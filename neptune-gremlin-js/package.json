@@ -36,6 +36,6 @@
   "devDependencies": {
     "eslint": "^8.4.1",
     "jest": "^30.2.0",
-    "retire": "^5.7.0"
+    "retire": "^6.1.1"
   }
 }
